@@ -1,0 +1,68 @@
+name: Validate Skills
+
+on:
+  push:
+    paths:
+      - 'skills/**/SKILL.md'
+  pull_request:
+    paths:
+      - 'skills/**/SKILL.md'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check SKILL.md frontmatter
+        run: |
+          errors=0
+          for skill_md in skills/*/SKILL.md; do
+            dir=$(dirname "$skill_md")
+            name=$(basename "$dir")
+
+            echo "Checking $name..."
+
+            # Verify frontmatter exists
+            if ! head -1 "$skill_md" | grep -q '^---$'; then
+              echo "  ERROR: Missing YAML frontmatter"
+              errors=$((errors + 1))
+              continue
+            fi
+
+            # Extract name field
+            fm_name=$(sed -n '/^---$/,/^---$/p' "$skill_md" | grep '^name:' | head -1 | sed 's/name: *//' | tr -d '"')
+            if [ "$fm_name" != "$name" ]; then
+              echo "  ERROR: name '$fm_name' does not match directory '$name'"
+              errors=$((errors + 1))
+            fi
+
+            # Check required fields
+            for field in name description; do
+              if ! sed -n '/^---$/,/^---$/p' "$skill_md" | grep -q "^$field:"; then
+                echo "  ERROR: Missing required field: $field"
+                errors=$((errors + 1))
+              fi
+            done
+
+            echo "  OK"
+          done
+
+          if [ "$errors" -gt 0 ]; then
+            echo ""
+            echo "Found $errors error(s)"
+            exit 1
+          fi
+
+      - name: Check skill completeness
+        run: |
+          for dir in skills/*/; do
+            name=$(basename "$dir")
+            echo "Checking $name completeness..."
+
+            [ -f "$dir/SKILL.md" ] || { echo "  WARN: Missing SKILL.md"; }
+            [ -f "$dir/install.sh" ] || { echo "  WARN: Missing install.sh"; }
+            [ -f "$dir/install.ps1" ] || { echo "  WARN: Missing install.ps1"; }
+
+            echo "  OK"
+          done

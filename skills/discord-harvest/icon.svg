@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Discord-style chat bubble -->
+  <rect x="6" y="8" width="52" height="36" rx="8" fill="#5865F2"/>
+  <!-- Download arrow -->
+  <path d="M32 18v14" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M25 28l7 7 7-7" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Tray line -->
+  <path d="M22 38h20" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <!-- Chat tail -->
+  <path d="M16 44l-4 8 12-8" fill="#5865F2"/>
+</svg>
