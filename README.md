@@ -29,6 +29,8 @@ npx skills add t4sh/skills4sh --all
 
 ```bash
 npx skills add git@github.com:t4sh/skills4sh.git --skill agent-memory
+OR
+npx skills add https://github.com/t4sh/skills4sh --skill agent-memory
 ```
 
 ### Manual install
