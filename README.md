@@ -25,14 +25,6 @@ npx skills add t4sh/skills4sh --skill agent-memory
 npx skills add t4sh/skills4sh --all
 ```
 
-### Via SSH (private repo)
-
-```bash
-npx skills add git@github.com:t4sh/skills4sh.git --skill agent-memory
-OR
-npx skills add https://github.com/t4sh/skills4sh --skill agent-memory
-```
-
 ### Manual install
 
 Each skill includes cross-platform install scripts:
@@ -52,6 +44,30 @@ cd skills4sh/skills/agent-memory
 The install scripts prompt for:
 1. **Global** (`~/.claude/skills/<skill>/`) or **Project** (`./.claude/skills/<skill>/`) install
 2. Credential setup (for skills that need it)
+
+---
+
+## Install from GitHub (private repo)
+
+**Option A: Use HTTPS URL** (works with your existing `gh` auth):
+
+```bash
+npx skills add https://github.com/t4sh/skills4sh --skill agent-memory
+```
+
+**Option B: Use SSH URL:**
+
+```bash
+npx skills add git@github.com:t4sh/skills4sh.git --skill agent-memory
+```
+
+> **Note:** If SSH fails with `Permission denied (publickey)`, configure git to rewrite SSH → HTTPS:
+>
+> ```bash
+> git config --global url."https://github.com/".insteadOf "git@github.com:"
+> ```
+>
+> This lets SSH-style URLs transparently use your `gh` CLI token.
 
 ## Skill structure
 
