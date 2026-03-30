@@ -1,0 +1,22 @@
+{
+  "name": "skills4sh",
+  "description": "Agent skills for Cursor and other AI coding agents",
+  "author": "t4sh",
+  "skills": [
+    {
+      "name": "agent-memory",
+      "path": "skills/agent-memory",
+      "description": "Cross-interface persistent memory system for any project"
+    },
+    {
+      "name": "discord-harvest",
+      "path": "skills/discord-harvest",
+      "description": "Extract and download images, links, and files from Discord conversations"
+    },
+    {
+      "name": "localhost-screenshots",
+      "path": "skills/localhost-screenshots",
+      "description": "Localhost screenshot capture and visual regression testing"
+    }
+  ]
+}
