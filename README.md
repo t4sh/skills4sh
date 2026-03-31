@@ -62,6 +62,17 @@ skills/<skill-name>/
 └── [supporting files]
 ```
 
+## Security scanning
+
+All skills pass [guardskills](https://www.npmjs.com/package/guardskills) with a **SAFE** rating:
+
+```bash
+npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run
+npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
+```
+
+The scanner reports LOW/low `R008_ENV_ACCESS` findings for `$HOME` usage in the install scripts and `bootstrap.sh`. These are expected — the scripts read `$HOME` solely to determine the global install path (`~/.claude/skills/`).
+
 ## License
 
 MIT
