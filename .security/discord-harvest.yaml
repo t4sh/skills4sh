@@ -1,0 +1,51 @@
+# OWASP Agentic Skills Top 10 (AST10) Manifest
+# Canonical security manifest for discord-harvest skill
+# https://owasp.org/www-project-agentic-skills-top-10/
+
+skill:
+  name: discord-harvest
+  version: "1.4.0"
+  license: MIT
+  author: t4sh
+  repository: https://github.com/t4sh/skills4sh
+  path: skills/discord-harvest
+
+integrity:
+  hash_algorithm: sha256
+  files:
+    SKILL.md: e51bcc184088187dcef839dfd44ff34129388328d54e7adacc892500aa649d27
+    install.sh: 049636eae28e70abe1847dfabbde85e876f70a55a6b40035147430ba33645a06
+    install.ps1: 72a6b513c06b390ae0f39d563f5ecbd58013a797aabfa42ddf1ffcfba745a8b5
+    icon.svg: e260db01006e94d9c6fbeccfa34b03a4e7fa390b5250f05c4ebfe3a8ad2dbd51
+    reference/code-examples.md: bba8ec3d74a4cedec198c256c896418ed4b5567aa1d474e73a0fb6c1afbe0235
+    reference/folder-structure.md: 32b7e645198ad01e30e10eeef590e6e61505927e84637bb18a11e794302e293a
+    reference/troubleshooting.md: 9ddb44320ec72ad8951b17fec40cec6de06f33ca2b794c5956a90ec48ca908f0
+
+permissions:
+  alwaysAllow:
+    - Read
+  rationale:
+    Read: "Read local config files to determine output directory and check for existing harvested content"
+
+execution_context:
+  sandbox: host-agent
+  network: outbound-only
+  filesystem: read-write
+  shell: optional
+  risk_tier: medium
+
+dependencies:
+  - name: discord-bot-token
+    type: credential
+    optional: true
+    reason: "Required only for server channel extraction (Path A); DM extraction uses browser"
+
+scanning:
+  guardskills: SAFE
+  snyk: pass
+  codeql: pass
+  expected_findings:
+    - id: R008_ENV_ACCESS
+      severity: low
+      file: install.sh
+      reason: "Reads $HOME only to determine global install path (~/.claude/skills/)"

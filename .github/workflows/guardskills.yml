@@ -1,0 +1,29 @@
+name: guardskills Scan
+
+on:
+  push:
+    paths:
+      - 'skills/**'
+  pull_request:
+    paths:
+      - 'skills/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        skill: [agent-memory, discord-harvest, localhost-screenshots]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Scan ${{ matrix.skill }}
+        run: npx guardskills add t4sh/skills4sh --skill ${{ matrix.skill }} --dry-run
