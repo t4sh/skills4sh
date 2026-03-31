@@ -97,7 +97,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | All skills pass with SAFE rating |
+| guardskills | agent-memory: SAFE, discord-harvest: SAFE, localhost-screenshots: WARNING (accepted — see [Expected Findings](#expected-security-findings)) |
 | Snyk | Continuous vulnerability scanning (badge in README) |
 | CodeQL | Static analysis on GitHub Actions (weekly + PR) |
 | guardskills CI | Automated scanning on every PR via `guardskills.yml` workflow |

@@ -26,4 +26,4 @@ jobs:
           node-version: '20'
 
       - name: Scan ${{ matrix.skill }}
-        run: npx guardskills add t4sh/skills4sh --skill ${{ matrix.skill }} --dry-run
+        run: npx guardskills add t4sh/skills4sh --skill ${{ matrix.skill }} --ci --yes
