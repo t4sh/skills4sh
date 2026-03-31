@@ -210,10 +210,15 @@ try {
 
 ### Setup (run once per session)
 
+**Check if Playwright is already installed before running `npm install`:**
+
 ```bash
-npm install playwright@latest 2>/dev/null
+# Only install if not present — avoids unnecessary npm registry calls
+node -e "require('playwright')" 2>/dev/null || npm install playwright 2>/dev/null
 npx playwright install --with-deps chromium
 ```
+
+Do not use `@latest` — let the project's `package.json` or lockfile control the version. If no lockfile exists, `npm install playwright` installs the current stable release.
 
 That's it. No `apt-get install chromium`, no `which google-chrome`. Playwright handles everything.
 
@@ -470,7 +475,7 @@ npx playwright --version
 
 If missing or outdated:
 ```bash
-npm install playwright@latest 2>/dev/null
+npm install playwright 2>/dev/null
 npx playwright install --with-deps chromium
 ```
 

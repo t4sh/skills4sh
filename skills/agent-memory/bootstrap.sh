@@ -236,31 +236,19 @@ HEREDOC
   # ── .claude/ directory ──
   mkdir -p "$ROOT/.claude"
   if [ ! -f "$ROOT/.claude/settings.json" ]; then
-cat > "$ROOT/.claude/settings.json" << 'HEREDOC'
-{
-  "$schema": "https://code.claude.com/schema/settings.json",
-  "permissions": {
-    "allow": [
-      "Read",
-      "Glob",
-      "Grep"
-    ]
-  }
-}
-HEREDOC
-    echo -e "  ${G}✓${N} .claude/settings.json (created)"
+    echo -e "  ${Y}⊘${N} .claude/settings.json not found"
+    echo ""
+    echo -e "  ${C}ℹ${N}  Create ${B}.claude/settings.json${N} with your preferred permissions."
+    echo -e "     Example:"
+    echo ""
+    echo -e "     ${C}{${N}"
+    echo -e "     ${C}  \"permissions\": {${N}"
+    echo -e "     ${C}    \"allow\": [\"Read\", \"Glob\", \"Grep\"]${N}"
+    echo -e "     ${C}  }${N}"
+    echo -e "     ${C}}${N}"
+    echo ""
   else
-    echo -e "  ${Y}⊘${N} .claude/settings.json (exists)"
-  fi
-
-  # ── Permission hint (never auto-granted) ──
-  if ! grep -q 'agent-memory/bootstrap' "$ROOT/.claude/settings.json" 2>/dev/null; then
-    echo ""
-    echo -e "  ${C}ℹ${N}  To allow bootstrap commands without prompts, add this to"
-    echo -e "     ${B}.claude/settings.json${N} → permissions.allow:"
-    echo ""
-    echo -e "     ${C}\"Bash(bash .agent-memory/bootstrap.sh *)\"${N}"
-    echo ""
+    echo -e "  ${G}✓${N} .claude/settings.json (exists)"
   fi
 
   # ── .cursor/rules/ directory (separate file, never overwrites) ──
@@ -321,17 +309,17 @@ _do_migrate_inner() {
     # Migrate content to a dedicated .mdc file (not index.mdc — that may be user-owned)
     target="$ROOT/.cursor/rules/project-instructions.mdc"
     if [ ! -f "$target" ]; then
-      # Extract content (strip any YAML frontmatter)
-      content=$(sed '/^---$/,/^---$/d' "$ROOT/CURSOR.md")
-cat > "$target" << HEREDOC
+      # Write the frontmatter (quoted heredoc — safe from injection)
+cat > "$target" << 'HEREDOC'
 ---
 description: "Project instructions (migrated from CURSOR.md)"
 globs:
 alwaysApply: true
 ---
 
-${content}
 HEREDOC
+      # Append the content safely (strip any YAML frontmatter from source)
+      sed '/^---$/,/^---$/d' "$ROOT/CURSOR.md" >> "$target"
       echo -e "  ${G}✓${N} CURSOR.md → .cursor/rules/project-instructions.mdc"
       migrated=$((migrated + 1))
     else
@@ -517,11 +505,11 @@ do_fix() {
 
   fixed=0
 
-  # Find files on disk not in index
-  for f in $(find "$MEM" -mindepth 2 -name "*.md" | sort); do
+  # Find files on disk not in index (use process substitution to handle spaces in paths)
+  while IFS= read -r f; do
     relpath="${f#$MEM/}"
-    if ! grep -v '^\s*#' "$MEM/index.yaml" 2>/dev/null | grep -q "path: $relpath"; then
-      # Extract frontmatter fields
+    if ! grep -v '^\s*#' "$MEM/index.yaml" 2>/dev/null | grep -q "path: ${relpath}"; then
+      # Extract frontmatter fields (quote all values for safe YAML output)
       id=$(grep "^id:" "$f" 2>/dev/null | head -1 | sed 's/id: *//')
       type=$(grep "^type:" "$f" 2>/dev/null | head -1 | sed 's/type: *//')
       desc=$(grep "^description:" "$f" 2>/dev/null | head -1 | sed 's/description: *//')
@@ -529,17 +517,17 @@ do_fix() {
       [ -z "$type" ] && type=$(dirname "$relpath")
       [ -z "$desc" ] && desc="(no description)"
 
-      # Append to index
+      # Append to index (values quoted to prevent YAML injection)
       echo "" >> "$MEM/index.yaml"
-      echo "  - id: $id" >> "$MEM/index.yaml"
-      echo "    type: $type" >> "$MEM/index.yaml"
-      echo "    path: $relpath" >> "$MEM/index.yaml"
-      echo "    description: $desc" >> "$MEM/index.yaml"
+      echo "  - id: \"${id//\"/\\\"}\"" >> "$MEM/index.yaml"
+      echo "    type: \"${type//\"/\\\"}\"" >> "$MEM/index.yaml"
+      echo "    path: \"${relpath//\"/\\\"}\"" >> "$MEM/index.yaml"
+      echo "    description: \"${desc//\"/\\\"}\"" >> "$MEM/index.yaml"
 
       echo -e "  ${G}+${N} Added to index: $relpath"
       fixed=$((fixed + 1))
     fi
-  done
+  done < <(find "$MEM" -mindepth 2 -name "*.md" -print0 | sort -z | tr '\0' '\n')
 
   # Find index entries pointing to missing files
   while IFS= read -r path; do

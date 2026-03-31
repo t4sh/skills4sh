@@ -8,11 +8,9 @@ metadata:
   version: "2.3.0"
   tags: memory, context, cross-interface, agent, persistence
 alwaysAllow:
-  - "Write"
   - "Read"
   - "Glob"
   - "Grep"
-  - "Edit"
 ---
 
 # Agent Memory Skill

@@ -47,28 +47,6 @@ The install scripts prompt for:
 
 ---
 
-## Install from GitHub (private repo)
-
-**Option A: Use HTTPS URL** (works with your existing `gh` auth):
-
-```bash
-npx skills add https://github.com/t4sh/skills4sh --skill agent-memory
-```
-
-**Option B: Use SSH URL:**
-
-```bash
-npx skills add git@github.com:t4sh/skills4sh.git --skill agent-memory
-```
-
-> **Note:** If SSH fails with `Permission denied (publickey)`, configure git to rewrite SSH → HTTPS:
->
-> ```bash
-> git config --global url."https://github.com/".insteadOf "git@github.com:"
-> ```
->
-> This lets SSH-style URLs transparently use your `gh` CLI token.
-
 ## Skill structure
 
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
