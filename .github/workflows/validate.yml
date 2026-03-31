@@ -66,8 +66,6 @@ jobs:
             echo "Checking $name completeness..."
 
             [ -f "$dir/SKILL.md" ] || { echo "  WARN: Missing SKILL.md"; }
-            [ -f "$dir/install.sh" ] || { echo "  WARN: Missing install.sh"; }
-            [ -f "$dir/install.ps1" ] || { echo "  WARN: Missing install.ps1"; }
             [ -f ".security/$(basename "$dir").yaml" ] || { echo "  WARN: Missing .security/$(basename "$dir").yaml"; }
 
             echo "  OK"

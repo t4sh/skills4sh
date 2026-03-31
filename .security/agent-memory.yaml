@@ -13,13 +13,10 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: f0242de62c6de4c5b110b3fce96a2a3988f0472d8271e83fa486f7770ca54058
-    install.sh: 355f7d97e8f6473f606fb97aa20ac22e8f1304566cb0a7f7d9ef1dbb85390dfe
-    install.ps1: ae3c85d45a2fa64a14d73c1627fa85c6abc5fc8fc1bd3d3e717364dd29b9ad58
-    bootstrap.sh: 57a31a0b54cb24035ddcc73eef70aeea835f9cb308ae020af7d36c3a9d813ba4
+    SKILL.md: ce9ed751fc8e56a0a60d467ce3433b4f0e6566fe812bd58e6fe395f4118ec7b8
     reference/templates.md: ab61fb061f97b3220ec6e6738bac5236e38f23a556ef4b37d8c7b9aa5f5e2ac3
     reference/display-conventions.md: 69145723e247db19313834a5a1f30a44f14b136ec44f49648cb5bb68eebc6745
-    reference/troubleshooting.md: d9a573ffb7fce25702f76113913da4277f7c5850b6e7279ff1a1d9dfa5961763
+    reference/troubleshooting.md: 3726fbc308f13e8bbf66b503d42490cdfd0808d6dfa805b9f69854193c7db3b0
 
 permissions:
   alwaysAllow:
@@ -35,21 +32,14 @@ execution_context:
   sandbox: host-agent
   network: none
   filesystem: read-write
-  shell: optional
+  shell: none
   risk_tier: low
 
 dependencies: []
 
 scanning:
   guardskills: SAFE
+  guardskills_risk_score: 0
   snyk: pass
   codeql: pass
-  expected_findings:
-    - id: R008_ENV_ACCESS
-      severity: low
-      file: install.sh
-      reason: "Reads $HOME only to determine global install path (~/.claude/skills/)"
-    - id: R008_ENV_ACCESS
-      severity: low
-      file: bootstrap.sh
-      reason: "Reads $HOME to locate global skill assets"
+  expected_findings: []

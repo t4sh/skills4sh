@@ -24,13 +24,10 @@
 
 ## Troubleshooting
 
-### `bootstrap.sh` Not Found
-- Check if the skill was installed correctly: `ls ~/.agents/skills/agent-memory/bootstrap.sh`
-- If missing, re-install the skill or create the directory structure manually using the Init operation steps
-
 ### Index Out of Sync
-- Run `bash .agent-memory/bootstrap.sh fix` — this reconciles filesystem with index
-- If `fix` doesn't resolve it, run `bash .agent-memory/bootstrap.sh doctor` for a full diagnostic
+- Run the `sync` or `maintain` command — the agent will reconcile the filesystem with `index.yaml`
+- Check for files in `.agent-memory/` subdirectories that aren't listed in `index.yaml`
+- Check for `index.yaml` entries that point to files that no longer exist
 
 ### Migration Fails
 - Check for file permission issues on `.agent-memory/` directory

@@ -13,9 +13,7 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: e96469ed1c76ac49672c8ee466aede519ede28d4dae02aef1cb25ddc2adff9e5
-    install.sh: bb1ba96c31feb1dcb9f7006b0d8e34457f776450bce0e17d924a275a29c6056e
-    install.ps1: 9336e4adc6bdd4cb47a28450c700d2ac9bb6aa8ea7ae638b65876d740dea8f15
+    SKILL.md: 36f6a395500759d0c52b9f9e9088c32b688d24e7a5d014ea1966da59fc0594cc
     reference/playwright-patterns.md: db82dfec5ac6986d23c609009fd6b3f1c9a1b64f829809ff89e39345de484cca
     reference/visual-regression.md: 03350151c2a3709768952b77d3bd06bfb77fd761c72f488af1c15cf4ac272bc1
     reference/interaction-templates.md: b85e5259c5d64057cf5cd1c6b2aeed9fa95f18ccd96f6ecfa1b7ea904d2fe124
@@ -30,7 +28,7 @@ execution_context:
   sandbox: host-agent
   network: localhost-only
   filesystem: read-write
-  shell: optional
+  shell: none
   risk_tier: low
 
 dependencies:
@@ -46,7 +44,7 @@ dependencies:
 
 scanning:
   guardskills: WARNING
-  guardskills_risk_score: 47
+  guardskills_risk_score: 43
   guardskills_note: "All HIGH findings are false positives from code examples in documentation"
   snyk: pass
   codeql: pass
@@ -65,10 +63,6 @@ scanning:
       severity: low
       file: SKILL.md
       reason: "Triggered by /tmp/chrome-debug in CDP code example. Standard Chrome debugging flag, not malicious temp staging."
-    - id: R008_ENV_ACCESS
-      severity: low
-      file: install.sh
-      reason: "Reads $HOME only to determine global install path (~/.claude/skills/)"
     - id: R008_ENV_ACCESS
       severity: low
       file: SKILL.md

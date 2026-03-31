@@ -17,8 +17,6 @@ Agent skills for Claude Code, Cursor, Windsurf, Cline, and other AI coding agent
 
 ## Install
 
-### Via `npx skills` (recommended)
-
 ```bash
 # List available skills
 npx skills add t4sh/skills4sh --list
@@ -30,26 +28,6 @@ npx skills add t4sh/skills4sh --skill agent-memory
 npx skills add t4sh/skills4sh --all
 ```
 
-### Manual install
-
-Each skill includes cross-platform install scripts:
-
-```bash
-# Clone the repo
-git clone https://github.com/t4sh/skills4sh.git
-cd skills4sh/skills/agent-memory
-
-# macOS / Linux
-./install.sh
-
-# Windows (PowerShell)
-.\install.ps1
-```
-
-The install scripts prompt for:
-1. **Global** (`~/.claude/skills/<skill>/`) or **Project** (`./.claude/skills/<skill>/`) install
-2. Credential setup (for skills that need it)
-
 ---
 
 ## Skill structure
@@ -59,9 +37,7 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 ```
 skills/<skill-name>/
 ├── SKILL.md          # Required: metadata + instructions
-├── install.sh        # Bash installer (macOS/Linux)
-├── install.ps1       # PowerShell installer (Windows)
-└── [supporting files]
+└── reference/        # Supporting documentation
 ```
 
 ## Security
@@ -95,7 +71,7 @@ npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
 npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run
 ```
 
-The scanner reports LOW/low `R008_ENV_ACCESS` findings for `$HOME` usage in the install scripts and `bootstrap.sh`. These are expected — the scripts read `$HOME` solely to determine the global install path (`~/.claude/skills/`).
+Skills contain no shell scripts or executable code — only SKILL.md instructions and reference documentation.
 
 ## License
 

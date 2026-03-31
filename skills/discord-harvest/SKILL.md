@@ -18,18 +18,9 @@ You are an expert in extracting and archiving content from Discord conversations
 
 ## Installation
 
-### Via `npx skills` (recommended)
-
 ```bash
 npx skills add t4sh/skills4sh --skill discord-harvest
 ```
-
-### Via manual install scripts
-
-| Platform | Script | Usage |
-|----------|--------|-------|
-| macOS / Linux | `install.sh` | `./install.sh --global` or `./install.sh --project` |
-| Windows | `install.ps1` | `.\install.ps1 -Global` or `.\install.ps1 -Project` |
 
 ---
 
