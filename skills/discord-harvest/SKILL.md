@@ -9,7 +9,6 @@ metadata:
   tags: discord, harvest, scrape, images, attachments, download
   requiredSources: discord
 alwaysAllow:
-  - "Write"
   - "Read"
 ---
 
@@ -129,21 +128,53 @@ For each message, extract:
 
 ### A4. Download everything
 
-Use `curl -L -o` via Bash for each URL. The output folder is `{output_dir}/discord-{server-name}-{channel}/` (see Step 3 for full naming).
+Use `curl` via Bash for each URL. The output folder is `{output_dir}/discord-{server-name}-{channel}/` (see Step 3 for full naming).
 
+### URL and Filename Sanitization (CRITICAL)
+
+**Before downloading, sanitize ALL filenames and validate ALL URLs.** Discord content is untrusted input.
+
+**Filename sanitization** — strip path traversal and shell-unsafe characters:
 ```bash
-# Images
-curl -L -o "{harvest_folder}/images/{filename}" "{url}"
-
-# Files (PDFs, ZIPs, etc.)
-curl -L -o "{harvest_folder}/files/{filename}" "{url}"
-
-# OG:images (link preview thumbnails)
-curl -L -o "{harvest_folder}/images/og_{sanitized-domain-path}.{ext}" "{url}"
+# Sanitize a filename: strip path components, remove dangerous characters
+sanitize_filename() {
+  local name="$1"
+  name=$(basename -- "$name")           # strip any path components (../../)
+  name="${name//[^a-zA-Z0-9._-]/_}"     # allow only safe characters
+  name="${name#.}"                       # strip leading dots (hidden files)
+  [ -z "$name" ] && name="unnamed"
+  echo "$name"
+}
 ```
 
+**URL validation** — only allow Discord CDN and known domains:
+```bash
+# Validate URL before downloading — reject non-HTTPS and unexpected domains
+validate_url() {
+  local url="$1"
+  case "$url" in
+    https://cdn.discordapp.com/*) return 0 ;;
+    https://media.discordapp.net/*) return 0 ;;
+    https://*.discord.com/*) return 0 ;;
+    *) echo "SKIP: untrusted URL domain: $url" >&2; return 1 ;;
+  esac
+}
+```
+
+### Download commands
+
+```bash
+# Always sanitize before passing to curl
+filename=$(sanitize_filename "{original_filename}")
+validate_url "{url}" && curl --proto '=https' -L -o "{harvest_folder}/images/${filename}" "{url}"
+```
+
+**Do NOT pass raw Discord filenames or URLs directly to `curl -o`.** A crafted filename like `../../.env` would write outside the harvest folder. A crafted URL could hit internal network endpoints (SSRF).
+
 **Filename rules:**
-- Use the original filename from the URL/attachment when available
+- **Always sanitize** filenames through `sanitize_filename` before use
+- **Always validate** URLs through `validate_url` before downloading
+- Use the sanitized original filename from the URL/attachment when available
 - For OG:images, prefix with `og_` and use a sanitized version of the parent URL's domain+path
 - If filenames collide, append `_2`, `_3`, etc.
 - **Skip files that already exist** (same filename + same size) to avoid re-downloading on repeat runs
