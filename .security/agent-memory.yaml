@@ -1,0 +1,55 @@
+# OWASP Agentic Skills Top 10 (AST10) Manifest
+# Canonical security manifest for agent-memory skill
+# https://owasp.org/www-project-agentic-skills-top-10/
+
+skill:
+  name: agent-memory
+  version: "2.5.0"
+  license: MIT
+  author: t4sh
+  repository: https://github.com/t4sh/skills4sh
+  path: skills/agent-memory
+
+integrity:
+  hash_algorithm: sha256
+  files:
+    SKILL.md: f0242de62c6de4c5b110b3fce96a2a3988f0472d8271e83fa486f7770ca54058
+    install.sh: 355f7d97e8f6473f606fb97aa20ac22e8f1304566cb0a7f7d9ef1dbb85390dfe
+    install.ps1: ae3c85d45a2fa64a14d73c1627fa85c6abc5fc8fc1bd3d3e717364dd29b9ad58
+    bootstrap.sh: 57a31a0b54cb24035ddcc73eef70aeea835f9cb308ae020af7d36c3a9d813ba4
+    reference/templates.md: ab61fb061f97b3220ec6e6738bac5236e38f23a556ef4b37d8c7b9aa5f5e2ac3
+    reference/display-conventions.md: 69145723e247db19313834a5a1f30a44f14b136ec44f49648cb5bb68eebc6745
+    reference/troubleshooting.md: d9a573ffb7fce25702f76113913da4277f7c5850b6e7279ff1a1d9dfa5961763
+
+permissions:
+  alwaysAllow:
+    - Read
+    - Glob
+    - Grep
+  rationale:
+    Read: "Read existing memory files, AGENTS.md, index.yaml, and project docs during build/save/sync operations"
+    Glob: "Discover memory files across .agent-memory/ subdirectories and scan project for existing documentation"
+    Grep: "Search memory file contents for duplicates, stale entries, and cross-references during maintenance"
+
+execution_context:
+  sandbox: host-agent
+  network: none
+  filesystem: read-write
+  shell: optional
+  risk_tier: low
+
+dependencies: []
+
+scanning:
+  guardskills: SAFE
+  snyk: pass
+  codeql: pass
+  expected_findings:
+    - id: R008_ENV_ACCESS
+      severity: low
+      file: install.sh
+      reason: "Reads $HOME only to determine global install path (~/.claude/skills/)"
+    - id: R008_ENV_ACCESS
+      severity: low
+      file: bootstrap.sh
+      reason: "Reads $HOME to locate global skill assets"

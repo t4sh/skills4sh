@@ -62,13 +62,35 @@ skills/<skill-name>/
 └── [supporting files]
 ```
 
-## Security scanning
+## Security
+
+### OWASP Agentic Skills Top 10 (AST10)
+
+This repository implements controls for all 10 risks in the [OWASP Agentic Skills Top 10](https://owasp.org/www-project-agentic-skills-top-10/):
+
+| Risk | Control | Implementation |
+|------|---------|----------------|
+| **AST01** Malicious Skills | Content integrity | SHA-256 hashes in `skills-lock.json` and `.security/` manifests |
+| **AST02** Supply Chain Compromise | Immutable lock file | All files pinned to exact hashes; CI drift detection |
+| **AST03** Over-Privileged Skills | Minimal permissions | Each skill declares only needed permissions with rationale |
+| **AST04** Insecure Metadata | Validated frontmatter | CI checks name/directory match; `metadata.repository` links to canonical source |
+| **AST05** Unsafe Deserialization | Declarative config only | SKILL.md frontmatter is metadata only; no executable YAML |
+| **AST06** Weak Isolation | Execution context declared | Network and filesystem scope documented per skill |
+| **AST07** Update Drift | Version pinning | CI verifies SKILL.md versions match `skills-lock.json` |
+| **AST08** Poor Scanning | Multi-layer scanning | guardskills + Snyk + CodeQL on every PR |
+| **AST09** No Governance | Security policy | `SECURITY.md` with disclosure process; PR review checklist |
+| **AST10** Cross-Platform Reuse | Canonical manifests | `.security/<name>.yaml` per skill; platform manifests generated from it |
+
+See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability disclosure process, and expected findings.
+
+### Security scanning
 
 All skills pass [guardskills](https://www.npmjs.com/package/guardskills) with a **SAFE** rating:
 
 ```bash
 npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run
 npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
+npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run
 ```
 
 The scanner reports LOW/low `R008_ENV_ACCESS` findings for `$HOME` usage in the install scripts and `bootstrap.sh`. These are expected — the scripts read `$HOME` solely to determine the global install path (`~/.claude/skills/`).
