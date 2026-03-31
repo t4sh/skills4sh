@@ -8,7 +8,6 @@ metadata:
   version: "2.3.0"
   tags: memory, context, cross-interface, agent, persistence
 alwaysAllow:
-  - "Bash"
   - "Write"
   - "Read"
   - "Glob"

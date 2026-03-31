@@ -9,7 +9,6 @@ metadata:
   tags: discord, harvest, scrape, images, attachments, download
   requiredSources: discord
 alwaysAllow:
-  - "Bash"
   - "Write"
   - "Read"
 ---
