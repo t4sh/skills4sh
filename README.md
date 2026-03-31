@@ -2,7 +2,7 @@
 
 [![Socket Badge](https://socket.dev/api/badge/npm/package/skills4sh)](https://socket.dev/npm/package/skills4sh)
 [![Known Vulnerabilities](https://snyk.io/test/github/t4sh/skills4sh/badge.svg)](https://snyk.io/test/github/t4sh/skills4sh)
-[![CodeQL](https://github.com/t4sh/skills4sh/actions/workflows/codeql.yml/badge.svg)](https://github.com/t4sh/skills4sh/actions/workflows/codeql.yml)
+[![CodeQL](https://github.com/t4sh/skills4sh/actions/workflows/codeql.yml/badge.svg)](https://github.com/t4sh/skills4sh/security/code-scanning)
 
 Agent skills for Claude Code, Cursor, Windsurf, Cline, and other AI coding agents.
 
