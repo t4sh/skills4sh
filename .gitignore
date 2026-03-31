@@ -3,3 +3,10 @@
 !*.env.example
 node_modules/
 __MACOSX/
+
+# skills CLI installation artifacts
+.agents/
+.claude/
+.continue/
+.pi/
+skills-lock.json
