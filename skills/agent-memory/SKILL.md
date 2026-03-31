@@ -4,8 +4,8 @@ description: "Use when managing project memory, initializing .agent-memory/, sav
 license: MIT
 compatibility: macOS, Linux, or Windows with bash (for bootstrap.sh)
 metadata:
-  author: erpai
-  version: "2.2"
+  author: t4sh
+  version: "2.3.0"
   tags: memory, context, cross-interface, agent, persistence
 alwaysAllow:
   - "Bash"
@@ -18,7 +18,37 @@ alwaysAllow:
 
 # Agent Memory Skill
 
-Manage the `.agent-memory/` cross-interface persistent memory system in the current working directory. This memory is read and written by any AI agent — Claude App, Claude Code CLI, VSCode, Craft Agent, or any file-reading tool.
+You are an expert in managing cross-interface persistent memory for AI-assisted projects. Your goal is to maintain a coherent, up-to-date knowledge base that any AI agent — Claude App, Claude Code CLI, VSCode, Craft Agent, or any file-reading tool — can read and build upon across sessions.
+
+## What I Can Help With
+
+- **Initializing project memory** — scaffold the `.agent-memory/` system with proper directory structure and entry points
+- **Capturing session learnings** — distill decisions, feedback, and context into durable memory files
+- **Cross-interface sync** — keep memory consistent when 4+ different AI interfaces touch the same project
+- **Memory maintenance** — compact stale entries, resolve conflicts, clean orphaned files
+- **Migration** — upgrade older memory formats (v1 flat files, CURSOR.md) to the v2.1 standard
+- **Auto-building from docs** — scan existing project documentation and generate initial memory files
+
+## Initial Assessment
+
+Before operating on memory, understand:
+
+1. **Current State**
+   - Does `.agent-memory/` already exist?
+   - What version/structure is in place?
+   - Are there older formats (CURSOR.md, flat files, INDEX.yaml) that need migration?
+
+2. **User's Goal**
+   - First-time setup or ongoing management?
+   - Saving learnings from this session or doing maintenance?
+   - Working across multiple AI interfaces?
+
+3. **Project Context**
+   - What kind of project is this? (affects which memory types matter most)
+   - Is there existing documentation to bootstrap from?
+   - How many people/agents are contributing?
+
+---
 
 ## Trigger
 
@@ -420,3 +450,83 @@ If the interface supports rich preview blocks (e.g., Craft Agent), prefer these 
 - **Strip frontmatter for markdown display.** Omit the `---` YAML frontmatter block — show only the markdown body.
 - **Large files.** For very long markdown files, summarize and offer to show specific sections. For PDFs over 10 pages, note the page count.
 - **Index display.** When showing `index.yaml`, use whichever format is most readable — a table, datatable, or yaml code block.
+
+---
+
+## Common Issues by Project Type
+
+### Solo Developer Projects
+- Memory accumulates fast with no pruning — run `maintain` monthly
+- Session logs dominate the index — promote recurring patterns to `conventions/` or `decisions/`
+- Context memories go stale within days — always set `expires` dates
+
+### Multi-Agent Projects (Claude App + CLI + VSCode)
+- Index gets out of sync when multiple interfaces create files — run `sync` at session end
+- Duplicate memories from different interfaces covering same topic — `maintain` detects and suggests merges
+- Source attribution missing — always set the `source` field so you know which agent wrote what
+
+### Team / Shared Repository Projects
+- Memory files committed to git create merge conflicts — keep `.agent-memory/` in `.gitignore` or use a shared branch strategy
+- Different team members save contradictory decisions — use `supersedes` field to track which decision is current
+- Onboarding context missing — run `build` to auto-generate from existing docs before new team members start
+
+### Monorepo / Large Codebases
+- Too many convention files — group by subsystem (e.g., `conventions/frontend.md`, `conventions/api.md`)
+- Architecture changes invalidate old decisions — set `expires` on decision memories
+- Build from docs generates too many files — be selective, focus on non-obvious knowledge
+
+---
+
+## Troubleshooting
+
+### `bootstrap.sh` Not Found
+- Check if the skill was installed correctly: `ls ~/.agents/skills/agent-memory/bootstrap.sh`
+- If missing, re-install the skill or create the directory structure manually using the Init operation steps
+
+### Index Out of Sync
+- Run `bash .agent-memory/bootstrap.sh fix` — this reconciles filesystem with index
+- If `fix` doesn't resolve it, run `bash .agent-memory/bootstrap.sh doctor` for a full diagnostic
+
+### Migration Fails
+- Check for file permission issues on `.agent-memory/` directory
+- Ensure old files have valid YAML frontmatter — malformed frontmatter blocks migration
+- Run migration with verbose output: review each file it tries to move
+
+### Memory Not Being Read by Other Interfaces
+- Verify `AGENTS.md` exists at project root and references `.agent-memory/`
+- Check that `.claude/settings.json` includes read permissions for the memory directory
+- Ensure `.cursor/rules/index.mdc` references `AGENTS.md`
+
+---
+
+## Tools Referenced
+
+**Built-in**
+- `bootstrap.sh` — shell script for init, migrate, fix, doctor, status operations
+- `index.yaml` — machine-readable registry of all memory files
+- `AGENTS.md` — canonical shared instructions (Linux Foundation standard)
+
+**AI Interfaces Supported**
+- Claude App (Cowork) — reads AGENTS.md + `.agent-memory/`
+- Claude Code CLI — reads CLAUDE.md → AGENTS.md → `.agent-memory/`
+- VSCode (Claude extension) — reads CLAUDE.md → AGENTS.md
+- Cursor — reads `.cursor/rules/index.mdc` → AGENTS.md → `.agent-memory/`
+- Craft Agent — reads AGENTS.md + `.agent-memory/` with rich preview support
+
+---
+
+## Task-Specific Questions
+
+1. Is this a new project or does `.agent-memory/` already exist?
+2. Are you working across multiple AI interfaces (Claude App, CLI, VSCode, Cursor)?
+3. Do you have existing documentation that should be bootstrapped into memory?
+4. Is this a solo project or shared with a team?
+5. When was the last time memory maintenance was run?
+
+---
+
+## Related Skills
+
+- **revise-claude-md**: For updating CLAUDE.md with session learnings (complementary to memory save)
+- **session-save**: For capturing files and responses from current chat to disk
+- **find-skills**: For discovering additional skills that may generate useful memory entries

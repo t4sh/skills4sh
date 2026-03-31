@@ -4,8 +4,8 @@ description: "Use when extracting and downloading images, links, and files from 
 license: MIT
 compatibility: macOS, Linux, or Windows with browser or Discord bot token
 metadata:
-  author: erpai
-  version: "1.0.0"
+  author: t4sh
+  version: "1.1.0"
   tags: discord, harvest, scrape, images, attachments, download
   requiredSources: discord
 alwaysAllow:
@@ -16,7 +16,36 @@ alwaysAllow:
 
 # Discord Harvest
 
-Extract and download all sources (images, links, files/attachments) from a Discord conversation into an organized local folder.
+You are an expert in extracting and archiving content from Discord conversations. Your goal is to systematically harvest all images, files, attachments, and links from a Discord conversation (DM or server channel) into an organized, browsable local folder with a machine-readable manifest.
+
+## What I Can Help With
+
+- **DM extraction** — harvest images, files, and links from direct message conversations via browser automation
+- **Server channel extraction** — harvest from public/private channels via Discord bot API
+- **Organized archival** — structured folder output with images, files, links manifest, and JSON summary
+- **Incremental harvesting** — append-mode runs that skip already-downloaded content
+- **Link documentation** — capture all shared URLs with OG:image cross-references
+
+## Initial Assessment
+
+Before harvesting, understand:
+
+1. **Source Type**
+   - Is this a DM or a server channel?
+   - For DMs: who is the conversation with?
+   - For channels: which server and channel?
+
+2. **Scope**
+   - How many messages to scan? (default: last 10)
+   - Specific date range or just the most recent?
+   - All content types or only images/files/links?
+
+3. **Output**
+   - Where should downloads be saved?
+   - Is this a first run or incremental update?
+   - Any content filtering needed?
+
+---
 
 ## Step 0: Determine Output Directory
 
@@ -339,3 +368,91 @@ Also mention:
 - **Duplicate URLs**: Deduplicate before downloading. The same link or image may appear in multiple messages.
 - **Browser login**: For the DM path, the user must be logged into Discord web. If not logged in, the skill will see the login page — prompt the user to log in first.
 - **Message count default**: If the user doesn't specify, scan the last 10 messages. For daily use this provides a small buffer over the typical 2-5 messages.
+
+---
+
+## Common Issues by Source Type
+
+### DMs (Browser Path)
+- **Login required** — Discord web requires authentication; bot tokens don't work for DMs
+- **DOM selectors change** — Discord updates their class names periodically; always take a snapshot first and adapt selectors if the standard ones fail
+- **Lazy-loaded images** — images below the fold won't have `src` populated until scrolled into view; scroll before extracting
+- **2FA prompts** — if the user has 2FA enabled and hasn't authenticated recently, the browser may show a verification screen
+- **Rate limiting on scroll** — scrolling too fast through message history may cause Discord to throttle content loading
+
+### Server Channels (Bot API Path)
+- **Missing permissions** — bot needs `VIEW_CHANNEL` and `READ_MESSAGE_HISTORY` permissions; NSFW channels need additional permissions
+- **Rate limits** — Discord API allows ~50 requests/second; batch large fetches (200+ messages) with small delays
+- **Thread messages** — threads are separate channels in the API; use the thread's channel ID, not the parent channel
+- **Ephemeral messages** — some bot responses are ephemeral and won't appear in message history
+- **Deleted messages** — if a message was deleted between listing and downloading, the CDN URL will 404
+
+### CDN & Downloads
+- **Expiring URLs** — Discord CDN attachment URLs contain authentication tokens that expire; download promptly after extraction
+- **Large files** — Discord attachments can be up to 25MB (500MB with Nitro); `curl` handles these but may take time
+- **Duplicate content** — same image/link shared in multiple messages; deduplicate before downloading
+- **OG:image availability** — not all links have OpenGraph images; some sites block unfamiliar user agents
+
+---
+
+## Troubleshooting
+
+### Bot Can't See the Channel
+- Verify bot is invited to the server with correct permissions
+- Check if the channel is in a category with restricted permissions
+- For private channels, the bot needs explicit access
+
+### Browser Shows Login Page Instead of DM
+- User needs to log in manually — the skill cannot authenticate
+- Check if Discord is requiring email/phone verification
+- Try clearing browser cookies and logging in fresh
+
+### Downloads Failing with 403/404
+- CDN URLs have expired — re-extract the URLs and download immediately
+- The attachment was deleted from Discord
+- Network firewall blocking Discord CDN domains
+
+### Selectors Not Matching Any Elements
+- Discord updated their DOM structure — take an annotated screenshot and inspect
+- Try fallback selectors: `[id^="message-content"]`, `[class*="markup"]`, `[data-list-item-id]`
+- The conversation may be empty or still loading — wait and retry
+
+---
+
+## Tools Referenced
+
+**Discord Bot API (via MCP)**
+- List guilds/servers
+- List channels in a guild
+- Fetch messages from a channel
+- Read message attachments and embeds
+
+**Browser Tools**
+- `browser_tool open` / `navigate` / `snapshot` / `screenshot` — browser automation
+- `browser_tool evaluate` — execute JavaScript in page context for DOM extraction
+- `browser_tool scroll` — load more message history
+
+**Download**
+- `curl -L -o` — download files with redirect following
+- Filename deduplication logic (append `_2`, `_3` on collision)
+
+**Documentation Reference**
+- `~/.craft-agent/docs/browser-tools.md` — read before using any browser tools (DM path)
+
+---
+
+## Task-Specific Questions
+
+1. Is this a DM or a server channel?
+2. Who is the conversation with (DM) or which server/channel (server)?
+3. How many messages should I scan? (default: last 10)
+4. Is this a first-time harvest or an incremental update?
+5. Do you want all content types (images, files, links) or specific ones?
+
+---
+
+## Related Skills
+
+- **agent-browser**: For general browser automation beyond Discord-specific extraction
+- **agent-memory**: For saving harvest metadata or conversation insights to project memory
+- **file-organizer**: For reorganizing harvested content into different folder structures
