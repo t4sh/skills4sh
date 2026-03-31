@@ -147,17 +147,22 @@ sanitize_filename() {
 }
 ```
 
-**URL validation** — only allow Discord CDN and known domains:
+**URL validation** — only allow Discord CDN and known domains, block private IPs (SSRF):
 ```bash
-# Validate URL before downloading — reject non-HTTPS and unexpected domains
+# Validate URL before downloading — reject non-HTTPS, unexpected domains, and private IPs
 validate_url() {
   local url="$1"
-  case "$url" in
-    https://cdn.discordapp.com/*) return 0 ;;
-    https://media.discordapp.net/*) return 0 ;;
-    https://*.discord.com/*) return 0 ;;
-    *) echo "SKIP: untrusted URL domain: $url" >&2; return 1 ;;
-  esac
+  # Block private/internal IP ranges (SSRF protection)
+  if [[ "$url" =~ https://(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|\[::1\]|169\.254\.) ]]; then
+    echo "SKIP: private/local URL blocked: $url" >&2
+    return 1
+  fi
+  # Whitelist only exact Discord domains (regex, not glob — prevents subdomain spoofing)
+  if [[ "$url" =~ ^https://(cdn\.discordapp\.com|media\.discordapp\.net|[a-z0-9-]+\.discord\.com)/ ]]; then
+    return 0
+  fi
+  echo "SKIP: untrusted URL domain: $url" >&2
+  return 1
 }
 ```
 

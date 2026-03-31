@@ -35,6 +35,12 @@ choose_destination() {
 install_skill() {
   local dest="$1"
 
+  # Validate destination is under a .claude/skills/ path
+  case "$dest" in
+    */.claude/skills/*) ;;
+    *) echo "Error: unexpected destination path: $dest" >&2; exit 1 ;;
+  esac
+
   if [ -L "$dest" ]; then
     echo "Found older symlink-based installation at $dest — removing."
     rm -f "$dest"
@@ -50,19 +56,16 @@ install_skill() {
 
   mkdir -p "$dest"
 
-  for f in "$SCRIPT_DIR"/*; do
-    fname="$(basename "$f")"
-    case "$fname" in
-      install.sh|install.ps1|AGENTS.md|CLAUDE.md|*.env.example) continue ;;
-      *) cp -r "$f" "$dest/" ;;
-    esac
-  done
+  # Copy only the files this skill needs
+  cp "$SCRIPT_DIR/SKILL.md" "$dest/"
+  cp "$SCRIPT_DIR/icon.svg" "$dest/"
 
   echo ""
   echo "Installation complete! The skill will now be loaded from $dest"
   echo "Refresh or restart your session for changes to take effect."
 }
 
+# Parse arguments
 MODE=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
