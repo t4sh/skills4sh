@@ -1,12 +1,12 @@
 ---
 name: localhost-screenshots
-description: "Use when taking screenshots of localhost sites, visual regression testing, responsive breakpoint captures, before/after comparisons, or any programmatic screenshot of locally running web pages. Supports Chrome MCP (quick) and Playwright (systematic multi-breakpoint)."
+description: "Use when taking screenshots of localhost sites, visual regression testing, responsive breakpoint captures, before/after comparisons, browser interaction workflows, pixel-diff regression, or any programmatic screenshot of locally running web pages. Supports Chrome MCP (quick), Playwright (systematic multi-breakpoint), and CDP connect (attach to running Chrome)."
 license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "1.2.0"
-  tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome
+  version: "3.0.0"
+  tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility, cdp, incremental-snapshots
 ---
 
 # Localhost Screenshots
@@ -28,63 +28,51 @@ npx skills add t4sh/skills4sh --skill localhost-screenshots
 | macOS / Linux | `install.sh` | `./install.sh --global` or `./install.sh --project` |
 | Windows | `install.ps1` | `.\install.ps1 -Global` or `.\install.ps1 -Project` |
 
-Both scripts copy skill files to either `~/.claude/skills/localhost-screenshots` (global) or `./.claude/skills/localhost-screenshots` (project-local), handling existing installations and excluding meta files.
-
 ---
 
 ## What I Can Help With
 
 - **Quick visual checks** — single screenshots for debugging layout or styling issues
 - **Responsive breakpoint captures** — systematic screenshots across 8 standard viewports
-- **Before/after comparisons** — visual regression testing with side-by-side HTML output
+- **Before/after comparisons** — visual regression testing with side-by-side HTML output and pixel-diff scoring
 - **Interactive debugging** — executing JS in live browser context to inspect state
 - **Visual documentation** — capturing full-page screenshots for design reviews or handoffs
+- **Multi-step browser workflows** — login, navigate, interact, then capture (persistent sessions)
+- **AI-friendly page analysis** — accessibility tree snapshots, DOM serialization, and incremental DOM diffs
+- **Automated regression CI** — GitHub Actions workflow for baseline comparison on every PR
 
 ## Initial Assessment
 
 Before taking screenshots, understand:
 
-1. **Environment**
-   - Is the dev server already running? What port?
-   - What framework/build tool? (Next.js, Vite, 11ty, etc.)
-   - Is this running in a sandbox/VM or locally?
-
-2. **What You Need**
-   - Quick debug screenshot or full breakpoint set?
-   - Specific pages/routes or the whole site?
-   - Before/after comparison needed?
-
-3. **Scope**
-   - Single page or multiple routes?
-   - Full page or specific element?
-   - Custom breakpoints or standard set?
+1. **Environment** — Is the dev server running? What port? What framework? Sandbox/VM or local?
+2. **What You Need** — Quick debug screenshot or full breakpoint set? Before/after comparison?
+3. **Scope** — Single page or multiple routes? Full page or specific element? Custom breakpoints?
 
 ---
-
-This skill supports two approaches depending on the task:
-
-- **Chrome MCP** — for quick debugging, single screenshots, and interactive verification
-- **Playwright** — for systematic multi-breakpoint screenshot sets and visual regression
 
 ## Tool Decision Matrix — Read This First
 
 | Need | Tool | Why |
 |------|------|-----|
-| Quick visual check / debug | **Chrome MCP** | Already connected to user's real browser, sees localhost |
+| Quick visual check / debug | **Chrome MCP** | Connected to user's real browser, sees localhost |
 | Verify a JS fix | **Chrome MCP** | Execute JS in live page context |
 | One or two screenshots | **Chrome MCP** | Instant, no setup |
 | Interactive debugging | **Chrome MCP** | Click, fill, inspect state in real browser |
 | Systematic multi-breakpoint set | **Playwright** | Automated viewport resizing across 8 breakpoints |
-| Before/after comparison | **Playwright** | Structured comparison HTML output |
+| Before/after comparison | **Playwright** | Structured comparison HTML output with pixel-diff |
 | Visual regression testing | **Playwright** | Repeatable, scriptable, consistent |
+| Multi-step workflow (login → navigate → capture) | **Playwright (persistent)** | Session state survives across steps |
+| AI-friendly page understanding | **Playwright** | Accessibility tree + DOM snapshot alongside screenshots |
+| Attach to running Chrome (no extension) | **CDP connect** | Playwright API on user's actual browser session |
+| Multi-step with page reuse across scripts | **Named page pattern** | Avoid re-navigating between agent turns |
+| Headless CI captures | **Playwright `--headless`** | No display needed, faster execution |
+
+---
 
 ## Chrome MCP — Quick Screenshots & Debugging
 
-**Use Chrome MCP when you need 1-2 screenshots or are debugging interactively.** It connects to the user's actual Chrome browser, which can already reach their localhost dev server. No setup, no serving files, no Playwright install.
-
-### Prerequisites
-
-The user's dev server must be running (e.g., `npx @11ty/eleventy --serve --port=3000`).
+**Use when you need 1-2 screenshots or are debugging interactively.** Connects to the user's actual Chrome browser. No setup needed.
 
 ### Quick Screenshot Flow
 
@@ -92,164 +80,57 @@ The user's dev server must be running (e.g., `npx @11ty/eleventy --serve --port=
 # 1. Get/create a tab
 mcp__Claude_in_Chrome__tabs_context_mcp({ createIfEmpty: true })
 
-# 2. Navigate to the page
+# 2. Navigate
 mcp__Claude_in_Chrome__navigate({ url: "http://localhost:3000/dashboard/" })
 
-# 3. Take a screenshot
+# 3. Screenshot
 mcp__Claude_in_Chrome__computer({ action: "screenshot" })
 
-# 4. (Optional) Resize for a different viewport and screenshot again
+# 4. (Optional) Resize and screenshot again
 mcp__Claude_in_Chrome__resize_window({ width: 375, height: 812 })
 mcp__Claude_in_Chrome__computer({ action: "screenshot" })
 ```
 
-### Debugging Patterns with Chrome MCP
+### Debugging Patterns
 
-**Check if a JS module loaded:**
 ```
+# Check if a JS module loaded
 mcp__Claude_in_Chrome__javascript_tool({
   action: "javascript_exec",
-  text: "JSON.stringify(Object.keys(window.AtariKit || {}))"
+  text: "JSON.stringify(Object.keys(window.MyApp || {}))"
+})
+
+# Inspect computed styles
+mcp__Claude_in_Chrome__javascript_tool({
+  action: "javascript_exec",
+  text: "JSON.stringify(getComputedStyle(document.querySelector('.target')).background)"
+})
+
+# Get page info
+mcp__Claude_in_Chrome__javascript_tool({
+  action: "javascript_exec",
+  text: "JSON.stringify({ title: document.title, url: location.href })"
 })
 ```
 
-**Inspect computed styles:**
-```
-mcp__Claude_in_Chrome__javascript_tool({
-  action: "javascript_exec",
-  text: "JSON.stringify(getComputedStyle(document.querySelector('.nav-profile-badge')).background)"
-})
-```
-
-**Measure element positions (gap debugging):**
-```
-mcp__Claude_in_Chrome__javascript_tool({
-  action: "javascript_exec",
-  text: "JSON.stringify(document.querySelector('.dash-post-actions').getBoundingClientRect())"
-})
-```
-
-**Simulate auth flow:**
-```
-mcp__Claude_in_Chrome__javascript_tool({
-  action: "javascript_exec",
-  text: "sessionStorage.setItem('krawler-auth', JSON.stringify({name:'Test',handle:'test',slug:'test',avatar:'Test'})); window.AtariKit.navProfile.init();"
-})
-```
-
-**Get page info:**
-```
-mcp__Claude_in_Chrome__javascript_tool({
-  action: "javascript_exec",
-  text: "JSON.stringify({ title: document.title, url: location.href, navExists: !!document.getElementById('main-nav') })"
-})
-```
-
-### When NOT to Use Chrome MCP for Screenshots
-
-- When you need all 8 breakpoints captured systematically — use Playwright
-- When you need repeatable, scriptable visual regression — use Playwright
-- When generating a before/after comparison HTML — use Playwright
+**When NOT to use Chrome MCP:** systematic multi-breakpoint sets, visual regression, before/after comparison HTML — use Playwright instead.
 
 ---
 
 ## Playwright — Systematic Multi-Breakpoint Screenshots
 
-Use Playwright for automated, repeatable screenshot sets across all breakpoints. This is the right tool for visual regression testing and comprehensive responsive documentation.
+Use for automated, repeatable screenshot sets. **Always use Playwright's bundled Chromium — never Puppeteer, Selenium, or system Chrome. Always serve over HTTP — never `file://` paths.**
 
-### Golden Rules
-
-**1. Always use Playwright's bundled Chromium. Never use Puppeteer, Selenium, or system Chrome.** Do not check for installed browsers. Playwright ships its own Chromium.
-
-**2. NEVER open HTML files via `file://` paths. Always serve them over HTTP.** This is the #1 cause of unstyled screenshots. Relative CSS/JS paths won't resolve without an HTTP server.
-
-### Serving the Site (CRITICAL for Playwright)
-
-Before taking Playwright screenshots, ensure the site is served over HTTP.
-
-**If the user's dev server is already running** (they told you the port, or you can confirm it):
-```js
-const BASE_URL = 'http://localhost:8080'; // use their port
-```
-
-**If you have the built output directory** (e.g., 11ty's `_site/` folder):
-```bash
-npx serve _site -l 3000 &
-```
-Then use `http://localhost:3000` as the base URL.
-
-**If you need to build and serve** (project source is available but not built):
-```bash
-npx @11ty/eleventy                    # build the site
-npx serve _site -l 3000 &            # serve the output
-```
-
-**In a sandboxed environment (like Cowork)** where the user's host localhost is unreachable:
-The VM cannot access `localhost` on the user's machine. You MUST either build the site inside the VM, or serve the static files that are available in the mounted workspace. Never assume `localhost:8080` is reachable — test it first.
-
-### Verifying the server is up before screenshotting
-
-Always confirm the server is responding before taking screenshots:
-```js
-const testPage = await browser.newPage();
-try {
-  const response = await testPage.goto(BASE_URL, { timeout: 5000 });
-  if (!response || !response.ok()) {
-    throw new Error(`Server returned ${response?.status()}`);
-  }
-  const stylesheetCount = await testPage.evaluate(
-    () => document.querySelectorAll('link[rel="stylesheet"], style').length
-  );
-  if (stylesheetCount === 0) {
-    console.warn('WARNING: No stylesheets detected — page may render unstyled');
-  }
-} finally {
-  await testPage.close();
-}
-```
-
-### Setup (run once per session)
-
-**Check if Playwright is already installed before running `npm install`:**
+### Setup
 
 ```bash
-# Only install if not present — avoids unnecessary npm registry calls
 node -e "require('playwright')" 2>/dev/null || npm install playwright 2>/dev/null
 npx playwright install --with-deps chromium
 ```
 
-Do not use `@latest` — let the project's `package.json` or lockfile control the version. If no lockfile exists, `npm install playwright` installs the current stable release.
-
-That's it. No `apt-get install chromium`, no `which google-chrome`. Playwright handles everything.
-
 ### Standard Breakpoints
 
-Every screenshot task captures **all standard breakpoints** unless the user explicitly asks for a single size.
-
 ```js
-const BREAKPOINTS = [
-  { name: 'mobile-sm',  width: 320,  height: 568  },  // iPhone SE / small phones
-  { name: 'mobile',     width: 375,  height: 812  },  // iPhone X / standard phones
-  { name: 'mobile-lg',  width: 428,  height: 926  },  // iPhone Pro Max / large phones
-  { name: 'tablet',     width: 768,  height: 1024 },  // iPad / portrait tablet
-  { name: 'tablet-lg',  width: 1024, height: 1366 },  // iPad Pro / landscape tablet
-  { name: 'desktop',    width: 1280, height: 800  },  // Standard laptop
-  { name: 'desktop-lg', width: 1440, height: 900  },  // Large laptop
-  { name: 'wide',       width: 1920, height: 1080 },  // Full HD monitor
-];
-```
-
-If the user's project has custom breakpoints (check their CSS for `@media` queries, or their tailwind config for `screens`), use those instead of or in addition to the defaults.
-
-### Canonical Screenshot Script
-
-```js
-const { chromium } = require('playwright');
-const fs = require('fs');
-const path = require('path');
-
-const BASE_URL = 'http://localhost:8080'; // adjust port as needed
-
 const BREAKPOINTS = [
   { name: 'mobile-sm',  width: 320,  height: 568  },
   { name: 'mobile',     width: 375,  height: 812  },
@@ -260,16 +141,23 @@ const BREAKPOINTS = [
   { name: 'desktop-lg', width: 1440, height: 900  },
   { name: 'wide',       width: 1920, height: 1080 },
 ];
+```
 
-const ROUTES = ['/']; // add routes as needed: '/about', '/blog', etc.
+### Canonical Screenshot Script
+
+```js
+const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
+
+const BASE_URL = 'http://localhost:8080';
+const ROUTES = ['/'];
 
 (async () => {
   const browser = await chromium.launch();
-  const outDir = '_screenshots';
-
   for (const route of ROUTES) {
     const routeName = route === '/' ? 'home' : route.slice(1).replace(/\//g, '-');
-    const routeDir = path.join(outDir, routeName);
+    const routeDir = path.join('_screenshots', routeName);
     fs.mkdirSync(routeDir, { recursive: true });
 
     for (const bp of BREAKPOINTS) {
@@ -283,416 +171,319 @@ const ROUTES = ['/']; // add routes as needed: '/about', '/blog', etc.
       await page.close();
     }
   }
-
   await browser.close();
-  console.log(`Done. Screenshots saved to ${outDir}/`);
 })();
 ```
 
-### Key API details
+### Headless Mode (default) and Headed Mode
 
-- `chromium.launch()` — no arguments needed, uses Playwright's bundled Chromium
-- `waitUntil: 'networkidle'` — waits until no network requests for 500ms; important for 11ty sites that load assets
-- `fullPage: true` — captures the entire scrollable page, not just the viewport
-- `page.setViewportSize()` — set before navigating for accurate responsive rendering
-- Create a **new page per breakpoint** — ensures clean rendering without leftover state
-
-### Output location
-
-**Always save screenshots to `_screenshots/` in the current project folder.** This is a convention — not negotiable.
-
-```
-_screenshots/
-  home/
-    mobile-sm-320x568.png
-    mobile-375x812.png
-    mobile-lg-428x926.png
-    tablet-768x1024.png
-    tablet-lg-1024x1366.png
-    desktop-1280x800.png
-    desktop-lg-1440x900.png
-    wide-1920x1080.png
-  about/
-    mobile-sm-320x568.png
-    ...
-```
-
-### Before/After Visual Comparison
-
-For visual regression, capture two sets and generate an HTML comparison page:
+Playwright runs headless by default — no visible browser window, faster execution, ideal for CI.
 
 ```js
-const fs = require('fs');
-const path = require('path');
-
-function generateComparison(beforeDir, afterDir, outputPath) {
-  const breakpoints = fs.readdirSync(beforeDir).filter(f => f.endsWith('.png')).sort();
-
-  const html = `<!DOCTYPE html><html><head>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; background: #f5f5f5; }
-  h1 { margin-bottom: 24px; }
-  .controls { position: sticky; top: 0; background: #f5f5f5; padding: 12px 0; z-index: 10;
-              display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; border-bottom: 1px solid #ddd; }
-  .controls button { padding: 6px 14px; border: 1px solid #ccc; border-radius: 4px;
-                     background: white; cursor: pointer; font-size: 13px; }
-  .controls button.active { background: #333; color: white; border-color: #333; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;
-          background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .pair h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
-  .pair img { width: 100%; border: 1px solid #eee; border-radius: 4px; }
-  .breakpoint-label { font-size: 18px; font-weight: 600; margin: 24px 0 12px; color: #333; }
-</style></head><body>
-<h1>Visual Comparison</h1>
-${breakpoints.map(f => {
-  const name = f.replace('.png', '');
-  return `<div class="breakpoint-label">${name}</div>
-<div class="pair">
-  <div><h3>Before</h3><img src="${path.relative(path.dirname(outputPath), path.join(beforeDir, f))}"></div>
-  <div><h3>After</h3><img src="${path.relative(path.dirname(outputPath), path.join(afterDir, f))}"></div>
-</div>`;
-}).join('\n')}
-</body></html>`;
-
-  fs.writeFileSync(outputPath, html);
-}
-```
-
-#### Workflow for before/after
-
-1. Run the canonical screenshot script, saving to `_screenshots/before/`
-2. User makes their changes
-3. Run the same script again, saving to `_screenshots/after/`
-4. Generate the comparison HTML
-
-### Waiting for Content
-
-If the page has dynamic content or lazy-loaded images:
-
-```js
-// Wait for a specific element
-await page.waitForSelector('.hero-image', { timeout: 10000 });
-
-// Wait for all images to load
-await page.evaluate(() => {
-  return Promise.all(
-    Array.from(document.images)
-      .filter(img => !img.complete)
-      .map(img => new Promise(resolve => {
-        img.onload = img.onerror = resolve;
-      }))
-  );
-});
-
-// Last resort: fixed delay after networkidle
-await page.waitForTimeout(500);
-```
-
-### Screenshot a Specific Element
-
-```js
-const element = await page.locator('.main-content');
-await element.screenshot({ path: 'content-only.png' });
-```
-
-### When the Dev Server Isn't Running
-
-If no server is running, you need to serve the files yourself:
-
-**Option A: Serve a pre-built output directory (fastest)**
-
-```js
-const { exec } = require('child_process');
-
-const server = exec('npx serve _site -l 3000 --no-clipboard', { cwd: projectDir });
-const BASE_URL = 'http://localhost:3000';
-
-let ready = false;
-for (let i = 0; i < 15; i++) {
-  try {
-    const testPage = await browser.newPage();
-    await testPage.goto(BASE_URL, { timeout: 2000 });
-    await testPage.close();
-    ready = true;
-    break;
-  } catch {
-    await new Promise(r => setTimeout(r, 1000));
-  }
-}
-if (!ready) throw new Error('HTTP server failed to start within 15s');
-
-// ... take screenshots ...
-
-server.kill();
-```
-
-**Option B: Build and serve**
-
-```js
-const { execSync, exec } = require('child_process');
-execSync('npx @11ty/eleventy', { cwd: projectDir, stdio: 'inherit' });
-const server = exec('npx serve _site -l 3000 --no-clipboard', { cwd: projectDir });
-// ... same wait loop as above ...
-```
-
-### Detecting Project Breakpoints
-
-Before using the default breakpoints, check if the project defines its own:
-
-```bash
-# Tailwind: check tailwind.config.js for custom screens
-grep -r "screens" tailwind.config.* 2>/dev/null
-
-# CSS: find @media breakpoints
-grep -roh '@media.*max-width:\s*[0-9]*px' src/ --include="*.css" 2>/dev/null | sort -u
-grep -roh '@media.*min-width:\s*[0-9]*px' src/ --include="*.css" 2>/dev/null | sort -u
-```
-
-### Troubleshooting
-
-If `npx playwright install --with-deps chromium` fails:
-```bash
-npx playwright install chromium
-sudo npx playwright install-deps chromium
-```
-
-If the site uses self-signed HTTPS locally:
-```js
-const context = await browser.newContext({ ignoreHTTPSErrors: true });
-const page = await context.newPage();
-```
-
-### Playwright Pre-Flight Checks
-
-Before running any Playwright screenshot task, run these checks in order. **Do not skip steps — each one prevents a class of broken screenshots.**
-
-#### 1. Verify Playwright is installed
-
-```bash
-npx playwright --version
-```
-
-If missing or outdated:
-```bash
-npm install playwright 2>/dev/null
-npx playwright install --with-deps chromium
-```
-
-#### 2. Verify Chromium browser is available
-
-```bash
-npx playwright install chromium --dry-run 2>&1 || npx playwright install chromium
-```
-
-Do **not** check for system Chrome/Chromium — Playwright ships its own bundled Chromium. If `install --with-deps` fails on Linux, fall back to:
-```bash
-npx playwright install chromium
-sudo npx playwright install-deps chromium
-```
-
-#### 3. Verify the dev server is reachable
-
-```js
-const { chromium } = require('playwright');
+// Headless (default) — use for CI, automated captures
 const browser = await chromium.launch();
-const page = await browser.newPage();
 
-try {
-  const response = await page.goto('http://localhost:PORT', { timeout: 5000 });
-  if (!response || !response.ok()) {
-    throw new Error(`Server returned ${response?.status()} — is the dev server running?`);
-  }
-  console.log('✓ Server reachable');
-} catch (e) {
-  console.error(`✗ Cannot reach localhost:PORT — ${e.message}`);
-  // Abort: do not proceed to screenshots
-} finally {
-  await page.close();
-  await browser.close();
-}
+// Headed — use for interactive debugging where you want to see the browser
+const browser = await chromium.launch({ headless: false });
 ```
 
-Common failures:
-- `ERR_CONNECTION_REFUSED` — dev server not running or wrong port
-- `TIMEOUT` — server is starting up, retry after 2-3 seconds
-- Sandboxed VM — host `localhost` is unreachable; must build and serve inside the VM
+**Always use headless for CI pipelines and automated regression.** Only use headed mode when debugging interactively.
 
-#### 4. Verify stylesheets are loading
+---
 
-```js
-const stylesheetCount = await page.evaluate(
-  () => document.querySelectorAll('link[rel="stylesheet"], style').length
-);
-if (stylesheetCount === 0) {
-  console.warn('⚠ No stylesheets detected — page will render unstyled');
-  console.warn('  Are you serving via HTTP? file:// paths break relative CSS imports');
-}
+## CDP Connect — Attach to Running Chrome
+
+Connect to a running Chrome instance via Chrome DevTools Protocol. Works without the Chrome MCP extension.
+
+### Starting Chrome with Remote Debugging
+
+```bash
+# macOS
+/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome \
+  --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-debug
+
+# Linux
+google-chrome --remote-debugging-port=9222 --user-data-dir=/tmp/chrome-debug
+
+# Windows (PowerShell)
+& "C:\Program Files\Google\Chrome\Application\chrome.exe" `
+  --remote-debugging-port=9222 --user-data-dir="$env:TEMP\chrome-debug"
 ```
 
-If zero stylesheets:
-- You're likely opening via `file://` instead of HTTP — serve over HTTP
-- The build step hasn't run — CSS hasn't been generated
-- Asset paths are wrong — check the base URL config in the framework
-
-#### 5. Verify page content has loaded
-
-```js
-// Wait for network to settle
-await page.goto(url, { waitUntil: 'networkidle' });
-
-// Check the page isn't blank or showing an error
-const bodyText = await page.evaluate(() => document.body?.innerText?.trim().slice(0, 200));
-if (!bodyText || bodyText.length < 10) {
-  console.warn('⚠ Page body is empty or near-empty — likely a loading/hydration issue');
-}
-
-// For SPAs: wait for the app root to have content
-const appRoot = await page.evaluate(() => {
-  const root = document.querySelector('#__next, #root, #app, main');
-  return root ? root.children.length : -1;
-});
-if (appRoot === 0) {
-  console.warn('⚠ App root has no children — JS may not have hydrated yet');
-  // Wait for a specific selector instead of relying on networkidle
-  await page.waitForSelector('main > *', { timeout: 10000 });
-}
-```
-
-#### 6. Check for obstructing overlays
-
-```js
-// Detect common overlays that ruin screenshots
-const overlays = await page.evaluate(() => {
-  const selectors = [
-    '[class*="cookie"]', '[class*="consent"]', '[class*="banner"]',
-    '[class*="modal"]', '[class*="overlay"]', '[class*="popup"]',
-    '[id*="cookie"]', '[id*="consent"]',
-  ];
-  return selectors
-    .map(s => ({ selector: s, count: document.querySelectorAll(s).length }))
-    .filter(r => r.count > 0);
-});
-
-if (overlays.length > 0) {
-  console.warn('⚠ Detected potential overlays:', overlays);
-  // Dismiss or hide them before screenshotting
-  await page.evaluate(() => {
-    document.querySelectorAll('[class*="cookie"], [class*="consent"], [class*="modal"]')
-      .forEach(el => el.style.display = 'none');
-  });
-}
-```
-
-#### 7. Full pre-flight script (copy-paste ready)
+### Connecting Playwright to Running Chrome
 
 ```js
 const { chromium } = require('playwright');
 
-async function preflight(baseUrl) {
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
-  const issues = [];
+async function connectToChrome() {
+  const ports = [9222, 9223, 9224, 9225, 9226, 9227, 9228, 9229];
+  for (const port of ports) {
+    try {
+      const browser = await chromium.connectOverCDP(`http://localhost:${port}`);
+      console.log(`Connected to Chrome on port ${port}`);
+      return browser;
+    } catch { continue; }
+  }
+  throw new Error('No Chrome instance found with remote debugging enabled');
+}
 
-  try {
-    // Server reachable?
-    const response = await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 10000 });
-    if (!response || !response.ok()) {
-      issues.push(`Server returned ${response?.status()}`);
-      return { ok: false, issues };
+// Screenshot the currently active tab
+const browser = await connectToChrome();
+const pages = browser.contexts()[0]?.pages() || [];
+if (pages.length > 0) {
+  await pages[0].screenshot({ path: '_screenshots/current-tab.png', fullPage: true });
+}
+// Don't close — it's the user's browser
+```
+
+### When to Use CDP vs Chrome MCP
+
+| Scenario | CDP | Chrome MCP |
+|----------|-----|------------|
+| Chrome extension not installed | **CDP** | Not available |
+| Need Playwright API (viewport resize, waitForSelector) | **CDP** | Limited |
+| Automated script | **CDP** | Not scriptable |
+| Quick one-off screenshot | Either | **Chrome MCP** (simpler) |
+
+---
+
+## Named Page Persistence
+
+For multi-step workflows where you need to reuse the same page state across multiple agent script executions — login once, then capture across breakpoints without re-authenticating.
+
+```js
+const { chromium } = require('playwright');
+const path = require('path');
+const fs = require('fs');
+
+const PROFILE_DIR = path.join(process.env.HOME || process.env.USERPROFILE, '.cache', 'localhost-screenshots', 'browser-profile');
+
+// Launch with persistent context — cookies/localStorage survive across runs
+const context = await chromium.launchPersistentContext(PROFILE_DIR, { headless: true });
+
+// Get or create a named page by storing URL-to-name mapping
+const PAGES_FILE = path.join(PROFILE_DIR, 'named-pages.json');
+
+function getNamedPages() {
+  if (fs.existsSync(PAGES_FILE)) return JSON.parse(fs.readFileSync(PAGES_FILE, 'utf-8'));
+  return {};
+}
+
+function saveNamedPages(map) {
+  fs.writeFileSync(PAGES_FILE, JSON.stringify(map, null, 2));
+}
+
+// Reuse existing page or create new one
+async function getPage(context, name, url) {
+  const pages = context.pages();
+  const existing = pages.find(p => p.url().includes(url));
+  if (existing) return existing;
+
+  const page = await context.newPage();
+  await page.goto(url, { waitUntil: 'networkidle' });
+  const map = getNamedPages();
+  map[name] = url;
+  saveNamedPages(map);
+  return page;
+}
+
+// Usage: login once, reuse across breakpoint captures
+const dashboard = await getPage(context, 'dashboard', 'http://localhost:3000/dashboard');
+```
+
+---
+
+## Stdin-Friendly Script Templates
+
+Concise, heredoc-friendly scripts optimized for AI agent piping — minimal boilerplate, maximum efficiency.
+
+### One-Shot Screenshot
+
+```bash
+node -e "
+const pw = require('playwright');
+(async () => {
+  const b = await pw.chromium.launch();
+  const p = await b.newPage();
+  await p.setViewportSize({width:1280,height:800});
+  await p.goto('http://localhost:3000', {waitUntil:'networkidle'});
+  await p.screenshot({path:'_screenshots/quick.png',fullPage:true});
+  await b.close();
+})();
+"
+```
+
+### Multi-Breakpoint One-Liner
+
+```bash
+node -e "
+const pw=require('playwright'),fs=require('fs');
+const bps=[{n:'mobile',w:375,h:812},{n:'tablet',w:768,h:1024},{n:'desktop',w:1280,h:800}];
+(async()=>{
+  const b=await pw.chromium.launch();
+  fs.mkdirSync('_screenshots/home',{recursive:true});
+  for(const bp of bps){
+    const p=await b.newPage();
+    await p.setViewportSize({width:bp.w,height:bp.h});
+    await p.goto('http://localhost:3000',{waitUntil:'networkidle'});
+    await p.screenshot({path:\`_screenshots/home/\${bp.n}-\${bp.w}x\${bp.h}.png\`,fullPage:true});
+    await p.close();
+  }
+  await b.close();
+})();
+"
+```
+
+### Screenshot + Accessibility Snapshot
+
+```bash
+node -e "
+const pw=require('playwright'),fs=require('fs');
+(async()=>{
+  const b=await pw.chromium.launch();
+  const p=await b.newPage();
+  await p.goto('http://localhost:3000',{waitUntil:'networkidle'});
+  await p.screenshot({path:'_screenshots/page.png',fullPage:true});
+  const tree=await p.accessibility.snapshot();
+  fs.writeFileSync('_screenshots/page.a11y.json',JSON.stringify(tree,null,2));
+  await b.close();
+})();
+"
+```
+
+---
+
+## Incremental DOM Snapshots
+
+For multi-step workflows, capture a full DOM snapshot on first call, then only changed elements on subsequent calls. Reduces context window usage.
+
+```js
+const crypto = require('crypto');
+
+class IncrementalSnapshot {
+  constructor() { this.prevHash = new Map(); }
+
+  async capture(page) {
+    const elements = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('*'))
+        .filter(n => n.children.length > 0 && !n.closest('script,style'))
+        .slice(0, 500)
+        .map(el => ({
+          selector: el.id ? `#${el.id}` : el.tagName.toLowerCase(),
+          text: el.textContent?.trim().slice(0, 200) || '',
+          childCount: el.children.length,
+        }));
+    });
+
+    if (this.prevHash.size === 0) {
+      for (const el of elements) this.prevHash.set(el.selector, this._hash(el));
+      return { type: 'full', elements, changedCount: elements.length };
     }
 
-    // Stylesheets?
-    const styles = await page.evaluate(
-      () => document.querySelectorAll('link[rel="stylesheet"], style').length
-    );
-    if (styles === 0) issues.push('No stylesheets detected — page may be unstyled');
+    const changed = [];
+    const newHash = new Map();
+    for (const el of elements) {
+      const h = this._hash(el);
+      newHash.set(el.selector, h);
+      if (this.prevHash.get(el.selector) !== h) changed.push(el);
+    }
+    this.prevHash = newHash;
+    return { type: 'incremental', changed, changedCount: changed.length };
+  }
 
-    // Content?
-    const text = await page.evaluate(() => document.body?.innerText?.trim().length || 0);
-    if (text < 10) issues.push('Page body is empty or near-empty');
-
-    // Overlays?
-    const hasOverlay = await page.evaluate(() =>
-      document.querySelectorAll('[class*="cookie"], [class*="consent"], [class*="modal"]').length > 0
-    );
-    if (hasOverlay) issues.push('Cookie/consent/modal overlay detected — will hide before capture');
-
-    return { ok: issues.length === 0, issues };
-  } catch (e) {
-    return { ok: false, issues: [e.message] };
-  } finally {
-    await page.close();
-    await browser.close();
+  _hash(el) {
+    return crypto.createHash('md5').update(JSON.stringify(el)).digest('hex').slice(0, 8);
   }
 }
+```
 
-// Usage
-preflight('http://localhost:3000').then(result => {
-  if (result.ok) {
-    console.log('✓ All pre-flight checks passed — ready to screenshot');
-  } else {
-    console.warn('⚠ Issues found:');
-    result.issues.forEach(i => console.warn(`  - ${i}`));
+See [reference/ai-snapshots.md](reference/ai-snapshots.md) for the full implementation with selector generation.
+
+---
+
+## Security & Sandboxing
+
+### Restrict File System Access
+
+```js
+const path = require('path');
+
+function safePath(filePath) {
+  const resolved = path.resolve(filePath);
+  const allowed = path.resolve('_screenshots');
+  if (!resolved.startsWith(allowed)) {
+    throw new Error(`Path ${filePath} is outside allowed directory ${allowed}`);
   }
+  return resolved;
+}
+```
+
+### Disable Unnecessary Browser Features
+
+```js
+const browser = await chromium.launch({
+  args: [
+    '--disable-extensions',
+    '--disable-background-networking',
+    '--disable-sync',
+    '--disable-translate',
+    '--no-first-run',
+    '--disable-default-apps',
+  ],
 });
 ```
 
-**Run pre-flight before every screenshot session.** It takes <2 seconds and prevents wasted time on broken captures.
+### Network Isolation (CI)
 
----
-
-## What NOT to Do
-
-- **Do not use Puppeteer** — it's a separate headless browser that can't reach localhost from sandbox
-- **Do not use JSDOM** — missing browser APIs (matchMedia, IntersectionObserver, sessionStorage)
-- Do not look for system Chrome or Chromium installations
-- Do not use `google-chrome`, `chromium-browser`, or any system binary
-- Do not use Selenium or WebDriver
-- Do not use `capture-website-cli` or similar npm screenshot wrappers
-- Do not check for `CHROME_PATH` or `PUPPETEER_EXECUTABLE_PATH` environment variables
-- Do not install Chrome via apt, snap, or any package manager
-- Do not take screenshots at only one viewport size (always capture all breakpoints unless explicitly told otherwise)
-- **Do not open HTML files via `file://` paths** — CSS/JS paths won't resolve without an HTTP server
-- Do not assume the user's host `localhost` is reachable from a sandboxed VM — always verify connectivity first
-- **Do not waste time on Puppeteer → serve → connect workarounds** when Chrome MCP is already connected
-
----
-
-## Common Issues by Project Type
-
-### Static Site Generators (11ty, Hugo, Jekyll)
-- Output directory not served over HTTP — screenshots show unstyled HTML
-- Build step forgotten before screenshotting — stale content captured
-- Asset paths relative — break on `file://` but work on HTTP
-- LiveReload scripts injecting extra elements into DOM
-
-### Next.js / React SPAs
-- Page not fully hydrated when screenshot taken — use `waitUntil: 'networkidle'`
-- Client-side routing means only `/` loads without JS — navigate via Playwright, don't just change URL
-- Loading spinners captured instead of actual content — wait for specific selectors
-- Dark mode / theme flashing — set `prefers-color-scheme` via `page.emulateMedia()`
-
-### Tailwind / Utility-First CSS
-- Custom breakpoints in `tailwind.config.js` don't match standard set — always check `screens` config
-- JIT mode may not generate styles for content not in the template — ensure dev server has processed all pages
-- `@apply` directives may behave differently in production build vs dev
-
-### WordPress / CMS Sites
-- Admin bar adds height — screenshots include toolbar unless logged out
-- Lazy-loaded images below fold — scroll to trigger loading before full-page capture
-- Cookie consent banners overlay content — dismiss before screenshotting
-
----
-
-## Output Format
-
-### Screenshot File Naming
-```
-{breakpoint-name}-{width}x{height}.png
+```js
+// Only allow localhost — block all external requests
+const context = await browser.newContext();
+await context.route('**/*', (route) => {
+  const url = new URL(route.request().url());
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    return route.continue();
+  }
+  return route.abort('blockedbyclient');
+});
 ```
 
-### Directory Structure
+### Docker Sandboxing (shared environments)
+
+For untrusted or shared environments, run Playwright inside a container:
+
+```bash
+docker run --rm -v $(pwd):/work -w /work mcr.microsoft.com/playwright:v1.52.0-noble \
+  node capture-screenshots.js
+```
+
+This isolates the browser process from the host filesystem and network.
+
+---
+
+## Performance Expectations
+
+| Task | Expected Time | Notes |
+|------|--------------|-------|
+| Chrome MCP single screenshot | ~1-2s | Already connected, no setup |
+| Playwright single screenshot | ~3-5s | Includes browser launch |
+| Full 8-breakpoint capture (1 route) | ~15-25s | New page per breakpoint |
+| Full 8-breakpoint capture (5 routes) | ~60-90s | Sequential per route |
+| Before/after with pixel-diff | ~40-60s | Two captures + diff computation |
+| Pre-flight checks | ~1-2s | Quick validation, always run |
+| Persistent context reuse | ~2-3s per capture | No browser relaunch |
+
+**Tips for faster captures:**
+- Use persistent contexts to avoid browser cold-start per session
+- Run pre-flight once, not per breakpoint
+- For CI, use `--headless` (default) — no GPU rendering overhead
+- Named page patterns avoid re-navigation between agent turns
+
+---
+
+## Output Convention
+
+**Always save to `_screenshots/` in the project root.** Non-negotiable.
+
 ```
 _screenshots/
   {route-name}/
@@ -700,32 +491,36 @@ _screenshots/
     mobile-375x812.png
     ...
     wide-1920x1080.png
+  comparison.html           # before/after visual comparison
+  diff/
+    report.json             # pixel-diff analysis results
+    diff-mobile-375x812.png
 ```
-
-### Before/After Comparison
-When generating comparison HTML, the output includes:
-- Side-by-side before/after images per breakpoint
-- Sticky filter controls
-- Breakpoint labels with dimensions
-- Responsive grid layout
-
-Always save to `_screenshots/` in the project root — this is a non-negotiable convention.
 
 ---
 
-## Tools Referenced
+## What NOT to Do
 
-**Built-in / Free**
-- Chrome MCP (`mcp__Claude_in_Chrome__*`) — browser control via MCP
-- Playwright (`npm install playwright`) — headless browser automation
-- `npx serve` — zero-config static file server
-- Chrome DevTools (via Chrome MCP `javascript_tool`)
+- Do not use Puppeteer, JSDOM, Selenium, or WebDriver
+- Do not look for system Chrome/Chromium or check `CHROME_PATH`
+- Do not open HTML files via `file://` — always serve over HTTP
+- Do not screenshot at only one viewport (capture all breakpoints unless told otherwise)
+- Do not assume `localhost` is reachable from sandboxed VMs — verify first
+- Do not waste time on Puppeteer workarounds when Chrome MCP is available
 
-**Framework-Specific**
-- 11ty: `npx @11ty/eleventy --serve`
-- Next.js: `npm run dev`
-- Vite: `npx vite`
-- Create React App: `npm start`
+---
+
+## Reference Files
+
+For detailed patterns, templates, and full code, read these files from the `reference/` directory:
+
+| File | Contents |
+|------|----------|
+| [reference/playwright-patterns.md](reference/playwright-patterns.md) | Full Playwright setup, pre-flight checks, serving patterns, persistent sessions, breakpoint detection |
+| [reference/visual-regression.md](reference/visual-regression.md) | Pixel-diff scoring, comparison HTML generation, GitHub Actions CI/CD workflow |
+| [reference/interaction-templates.md](reference/interaction-templates.md) | Auth flows, e-commerce flows, state variations, interactive mode, core interaction primitives |
+| [reference/ai-snapshots.md](reference/ai-snapshots.md) | Accessibility tree, DOM snapshots, interactive element maps, incremental DOM diff (full implementation) |
+| [reference/troubleshooting.md](reference/troubleshooting.md) | Common issues by project type (SSG, Next.js, Tailwind, WordPress), full "what not to do" list |
 
 ---
 
@@ -741,7 +536,19 @@ Always save to `_screenshots/` in the project root — this is a non-negotiable 
 
 ## Related Skills
 
-- **optimize**: For diagnosing performance issues visible in screenshots (layout shift, slow loading)
-- **accessibility-review**: For auditing visual accessibility concerns spotted in captures
-- **design-critique**: For getting structured feedback on captured UI states
-- **web-design-guidelines**: For checking captured pages against interface best practices
+- **optimize** — performance issues visible in screenshots (layout shift, slow loading)
+- **accessibility-review** — visual accessibility concerns
+- **design-critique** — structured feedback on captured UI states
+- **web-design-guidelines** — checking pages against interface best practices
+
+---
+
+## Tools Referenced
+
+| Tool | Type | Purpose |
+|------|------|---------|
+| Chrome MCP | Built-in | Browser control via MCP extension |
+| Playwright | `npm install playwright` | Headless browser automation |
+| CDP | Built-in (Chrome) | Direct Chrome connection via `--remote-debugging-port` |
+| pixelmatch | `npm install pixelmatch pngjs` | Pixel-level image comparison |
+| `npx serve` | npm | Zero-config static file server |
