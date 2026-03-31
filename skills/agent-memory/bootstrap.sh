@@ -233,11 +233,9 @@ HEREDOC
     echo -e "  ${Y}⊘${N} CLAUDE.md (exists)"
   fi
 
-  # ── .claude/ directory (merge-aware) ──
+  # ── .claude/ directory ──
   mkdir -p "$ROOT/.claude"
-  CLAUDE_PERM='Bash(bash .agent-memory/bootstrap.sh *)'
   if [ ! -f "$ROOT/.claude/settings.json" ]; then
-    # Fresh: create with our defaults
 cat > "$ROOT/.claude/settings.json" << 'HEREDOC'
 {
   "$schema": "https://code.claude.com/schema/settings.json",
@@ -245,30 +243,24 @@ cat > "$ROOT/.claude/settings.json" << 'HEREDOC'
     "allow": [
       "Read",
       "Glob",
-      "Grep",
-      "Bash(bash .agent-memory/bootstrap.sh *)"
+      "Grep"
     ]
   }
 }
 HEREDOC
     echo -e "  ${G}✓${N} .claude/settings.json (created)"
   else
-    # Exists: check if our bootstrap permission is already present
-    if grep -q 'agent-memory/bootstrap' "$ROOT/.claude/settings.json" 2>/dev/null; then
-      echo -e "  ${Y}⊘${N} .claude/settings.json (exists, bootstrap permission present)"
-    else
-      # Try to inject our permission into the existing allow array
-      # Look for the "allow": [ line and append after it
-      if grep -q '"allow"' "$ROOT/.claude/settings.json" 2>/dev/null; then
-        # Use sed to add our entry after the first line containing "allow": [
-        sed -i.bak '/"allow".*\[/a\
-      "Bash(bash .agent-memory/bootstrap.sh *)",' "$ROOT/.claude/settings.json" && rm -f "$ROOT/.claude/settings.json.bak"
-        echo -e "  ${G}+${N} .claude/settings.json (merged: added bootstrap permission)"
-      else
-        echo -e "  ${Y}⚠${N} .claude/settings.json exists but has no \"allow\" array."
-        echo -e "    Add manually: ${C}\"Bash(bash .agent-memory/bootstrap.sh *)\"${N}"
-      fi
-    fi
+    echo -e "  ${Y}⊘${N} .claude/settings.json (exists)"
+  fi
+
+  # ── Permission hint (never auto-granted) ──
+  if ! grep -q 'agent-memory/bootstrap' "$ROOT/.claude/settings.json" 2>/dev/null; then
+    echo ""
+    echo -e "  ${C}ℹ${N}  To allow bootstrap commands without prompts, add this to"
+    echo -e "     ${B}.claude/settings.json${N} → permissions.allow:"
+    echo ""
+    echo -e "     ${C}\"Bash(bash .agent-memory/bootstrap.sh *)\"${N}"
+    echo ""
   fi
 
   # ── .cursor/rules/ directory (separate file, never overwrites) ──
