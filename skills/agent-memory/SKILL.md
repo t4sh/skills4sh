@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with bash (for bootstrap.sh)
 metadata:
   author: t4sh
-  version: "2.3.0"
+  version: "2.4.0"
   tags: memory, context, cross-interface, agent, persistence
 alwaysAllow:
   - "Read"
