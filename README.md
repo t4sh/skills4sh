@@ -1,5 +1,7 @@
 # skills4sh
 
+[![OWASP AST10](https://img.shields.io/badge/OWASP-Agentic_Skills_Top_10-blue?logo=owasp)](SECURITY.md)
+[![guardskills](https://img.shields.io/badge/guardskills-SAFE-brightgreen)](https://www.npmjs.com/package/guardskills)
 [![Known Vulnerabilities](https://snyk.io/test/github/t4sh/skills4sh/badge.svg)](https://snyk.io/test/github/t4sh/skills4sh)
 [![CodeQL](https://github.com/t4sh/skills4sh/actions/workflows/codeql.yml/badge.svg)](https://github.com/t4sh/skills4sh/actions/workflows/codeql.yml)
 
