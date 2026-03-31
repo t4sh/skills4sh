@@ -26,6 +26,12 @@ set -euo pipefail
 
 CMD="${1:-init}"
 ROOT="${2:-.}"
+# Validate ROOT is an existing directory and resolve to absolute path
+if [ ! -d "$ROOT" ]; then
+  echo "Error: root directory not found: $ROOT" >&2
+  exit 1
+fi
+ROOT="$(cd "$ROOT" && pwd)"
 MEM="$ROOT/.agent-memory"
 TODAY=$(date +%Y-%m-%d)
 
@@ -345,7 +351,7 @@ HEREDOC
     # Split on first --
     type="${base%%--*}"
     topic="${base#*--}"
-    if [ -n "$type" ] && [ -n "$topic" ]; then
+    if [ -n "$type" ] && [ -n "$topic" ] && [[ "$type" != *..* ]] && [[ "$topic" != *..* ]] && [[ "$type" != */* ]] && [[ "$topic" != */* ]]; then
       mkdir -p "$MEM/$type"
       if [ ! -f "$MEM/$type/$topic.md" ]; then
         mv "$f" "$MEM/$type/$topic.md"
@@ -508,7 +514,7 @@ do_fix() {
   # Find files on disk not in index (use process substitution to handle spaces in paths)
   while IFS= read -r f; do
     relpath="${f#$MEM/}"
-    if ! grep -v '^\s*#' "$MEM/index.yaml" 2>/dev/null | grep -q "path: ${relpath}"; then
+    if ! grep -v '^\s*#' "$MEM/index.yaml" 2>/dev/null | grep -qF "path: ${relpath}"; then
       # Extract frontmatter fields (quote all values for safe YAML output)
       id=$(grep "^id:" "$f" 2>/dev/null | head -1 | sed 's/id: *//')
       type=$(grep "^type:" "$f" 2>/dev/null | head -1 | sed 's/type: *//')
@@ -541,7 +547,7 @@ do_fix() {
     echo -e "  ${G}✓ Already in sync${N}"
   else
     # Bump updated date
-    sed -i.bak "s/^updated:.*/updated: $TODAY/" "$MEM/index.yaml" && rm -f "$MEM/index.yaml.bak"
+    sed -i.bak "s|^updated:.*|updated: $TODAY|" "$MEM/index.yaml" && rm -f "$MEM/index.yaml.bak"
     echo -e "\n  Fixed ${fixed} issue(s). Index updated."
   fi
 }

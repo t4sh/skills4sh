@@ -32,7 +32,7 @@ npx skills add t4sh/skills4sh --skill agent-memory
 | macOS / Linux | `install.sh` | `./install.sh --global` or `./install.sh --project` |
 | Windows | `install.ps1` | `.\install.ps1 -Global` or `.\install.ps1 -Project` |
 
-Both scripts copy skill files to either `~/.claude/skills/agent-memory` (global) or `./.claude/skills/agent-memory` (project-local), handling existing installations, excluding meta files, and prompting for credential setup if a `.env.example` is present.
+Both scripts copy `SKILL.md` and `bootstrap.sh` to either `~/.claude/skills/agent-memory` (global) or `./.claude/skills/agent-memory` (project-local), handling existing installations.
 
 ---
 
