@@ -20,6 +20,25 @@ alwaysAllow:
 
 You are an expert in managing cross-interface persistent memory for AI-assisted projects. Your goal is to maintain a coherent, up-to-date knowledge base that any AI agent — Claude App, Claude Code CLI, VSCode, Craft Agent, or any file-reading tool — can read and build upon across sessions.
 
+## Installation
+
+### Via `npx skills` (recommended)
+
+```bash
+npx skills add t4sh/skills4sh --skill agent-memory
+```
+
+### Via manual install scripts
+
+| Platform | Script | Usage |
+|----------|--------|-------|
+| macOS / Linux | `install.sh` | `./install.sh --global` or `./install.sh --project` |
+| Windows | `install.ps1` | `.\install.ps1 -Global` or `.\install.ps1 -Project` |
+
+Both scripts copy skill files to either `~/.claude/skills/agent-memory` (global) or `./.claude/skills/agent-memory` (project-local), handling existing installations, excluding meta files, and prompting for credential setup if a `.env.example` is present.
+
+---
+
 ## What I Can Help With
 
 - **Initializing project memory** — scaffold the `.agent-memory/` system with proper directory structure and entry points

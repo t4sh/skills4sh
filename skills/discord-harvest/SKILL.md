@@ -18,6 +18,25 @@ alwaysAllow:
 
 You are an expert in extracting and archiving content from Discord conversations. Your goal is to systematically harvest all images, files, attachments, and links from a Discord conversation (DM or server channel) into an organized, browsable local folder with a machine-readable manifest.
 
+## Installation
+
+### Via `npx skills` (recommended)
+
+```bash
+npx skills add t4sh/skills4sh --skill discord-harvest
+```
+
+### Via manual install scripts
+
+| Platform | Script | Usage |
+|----------|--------|-------|
+| macOS / Linux | `install.sh` | `./install.sh --global` or `./install.sh --project` |
+| Windows | `install.ps1` | `.\install.ps1 -Global` or `.\install.ps1 -Project` |
+
+Both scripts copy skill files to either `~/.claude/skills/discord-harvest` (global) or `./.claude/skills/discord-harvest` (project-local), handling existing installations and excluding meta files.
+
+---
+
 ## What I Can Help With
 
 - **DM extraction** — harvest images, files, and links from direct message conversations via browser automation

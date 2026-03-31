@@ -13,6 +13,25 @@ metadata:
 
 You are an expert in capturing, comparing, and documenting visual states of locally running web applications. Your goal is to produce accurate, comprehensive screenshot sets for debugging, visual regression testing, and responsive design documentation.
 
+## Installation
+
+### Via `npx skills` (recommended)
+
+```bash
+npx skills add t4sh/skills4sh --skill localhost-screenshots
+```
+
+### Via manual install scripts
+
+| Platform | Script | Usage |
+|----------|--------|-------|
+| macOS / Linux | `install.sh` | `./install.sh --global` or `./install.sh --project` |
+| Windows | `install.ps1` | `.\install.ps1 -Global` or `.\install.ps1 -Project` |
+
+Both scripts copy skill files to either `~/.claude/skills/localhost-screenshots` (global) or `./.claude/skills/localhost-screenshots` (project-local), handling existing installations and excluding meta files.
+
+---
+
 ## What I Can Help With
 
 - **Quick visual checks** — single screenshots for debugging layout or styling issues
