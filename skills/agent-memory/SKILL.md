@@ -2,7 +2,7 @@
 name: agent-memory
 description: "Use when managing project memory, initializing .agent-memory/, saving session learnings, or running memory maintenance. Handles cross-interface persistent memory for any project."
 license: MIT
-compatibility: macOS, Linux, or Windows with bash (for bootstrap.sh)
+compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
   version: "2.5.0"
@@ -19,18 +19,9 @@ You are an expert in managing cross-interface persistent memory for AI-assisted 
 
 ## Installation
 
-### Via `npx skills` (recommended)
-
 ```bash
 npx skills add t4sh/skills4sh --skill agent-memory
 ```
-
-### Via manual install scripts
-
-| Platform | Script | Usage |
-|----------|--------|-------|
-| macOS / Linux | `install.sh` | `./install.sh --global` or `./install.sh --project` |
-| Windows | `install.ps1` | `.\install.ps1 -Global` or `.\install.ps1 -Project` |
 
 ---
 
@@ -100,10 +91,10 @@ project/
 
 ### Steps
 
-1. **Check for `bootstrap.sh`** — if `.agent-memory/bootstrap.sh` exists, run `bash .agent-memory/bootstrap.sh init`. Otherwise check `~/.agents/skills/agent-memory/bootstrap.sh` and copy it in. If neither exists, create structure manually.
-2. **Verify result:** `.agent-memory/` with subdirs (`user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `reference/`, `sessions/`), plus `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, `.cursor/rules/index.mdc`.
+1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `reference/`, `sessions/` under `.agent-memory/`.
+2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), `AGENTS.md` (canonical shared instructions), `CLAUDE.md` (thin pointer to AGENTS.md), `.cursor/rules/agent-memory.mdc` (Cursor rule referencing AGENTS.md).
 3. **Fill in TODOs** in AGENTS.md with project's actual structure and rules.
-4. **Report** what was created.
+4. **Update `index.yaml`** and **report** what was created.
 
 ---
 
@@ -119,7 +110,7 @@ Detect and migrate older structures to v2.1.
 | `summary:` frontmatter | `description:` frontmatter | Field renamed |
 | `CLAUDE.md` with full instructions (no AGENTS.md) | `AGENTS.md` + thin `CLAUDE.md` | Promoted |
 
-**Steps:** Run `bash .agent-memory/bootstrap.sh migrate` → review report → update `CLAUDE.md` to thin pointer → run `bash .agent-memory/bootstrap.sh fix` to verify.
+**Steps:** Scan for each old structure listed above → perform the migration → update `CLAUDE.md` to thin pointer → reconcile `index.yaml` with filesystem → report what changed.
 
 ---
 
@@ -131,7 +122,7 @@ Scan project and auto-generate initial memory files from existing docs.
 2. **Distill** each source: overview → `project/overview.md`, architecture → `project/architecture.md`, decisions → `decisions/{topic}.md`, conventions → `conventions/{topic}.md`, user identity → `user/identity.md`
 3. **Rules:** Summarize don't copy. One topic per file. Reference source docs. Use standard frontmatter.
 4. **Migrate** old formats if found (flat files, old frontmatter fields)
-5. **Update `index.yaml`** and run `bash .agent-memory/bootstrap.sh fix`
+5. **Update `index.yaml`** — add entries for each new file, reconcile with filesystem
 6. **Report** with summary table
 
 ---
@@ -152,7 +143,7 @@ Capture learnings from the current conversation into memory.
 
 Combined: ingest external changes **then** save session. Recommended end-of-session command for multi-editor workflows.
 
-**Phase 1 — Ingest:** Run `bash .agent-memory/bootstrap.sh fix` → scan for unindexed files (add to index) → scan for orphan entries (remove) → read updated files for awareness.
+**Phase 1 — Ingest:** Scan for unindexed files in `.agent-memory/` (add to index) → scan for orphan index entries (remove) → read updated files for awareness.
 
 **Phase 2 — Save:** Run the full Save operation (review, update/create, session log, index).
 
@@ -164,7 +155,7 @@ Combined: ingest external changes **then** save session. Recommended end-of-sess
 
 Full maintenance: compact, trim stale, fix index, clean old session logs.
 
-1. **Run** `bash .agent-memory/bootstrap.sh doctor`
+1. **Health check:** Count files by type, check index sync, identify stale/expired entries.
 2. **Staleness check:** `context/` >30 days old → ask update/archive/remove. Expired or archived >90 days → suggest deletion.
 3. **Compaction:** Identify content overlap, suggest merges, promote session log patterns to `conventions/` or `decisions/`.
 4. **Session cleanup:** Logs >60 days → extract valuable info elsewhere if needed, then delete.
@@ -174,7 +165,7 @@ Full maintenance: compact, trim stale, fix index, clean old session logs.
 
 ## Operation: Status
 
-Quick read-only health check. Run `bash .agent-memory/bootstrap.sh status`. If `.agent-memory/` doesn't exist, suggest `init`. If issues found, suggest `maintain`.
+Quick read-only health check. Count files by type, check index ↔ filesystem sync, report stale/expired entries. If `.agent-memory/` doesn't exist, suggest `init`. If issues found, suggest `maintain`.
 
 ---
 
@@ -205,7 +196,7 @@ For frontmatter schema, memory types, and templates, see [reference/templates.md
 
 ## Tools Referenced
 
-**Built-in:** `bootstrap.sh` (init, migrate, fix, doctor, status), `index.yaml` (registry), `AGENTS.md` (shared instructions)
+**Built-in:** `index.yaml` (registry), `AGENTS.md` (shared instructions)
 
 **AI Interfaces:** Claude App, Claude Code CLI, VSCode (Claude extension), Cursor, Craft Agent
 

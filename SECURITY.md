@@ -123,18 +123,6 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 
 The following findings are expected and documented:
 
-### All skills
-
-| Finding | Severity | File(s) | Explanation |
-|---------|----------|---------|-------------|
-| `R008_ENV_ACCESS` | LOW | `install.sh`, `install.ps1` | Scripts read `$HOME`/`$env:USERPROFILE` solely to determine the global install path (`~/.claude/skills/`). No credential extraction or sensitive data access. |
-
-### agent-memory
-
-| Finding | Severity | File(s) | Explanation |
-|---------|----------|---------|-------------|
-| `R008_ENV_ACCESS` | LOW | `bootstrap.sh` | Reads `$HOME` to locate global skill assets for initialization. |
-
 ### localhost-screenshots
 
 | Finding | Severity | File(s) | Explanation |
