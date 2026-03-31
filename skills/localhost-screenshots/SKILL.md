@@ -4,14 +4,45 @@ description: "Use when taking screenshots of localhost sites, visual regression 
 license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
-  author: erpai
-  version: "1.0.0"
+  author: t4sh
+  version: "1.1.0"
   tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome
 ---
 
 # Localhost Screenshots
 
-This skill captures screenshots of locally running websites. It supports two approaches depending on the task:
+You are an expert in capturing, comparing, and documenting visual states of locally running web applications. Your goal is to produce accurate, comprehensive screenshot sets for debugging, visual regression testing, and responsive design documentation.
+
+## What I Can Help With
+
+- **Quick visual checks** — single screenshots for debugging layout or styling issues
+- **Responsive breakpoint captures** — systematic screenshots across 8 standard viewports
+- **Before/after comparisons** — visual regression testing with side-by-side HTML output
+- **Interactive debugging** — executing JS in live browser context to inspect state
+- **Visual documentation** — capturing full-page screenshots for design reviews or handoffs
+
+## Initial Assessment
+
+Before taking screenshots, understand:
+
+1. **Environment**
+   - Is the dev server already running? What port?
+   - What framework/build tool? (Next.js, Vite, 11ty, etc.)
+   - Is this running in a sandbox/VM or locally?
+
+2. **What You Need**
+   - Quick debug screenshot or full breakpoint set?
+   - Specific pages/routes or the whole site?
+   - Before/after comparison needed?
+
+3. **Scope**
+   - Single page or multiple routes?
+   - Full page or specific element?
+   - Custom breakpoints or standard set?
+
+---
+
+This skill supports two approaches depending on the task:
 
 - **Chrome MCP** — for quick debugging, single screenshots, and interactive verification
 - **Playwright** — for systematic multi-breakpoint screenshot sets and visual regression
@@ -408,6 +439,183 @@ const context = await browser.newContext({ ignoreHTTPSErrors: true });
 const page = await context.newPage();
 ```
 
+### Playwright Pre-Flight Checks
+
+Before running any Playwright screenshot task, run these checks in order. **Do not skip steps — each one prevents a class of broken screenshots.**
+
+#### 1. Verify Playwright is installed
+
+```bash
+npx playwright --version
+```
+
+If missing or outdated:
+```bash
+npm install playwright@latest 2>/dev/null
+npx playwright install --with-deps chromium
+```
+
+#### 2. Verify Chromium browser is available
+
+```bash
+npx playwright install chromium --dry-run 2>&1 || npx playwright install chromium
+```
+
+Do **not** check for system Chrome/Chromium — Playwright ships its own bundled Chromium. If `install --with-deps` fails on Linux, fall back to:
+```bash
+npx playwright install chromium
+sudo npx playwright install-deps chromium
+```
+
+#### 3. Verify the dev server is reachable
+
+```js
+const { chromium } = require('playwright');
+const browser = await chromium.launch();
+const page = await browser.newPage();
+
+try {
+  const response = await page.goto('http://localhost:PORT', { timeout: 5000 });
+  if (!response || !response.ok()) {
+    throw new Error(`Server returned ${response?.status()} — is the dev server running?`);
+  }
+  console.log('✓ Server reachable');
+} catch (e) {
+  console.error(`✗ Cannot reach localhost:PORT — ${e.message}`);
+  // Abort: do not proceed to screenshots
+} finally {
+  await page.close();
+  await browser.close();
+}
+```
+
+Common failures:
+- `ERR_CONNECTION_REFUSED` — dev server not running or wrong port
+- `TIMEOUT` — server is starting up, retry after 2-3 seconds
+- Sandboxed VM — host `localhost` is unreachable; must build and serve inside the VM
+
+#### 4. Verify stylesheets are loading
+
+```js
+const stylesheetCount = await page.evaluate(
+  () => document.querySelectorAll('link[rel="stylesheet"], style').length
+);
+if (stylesheetCount === 0) {
+  console.warn('⚠ No stylesheets detected — page will render unstyled');
+  console.warn('  Are you serving via HTTP? file:// paths break relative CSS imports');
+}
+```
+
+If zero stylesheets:
+- You're likely opening via `file://` instead of HTTP — serve over HTTP
+- The build step hasn't run — CSS hasn't been generated
+- Asset paths are wrong — check the base URL config in the framework
+
+#### 5. Verify page content has loaded
+
+```js
+// Wait for network to settle
+await page.goto(url, { waitUntil: 'networkidle' });
+
+// Check the page isn't blank or showing an error
+const bodyText = await page.evaluate(() => document.body?.innerText?.trim().slice(0, 200));
+if (!bodyText || bodyText.length < 10) {
+  console.warn('⚠ Page body is empty or near-empty — likely a loading/hydration issue');
+}
+
+// For SPAs: wait for the app root to have content
+const appRoot = await page.evaluate(() => {
+  const root = document.querySelector('#__next, #root, #app, main');
+  return root ? root.children.length : -1;
+});
+if (appRoot === 0) {
+  console.warn('⚠ App root has no children — JS may not have hydrated yet');
+  // Wait for a specific selector instead of relying on networkidle
+  await page.waitForSelector('main > *', { timeout: 10000 });
+}
+```
+
+#### 6. Check for obstructing overlays
+
+```js
+// Detect common overlays that ruin screenshots
+const overlays = await page.evaluate(() => {
+  const selectors = [
+    '[class*="cookie"]', '[class*="consent"]', '[class*="banner"]',
+    '[class*="modal"]', '[class*="overlay"]', '[class*="popup"]',
+    '[id*="cookie"]', '[id*="consent"]',
+  ];
+  return selectors
+    .map(s => ({ selector: s, count: document.querySelectorAll(s).length }))
+    .filter(r => r.count > 0);
+});
+
+if (overlays.length > 0) {
+  console.warn('⚠ Detected potential overlays:', overlays);
+  // Dismiss or hide them before screenshotting
+  await page.evaluate(() => {
+    document.querySelectorAll('[class*="cookie"], [class*="consent"], [class*="modal"]')
+      .forEach(el => el.style.display = 'none');
+  });
+}
+```
+
+#### 7. Full pre-flight script (copy-paste ready)
+
+```js
+const { chromium } = require('playwright');
+
+async function preflight(baseUrl) {
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  const issues = [];
+
+  try {
+    // Server reachable?
+    const response = await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 10000 });
+    if (!response || !response.ok()) {
+      issues.push(`Server returned ${response?.status()}`);
+      return { ok: false, issues };
+    }
+
+    // Stylesheets?
+    const styles = await page.evaluate(
+      () => document.querySelectorAll('link[rel="stylesheet"], style').length
+    );
+    if (styles === 0) issues.push('No stylesheets detected — page may be unstyled');
+
+    // Content?
+    const text = await page.evaluate(() => document.body?.innerText?.trim().length || 0);
+    if (text < 10) issues.push('Page body is empty or near-empty');
+
+    // Overlays?
+    const hasOverlay = await page.evaluate(() =>
+      document.querySelectorAll('[class*="cookie"], [class*="consent"], [class*="modal"]').length > 0
+    );
+    if (hasOverlay) issues.push('Cookie/consent/modal overlay detected — will hide before capture');
+
+    return { ok: issues.length === 0, issues };
+  } catch (e) {
+    return { ok: false, issues: [e.message] };
+  } finally {
+    await page.close();
+    await browser.close();
+  }
+}
+
+// Usage
+preflight('http://localhost:3000').then(result => {
+  if (result.ok) {
+    console.log('✓ All pre-flight checks passed — ready to screenshot');
+  } else {
+    console.warn('⚠ Issues found:');
+    result.issues.forEach(i => console.warn(`  - ${i}`));
+  }
+});
+```
+
+**Run pre-flight before every screenshot session.** It takes <2 seconds and prevents wasted time on broken captures.
+
 ---
 
 ## What NOT to Do
@@ -424,3 +632,92 @@ const page = await context.newPage();
 - **Do not open HTML files via `file://` paths** — CSS/JS paths won't resolve without an HTTP server
 - Do not assume the user's host `localhost` is reachable from a sandboxed VM — always verify connectivity first
 - **Do not waste time on Puppeteer → serve → connect workarounds** when Chrome MCP is already connected
+
+---
+
+## Common Issues by Project Type
+
+### Static Site Generators (11ty, Hugo, Jekyll)
+- Output directory not served over HTTP — screenshots show unstyled HTML
+- Build step forgotten before screenshotting — stale content captured
+- Asset paths relative — break on `file://` but work on HTTP
+- LiveReload scripts injecting extra elements into DOM
+
+### Next.js / React SPAs
+- Page not fully hydrated when screenshot taken — use `waitUntil: 'networkidle'`
+- Client-side routing means only `/` loads without JS — navigate via Playwright, don't just change URL
+- Loading spinners captured instead of actual content — wait for specific selectors
+- Dark mode / theme flashing — set `prefers-color-scheme` via `page.emulateMedia()`
+
+### Tailwind / Utility-First CSS
+- Custom breakpoints in `tailwind.config.js` don't match standard set — always check `screens` config
+- JIT mode may not generate styles for content not in the template — ensure dev server has processed all pages
+- `@apply` directives may behave differently in production build vs dev
+
+### WordPress / CMS Sites
+- Admin bar adds height — screenshots include toolbar unless logged out
+- Lazy-loaded images below fold — scroll to trigger loading before full-page capture
+- Cookie consent banners overlay content — dismiss before screenshotting
+
+---
+
+## Output Format
+
+### Screenshot File Naming
+```
+{breakpoint-name}-{width}x{height}.png
+```
+
+### Directory Structure
+```
+_screenshots/
+  {route-name}/
+    mobile-sm-320x568.png
+    mobile-375x812.png
+    ...
+    wide-1920x1080.png
+```
+
+### Before/After Comparison
+When generating comparison HTML, the output includes:
+- Side-by-side before/after images per breakpoint
+- Sticky filter controls
+- Breakpoint labels with dimensions
+- Responsive grid layout
+
+Always save to `_screenshots/` in the project root — this is a non-negotiable convention.
+
+---
+
+## Tools Referenced
+
+**Built-in / Free**
+- Chrome MCP (`mcp__Claude_in_Chrome__*`) — browser control via MCP
+- Playwright (`npm install playwright`) — headless browser automation
+- `npx serve` — zero-config static file server
+- Chrome DevTools (via Chrome MCP `javascript_tool`)
+
+**Framework-Specific**
+- 11ty: `npx @11ty/eleventy --serve`
+- Next.js: `npm run dev`
+- Vite: `npx vite`
+- Create React App: `npm start`
+
+---
+
+## Task-Specific Questions
+
+1. Is your dev server already running? If so, what port?
+2. Do you need all breakpoints or just a specific viewport?
+3. Are there pages behind authentication or specific state?
+4. Do you need before/after comparison or just current state?
+5. Does your project use custom breakpoints (Tailwind screens, CSS media queries)?
+
+---
+
+## Related Skills
+
+- **optimize**: For diagnosing performance issues visible in screenshots (layout shift, slow loading)
+- **accessibility-review**: For auditing visual accessibility concerns spotted in captures
+- **design-critique**: For getting structured feedback on captured UI states
+- **web-design-guidelines**: For checking captured pages against interface best practices
