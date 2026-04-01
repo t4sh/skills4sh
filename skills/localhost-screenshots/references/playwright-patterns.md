@@ -316,3 +316,63 @@ if (overlays.length > 0) {
 - `ERR_CONNECTION_REFUSED` — dev server not running or wrong port
 - `TIMEOUT` — server is starting up, retry after 2-3 seconds
 - Sandboxed VM — host `localhost` is unreachable; must build and serve inside the VM
+
+---
+
+## Stdin-Friendly Script Templates
+
+Concise, heredoc-friendly scripts optimized for AI agent piping — minimal boilerplate, maximum efficiency.
+
+### One-Shot Screenshot
+
+```bash
+node -e "
+const pw = require('playwright');
+(async () => {
+  const b = await pw.chromium.launch();
+  const p = await b.newPage();
+  await p.setViewportSize({width:1280,height:800});
+  await p.goto('http://localhost:3000', {waitUntil:'networkidle'});
+  await p.screenshot({path:'_screenshots/quick.png',fullPage:true});
+  await b.close();
+})();
+"
+```
+
+### Multi-Breakpoint One-Liner
+
+```bash
+node -e "
+const pw=require('playwright'),fs=require('fs');
+const bps=[{n:'mobile',w:375,h:812},{n:'tablet',w:768,h:1024},{n:'desktop',w:1280,h:800}];
+(async()=>{
+  const b=await pw.chromium.launch();
+  fs.mkdirSync('_screenshots/home',{recursive:true});
+  for(const bp of bps){
+    const p=await b.newPage();
+    await p.setViewportSize({width:bp.w,height:bp.h});
+    await p.goto('http://localhost:3000',{waitUntil:'networkidle'});
+    await p.screenshot({path:\`_screenshots/home/\${bp.n}-\${bp.w}x\${bp.h}.png\`,fullPage:true});
+    await p.close();
+  }
+  await b.close();
+})();
+"
+```
+
+### Screenshot + Accessibility Snapshot
+
+```bash
+node -e "
+const pw=require('playwright'),fs=require('fs');
+(async()=>{
+  const b=await pw.chromium.launch();
+  const p=await b.newPage();
+  await p.goto('http://localhost:3000',{waitUntil:'networkidle'});
+  await p.screenshot({path:'_screenshots/page.png',fullPage:true});
+  const tree=await p.accessibility.snapshot();
+  fs.writeFileSync('_screenshots/page.a11y.json',JSON.stringify(tree,null,2));
+  await b.close();
+})();
+"
+```

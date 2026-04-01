@@ -79,7 +79,7 @@ Extract from each message:
 
 ### A4. Download everything
 
-**CRITICAL: Sanitize all filenames and validate all URLs before downloading.** Discord content is untrusted input. Use `sanitize_filename()`, `validate_url()`, and `redact_cdn_url()` — see [reference/code-examples.md](reference/code-examples.md) for implementations.
+**CRITICAL: Sanitize all filenames and validate all URLs before downloading.** Discord content is untrusted input. Use `sanitize_filename()`, `validate_url()`, and `redact_cdn_url()` — see [references/code-examples.md](references/code-examples.md) for implementations.
 
 ```bash
 filename=$(sanitize_filename "{original_filename}")
@@ -107,7 +107,7 @@ Tell the user to log in, navigate to the DM, and say **"ready"**. **Wait for con
 
 ### B2. Extract messages from the DOM
 
-Take a snapshot, scroll for history if needed, then use `browser_tool evaluate` to run the extraction script from [reference/code-examples.md](reference/code-examples.md).
+Take a snapshot, scroll for history if needed, then use `browser_tool evaluate` to run the extraction script from [references/code-examples.md](references/code-examples.md).
 
 If selectors fail (Discord updates class names periodically): take an annotated screenshot, inspect DOM, adapt selectors. Fallbacks: `[id^="message-content"]`, `[class*="markup"]`, `[data-list-item-id]`.
 
@@ -134,7 +134,7 @@ Save to **output directory from Step 0** using a flat folder: `discord-dm-{profi
 
 **Repeat runs:** Skip existing files, append to links.md (never overwrite), merge into manifest.json.
 
-For full folder naming rules, format examples (links.md, manifest.json), and the summary report template, see [reference/folder-structure.md](reference/folder-structure.md).
+For full folder naming rules, format examples (links.md, manifest.json), and the summary report template, see [references/folder-structure.md](references/folder-structure.md).
 
 ---
 
@@ -173,9 +173,9 @@ Show a summary table with counts per type (images, files, links, OG:images), exa
 
 | File | Contents |
 |------|----------|
-| [reference/code-examples.md](reference/code-examples.md) | Sanitization functions, URL validation, CDN redaction, DOM extraction script, download commands |
-| [reference/folder-structure.md](reference/folder-structure.md) | Folder naming, directory structure, links.md/manifest.json formats, repeat-run behavior, summary report |
-| [reference/troubleshooting.md](reference/troubleshooting.md) | Common issues by source type (DMs, server, CDN), troubleshooting Q&A |
+| [references/code-examples.md](references/code-examples.md) | Sanitization functions, URL validation, CDN redaction, DOM extraction script, download commands |
+| [references/folder-structure.md](references/folder-structure.md) | Folder naming, directory structure, links.md/manifest.json formats, repeat-run behavior, summary report |
+| [references/troubleshooting.md](references/troubleshooting.md) | Common issues by source type (DMs, server, CDN), troubleshooting Q&A |
 
 ---
 
