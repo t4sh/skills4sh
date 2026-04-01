@@ -6,9 +6,9 @@
     "agent-memory": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.5.0",
+      "version": "2.5.1",
       "files": {
-        "SKILL.md": "ce9ed751fc8e56a0a60d467ce3433b4f0e6566fe812bd58e6fe395f4118ec7b8",
+        "SKILL.md": "dd869073900bf27507b4fb20a9ccf6df6ad94f88314fe4d115b72bc03834fe0d",
         "reference/templates.md": "ab61fb061f97b3220ec6e6738bac5236e38f23a556ef4b37d8c7b9aa5f5e2ac3",
         "reference/display-conventions.md": "69145723e247db19313834a5a1f30a44f14b136ec44f49648cb5bb68eebc6745",
         "reference/troubleshooting.md": "3726fbc308f13e8bbf66b503d42490cdfd0808d6dfa805b9f69854193c7db3b0"
@@ -17,11 +17,11 @@
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.4.0",
+      "version": "1.4.1",
       "files": {
-        "SKILL.md": "06ab903043afcde9dc56bda2b53e5a9a381cd5457a17be35ab2226970cc62da6",
+        "SKILL.md": "be85e123d84c904b6572e163819f26f58711181242d8fca0ceeedbccf6aacaea",
         "icon.svg": "e260db01006e94d9c6fbeccfa34b03a4e7fa390b5250f05c4ebfe3a8ad2dbd51",
-        "reference/code-examples.md": "bba8ec3d74a4cedec198c256c896418ed4b5567aa1d474e73a0fb6c1afbe0235",
+        "reference/code-examples.md": "8a9ebc21014ab8e063699f4621ac9c031b20c42b487eb6a2c9988f5a44979d66",
         "reference/folder-structure.md": "32b7e645198ad01e30e10eeef590e6e61505927e84637bb18a11e794302e293a",
         "reference/troubleshooting.md": "9ddb44320ec72ad8951b17fec40cec6de06f33ca2b794c5956a90ec48ca908f0"
       }
