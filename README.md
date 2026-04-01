@@ -44,9 +44,9 @@ See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability di
 All skills pass [guardskills](https://www.npmjs.com/package/guardskills) with a **SAFE** rating:
 
 ```bash
-npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run
-npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
-npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run
+npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run;
+npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run;
+npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run;
 ```
 
 Skills contain no shell scripts or executable code — only SKILL.md instructions and reference documentation.

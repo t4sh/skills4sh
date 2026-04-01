@@ -1,43 +1,20 @@
 {
   "version": 2,
-  "generatedAt": "2026-04-01T00:00:00Z",
-  "hashAlgorithm": "sha256",
   "skills": {
     "agent-memory": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.5.1",
-      "files": {
-        "SKILL.md": "dd869073900bf27507b4fb20a9ccf6df6ad94f88314fe4d115b72bc03834fe0d",
-        "reference/templates.md": "ab61fb061f97b3220ec6e6738bac5236e38f23a556ef4b37d8c7b9aa5f5e2ac3",
-        "reference/display-conventions.md": "69145723e247db19313834a5a1f30a44f14b136ec44f49648cb5bb68eebc6745",
-        "reference/troubleshooting.md": "3726fbc308f13e8bbf66b503d42490cdfd0808d6dfa805b9f69854193c7db3b0"
-      }
+      "computedHash": "1dd5a6a5709d687d0dcd5ef3a0d067e6748043a9caeab50497419367766c34cd"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.4.1",
-      "files": {
-        "SKILL.md": "be85e123d84c904b6572e163819f26f58711181242d8fca0ceeedbccf6aacaea",
-        "icon.svg": "e260db01006e94d9c6fbeccfa34b03a4e7fa390b5250f05c4ebfe3a8ad2dbd51",
-        "reference/code-examples.md": "8a9ebc21014ab8e063699f4621ac9c031b20c42b487eb6a2c9988f5a44979d66",
-        "reference/folder-structure.md": "32b7e645198ad01e30e10eeef590e6e61505927e84637bb18a11e794302e293a",
-        "reference/troubleshooting.md": "9ddb44320ec72ad8951b17fec40cec6de06f33ca2b794c5956a90ec48ca908f0"
-      }
+      "computedHash": "c59dfaf3bf8a0dc12530b916a970d0f581c5af3ee4af22b70e256a96b869ec9c"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "3.0.0",
-      "files": {
-        "SKILL.md": "36f6a395500759d0c52b9f9e9088c32b688d24e7a5d014ea1966da59fc0594cc",
-        "reference/playwright-patterns.md": "db82dfec5ac6986d23c609009fd6b3f1c9a1b64f829809ff89e39345de484cca",
-        "reference/visual-regression.md": "03350151c2a3709768952b77d3bd06bfb77fd761c72f488af1c15cf4ac272bc1",
-        "reference/interaction-templates.md": "b85e5259c5d64057cf5cd1c6b2aeed9fa95f18ccd96f6ecfa1b7ea904d2fe124",
-        "reference/ai-snapshots.md": "26872bf79640327b7e9770cc4cc9224b51b56af668169de58305588ac19fef0c",
-        "reference/troubleshooting.md": "3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393"
-      }
+      "computedHash": "3bd47ec02001e0d585f5917d2b15a83e8761717e6c6ed12707a20fa815f5e325"
     }
   }
 }
