@@ -8,7 +8,7 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 |-------|---------|-----------|
 | agent-memory | 2.5.1 | Yes |
 | discord-harvest | 1.4.1 | Yes |
-| localhost-screenshots | 3.0.x | Yes |
+| localhost-screenshots | 3.0.0 | Yes |
 
 ## Reporting a Vulnerability
 
@@ -74,7 +74,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 |---------|----------------|
 | No executable YAML | SKILL.md frontmatter is declarative metadata only |
 | Safe parsing | Skills are parsed by host agents using safe YAML loaders |
-| No dynamic code in config | Install scripts are separate from configuration |
+| No dynamic code in config | No install scripts; skills are pure markdown consumed by host agents |
 
 ### AST06 — Weak Isolation
 
