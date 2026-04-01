@@ -14,25 +14,32 @@ sanitize_filename() {
   name=$(basename -- "$name")           # strip any path components (../../)
   name="${name//[^a-zA-Z0-9._-]/_}"     # allow only safe characters
   name="${name#.}"                       # strip leading dots (hidden files)
-  [ -z "$name" ] && name="unnamed"
+  name="${name%%.*}.${name#*.}"          # collapse multiple extensions (foo.tar.gz → foo.tar)
+  name="${name:0:200}"                   # truncate to 200 chars max
+  [ -z "$name" ] || [ "$name" = "." ] && name="unnamed"
   echo "$name"
 }
 ```
 
 ### URL Validation
 
-Only allow Discord CDN and known domains, block private IPs (SSRF):
+Only allow exact Discord CDN domains, block private/internal IPs including IPv6 (SSRF):
 
 ```bash
 validate_url() {
   local url="$1"
-  # Block private/internal IP ranges (SSRF protection)
-  if [[ "$url" =~ https://(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|\[::1\]|169\.254\.) ]]; then
+  # Must be HTTPS
+  if [[ ! "$url" =~ ^https:// ]]; then
+    echo "SKIP: non-HTTPS URL blocked: $url" >&2
+    return 1
+  fi
+  # Block private/internal IP ranges including IPv6 (SSRF protection)
+  if [[ "$url" =~ https://(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|\[::1\]|\[fe80:|\[fc00:|\[fd00:|0\.0\.0\.0|169\.254\.) ]]; then
     echo "SKIP: private/local URL blocked: $url" >&2
     return 1
   fi
-  # Whitelist only exact Discord domains (regex, not glob — prevents subdomain spoofing)
-  if [[ "$url" =~ ^https://(cdn\.discordapp\.com|media\.discordapp\.net|[a-z0-9-]+\.discord\.com)/ ]]; then
+  # Strict allowlist — only exact Discord CDN domains (no wildcard subdomains)
+  if [[ "$url" =~ ^https://(cdn\.discordapp\.com|media\.discordapp\.net|images-ext-[0-9]+\.discordapp\.net)/ ]]; then
     return 0
   fi
   echo "SKIP: untrusted URL domain: $url" >&2

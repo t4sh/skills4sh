@@ -5,12 +5,8 @@ license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.5.0"
+  version: "2.5.1"
   tags: memory, context, cross-interface, agent, persistence
-alwaysAllow:
-  - "Read"
-  - "Glob"
-  - "Grep"
 ---
 
 # Agent Memory Skill

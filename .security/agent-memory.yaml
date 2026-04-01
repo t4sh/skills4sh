@@ -4,7 +4,7 @@
 
 skill:
   name: agent-memory
-  version: "2.5.0"
+  version: "2.5.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,20 +13,14 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: ce9ed751fc8e56a0a60d467ce3433b4f0e6566fe812bd58e6fe395f4118ec7b8
+    SKILL.md: dd869073900bf27507b4fb20a9ccf6df6ad94f88314fe4d115b72bc03834fe0d
     reference/templates.md: ab61fb061f97b3220ec6e6738bac5236e38f23a556ef4b37d8c7b9aa5f5e2ac3
     reference/display-conventions.md: 69145723e247db19313834a5a1f30a44f14b136ec44f49648cb5bb68eebc6745
     reference/troubleshooting.md: 3726fbc308f13e8bbf66b503d42490cdfd0808d6dfa805b9f69854193c7db3b0
 
 permissions:
-  alwaysAllow:
-    - Read
-    - Glob
-    - Grep
-  rationale:
-    Read: "Read existing memory files, AGENTS.md, index.yaml, and project docs during build/save/sync operations"
-    Glob: "Discover memory files across .agent-memory/ subdirectories and scan project for existing documentation"
-    Grep: "Search memory file contents for duplicates, stale entries, and cross-references during maintenance"
+  alwaysAllow: []
+  rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
 
 execution_context:
   sandbox: host-agent
