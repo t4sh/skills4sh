@@ -284,112 +284,6 @@ const dashboard = await getPage(context, 'dashboard', 'http://localhost:3000/das
 
 ---
 
-## Stdin-Friendly Script Templates
-
-Concise, heredoc-friendly scripts optimized for AI agent piping — minimal boilerplate, maximum efficiency.
-
-### One-Shot Screenshot
-
-```bash
-node -e "
-const pw = require('playwright');
-(async () => {
-  const b = await pw.chromium.launch();
-  const p = await b.newPage();
-  await p.setViewportSize({width:1280,height:800});
-  await p.goto('http://localhost:3000', {waitUntil:'networkidle'});
-  await p.screenshot({path:'_screenshots/quick.png',fullPage:true});
-  await b.close();
-})();
-"
-```
-
-### Multi-Breakpoint One-Liner
-
-```bash
-node -e "
-const pw=require('playwright'),fs=require('fs');
-const bps=[{n:'mobile',w:375,h:812},{n:'tablet',w:768,h:1024},{n:'desktop',w:1280,h:800}];
-(async()=>{
-  const b=await pw.chromium.launch();
-  fs.mkdirSync('_screenshots/home',{recursive:true});
-  for(const bp of bps){
-    const p=await b.newPage();
-    await p.setViewportSize({width:bp.w,height:bp.h});
-    await p.goto('http://localhost:3000',{waitUntil:'networkidle'});
-    await p.screenshot({path:\`_screenshots/home/\${bp.n}-\${bp.w}x\${bp.h}.png\`,fullPage:true});
-    await p.close();
-  }
-  await b.close();
-})();
-"
-```
-
-### Screenshot + Accessibility Snapshot
-
-```bash
-node -e "
-const pw=require('playwright'),fs=require('fs');
-(async()=>{
-  const b=await pw.chromium.launch();
-  const p=await b.newPage();
-  await p.goto('http://localhost:3000',{waitUntil:'networkidle'});
-  await p.screenshot({path:'_screenshots/page.png',fullPage:true});
-  const tree=await p.accessibility.snapshot();
-  fs.writeFileSync('_screenshots/page.a11y.json',JSON.stringify(tree,null,2));
-  await b.close();
-})();
-"
-```
-
----
-
-## Incremental DOM Snapshots
-
-For multi-step workflows, capture a full DOM snapshot on first call, then only changed elements on subsequent calls. Reduces context window usage.
-
-```js
-const crypto = require('crypto');
-
-class IncrementalSnapshot {
-  constructor() { this.prevHash = new Map(); }
-
-  async capture(page) {
-    const elements = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll('*'))
-        .filter(n => n.children.length > 0 && !n.closest('script,style'))
-        .slice(0, 500)
-        .map(el => ({
-          selector: el.id ? `#${el.id}` : el.tagName.toLowerCase(),
-          text: el.textContent?.trim().slice(0, 200) || '',
-          childCount: el.children.length,
-        }));
-    });
-
-    if (this.prevHash.size === 0) {
-      for (const el of elements) this.prevHash.set(el.selector, this._hash(el));
-      return { type: 'full', elements, changedCount: elements.length };
-    }
-
-    const changed = [];
-    const newHash = new Map();
-    for (const el of elements) {
-      const h = this._hash(el);
-      newHash.set(el.selector, h);
-      if (this.prevHash.get(el.selector) !== h) changed.push(el);
-    }
-    this.prevHash = newHash;
-    return { type: 'incremental', changed, changedCount: changed.length };
-  }
-
-  _hash(el) {
-    return crypto.createHash('md5').update(JSON.stringify(el)).digest('hex').slice(0, 8);
-  }
-}
-```
-
-See [reference/ai-snapshots.md](reference/ai-snapshots.md) for the full implementation with selector generation.
-
 ---
 
 ## Security & Sandboxing
@@ -503,15 +397,15 @@ _screenshots/
 
 ## Reference Files
 
-For detailed patterns, templates, and full code, read these files from the `reference/` directory:
+For detailed patterns, templates, and full code, read these files from the `references/` directory:
 
 | File | Contents |
 |------|----------|
-| [reference/playwright-patterns.md](reference/playwright-patterns.md) | Full Playwright setup, pre-flight checks, serving patterns, persistent sessions, breakpoint detection |
-| [reference/visual-regression.md](reference/visual-regression.md) | Pixel-diff scoring, comparison HTML generation, GitHub Actions CI/CD workflow |
-| [reference/interaction-templates.md](reference/interaction-templates.md) | Auth flows, e-commerce flows, state variations, interactive mode, core interaction primitives |
-| [reference/ai-snapshots.md](reference/ai-snapshots.md) | Accessibility tree, DOM snapshots, interactive element maps, incremental DOM diff (full implementation) |
-| [reference/troubleshooting.md](reference/troubleshooting.md) | Common issues by project type (SSG, Next.js, Tailwind, WordPress), full "what not to do" list |
+| [references/playwright-patterns.md](references/playwright-patterns.md) | Full Playwright setup, pre-flight checks, serving patterns, persistent sessions, breakpoint detection, stdin-friendly script templates |
+| [references/visual-regression.md](references/visual-regression.md) | Pixel-diff scoring, comparison HTML generation, GitHub Actions CI/CD workflow |
+| [references/interaction-templates.md](references/interaction-templates.md) | Auth flows, e-commerce flows, state variations, interactive mode, core interaction primitives |
+| [references/ai-snapshots.md](references/ai-snapshots.md) | Accessibility tree, DOM snapshots, interactive element maps, incremental DOM diff with `IncrementalSnapshot` class |
+| [references/troubleshooting.md](references/troubleshooting.md) | Common issues by project type (SSG, Next.js, Tailwind, WordPress), full "what not to do" list |
 
 ---
 

@@ -87,7 +87,7 @@ project/
 
 ### Steps
 
-1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `reference/`, `sessions/` under `.agent-memory/`.
+1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `references/`, `sessions/` under `.agent-memory/`.
 2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), `AGENTS.md` (canonical shared instructions), `CLAUDE.md` (thin pointer to AGENTS.md), `.cursor/rules/agent-memory.mdc` (Cursor rule referencing AGENTS.md).
 3. **Fill in TODOs** in AGENTS.md with project's actual structure and rules.
 4. **Update `index.yaml`** and **report** what was created.
@@ -130,7 +130,7 @@ Capture learnings from the current conversation into memory.
 1. **Review conversation** for: decisions, feedback, conventions, status changes, important context
 2. **For each piece:** update existing memory file or create new one in appropriate `{type}/` directory. Create session log in `sessions/` for significant sessions.
 3. **Source identifier:** `claude-app` | `claude-code` | `vscode` | `craft-agent` | `other`
-4. **Write files** using standard frontmatter format (see [reference/templates.md](reference/templates.md))
+4. **Write files** using standard frontmatter format (see [references/templates.md](references/templates.md))
 5. **Update `index.yaml`** and **report** what was saved/updated
 
 ---
@@ -143,7 +143,7 @@ Combined: ingest external changes **then** save session. Recommended end-of-sess
 
 **Phase 2 — Save:** Run the full Save operation (review, update/create, session log, index).
 
-**Phase 3 — Report:** Single combined report (see [reference/templates.md](reference/templates.md) for format).
+**Phase 3 — Report:** Single combined report (see [references/templates.md](references/templates.md) for format).
 
 ---
 
@@ -155,7 +155,7 @@ Full maintenance: compact, trim stale, fix index, clean old session logs.
 2. **Staleness check:** `context/` >30 days old → ask update/archive/remove. Expired or archived >90 days → suggest deletion.
 3. **Compaction:** Identify content overlap, suggest merges, promote session log patterns to `conventions/` or `decisions/`.
 4. **Session cleanup:** Logs >60 days → extract valuable info elsewhere if needed, then delete.
-5. **Report** with health summary (see [reference/templates.md](reference/templates.md) for format).
+5. **Report** with health summary (see [references/templates.md](references/templates.md) for format).
 
 ---
 
@@ -176,7 +176,7 @@ Quick read-only health check. Count files by type, check index ↔ filesystem sy
 7. **No secrets.** No credentials, PII, or sensitive data in memory files.
 8. **Absolute dates.** Convert "next Thursday" to "2026-03-27" when saving.
 
-For frontmatter schema, memory types, and templates, see [reference/templates.md](reference/templates.md).
+For frontmatter schema, memory types, and templates, see [references/templates.md](references/templates.md).
 
 ---
 
@@ -184,9 +184,9 @@ For frontmatter schema, memory types, and templates, see [reference/templates.md
 
 | File | Contents |
 |------|----------|
-| [reference/templates.md](reference/templates.md) | Session log template, sync/health report templates, frontmatter schema, memory types table |
-| [reference/display-conventions.md](reference/display-conventions.md) | How to render memory files inline (markdown, YAML, JSON, rich previews, guidelines) |
-| [reference/troubleshooting.md](reference/troubleshooting.md) | Common issues by project type (solo, multi-agent, team, monorepo), troubleshooting Q&A |
+| [references/templates.md](references/templates.md) | Session log template, sync/health report templates, frontmatter schema, memory types table |
+| [references/display-conventions.md](references/display-conventions.md) | How to render memory files inline (markdown, YAML, JSON, rich previews, guidelines) |
+| [references/troubleshooting.md](references/troubleshooting.md) | Common issues by project type (solo, multi-agent, team, monorepo), troubleshooting Q&A |
 
 ---
 
