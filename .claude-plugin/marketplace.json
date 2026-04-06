@@ -1,22 +1,23 @@
 {
   "name": "skills4sh",
-  "description": "Agent skills for Claude Code, Cursor, Windsurf, and other AI coding agents",
-  "author": "t4sh",
-  "skills": [
+  "owner": {
+    "name": "t4sh"
+  },
+  "metadata": {
+    "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)"
+  },
+  "plugins": [
     {
-      "name": "agent-memory",
-      "path": "skills/agent-memory",
-      "description": "Use when managing project memory, initializing .agent-memory/, saving session learnings, or running memory maintenance."
-    },
-    {
-      "name": "discord-harvest",
-      "path": "skills/discord-harvest",
-      "description": "Use when extracting and downloading images, links, and files from a Discord conversation."
-    },
-    {
-      "name": "localhost-screenshots",
-      "path": "skills/localhost-screenshots",
-      "description": "Use when taking screenshots of localhost sites, visual regression testing, or responsive breakpoint captures."
+      "name": "skills4sh",
+      "source": ".",
+      "description": "Agent skills: agent-memory (persistent project memory), discord-harvest (Discord content extraction), localhost-screenshots (responsive screenshot capture)",
+      "version": "1.0.0",
+      "author": {
+        "name": "t4sh"
+      },
+      "repository": "https://github.com/t4sh/skills4sh",
+      "license": "MIT",
+      "keywords": ["memory", "screenshots", "discord", "agent-skills"]
     }
   ]
 }

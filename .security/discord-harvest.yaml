@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "1.4.1"
+  version: "1.5.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,11 +13,11 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: be85e123d84c904b6572e163819f26f58711181242d8fca0ceeedbccf6aacaea
+    SKILL.md: b3fce16f72e8ca048664a970dcdd3c8196bba4a686d56897aa15f2e269321dac
     icon.svg: e260db01006e94d9c6fbeccfa34b03a4e7fa390b5250f05c4ebfe3a8ad2dbd51
-    reference/code-examples.md: 8a9ebc21014ab8e063699f4621ac9c031b20c42b487eb6a2c9988f5a44979d66
-    reference/folder-structure.md: 32b7e645198ad01e30e10eeef590e6e61505927e84637bb18a11e794302e293a
-    reference/troubleshooting.md: 9ddb44320ec72ad8951b17fec40cec6de06f33ca2b794c5956a90ec48ca908f0
+    references/code-examples.md: 8a9ebc21014ab8e063699f4621ac9c031b20c42b487eb6a2c9988f5a44979d66
+    references/folder-structure.md: 32b7e645198ad01e30e10eeef590e6e61505927e84637bb18a11e794302e293a
+    references/troubleshooting.md: 9ddb44320ec72ad8951b17fec40cec6de06f33ca2b794c5956a90ec48ca908f0
 
 permissions:
   alwaysAllow: []

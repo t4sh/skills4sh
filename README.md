@@ -1,14 +1,14 @@
 # skills4sh
 
-Agent skills for Claude Code, Cursor, Windsurf, Cline, and other AI coding agents.
+Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 
 ## Skills
 
 | Skill | Description | Version |
 |-------|-------------|---------|
-| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.5.1 |
-| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.4.1 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.0.0 |
+| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.6.0 |
+| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.5.0 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.1.0 |
 
 ## Install
 
@@ -32,12 +32,12 @@ Each skill follows the [Agent Skills specification](https://agentskills.io/speci
 ```
 skills/<skill-name>/
 ├── SKILL.md          # Required: metadata + instructions
-└── reference/        # Supporting documentation
+└── references/       # Supporting documentation
 ```
 
 ## Security
 
-See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability disclosure process, and expected findings.
+See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability disclosure process, and expected findings. Per-skill security manifests live in [`.security/`](.security/).
 
 ### Security scanning
 
