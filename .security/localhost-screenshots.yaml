@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.0.0"
+  version: "3.1.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,12 +13,12 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: 36f6a395500759d0c52b9f9e9088c32b688d24e7a5d014ea1966da59fc0594cc
-    reference/playwright-patterns.md: db82dfec5ac6986d23c609009fd6b3f1c9a1b64f829809ff89e39345de484cca
-    reference/visual-regression.md: 03350151c2a3709768952b77d3bd06bfb77fd761c72f488af1c15cf4ac272bc1
-    reference/interaction-templates.md: b85e5259c5d64057cf5cd1c6b2aeed9fa95f18ccd96f6ecfa1b7ea904d2fe124
-    reference/ai-snapshots.md: 26872bf79640327b7e9770cc4cc9224b51b56af668169de58305588ac19fef0c
-    reference/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
+    SKILL.md: d1ccca451d805987e19655813761de05e4293cf88765d10981bac13184500788
+    references/playwright-patterns.md: ed830f689b21057e5198eb6d8d2eb13326cc5f61cf6b2ea086d1c585a1060f26
+    references/visual-regression.md: 03350151c2a3709768952b77d3bd06bfb77fd761c72f488af1c15cf4ac272bc1
+    references/interaction-templates.md: b85e5259c5d64057cf5cd1c6b2aeed9fa95f18ccd96f6ecfa1b7ea904d2fe124
+    references/ai-snapshots.md: 26872bf79640327b7e9770cc4cc9224b51b56af668169de58305588ac19fef0c
+    references/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
 
 permissions:
   alwaysAllow: []
@@ -57,7 +57,7 @@ scanning:
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
-      file: reference/playwright-patterns.md
+      file: references/playwright-patterns.md
       reason: "False positive — triggered by process.env.HOME/.cache/localhost-screenshots session directory code example. Stores browser state for multi-step workflows, not secrets."
     - id: R009_FILE_STAGE
       severity: low
@@ -69,9 +69,9 @@ scanning:
       reason: "Code examples reference process.env.HOME/USERPROFILE for browser profile directories"
     - id: R008_ENV_ACCESS
       severity: low
-      file: reference/playwright-patterns.md
+      file: references/playwright-patterns.md
       reason: "Code examples reference process.env.HOME/USERPROFILE for session directories"
     - id: R008_ENV_ACCESS
       severity: low
-      file: reference/visual-regression.md
+      file: references/visual-regression.md
       reason: "Code examples reference environment variables for CI configuration"

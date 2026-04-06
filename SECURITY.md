@@ -6,9 +6,9 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 
 | Skill | Version | Supported |
 |-------|---------|-----------|
-| agent-memory | 2.5.1 | Yes |
-| discord-harvest | 1.4.1 | Yes |
-| localhost-screenshots | 3.0.0 | Yes |
+| agent-memory | 2.6.0 | Yes |
+| discord-harvest | 1.5.0 | Yes |
+| localhost-screenshots | 3.1.0 | Yes |
 
 ## Reporting a Vulnerability
 
@@ -23,6 +23,16 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 2. You will receive an acknowledgment within **48 hours**.
 
 3. We aim to provide a fix or mitigation within **7 days** for critical issues.
+
+## Per-Skill Security Manifests
+
+Each skill has a canonical security manifest containing integrity hashes, permission rationale, execution context, and scanning results. These are the source of truth for OWASP compliance auditing.
+
+| Skill | Manifest |
+|-------|----------|
+| agent-memory | [`.security/agent-memory.yaml`](.security/agent-memory.yaml) |
+| discord-harvest | [`.security/discord-harvest.yaml`](.security/discord-harvest.yaml) |
+| localhost-screenshots | [`.security/localhost-screenshots.yaml`](.security/localhost-screenshots.yaml) |
 
 ## OWASP AST10 Compliance
 
@@ -98,7 +108,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | Control | Implementation |
 |---------|----------------|
 | guardskills | agent-memory: SAFE, discord-harvest: SAFE, localhost-screenshots: WARNING (accepted — see [Expected Findings](#expected-security-findings)) |
-| Snyk | Continuous vulnerability scanning (badge in README) |
+| Snyk | Continuous vulnerability scanning via Snyk integration |
 | CodeQL | Static analysis on GitHub Actions (weekly + PR) |
 | guardskills CI | Automated scanning on every PR via `guardskills.yml` workflow |
 
@@ -108,7 +118,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 |---------|----------------|
 | This document | Security policy with disclosure process |
 | PR review checklist | `.github/PULL_REQUEST_TEMPLATE.md` includes security review items |
-| Skill approval workflow | All skill changes require PR review |
+| Skill review workflow | Skill changes should go through PR review; branch protection recommended for team repos |
 | Supported versions | Clear table of which versions receive security updates |
 
 ### AST10 — Cross-Platform Reuse
@@ -116,7 +126,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | Control | Implementation |
 |---------|----------------|
 | Canonical manifest | `.security/<name>.yaml` per skill with unified schema |
-| Platform manifests | `.claude-plugin/marketplace.json` and `.cursor-plugin/plugin.json` generated from canonical source |
+| Platform manifests | `.claude-plugin/marketplace.json` and `.cursor-plugin/plugin.json` aligned with canonical source |
 | Consistent hashes | Same content hashes across all platform representations |
 
 ## Expected Security Findings
@@ -128,9 +138,9 @@ The following findings are expected and documented:
 | Finding | Severity | File(s) | Explanation |
 |---------|----------|---------|-------------|
 | `R005_SECRET_READ` | HIGH/medium | `SKILL.md` | False positive. Triggered by `--user-data-dir=/tmp/chrome-debug` (Chrome CDP debugging flag) and `process.env.HOME \|\| process.env.USERPROFILE, '.cache', 'localhost-screenshots'` (Playwright persistent browser profile path). These are code examples for browser automation — no credentials or secrets are read. The `user-data-dir` is a throwaway temp directory for remote debugging sessions. |
-| `R005_SECRET_READ` | HIGH/medium | `reference/playwright-patterns.md` | False positive. Triggered by `process.env.HOME \|\| process.env.USERPROFILE, '.cache', 'localhost-screenshots'` — a code example showing how to set up persistent browser sessions. Stores browser cookies/localStorage for multi-step screenshot workflows, not secrets. |
+| `R005_SECRET_READ` | HIGH/medium | `references/playwright-patterns.md` | False positive. Triggered by `process.env.HOME \|\| process.env.USERPROFILE, '.cache', 'localhost-screenshots'` — a code example showing how to set up persistent browser sessions. Stores browser cookies/localStorage for multi-step screenshot workflows, not secrets. |
 | `R009_FILE_STAGE` | LOW | `SKILL.md` | Triggered by `/tmp/chrome-debug` in the CDP debugging code example. This is a standard Chrome flag for isolated debugging profiles, not malicious temp file staging. |
-| `R008_ENV_ACCESS` | LOW | `SKILL.md`, `reference/playwright-patterns.md`, `reference/visual-regression.md` | Code examples reference `process.env.HOME`/`USERPROFILE` for browser profile and session directories. |
+| `R008_ENV_ACCESS` | LOW | `SKILL.md`, `references/playwright-patterns.md`, `references/visual-regression.md` | Code examples reference `process.env.HOME`/`USERPROFILE` for browser profile and session directories. |
 
 ## Security Scanning
 
@@ -142,11 +152,12 @@ npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run
 npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
 npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run
 
-# Verify content hashes
+# Verify content hashes (includes references/ subdirectory)
 for skill in agent-memory discord-harvest localhost-screenshots; do
   echo "=== $skill ==="
-  for f in skills/$skill/*; do
-    [ -f "$f" ] && echo "  $(basename $f): $(shasum -a 256 "$f" | cut -d' ' -f1)"
+  find "skills/$skill" -type f -not -name '.DS_Store' | sort | while read -r f; do
+    relpath="${f#skills/$skill/}"
+    echo "  $relpath: $(shasum -a 256 "$f" | cut -d' ' -f1)"
   done
 done
 ```

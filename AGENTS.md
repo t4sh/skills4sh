@@ -8,7 +8,7 @@ This is a mono-repo of agent skills. Each skill lives in `skills/<skill-name>/` 
    - **Global**: `~/.claude/skills/<skill-name>/`
    - **Project**: `./.claude/skills/<skill-name>/`
 2. Check for older installations (remove symlinks silently; ask before overwriting directories).
-3. **Copy** the skill folder contents (`SKILL.md` and `reference/`) to the destination.
+3. **Copy** the skill folder contents (`SKILL.md` and `references/`) to the destination.
 4. Show: **Installation complete!** The skill will now be loaded from `<path>`. Refresh or restart your session for changes to take effect.
 
 Always **copy**, never symlink.

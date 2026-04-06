@@ -1,7 +1,12 @@
 {
   "name": "skills4sh",
-  "description": "Agent skills for Cursor and other AI coding agents",
-  "author": "t4sh",
+  "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)",
+  "version": "1.0.0",
+  "author": {
+    "name": "t4sh"
+  },
+  "repository": "https://github.com/t4sh/skills4sh",
+  "license": "MIT",
   "skills": [
     {
       "name": "agent-memory",
