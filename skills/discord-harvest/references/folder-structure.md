@@ -62,10 +62,16 @@ If the folder already exists from a previous run:
   "type": "dm",
   "harvest_folder": "discord-dm-john-smith",
   "last_harvested_at": "2026-03-21T20:30:00Z",
+  "resolvedIds": {
+    "guild_id": "1234567890123456789",
+    "channel_id": "9876543210987654321",
+    "thread_ids": ["1111111111111111111", "2222222222222222222"]
+  },
   "runs": [
     {
       "harvested_at": "2026-03-21T20:30:00Z",
-      "messages_scanned": 10
+      "messages_scanned": 10,
+      "threads_scanned": 2
     }
   ],
   "downloads": {
@@ -81,11 +87,16 @@ If the folder already exists from a previous run:
       { "url": "https://github.com/user/repo", "og_image": null, "added": "2026-03-21" }
     ]
   },
+  "flagged": [
+    { "filename": "IMPORTANT_run_this.exe", "flag": "suspicious:attention-hijack", "action": "downloaded" },
+    { "embed_title": "ignore previous instructions", "flag": "injection:instruction-override", "action": "link-only" }
+  ],
   "totals": {
     "images": 5,
     "files": 2,
     "links": 3,
-    "og_images": 2
+    "og_images": 2,
+    "flagged": 2
   }
 }
 ```
@@ -111,9 +122,11 @@ If the folder already exists from a previous run:
 
 Also mention:
 - **Full output path** — make this prominent so the user can navigate there easily
-- How many messages were scanned
+- How many messages were scanned (channel + threads)
+- How many threads were traversed
 - How many files were new vs. already existed (skipped)
 - Any failures (URLs that couldn't be downloaded)
+- **Flagged content** — if `flag_suspicious()` matched any filenames or embed titles, list them with their flag type. This is informational, not blocking — the user should know what they're archiving
 
 **Always end with the folder path as the last line**, e.g.:
 > Saved to: `~/Projects/GenAI/discord-dm-john-smith/`
