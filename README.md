@@ -7,7 +7,7 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 | Skill | Description | Version |
 |-------|-------------|---------|
 | [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.6.1 |
-| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.5.2 |
+| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.6.0 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.1.1 |
 
 ## Install

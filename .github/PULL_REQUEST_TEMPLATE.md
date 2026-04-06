@@ -8,7 +8,7 @@ Complete this checklist for any PR that modifies files under `skills/`:
 
 ### Permissions (AST03)
 - [ ] `alwaysAllow` in SKILL.md lists only the minimum required permissions
-- [ ] Every permission has a rationale in `metadata.permissions_rationale`
+- [ ] Every permission has a rationale in `.security/<name>.yaml` `permissions.rationale`
 - [ ] No new `Bash` or `Write` permissions added without justification
 
 ### Integrity (AST01/AST02)
@@ -23,7 +23,7 @@ Complete this checklist for any PR that modifies files under `skills/`:
 - [ ] No misleading descriptions or impersonation of other tools
 
 ### Isolation (AST06)
-- [ ] `metadata.execution_context` accurately reflects network and filesystem needs
+- [ ] `.security/<name>.yaml` `execution_context` accurately reflects network and filesystem needs
 - [ ] No new network access beyond what's documented
 - [ ] Install scripts restricted to `.claude/skills/` destination paths
 
