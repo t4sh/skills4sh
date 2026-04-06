@@ -57,6 +57,6 @@ if [ "$errors" -gt 0 ]; then
   echo ""
   echo "Hash verification failed for $errors skill(s)"
   echo "Run: shasum -a 256 skills/<skill>/<file> to get current hashes"
-  echo "Then update skills-lock.json and skill-manifest.yaml"
+  echo "Then update skills-lock.json and .security/<name>.yaml"
   exit 1
 fi

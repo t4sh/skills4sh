@@ -6,9 +6,9 @@ Agent skills for Claude Code, Cursor, Windsurf, Cline, and other AI coding agent
 
 | Skill | Description | Version |
 |-------|-------------|---------|
-| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.2 |
-| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.0.0 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 1.0.0 |
+| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.5.1 |
+| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.4.1 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.0.0 |
 
 ## Install
 
