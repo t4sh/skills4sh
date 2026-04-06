@@ -11,6 +11,14 @@ metadata:
 
 # Localhost Screenshots
 
+## Installation
+
+```bash
+npx skills add t4sh/skills4sh --skill localhost-screenshots
+```
+
+---
+
 This skill captures screenshots of locally running websites. It supports two primary approaches depending on the task:
 
 - **Chrome MCP** — for quick debugging, single screenshots, and interactive verification
@@ -116,336 +124,71 @@ mcp__Claude_in_Chrome__javascript_tool({
 
 Use Playwright for automated, repeatable screenshot sets across all breakpoints. This is the right tool for visual regression testing and comprehensive responsive documentation.
 
-### 1. Golden Rules
+### Golden Rules
 
-**1. Always use Playwright's bundled Chromium. Never use Puppeteer, Selenium, or system Chrome.** Do not check for installed browsers. Playwright ships its own Chromium.
+1. **Always use Playwright’s bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
+2. **NEVER open HTML files via `file://` paths.** Always serve them over HTTP — relative CSS/JS paths won’t resolve without a server.
 
-**2. NEVER open HTML files via `file://` paths. Always serve them over HTTP.** This is the #1 cause of unstyled screenshots. Relative CSS/JS paths won't resolve without an HTTP server.
-
-### 2. Serving the Site (CRITICAL for Playwright)
-
-Before taking Playwright screenshots, ensure the site is served over HTTP.
-
-**If the user's dev server is already running** (they told you the port, or you can confirm it):
-```js
-const BASE_URL = 'http://localhost:8080'; // use their port
-```
-
-**If you have the built output directory** (e.g., 11ty's `_site/` folder):
-```bash
-npx serve _site -l 3000 &
-```
-Then use `http://localhost:3000` as the base URL.
-
-**If you need to build and serve** (project source is available but not built):
-```bash
-npx @11ty/eleventy                    # build the site
-npx serve _site -l 3000 &            # serve the output
-```
-
-**Remote or sandboxed agent environments** (VM, hosted agent, CI runner) where the developer’s machine `localhost` is not the same network as the agent:
-The agent may not reach `http://localhost:<port>` on the user’s laptop. Build or serve the site **inside the environment** (or from the mounted workspace) and probe the URL from there. Never assume a port is reachable — test with a quick `goto` first.
-
-### 3. Verifying the Server Is Up Before Screenshotting
-
-Always confirm the server is responding before taking screenshots:
-```js
-const testPage = await browser.newPage();
-try {
-  const response = await testPage.goto(BASE_URL, { timeout: 5000 });
-  if (!response || !response.ok()) {
-    throw new Error(`Server returned ${response?.status()}`);
-  }
-  const stylesheetCount = await testPage.evaluate(
-    () => document.querySelectorAll('link[rel="stylesheet"], style').length
-  );
-  if (stylesheetCount === 0) {
-    console.warn('WARNING: No stylesheets detected — page may render unstyled');
-  }
-} finally {
-  await testPage.close();
-}
-```
-
-### 4. Setup (run once per session)
+### Setup (run once per session)
 
 ```bash
-npm install playwright@latest 2>/dev/null
+node -e “require(‘playwright’)” 2>/dev/null || npm install playwright 2>/dev/null
 npx playwright install --with-deps chromium
 ```
 
-That's it. No `apt-get install chromium`, no `which google-chrome`. Playwright handles everything.
+Do not use `@latest` — let the project’s lockfile control the version.
 
-### 5. Standard Breakpoints
+### Quick workflow
 
-Every screenshot task captures **all standard breakpoints** unless the user explicitly asks for a single size.
+1. Ensure the site is served over HTTP (user’s dev server, or `npx serve _site -l 3000 &`).
+2. Verify the server responds before screenshotting (see [playwright-patterns.md](references/playwright-patterns.md) § “Verifying the Server”).
+3. Capture all 8 standard breakpoints (320–1920px) unless the user asks for specific sizes. Check the project’s CSS/Tailwind config for custom breakpoints first.
+4. Save to `_screenshots/` in the project folder.
 
-```js
-const BREAKPOINTS = [
-  { name: 'mobile-sm',  width: 320,  height: 568  },  // iPhone SE / small phones
-  { name: 'mobile',     width: 375,  height: 812  },  // iPhone X / standard phones
-  { name: 'mobile-lg',  width: 428,  height: 926  },  // iPhone Pro Max / large phones
-  { name: 'tablet',     width: 768,  height: 1024 },  // iPad / portrait tablet
-  { name: 'tablet-lg',  width: 1024, height: 1366 },  // iPad Pro / landscape tablet
-  { name: 'desktop',    width: 1280, height: 800  },  // Standard laptop
-  { name: 'desktop-lg', width: 1440, height: 900  },  // Large laptop
-  { name: 'wide',       width: 1920, height: 1080 },  // Full HD monitor
-];
-```
+For the **canonical screenshot script**, **standard breakpoints array**, **serving patterns**, **server verification**, **waiting for dynamic content**, **element screenshots**, **persistent sessions**, and **when the dev server isn’t running** — see [references/playwright-patterns.md](references/playwright-patterns.md).
 
-If the user's project has custom breakpoints (check their CSS for `@media` queries, or their tailwind config for `screens`), use those instead of or in addition to the defaults.
-
-### 6. Canonical Screenshot Script
-
-```js
-const { chromium } = require('playwright');
-const fs = require('fs');
-const path = require('path');
-
-const BASE_URL = 'http://localhost:8080'; // adjust port as needed
-
-const BREAKPOINTS = [
-  { name: 'mobile-sm',  width: 320,  height: 568  },
-  { name: 'mobile',     width: 375,  height: 812  },
-  { name: 'mobile-lg',  width: 428,  height: 926  },
-  { name: 'tablet',     width: 768,  height: 1024 },
-  { name: 'tablet-lg',  width: 1024, height: 1366 },
-  { name: 'desktop',    width: 1280, height: 800  },
-  { name: 'desktop-lg', width: 1440, height: 900  },
-  { name: 'wide',       width: 1920, height: 1080 },
-];
-
-const ROUTES = ['/']; // add routes as needed: '/about', '/blog', etc.
-
-(async () => {
-  const browser = await chromium.launch();
-  // Before/after: use '_screenshots/before' then '_screenshots/after' (same ROUTES/BREAKPOINTS).
-  const outDir = '_screenshots';
-
-  for (const route of ROUTES) {
-    const routeName = route === '/' ? 'home' : route.slice(1).replace(/\//g, '-');
-    const routeDir = path.join(outDir, routeName);
-    fs.mkdirSync(routeDir, { recursive: true });
-
-    for (const bp of BREAKPOINTS) {
-      const page = await browser.newPage();
-      await page.setViewportSize({ width: bp.width, height: bp.height });
-      await page.goto(`${BASE_URL}${route}`, { waitUntil: 'networkidle' });
-      await page.screenshot({
-        path: path.join(routeDir, `${bp.name}-${bp.width}x${bp.height}.png`),
-        fullPage: true,
-      });
-      await page.close();
-    }
-  }
-
-  await browser.close();
-  console.log(`Done. Screenshots saved to ${outDir}/`);
-})();
-```
-
-### 7. Key API Details
-
-- `chromium.launch()` — no arguments needed, uses Playwright's bundled Chromium
-- `waitUntil: 'networkidle'` — no network for ~500ms; good for static sites. **SPAs, analytics, websockets, or long-polling** often never go “idle” — prefer `load` or `domcontentloaded` plus `waitForSelector` / image waits (see **10. Waiting for Content**).
-- `fullPage: true` — captures the entire scrollable page, not just the viewport
-- `page.setViewportSize()` — set before navigating for accurate responsive rendering
-- Create a **new page per breakpoint** — ensures clean rendering without leftover state
-
-### 8. Output Location
-
-**Always save screenshots to `_screenshots/` in the current project folder.** This is a convention — not negotiable.
+### Output structure
 
 ```
 _screenshots/
   home/
     mobile-sm-320x568.png
     mobile-375x812.png
-    mobile-lg-428x926.png
-    tablet-768x1024.png
-    tablet-lg-1024x1366.png
-    desktop-1280x800.png
-    desktop-lg-1440x900.png
+    ...
     wide-1920x1080.png
   about/
-    mobile-sm-320x568.png
     ...
 ```
 
-### 9. Before/After Visual Comparison
+### Before/after visual comparison
 
-The canonical script (§6) writes PNGs under `_screenshots/<route>/<breakpoint>.png`. For before/after, use **the same script twice** with different output roots so directory trees match.
+Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), then generate a comparison HTML. For the comparison script and pixel-diff scoring, see [references/visual-regression.md](references/visual-regression.md).
 
-```js
-const fs = require('fs');
-const path = require('path');
+### Key API notes
 
-function collectRelPngs(absDir, base = absDir) {
-  const out = [];
-  for (const ent of fs.readdirSync(absDir, { withFileTypes: true })) {
-    const p = path.join(absDir, ent.name);
-    if (ent.isDirectory()) out.push(...collectRelPngs(p, base));
-    else if (ent.name.endsWith('.png')) out.push(path.relative(base, p));
-  }
-  return out.sort();
-}
-
-function generateComparison(beforeRoot, afterRoot, outputPath) {
-  const rels = collectRelPngs(beforeRoot).filter((rel) =>
-    fs.existsSync(path.join(afterRoot, rel))
-  );
-  const outDir = path.dirname(outputPath);
-
-  const html = `<!DOCTYPE html><html><head>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; background: #f5f5f5; }
-  h1 { margin-bottom: 24px; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;
-          background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .pair h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
-  .pair img { width: 100%; border: 1px solid #eee; border-radius: 4px; }
-  .breakpoint-label { font-size: 18px; font-weight: 600; margin: 24px 0 12px; color: #333; }
-</style></head><body>
-<h1>Visual Comparison</h1>
-${rels
-  .map((rel) => {
-    const label = rel.replace(/\.png$/i, '');
-    const beforeSrc = path.relative(outDir, path.join(beforeRoot, rel));
-    const afterSrc = path.relative(outDir, path.join(afterRoot, rel));
-    return `<div class="breakpoint-label">${label}</div>
-<div class="pair">
-  <div><h3>Before</h3><img src="${beforeSrc}"></div>
-  <div><h3>After</h3><img src="${afterSrc}"></div>
-</div>`;
-  })
-  .join('\n')}
-</body></html>`;
-
-  fs.writeFileSync(outputPath, html);
-}
-```
-
-#### Workflow for before/after
-
-1. Set `outDir` to `_screenshots/before` (same `ROUTES` / `BREAKPOINTS` as §6), run the script.
-2. User makes their changes.
-3. Set `outDir` to `_screenshots/after`, run again.
-4. `generateComparison('_screenshots/before', '_screenshots/after', '_screenshots/compare.html')`
-
-### 10. Waiting for Content
-
-If the page has dynamic content or lazy-loaded images:
-
-```js
-// Wait for a specific element
-await page.waitForSelector('.hero-image', { timeout: 10000 });
-
-// Wait for all images to load
-await page.evaluate(() => {
-  return Promise.all(
-    Array.from(document.images)
-      .filter(img => !img.complete)
-      .map(img => new Promise(resolve => {
-        img.onload = img.onerror = resolve;
-      }))
-  );
-});
-
-// Last resort: short delay (avoid page.waitForTimeout — deprecated in newer Playwright)
-await new Promise((r) => setTimeout(r, 500));
-```
-
-### 11. Screenshot a Specific Element
-
-```js
-const element = await page.locator('.main-content');
-await element.screenshot({ path: 'content-only.png' });
-```
-
-### 12. Detecting Project Breakpoints
-
-Before using the default breakpoints, check if the project defines its own:
-
-```bash
-# Tailwind: check tailwind.config.js for custom screens
-grep -r "screens" tailwind.config.* 2>/dev/null
-
-# CSS: find @media breakpoints
-grep -roh '@media.*max-width:\s*[0-9]*px' src/ --include="*.css" 2>/dev/null | sort -u
-grep -roh '@media.*min-width:\s*[0-9]*px' src/ --include="*.css" 2>/dev/null | sort -u
-```
-
-### 13. When the Dev Server Isn't Running
-
-If no server is running, you need to serve the files yourself:
-
-**Option A: Serve a pre-built output directory (fastest)**
-
-```js
-const { exec } = require('child_process');
-
-const server = exec('npx serve _site -l 3000 --no-clipboard', { cwd: projectDir });
-const BASE_URL = 'http://localhost:3000';
-
-let ready = false;
-for (let i = 0; i < 15; i++) {
-  try {
-    const testPage = await browser.newPage();
-    await testPage.goto(BASE_URL, { timeout: 2000 });
-    await testPage.close();
-    ready = true;
-    break;
-  } catch {
-    await new Promise(r => setTimeout(r, 1000));
-  }
-}
-if (!ready) throw new Error('HTTP server failed to start within 15s');
-
-// ... take screenshots ...
-
-server.kill();
-```
-
-**Option B: Build and serve**
-
-```js
-const { execSync, exec } = require('child_process');
-execSync('npx @11ty/eleventy', { cwd: projectDir, stdio: 'inherit' });
-const server = exec('npx serve _site -l 3000 --no-clipboard', { cwd: projectDir });
-// ... same wait loop as above ...
-```
-
-### 14. Troubleshooting
-
-If `npx playwright install --with-deps chromium` fails:
-```bash
-npx playwright install chromium
-sudo npx playwright install-deps chromium
-```
-
-If the site uses self-signed HTTPS locally:
-```js
-const context = await browser.newContext({ ignoreHTTPSErrors: true });
-const page = await context.newPage();
-```
+- `chromium.launch()` — no arguments, uses Playwright’s bundled Chromium
+- `waitUntil: ‘networkidle’` — good for static sites. SPAs with analytics/websockets may never go idle — use `load` + `waitForSelector` instead
+- `fullPage: true` — captures entire scrollable page
+- Create a **new page per breakpoint** — avoids leftover state
+- `page.setViewportSize()` — set before navigating for accurate responsive rendering
 
 ---
 
 ## What NOT to Do
 
-- **Do not use Puppeteer** — it's a separate headless browser that can't reach localhost from sandbox
-- **Do not use JSDOM** — missing browser APIs (matchMedia, IntersectionObserver, sessionStorage)
-- Do not look for system Chrome or Chromium installations
-- Do not use `google-chrome`, `chromium-browser`, or any system binary
-- Do not use Selenium or WebDriver
-- Do not use `capture-website-cli` or similar npm screenshot wrappers
-- Do not check for `CHROME_PATH` or `PUPPETEER_EXECUTABLE_PATH` environment variables
-- Do not install Chrome via apt, snap, or any package manager
-- Do not take screenshots at only one viewport size (always capture all breakpoints unless explicitly told otherwise)
-- **Do not open HTML files via `file://` paths** — CSS/JS paths won't resolve without an HTTP server
-- Do not assume the user's host `localhost` is reachable from a sandboxed VM — always verify connectivity first
-- **Do not waste time on Puppeteer → serve → connect workarounds** when Chrome MCP is already connected
+See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT to Do" for the full list. Key items: no Puppeteer, no JSDOM, no system Chrome binaries, no `file://` paths, always capture all breakpoints.
+
+---
+
+## Related Skills
+
+**Built-in (Claude Code):**
+- **dev-browser** — browser automation with persistent page state. Useful for interactive captures and manual navigation before screenshotting
+
+**On skills.sh:**
+- **[screenshot-local](https://skills.sh/antjanus/skillbox/screenshot-local)** — shot-scraper (Playwright-based) for localhost captures with custom viewports, element targeting, and batch YAML configs. Lighter-weight alternative when you don't need the full regression pipeline
+- **[visual-regression-tester](https://skills.sh/patricio0312rev/skills/visual-regression-tester)** — automated visual regression via Playwright, Chromatic, or Percy with multi-viewport and CI/CD. Complements the pixel-diff reference in this skill
+- **[playwright-responsive-screenshots](https://skills.sh/dawiddutoit/custom-claude/playwright-responsive-screenshots)** — responsive breakpoint captures at mobile/tablet/desktop via Playwright. Same core use case with a simpler scope
 
 ---
 
