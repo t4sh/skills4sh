@@ -17,7 +17,7 @@ for dir in skills/*/; do
     continue
   fi
 
-  # Extract file list and expected hashes, then verify each
+  # Verify computedHash of SKILL.md against lock file
   python3 << PYEOF
 import json, hashlib, sys, os
 
@@ -28,7 +28,28 @@ skill = lock["skills"]["$name"]
 skill_dir = "skills/$name"
 ok = True
 
-for relpath, expected_hash in skill.get("files", {}).items():
+# Check computedHash (SHA-256 of SKILL.md)
+expected_hash = skill.get("computedHash")
+if not expected_hash:
+    print("  ERROR: no computedHash in lock file")
+    sys.exit(1)
+
+skill_file = os.path.join(skill_dir, "SKILL.md")
+if not os.path.exists(skill_file):
+    print(f"  ERROR: SKILL.md missing from {skill_dir}")
+    sys.exit(1)
+
+with open(skill_file, "rb") as fh:
+    actual = hashlib.sha256(fh.read()).hexdigest()
+
+if actual != expected_hash:
+    print(f"  ERROR: SKILL.md hash mismatch")
+    print(f"    expected: {expected_hash}")
+    print(f"    actual:   {actual}")
+    ok = False
+
+# Also verify per-file hashes if present
+for relpath, file_hash in skill.get("files", {}).items():
     filepath = os.path.join(skill_dir, relpath)
     if not os.path.exists(filepath):
         print(f"  ERROR: {relpath} listed in lock but missing from disk")
@@ -36,9 +57,9 @@ for relpath, expected_hash in skill.get("files", {}).items():
         continue
     with open(filepath, "rb") as fh:
         actual = hashlib.sha256(fh.read()).hexdigest()
-    if actual != expected_hash:
+    if actual != file_hash:
         print(f"  ERROR: {relpath} hash mismatch")
-        print(f"    expected: {expected_hash}")
+        print(f"    expected: {file_hash}")
         print(f"    actual:   {actual}")
         ok = False
 
