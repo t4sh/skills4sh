@@ -185,8 +185,8 @@ await page.evaluate(() => {
   );
 });
 
-// Last resort: fixed delay after networkidle
-await page.waitForTimeout(500);
+// Last resort: short delay (avoid page.waitForTimeout — deprecated in newer Playwright)
+await new Promise((r) => setTimeout(r, 500));
 ```
 
 ## Screenshot a Specific Element

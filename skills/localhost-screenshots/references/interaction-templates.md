@@ -66,7 +66,7 @@ const fs = require('fs');
   fs.mkdirSync('_screenshots/settings', { recursive: true });
   for (const bp of BREAKPOINTS) {
     await page.setViewportSize({ width: bp.width, height: bp.height });
-    await page.waitForTimeout(300); // let layout reflow
+    await new Promise((r) => setTimeout(r, 300)); // let layout reflow
     await page.screenshot({
       path: `_screenshots/settings/${bp.name}-${bp.width}x${bp.height}.png`,
       fullPage: true,

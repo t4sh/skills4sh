@@ -6,9 +6,9 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 
 | Skill | Version | Supported |
 |-------|---------|-----------|
-| agent-memory | 2.6.0 | Yes |
-| discord-harvest | 1.5.0 | Yes |
-| localhost-screenshots | 3.1.0 | Yes |
+| agent-memory | 2.6.1 | Yes |
+| discord-harvest | 1.5.2 | Yes |
+| localhost-screenshots | 3.1.1 | Yes |
 
 ## Reporting a Vulnerability
 
