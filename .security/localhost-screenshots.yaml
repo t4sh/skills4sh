@@ -44,30 +44,17 @@ dependencies:
     reason: "Required only for pixel-diff visual regression comparisons"
 
 scanning:
-  guardskills: WARNING
-  guardskills_risk_score: 43
-  guardskills_note: "All HIGH findings are false positives from code examples in documentation"
+  guardskills: SAFE
+  guardskills_risk_score: 21.5
+  guardskills_note: "All findings are false positives from code examples in reference documentation"
   snyk: pass
   codeql: pass
   expected_findings:
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
-      file: SKILL.md
-      reason: "False positive — triggered by --user-data-dir=/tmp/chrome-debug (Chrome CDP flag) and process.env.HOME/.cache/ (Playwright persistent browser profile path). Code examples only, no secrets read."
-    - id: R005_SECRET_READ
-      severity: high
-      confidence: medium
       file: references/playwright-patterns.md
       reason: "False positive — triggered by process.env.HOME/.cache/localhost-screenshots session directory code example. Stores browser state for multi-step workflows, not secrets."
-    - id: R009_FILE_STAGE
-      severity: low
-      file: SKILL.md
-      reason: "Triggered by /tmp/chrome-debug in CDP code example. Standard Chrome debugging flag, not malicious temp staging."
-    - id: R008_ENV_ACCESS
-      severity: low
-      file: SKILL.md
-      reason: "Code examples reference process.env.HOME/USERPROFILE for browser profile directories"
     - id: R008_ENV_ACCESS
       severity: low
       file: references/playwright-patterns.md
