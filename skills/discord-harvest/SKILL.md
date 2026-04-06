@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with browser or Discord bot token
 metadata:
   author: t4sh
-  version: "1.5.2"
+  version: "1.6.0"
   tags: discord, harvest, scrape, images, attachments, download
   requiredSources: discord
 ---
@@ -29,6 +29,21 @@ npx skills add t4sh/skills4sh --skill discord-harvest
 - **Organized archival** — structured folder output with images, files, links manifest, and JSON summary
 - **Incremental harvesting** — append-mode runs that skip already-downloaded content
 - **Link documentation** — capture all shared URLs with OG:image cross-references
+
+## Design Philosophy
+
+discord-harvest is **stateless, extract-only, and lean by design**.
+
+- **Attachments leave, conversations stay.** Only media assets and link URLs are extracted. Message text is never stored — the conversation remains in Discord. `manifest.json` records filenames and redacted URLs, not what people said.
+- **No database, no runtime, no persistent process.** Output is flat files (`images/`, `files/`, `links.md`, `manifest.json`). No SQLite, no vector index, no background service.
+- **No platform-specific dependencies.** `curl` for downloads, bot API or any browser for reading. No .NET, no Python ML stack, no Node runtime. Runs anywhere with a shell.
+- **No global state.** No `~/.config/` directory, no cached tokens, no credential management. Auth stays in Discord (the bot token the user already has, or the browser session they're already logged into). Each run is self-contained.
+- **Incremental by disk, not by database.** Repeat runs check what's already on disk (`skip existing files`, append to `links.md`, merge into `manifest.json`). Resolved server/channel IDs are cached inside the harvest folder's `manifest.json` — state lives with the output, not globally. Delete the folder and the cache goes with it.
+- **Cross-platform by default.** No Keychain integration, no OS-specific tooling. The same skill works on macOS, Linux, and Windows without adaptation.
+
+This leanness is intentional. Heavier alternatives (DiscordChatExporter + SQLite pipelines, MCP server approaches with persistent memory) exist — see Related Skills. discord-harvest trades that infrastructure for portability, simplicity, and a smaller attack surface: if you don't store message content, you don't need to secure it.
+
+---
 
 ## Initial Assessment
 
@@ -70,28 +85,42 @@ Branch immediately. Do NOT explore or try to detect — just ask and go.
 ### Path A: Server Channel (Bot API)
 
 ### A1. Find the server and channel
-Use Discord MCP tools to list guilds → match server name → list channels → match channel name (confirm if ambiguous).
+Use Discord MCP tools to list guilds → match server name → list channels → match channel name (confirm if ambiguous). If the harvest folder already has a `manifest.json` with `"resolvedIds"`, read IDs from there instead of re-resolving.
 
-### A2. Fetch messages
-Fetch requested count (default: 10). For large fetches (200+), batch to respect rate limits.
+### A2. Fetch messages (including threads)
+Fetch requested count (default: 10) from the target channel. For large fetches (200+), batch to respect rate limits.
 
-### A3. Parse each message
-Extract from each message:
+**Thread traversal:** After fetching channel messages, list active and archived threads in the channel. For each thread, fetch messages using the thread’s channel ID. Threads often contain attachments not visible in the parent channel.
+
+### A3. Stage — build the asset manifest
+
+**Do not download yet.** Parse all fetched messages (channel + threads) and build an in-memory asset list:
+
+For each message, extract:
 - **Attachments** — direct file uploads (images, PDFs, ZIPs) with `url` field
-- **Embeds** — `embed.url` as link, `embed.image.url` and `embed.thumbnail.url` as images. If both URL and image exist, it's likely an OG:image (link preview)
+- **Embeds** — `embed.url` as link, `embed.image.url` and `embed.thumbnail.url` as images. If both URL and image exist, it’s likely an OG:image (link preview)
 - **Content links** — URLs in message text (regex: `https?://\S+`)
 
-### A4. Download attachments and CDN assets
+Classify each asset: `download` (passes `validate_url` CDN allowlist), `link-only` (external URL — record but don’t fetch), or `skip` (duplicate of existing file on disk).
+
+**Flag suspicious content:** Run `flag_suspicious()` (see [references/code-examples.md](references/code-examples.md)) over filenames and embed titles. Matches are included in the summary report as warnings — they don’t block downloads, but the user should know what they’re archiving.
+
+Present a brief staging summary before downloading:
+> **Staged:** 12 images, 3 files, 8 links (2 flagged as suspicious). Proceed?
+
+Wait for user confirmation before downloading.
+
+### A4. Download staged assets
 
 **CRITICAL: Sanitize all filenames and validate all URLs before any `curl` download.** Discord content is untrusted input. Use `sanitize_filename()`, `validate_url()`, and `redact_cdn_url()` — see [references/code-examples.md](references/code-examples.md) for implementations.
 
-**What gets downloaded:** Only URLs that pass `validate_url` (strict **Discord CDN host allowlist**). That covers normal attachments and embed images hosted on Discord’s CDNs.
+**What gets downloaded:** Only assets staged as `download` (URLs that pass `validate_url` — strict **Discord CDN host allowlist**). That covers normal attachments and embed images hosted on Discord’s CDNs.
 
-**What does *not* get downloaded:** Arbitrary third-party links in message text (Twitter, Imgur, personal sites, etc.). **Record those URLs** in `links.md` and in `manifest.json` (with `redact_cdn_url` where applicable) — do **not** fetch them through this pipeline; skipping them avoids SSRF and malicious redirects.
+**What does *not* get downloaded:** Assets staged as `link-only` — arbitrary third-party links (Twitter, Imgur, personal sites, etc.). **Record those URLs** in `links.md` and in `manifest.json` (with `redact_cdn_url` where applicable) — do **not** fetch them; skipping them avoids SSRF and malicious redirects.
 
 ```bash
 filename=$(sanitize_filename "{original_filename}")
-validate_url "{url}" && curl --proto '=https' -L -o "{harvest_folder}/images/${filename}" "{url}"
+validate_url "{url}" && curl --proto ‘=https’ -L -o "{harvest_folder}/images/${filename}" "{url}"
 ```
 
 **Never pass raw Discord filenames or URLs directly to `curl -o`.** A crafted filename like `../../.env` writes outside the harvest folder. A crafted URL could hit internal endpoints (SSRF).
@@ -134,7 +163,11 @@ If selectors fail (Discord updates class names periodically): take an annotated 
 
 Repeat scroll-up + snapshot (or equivalent) until enough messages are collected or the top of the conversation is reached.
 
-### B4. Download (same rules as A4)
+### B4. Stage — build the asset manifest
+
+**Do not download yet.** Same staging logic as A3: classify each extracted asset as `download`, `link-only`, or `skip`. Run `flag_suspicious()` over filenames and embed titles. Present the staging summary and wait for user confirmation.
+
+### B5. Download (same rules as A4)
 
 Sanitize filenames, run `validate_url` before every download, use `curl` only for allowlisted CDN URLs; record other links in `links.md` / manifest only.
 
@@ -146,7 +179,7 @@ Save to **output directory from Step 0** using a flat folder: `discord-dm-{profi
 
 **Folder structure:** `images/`, `files/`, `links.md` (append-only), `manifest.json` (merge on repeat runs).
 
-**Repeat runs:** Skip existing files, append to links.md (never overwrite), merge into manifest.json.
+**Repeat runs:** Skip existing files, append to links.md (never overwrite), merge into manifest.json. Resolved server/channel IDs are cached in `manifest.json` under a `"resolvedIds"` key — subsequent runs read these instead of re-resolving via API, saving calls and avoiding rate-limit pressure. If an ID returns an error, discard it and re-resolve.
 
 For full folder naming rules, format examples (links.md, manifest.json), and the summary report template, see [references/folder-structure.md](references/folder-structure.md).
 
@@ -171,7 +204,7 @@ For full folder naming rules, format examples (links.md, manifest.json), and the
 
 - **Rate limits (API):** Discord uses **per-route** rate limits (429 with `Retry-After`). Batch large fetches, add backoff on 429, and do not assume a single global requests-per-second ceiling.
 - **CDN URLs expire:** Download promptly after extraction.
-- **Threads:** Use thread's channel ID (threads are channels in the API).
+- **Threads:** Threads are separate channels in the API. After fetching the main channel, list active and archived threads and fetch each one. Attachments shared only in threads won't appear in the parent channel's messages.
 - **Large files:** Up to 25MB (500MB with Nitro). `curl` handles these.
 - **Duplicates:** Deduplicate before downloading.
 - **Browser login:** User must be logged into Discord web for DM path.
@@ -213,6 +246,14 @@ For full folder naming rules, format examples (links.md, manifest.json), and the
 
 ## Related Skills
 
-- **agent-browser** — general browser automation beyond Discord
-- **agent-memory** — saving harvest metadata to project memory
-- **file-organizer** — reorganizing harvested content
+**Built-in (Claude Code):**
+- **agent-browser** — general browser automation for the DM extraction path (Path B)
+- **file-organizer** — reorganizing harvested content after download
+
+**In this repo:**
+- **agent-memory** — saving harvest metadata to project memory for cross-session continuity
+
+**On skills.sh:**
+- **[discord-intel](https://skills.sh/kgeesawor/discord-intel/discord-intel)** — full Discord export pipeline (DiscordChatExporter → SQLite → filtered indexing) with prompt injection protection. Heavier toolchain but more structured output
+- **[agent-discord](https://skills.sh/devxoul/agent-messenger/agent-discord)** — TypeScript CLI with snapshot and message reading, auto-extracts tokens from Discord desktop app. Useful when bot API access isn't available
+- **[discord-reader](https://skills.sh/himself65/finance-skills/discord-reader)** — read-only Discord access via Chrome DevTools Protocol. No bot token needed — complements the DM browser path

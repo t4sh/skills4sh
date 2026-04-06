@@ -12,7 +12,7 @@
 ### Server Channels (Bot API Path)
 - **Missing permissions** — bot needs `VIEW_CHANNEL` and `READ_MESSAGE_HISTORY` permissions; NSFW channels need additional permissions
 - **Rate limits** — Discord API allows ~50 requests/second; batch large fetches (200+ messages) with small delays
-- **Thread messages** — threads are separate channels in the API; use the thread's channel ID, not the parent channel
+- **Thread messages** — threads are separate channels in the API. After fetching the main channel, list active threads (`GET /channels/{id}/threads/active`) and archived threads (`GET /channels/{id}/threads/archived/public`). Fetch each thread's messages using the thread's channel ID. Attachments shared only in threads won't appear in the parent channel.
 - **Ephemeral messages** — some bot responses are ephemeral and won't appear in message history
 - **Deleted messages** — if a message was deleted between listing and downloading, the CDN URL will 404
 
@@ -21,6 +21,11 @@
 - **Large files** — Discord attachments can be up to 25MB (500MB with Nitro); `curl` handles these but may take time
 - **Duplicate content** — same image/link shared in multiple messages; deduplicate before downloading
 - **OG:image availability** — not all links have OpenGraph images; some sites block unfamiliar user agents
+
+### Staging & Flagged Content
+- **Staging summary shows flagged items** — `flag_suspicious()` matched injection patterns in a filename or embed title. These are warnings, not blocks. Review the flagged items and proceed if they look benign (e.g., a file genuinely named "important_notes.pdf"). The flag is recorded in `manifest.json` for audit.
+- **User declines at staging prompt** — no downloads happen. The staging data is discarded. Re-run with adjusted scope or content type filters.
+- **Resolved IDs in manifest.json return errors on re-run** — the channel or thread was deleted or the bot lost access. Discard the stale ID from `resolvedIds` and re-resolve via API.
 
 ## Troubleshooting
 
