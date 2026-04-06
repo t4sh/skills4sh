@@ -191,38 +191,63 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   visual-regression:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - run: npm ci
-
       - name: Install Playwright
         run: npx playwright install --with-deps chromium
 
-      - name: Start dev server
+      # ── Baseline: capture screenshots from the base branch ──
+      - name: Checkout base branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+
+      - run: npm ci
+
+      - name: Start dev server (base)
         run: npm run dev &
         env:
           PORT: 3000
 
-      - name: Wait for server
+      - name: Wait for server (base)
         run: npx wait-on http://localhost:3000 --timeout 30000
 
-      - name: Capture baseline (main branch)
-        run: |
-          git stash
-          node scripts/capture-screenshots.js --output _screenshots/before
-          git stash pop
+      - name: Capture baseline screenshots
+        run: node scripts/capture-screenshots.js --output _screenshots/before
 
-      - name: Capture current (PR branch)
+      - name: Stop dev server (base)
+        run: kill $(lsof -t -i:3000) || true
+
+      # ── Current: capture screenshots from the PR branch ──
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          clean: false
+
+      - run: npm ci
+
+      - name: Start dev server (PR)
+        run: npm run dev &
+        env:
+          PORT: 3000
+
+      - name: Wait for server (PR)
+        run: npx wait-on http://localhost:3000 --timeout 30000
+
+      - name: Capture current screenshots
         run: node scripts/capture-screenshots.js --output _screenshots/after
 
+      # ── Diff and report ──
       - name: Run pixel diff
         run: node scripts/diff-screenshots.js
 
