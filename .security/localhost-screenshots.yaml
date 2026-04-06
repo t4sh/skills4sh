@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.1.0"
+  version: "3.1.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,10 +13,10 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: d1ccca451d805987e19655813761de05e4293cf88765d10981bac13184500788
-    references/playwright-patterns.md: ed830f689b21057e5198eb6d8d2eb13326cc5f61cf6b2ea086d1c585a1060f26
+    SKILL.md: 6ce6f6ed2b961d3720cb549dc41119e6038d446051cda72a37b831583c009789
+    references/playwright-patterns.md: 1a7b31bf7efee13ce628529e639b42be832fb979c8997cc3347839ca4cb2e075
     references/visual-regression.md: 03350151c2a3709768952b77d3bd06bfb77fd761c72f488af1c15cf4ac272bc1
-    references/interaction-templates.md: b85e5259c5d64057cf5cd1c6b2aeed9fa95f18ccd96f6ecfa1b7ea904d2fe124
+    references/interaction-templates.md: 965fcd298c4d29a4ba63dce70469bb9ba61129df61644869f6f4e30087159c2c
     references/ai-snapshots.md: 26872bf79640327b7e9770cc4cc9224b51b56af668169de58305588ac19fef0c
     references/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
 

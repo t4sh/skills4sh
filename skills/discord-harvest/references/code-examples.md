@@ -14,7 +14,6 @@ sanitize_filename() {
   name=$(basename -- "$name")           # strip any path components (../../)
   name="${name//[^a-zA-Z0-9._-]/_}"     # allow only safe characters
   name="${name#.}"                       # strip leading dots (hidden files)
-  name="${name%%.*}.${name#*.}"          # collapse multiple extensions (foo.tar.gz → foo.tar)
   name="${name:0:200}"                   # truncate to 200 chars max
   [ -z "$name" ] || [ "$name" = "." ] && name="unnamed"
   echo "$name"
@@ -46,6 +45,8 @@ validate_url() {
   return 1
 }
 ```
+
+**External (non-CDN) URLs:** Links in message text often point at arbitrary sites. **`validate_url` is intentionally strict:** only Discord CDN patterns return success for downloads. For every other HTTPS URL, **append to `links.md` and the manifest** (use `redact_cdn_url` when logging) and **do not `curl`** — that records the conversation without SSRF risk.
 
 ### CDN Token Redaction (CRITICAL)
 
@@ -129,6 +130,6 @@ validate_url "{url}" && curl --proto '=https' -L -o "{harvest_folder}/images/${f
 ```
 
 **Note:** Discord's DOM classes change occasionally. If the above selectors don't work:
-- Take a screenshot: `browser_tool screenshot --annotated`
+- Take a screenshot: Craft `browser_tool screenshot --annotated`, or your MCP’s screenshot action (e.g. `browser_take_screenshot`)
 - Inspect the DOM structure and adapt the selectors
 - Look for `[id^="message-content"]`, `[class*="markup"]`, or `[data-list-item-id]` as fallbacks

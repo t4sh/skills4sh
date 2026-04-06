@@ -6,9 +6,9 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 
 | Skill | Description | Version |
 |-------|-------------|---------|
-| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.6.0 |
-| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.5.0 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.1.0 |
+| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.6.1 |
+| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.5.2 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.1.1 |
 
 ## Install
 
@@ -41,7 +41,7 @@ See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability di
 
 ### Security scanning
 
-All skills pass [guardskills](https://www.npmjs.com/package/guardskills) with a **SAFE** rating:
+All skills are checked with [guardskills](https://www.npmjs.com/package/guardskills). **agent-memory** and **discord-harvest** rate **SAFE**; **localhost-screenshots** rates **WARNING** with documented false positives in code examples (see [SECURITY.md](SECURITY.md) and `.security/localhost-screenshots.yaml`).
 
 ```bash
 npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run;

@@ -4,19 +4,19 @@
     "agent-memory": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.6.0",
+      "version": "2.6.1",
       "computedHash": "1dd5a6a5709d687d0dcd5ef3a0d067e6748043a9caeab50497419367766c34cd"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.5.0",
+      "version": "1.5.2",
       "computedHash": "c59dfaf3bf8a0dc12530b916a970d0f581c5af3ee4af22b70e256a96b869ec9c"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "3.1.0",
+      "version": "3.1.1",
       "computedHash": "3bd47ec02001e0d585f5917d2b15a83e8761717e6c6ed12707a20fa815f5e325"
     }
   }

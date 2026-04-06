@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.6.0"
+  version: "2.6.1"
   tags: memory, context, cross-interface, agent, persistence
 ---
 
@@ -88,7 +88,7 @@ project/
 ### Steps
 
 1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `references/`, `sessions/` under `.agent-memory/`.
-2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), `AGENTS.md` (canonical shared instructions), `CLAUDE.md` (thin pointer to AGENTS.md), `.cursor/rules/agent-memory.mdc` (Cursor rule referencing AGENTS.md).
+2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), `AGENTS.md` (canonical shared instructions), `CLAUDE.md` (thin pointer to AGENTS.md), `.cursor/rules/index.mdc` (Cursor “Always” rule that points agents at `AGENTS.md` — same file Migrate creates from `CURSOR.md`).
 3. **Fill in TODOs** in AGENTS.md with project's actual structure and rules.
 4. **Update `index.yaml`** and **report** what was created.
 
