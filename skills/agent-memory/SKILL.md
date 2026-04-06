@@ -30,6 +30,16 @@ npx skills add t4sh/skills4sh --skill agent-memory
 - **Migration** — upgrade older formats (v1 flat files, CURSOR.md) to v2.1 standard
 - **Auto-building from docs** — scan existing documentation and generate initial memory files
 
+## Design Philosophy
+
+1. **Files you can open, read, and edit.** Memory is YAML-frontmatter markdown in a folder — viewable in VSCode, Obsidian, Sublime, or `cat`. Structured frontmatter (`type`, `status`, `expires`, `tags`) makes files machine-queryable without an LLM; the markdown body makes them human-readable. The user can browse `decisions/`, fix a stale entry, or add a convention by hand. The agent writes memory; it doesn't gatekeep it.
+
+2. **Cross-interface portability.** `AGENTS.md` is the single entry point, readable by any tool. No runtime, no platform SDK, no MCP server. Memory written by Claude Code is immediately available in Cursor, VSCode Copilot, Craft Agent, or anything that reads files. If it requires a specific client to read, it doesn't belong in `.agent-memory/`.
+
+3. **Lifecycle management.** Typed directories with staleness rules: `context/` expires at 30 days, `sessions/` at 60, archived at 90. The `maintain` command compacts overlapping entries, promotes session patterns to `conventions/` or `decisions/`, and reconciles the index. Memory that only grows eventually becomes noise.
+
+---
+
 ## Initial Assessment
 
 Before operating on memory, understand:
@@ -152,9 +162,13 @@ Combined: ingest external changes **then** save session. Recommended end-of-sess
 Full maintenance: compact, trim stale, fix index, clean old session logs.
 
 1. **Health check:** Count files by type, check index sync, identify stale/expired entries.
-2. **Staleness check:** `context/` >30 days old → ask update/archive/remove. Expired or archived >90 days → suggest deletion.
+2. **Staleness check — frontmatter-driven:**
+   - **Primary signal:** `expires` field. If `expires` < today → flag as expired, ask update/archive/remove.
+   - **Fallback (no `expires`):** Use `updated` date (or `created` if never updated) + type-based thresholds: `context/` >30 days, `sessions/` >60 days.
+   - **Archived entries:** `status: archived` with `updated` >90 days ago → suggest deletion.
+   - **`supersedes` chain:** If file A has `supersedes: B`, and B still exists with `status: active`, flag B for archival.
 3. **Compaction:** Identify content overlap, suggest merges, promote session log patterns to `conventions/` or `decisions/`.
-4. **Session cleanup:** Logs >60 days → extract valuable info elsewhere if needed, then delete.
+4. **Session cleanup:** `type: session` with `updated` >60 days → extract valuable info elsewhere if needed, then delete.
 5. **Report** with health summary (see [references/templates.md](references/templates.md) for format).
 
 ---
@@ -210,6 +224,11 @@ For frontmatter schema, memory types, and templates, see [references/templates.m
 
 ## Related Skills
 
-- **revise-claude-md** — updating CLAUDE.md with session learnings
-- **session-save** — capturing files and responses from current chat to disk
-- **find-skills** — discovering additional skills that may generate useful memory entries
+**Built-in (Claude Code):**
+- **revise-claude-md** — updates CLAUDE.md with session learnings (the "thin pointer" agent-memory depends on)
+- **session-save** — captures files and responses from current chat to disk (one-shot export, not structured memory)
+
+**On skills.sh:**
+- **[memory-management](https://skills.sh/anthropics/knowledge-work-plugins/memory-management)** — Anthropic's two-tier system (CLAUDE.md hot cache + `memory/` directory). Same architectural pattern; use agent-memory when you need cross-interface portability beyond Claude Code
+- **[session-handoff](https://skills.sh/softaworks/agent-toolkit/session-handoff)** — creates handoff documents for session transfers with git history and project metadata. Complements agent-memory's `sync` operation for end-of-session workflows
+- **[agent-memory-mcp](https://skills.sh/sickn33/antigravity-awesome-skills/agent-memory-mcp)** — MCP server approach with searchable persistent memory and web dashboard. Alternative architecture (server-based vs file-based)
