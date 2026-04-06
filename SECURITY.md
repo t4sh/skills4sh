@@ -7,7 +7,7 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 | Skill | Version | Supported |
 |-------|---------|-----------|
 | agent-memory | 2.6.1 | Yes |
-| discord-harvest | 1.5.2 | Yes |
+| discord-harvest | 1.6.0 | Yes |
 | localhost-screenshots | 3.1.1 | Yes |
 
 ## Reporting a Vulnerability
@@ -43,7 +43,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | Control | Implementation |
 |---------|----------------|
 | Content hashes | Every file tracked in `skills-lock.json` with SHA-256 hashes |
-| Hash in metadata | Each `SKILL.md` includes `content_hash` in frontmatter |
+| Hash in metadata | Each skill's SHA-256 hash tracked in `skills-lock.json` and `.security/<name>.yaml` |
 | CI verification | `validate.yml` checks hashes haven't drifted on every PR |
 | Canonical manifests | `.security/<name>.yaml` per skill with full file inventory |
 
@@ -76,7 +76,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 |---------|----------------|
 | Frontmatter validation | `validate.yml` checks name matches directory, required fields present |
 | Author verification | `.security/<name>.yaml` repository field links to canonical source |
-| Content hash | `content_hash` in `.security/<name>.yaml` allows registries to verify integrity |
+| Content hash | File hashes in `.security/<name>.yaml` allow registries to verify integrity |
 
 ### AST05 — Unsafe Deserialization
 

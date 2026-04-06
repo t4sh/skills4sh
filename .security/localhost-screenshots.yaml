@@ -13,11 +13,12 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: 6ce6f6ed2b961d3720cb549dc41119e6038d446051cda72a37b831583c009789
+    SKILL.md: b20cdc9283f5953c24c564f95fcebce03f63415cbab1b5e0a022d902b9beaa40
     references/playwright-patterns.md: 1a7b31bf7efee13ce628529e639b42be832fb979c8997cc3347839ca4cb2e075
-    references/visual-regression.md: 03350151c2a3709768952b77d3bd06bfb77fd761c72f488af1c15cf4ac272bc1
+    references/visual-regression.md: 6a5c9e1e86db76a904d95a0f84057c8e723b68ccf96471effc35493156c418d7
     references/interaction-templates.md: 965fcd298c4d29a4ba63dce70469bb9ba61129df61644869f6f4e30087159c2c
     references/ai-snapshots.md: 26872bf79640327b7e9770cc4cc9224b51b56af668169de58305588ac19fef0c
+    assets/icon.svg: d2e39e2fcbd9b6c907bbe7c3b4a5b0c72f73c8362e277a6852c866945605f22f
     references/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
 
 permissions:

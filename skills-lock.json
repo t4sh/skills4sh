@@ -5,19 +5,19 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "2.6.1",
-      "computedHash": "1dd5a6a5709d687d0dcd5ef3a0d067e6748043a9caeab50497419367766c34cd"
+      "computedHash": "a012d963b634db45fd05cf3f1e0e249d031e2487c7260807fa20e69f38bba32c"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.5.2",
-      "computedHash": "c59dfaf3bf8a0dc12530b916a970d0f581c5af3ee4af22b70e256a96b869ec9c"
+      "version": "1.6.0",
+      "computedHash": "96f6a58965e5e6e998373c93f2e86138ce8c60aae02347c141e82b9dad15ef28"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "3.1.1",
-      "computedHash": "3bd47ec02001e0d585f5917d2b15a83e8761717e6c6ed12707a20fa815f5e325"
+      "computedHash": "b20cdc9283f5953c24c564f95fcebce03f63415cbab1b5e0a022d902b9beaa40"
     }
   }
 }
