@@ -42,11 +42,11 @@ For niche scenarios (CDP attach, persistent sessions, AI snapshots, CI workflows
 
 ## Chrome MCP — Quick Screenshots & Debugging
 
-**Use a Chrome-connected MCP** when you need one or two screenshots or interactive debugging. It drives the user’s real browser, which can already reach their localhost dev server. No Playwright install required.
+**Use a Chrome-connected MCP** for one or two screenshots or interactive debugging. It drives the user’s real browser, which can already reach their localhost dev server. No Playwright install required.
 
-### MCP tool names (map to your server)
+### MCP tool names (map to the host's server)
 
-Identifiers differ by host. Map **capabilities** to your server’s actual tools:
+Identifiers differ by host. Map **capabilities** to the host server's actual tools:
 
 | Step | Capability | Claude Chrome MCP (example) | Cursor `cursor-ide-browser` |
 |------|------------|----------------------------|-----------------------------|
@@ -54,9 +54,9 @@ Identifiers differ by host. Map **capabilities** to your server’s actual tools
 | Navigate | Open URL | `…navigate({ url })` | `browser_navigate` |
 | Screenshot | Capture viewport | `…computer({ action: "screenshot" })` | `browser_take_screenshot` |
 | Resize | Viewport / window | `…resize_window({ width, height })` | Resize tools if available, or devtools |
-| Run JS | Evaluate in page | `…javascript_tool({ action: "javascript_exec", text })` | Follow your server’s evaluate / snapshot workflow |
+| Run JS | Evaluate in page | `…javascript_tool({ action: "javascript_exec", text })` | Follow the server's evaluate / snapshot workflow |
 
-Follow your MCP server’s lock/snapshot rules (e.g. Cursor: snapshot before structural changes).
+Follow the MCP server's lock/snapshot rules (e.g. Cursor: snapshot before structural changes).
 
 ### Prerequisites
 
@@ -85,7 +85,7 @@ Navigate with `browser_navigate`, then `browser_take_screenshot`. Use `browser_s
 
 ### Debugging patterns (run JS in page)
 
-Payload examples (wrap in your MCP’s JS action):
+Payload examples (wrap in the MCP's JS action):
 
 ```js
 JSON.stringify(Object.keys(window.MyApp || {}))
@@ -114,8 +114,8 @@ mcp__Claude_in_Chrome__javascript_tool({
 
 ### When NOT to Use Chrome MCP for Screenshots
 
-- When you need all 8 breakpoints captured systematically — use Playwright
-- When you need repeatable, scriptable visual regression — use Playwright
+- When all 8 breakpoints need capture systematically — use Playwright
+- When repeatable, scriptable visual regression is required — use Playwright
 - When generating a before/after comparison HTML — use Playwright
 
 ---
@@ -186,7 +186,7 @@ See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT 
 - **dev-browser** — browser automation with persistent page state. Useful for interactive captures and manual navigation before screenshotting
 
 **On skills.sh:**
-- **[screenshot-local](https://skills.sh/antjanus/skillbox/screenshot-local)** — shot-scraper (Playwright-based) for localhost captures with custom viewports, element targeting, and batch YAML configs. Lighter-weight alternative when you don't need the full regression pipeline
+- **[screenshot-local](https://skills.sh/antjanus/skillbox/screenshot-local)** — shot-scraper (Playwright-based) for localhost captures with custom viewports, element targeting, and batch YAML configs. Lighter-weight alternative when a full regression pipeline isn't needed
 - **[visual-regression-tester](https://skills.sh/patricio0312rev/skills/visual-regression-tester)** — automated visual regression via Playwright, Chromatic, or Percy with multi-viewport and CI/CD. Complements the pixel-diff reference in this skill
 - **[playwright-responsive-screenshots](https://skills.sh/dawiddutoit/custom-claude/playwright-responsive-screenshots)** — responsive breakpoint captures at mobile/tablet/desktop via Playwright. Same core use case with a simpler scope
 
