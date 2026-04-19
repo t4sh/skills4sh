@@ -16,6 +16,7 @@ Complete this checklist for any PR that modifies files under `skills/`:
 - [ ] Content hashes in `.security/<name>.yaml` updated to match
 - [ ] `.security/<name>.yaml` updated with new hashes
 - [ ] Version bumped in SKILL.md, skills-lock.json, and `.security/<name>.yaml` if behavior changed
+- [ ] If `package.json` version bumped: `.claude-plugin/marketplace.json` and `.cursor-plugin/plugin.json` bumped to match (CI enforces via `verify-versions.sh`)
 
 ### Metadata (AST04)
 - [ ] SKILL.md `name` matches directory name
