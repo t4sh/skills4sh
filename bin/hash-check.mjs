@@ -1,16 +1,41 @@
 #!/usr/bin/env node
 // Verify (default) or regenerate (`--write`) computedHash values in skills-lock.json.
 // Algorithm mirrors vercel-labs/skills src/local-lock.ts `computeSkillFolderHash`.
+//
+// Usage:
+//   hash-check [--write] [--root <dir>]
+//   --root defaults to process.cwd(); looks for <root>/skills/ and <root>/skills-lock.json
 
-import { readFile, readdir, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
-import { fileURLToPath } from "node:url";
+import { readFile, readdir, writeFile, stat } from "node:fs/promises";
+import { join, relative, resolve } from "node:path";
 import { createHash } from "node:crypto";
 
-const root = join(fileURLToPath(import.meta.url), "../..");
+const args = process.argv.slice(2);
+const write = args.includes("--write");
+const rootIdx = args.indexOf("--root");
+let rootArg = process.cwd();
+if (rootIdx !== -1) {
+  const v = args[rootIdx + 1];
+  if (!v || v.startsWith("--")) {
+    console.error("✗ --root requires a directory path");
+    process.exit(1);
+  }
+  rootArg = resolve(v);
+}
+const root = rootArg;
 const skillsDir = join(root, "skills");
 const lockPath = join(root, "skills-lock.json");
-const write = process.argv.includes("--write");
+
+for (const [label, path, kind] of [["skills/", skillsDir, "dir"], ["skills-lock.json", lockPath, "file"]]) {
+  try {
+    const s = await stat(path);
+    if (kind === "dir" && !s.isDirectory()) throw new Error("not a directory");
+    if (kind === "file" && !s.isFile()) throw new Error("not a file");
+  } catch (err) {
+    console.error(`✗ ${label} not found at ${path} (${err.message})`);
+    process.exit(1);
+  }
+}
 
 const lock = JSON.parse(await readFile(lockPath, "utf8"));
 const names = (await readdir(skillsDir, { withFileTypes: true }))
@@ -31,7 +56,10 @@ for (const name of names) {
 }
 
 if (write) {
-  const sorted = { ...next, skills: Object.fromEntries(Object.keys(next.skills).sort().map((k) => [k, next.skills[k]])) };
+  const sorted = {
+    ...next,
+    skills: Object.fromEntries(Object.keys(next.skills).sort().map((k) => [k, next.skills[k]])),
+  };
   await writeFile(lockPath, JSON.stringify(sorted, null, 2) + "\n");
   console.log(`\n→ wrote ${lockPath}`);
   process.exit(0);
