@@ -1,6 +1,6 @@
 ---
 name: localhost-screenshots
-description: "Take screenshots of locally running websites (localhost) across all viewport breakpoints for visual comparison, regression testing, or documentation. Use this skill whenever the user mentions screenshots, visual comparison, visual regression, capturing pages, responsive screenshots, breakpoint testing, or taking snapshots of a local dev server, localhost site, 11ty site, or any site running on localhost. Also triggers on 'screenshot my site', 'capture pages', 'visual diff', 'compare screenshots', 'before/after screenshots', 'responsive screenshots', 'check breakpoints', or any request involving programmatic screenshots of web pages running locally. ALWAYS use this skill instead of guessing at screenshot approaches — it defines the exact toolchain and avoids wasted time trying different browsers or tools."
+description: "This skill should be used when the user asks to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or any request involving programmatic screenshots of a local dev server or localhost site across viewport breakpoints. Defines the exact Chrome/Playwright toolchain to avoid trial-and-error across browsers."
 license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
