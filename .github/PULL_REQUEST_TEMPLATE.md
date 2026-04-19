@@ -25,7 +25,7 @@ Complete this checklist for any PR that modifies files under `skills/`:
 ### Isolation (AST06)
 - [ ] `.security/<name>.yaml` `execution_context` accurately reflects network and filesystem needs
 - [ ] No new network access beyond what's documented
-- [ ] Install scripts restricted to `.claude/skills/` destination paths
+- [ ] Install scripts restricted to agent skill destination paths (`.agents/skills/`, `.claude/skills/`, or equivalent system default)
 
 ### Scanning (AST08)
 - [ ] `npx guardskills add t4sh/skills4sh --skill <name> --dry-run` passes

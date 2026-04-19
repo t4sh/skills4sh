@@ -19,7 +19,7 @@ npx skills add t4sh/skills4sh --skill discord-harvest     # only discord-harvest
 npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
 ```
 
-Skills install to `~/.claude/skills/` by default. Re-running is idempotent — safe to use as a sync command.
+Skills install to `~/.agents/skills/` by default. Or, picks your system-wide  default. Re-running is idempotent — safe to use as a sync command.
 
 <details>
 <summary>Backup install path (no <code>git</code> required)</summary>
