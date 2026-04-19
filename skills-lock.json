@@ -1,23 +1,23 @@
 {
-  "version": 2,
+  "version": 1,
   "skills": {
     "agent-memory": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.6.1",
-      "computedHash": "fa73a87716930a733ebf43a48ce4ff2341bf2d0d6d35eab6f372f4545b413393"
+      "version": "2.7.0",
+      "computedHash": "f5e1151cb2b0f7a4a5903c62849c56a48883c346d1ade712881ed06239d5f357"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.6.0",
-      "computedHash": "8c3e632572891dcded110fae8a315c4941ca7ae3bd61a81d30c9c69b1cba931a"
+      "version": "1.7.0",
+      "computedHash": "31f22faf9a97be07cbcb86a006af09b0bb220d1be832414bf5612ada12981faf"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "3.1.1",
-      "computedHash": "207352897605312f4da20bcb45bd494e766c5d538881f19eeb8e99051188bb15"
+      "version": "3.2.0",
+      "computedHash": "7f20217f68feaf535a2f0ce541d4c205a544fd5ab2a8ce38c81eef46748c7b5d"
     }
   }
 }

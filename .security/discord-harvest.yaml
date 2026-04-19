@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "1.6.0"
+  version: "1.7.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
