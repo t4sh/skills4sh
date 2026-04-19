@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
-# Verify that versions in SKILL.md match skills-lock.json, README.md, and SECURITY.md.
+# Verify two version invariants:
+#   1. Per-skill: SKILL.md frontmatter == skills-lock.json == .security/<name>.yaml
+#                                      == README.md table  == SECURITY.md table
+#   2. Package-wide: package.json.version == .claude-plugin/marketplace.json
+#                                         == .cursor-plugin/plugin.json
 # Used by CI (validate.yml) to enforce AST07 update drift controls.
 set -euo pipefail
 
 LOCK_FILE="skills-lock.json"
 README="README.md"
 SECURITY="SECURITY.md"
+PKG="package.json"
+CLAUDE_PLUGIN=".claude-plugin/marketplace.json"
+CURSOR_PLUGIN=".cursor-plugin/plugin.json"
 errors=0
 
 for dir in skills/*/; do
@@ -65,9 +72,39 @@ for dir in skills/*/; do
   fi
 done
 
+echo ""
+echo "Checking package version consistency (package.json ↔ plugin manifests)..."
+pkg_version=$(python3 -c "import json; print(json.load(open('$PKG'))['version'])")
+if [ -z "$pkg_version" ]; then
+  echo "  ERROR: No version in $PKG"
+  errors=$((errors + 1))
+else
+  for manifest_file in "$CLAUDE_PLUGIN" "$CURSOR_PLUGIN"; do
+    if [ ! -f "$manifest_file" ]; then continue; fi
+    # marketplace.json nests version under plugins[0]; plugin.json has it at root.
+    manifest_version=$(python3 -c "
+import json
+d = json.load(open('$manifest_file'))
+v = d.get('version') or (d.get('plugins') or [{}])[0].get('version', '')
+print(v)
+")
+    if [ -z "$manifest_version" ]; then
+      echo "  ERROR: No version found in $manifest_file"
+      errors=$((errors + 1))
+    elif [ "$pkg_version" != "$manifest_version" ]; then
+      echo "  ERROR: $manifest_file version mismatch — $PKG=$pkg_version, manifest=$manifest_version"
+      errors=$((errors + 1))
+    fi
+  done
+  if [ "$errors" -eq 0 ]; then
+    echo "  OK ($pkg_version)"
+  fi
+fi
+
 if [ "$errors" -gt 0 ]; then
   echo ""
-  echo "Version mismatch in $errors location(s). SKILL.md frontmatter is the source of truth."
-  echo "Update skills-lock.json, .security/<name>.yaml, README.md, and SECURITY.md to match."
+  echo "Version mismatch in $errors location(s)."
+  echo "  - Per-skill: SKILL.md frontmatter is source of truth — update skills-lock.json, .security/<name>.yaml, README.md, SECURITY.md to match."
+  echo "  - Package-wide: $PKG is source of truth — update $CLAUDE_PLUGIN and $CURSOR_PLUGIN to match."
   exit 1
 fi
