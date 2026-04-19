@@ -376,8 +376,10 @@ function parseArgs(argv) {
     else if (a === "--no-verify") out.noVerify = true;
     else if (a === "--force" || a === "-f") out.force = true;
     else if (a === "-h" || a === "--help") out.help = true;
-    // Users often confuse npm's `--yes` (must be before the package name) with a trailing flag.
-    else if (a === "-y" || a === "--yes") {
+    // Users often confuse npm's `--yes` / `--global` (which must appear before
+    // the package name) with trailing CLI flags. Accept both as silent no-ops
+    // so e.g. `npx skills add <repo> -g -y` never errors if we shadow npx.
+    else if (a === "-y" || a === "--yes" || a === "-g" || a === "--global") {
       /* no-op */
     } else throw new Error(`unknown argument: ${a}`);
   }
@@ -403,6 +405,7 @@ Options:
   --force, -f            (deprecated no-op — re-runs are now idempotent)
   --no-verify            skip skills-lock.json hash verification (INSECURE)
   -y, --yes              ignored (use npx --yes <pkg> ... so npm skips the install prompt)
+  -g, --global           ignored (npm's global-install flag must come before the package name)
 
 Env:
   GITHUB_TOKEN           raises the 60 req/hr anonymous rate limit
