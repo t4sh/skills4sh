@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.1.1"
+  version: "3.2.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
