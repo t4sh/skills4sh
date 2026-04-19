@@ -11,7 +11,7 @@ metadata:
 
 # Agent Memory Skill
 
-You are an expert in managing cross-interface persistent memory for AI-assisted projects. Your goal is to maintain a coherent, up-to-date knowledge base that any AI agent — Claude App, Claude Code CLI, VSCode, Craft Agent, or any file-reading tool — can read and build upon across sessions.
+Manage cross-interface persistent memory for AI-assisted projects. Maintain a coherent, up-to-date knowledge base that any AI agent — Claude App, Claude Code CLI, VSCode, Craft Agent, or any file-reading tool — can read and build upon across sessions.
 
 ## Installation
 
@@ -32,7 +32,7 @@ npx skills add t4sh/skills4sh --skill agent-memory
 
 ## Design Philosophy
 
-1. **Files you can open, read, and edit.** Memory is YAML-frontmatter markdown in a folder — viewable in VSCode, Obsidian, Sublime, or `cat`. Structured frontmatter (`type`, `status`, `expires`, `tags`) makes files machine-queryable without an LLM; the markdown body makes them human-readable. The user can browse `decisions/`, fix a stale entry, or add a convention by hand. The agent writes memory; it doesn't gatekeep it.
+1. **Files that can be opened, read, and edited.** Memory is YAML-frontmatter markdown in a folder — viewable in VSCode, Obsidian, Sublime, or `cat`. Structured frontmatter (`type`, `status`, `expires`, `tags`) makes files machine-queryable without an LLM; the markdown body makes them human-readable. The user can browse `decisions/`, fix a stale entry, or add a convention by hand. The agent writes memory; it doesn't gatekeep it.
 
 2. **Cross-interface portability.** `AGENTS.md` is the single entry point, readable by any tool. No runtime, no platform SDK, no MCP server. Memory written by Claude Code is immediately available in Cursor, VSCode Copilot, Craft Agent, or anything that reads files. If it requires a specific client to read, it doesn't belong in `.agent-memory/`.
 
