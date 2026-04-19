@@ -11,13 +11,13 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "1.7.0",
-      "computedHash": "541cc7113ba45450f87fbae449752c6bf7cbb2f0007d224b7bb60066c0ae995e"
+      "computedHash": "e2499adee175d0650b94014d468c855df1e0be43e302ed2f2cb72849ab6bf2a3"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "3.2.0",
-      "computedHash": "196237775e4a929f5dc7b89809ab013383b94ae05c8098d82940d18ed700c308"
+      "computedHash": "d027614bb5b3c0236ce04665ae8ea0fdc15d525f1431b6857aa77e83048cd3f9"
     }
   }
 }

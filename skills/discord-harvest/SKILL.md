@@ -12,7 +12,7 @@ metadata:
 
 # Discord Harvest
 
-You are an expert in extracting and archiving content from Discord conversations. Your goal is to systematically harvest all images, files, attachments, and links from a Discord conversation (DM or server channel) into an organized, browsable local folder with a machine-readable manifest.
+Extract and archive content from Discord conversations. Systematically harvest all images, files, attachments, and links from a Discord conversation (DM or server channel) into an organized, browsable local folder with a machine-readable manifest.
 
 ## Installation
 
@@ -41,7 +41,7 @@ discord-harvest is **stateless, extract-only, and lean by design**.
 - **Incremental by disk, not by database.** Repeat runs check what's already on disk (`skip existing files`, append to `links.md`, merge into `manifest.json`). Resolved server/channel IDs are cached inside the harvest folder's `manifest.json` — state lives with the output, not globally. Delete the folder and the cache goes with it.
 - **Cross-platform by default.** No Keychain integration, no OS-specific tooling. The same skill works on macOS, Linux, and Windows without adaptation.
 
-This leanness is intentional. Heavier alternatives (DiscordChatExporter + SQLite pipelines, MCP server approaches with persistent memory) exist — see Related Skills. discord-harvest trades that infrastructure for portability, simplicity, and a smaller attack surface: if you don't store message content, you don't need to secure it.
+This leanness is intentional. Heavier alternatives (DiscordChatExporter + SQLite pipelines, MCP server approaches with persistent memory) exist — see Related Skills. discord-harvest trades that infrastructure for portability, simplicity, and a smaller attack surface: not storing message content means not needing to secure it.
 
 ---
 
@@ -129,11 +129,11 @@ validate_url "{url}" && curl --proto ‘=https’ -L -o "{harvest_folder}/images
 
 ### Path B: DM (Browser)
 
-The bot cannot access DMs. Use **browser automation** from the environment you are running in.
+The bot cannot access DMs. Use **browser automation** from the current runtime environment.
 
 #### B0. Pick the browser tool stack
 
-| Environment | Before you start | Typical flow |
+| Environment | Before starting | Typical flow |
 |-------------|------------------|--------------|
 | **Craft Agent** | Read `~/.craft-agent/docs/browser-tools.md` if present | `browser_tool open` → `navigate` → `snapshot` / `evaluate` / `scroll` |
 | **Cursor (`cursor-ide-browser`)** | Follow the MCP server’s workflow (lock tab → snapshot before structural changes) | `browser_navigate` → `browser_snapshot` → interact → `browser_take_screenshot` as needed |
@@ -155,7 +155,7 @@ Tell the user to log in, navigate to the DM, and say **"ready"**. **Wait for con
 
 ### B2. Extract messages from the DOM
 
-Take a snapshot, scroll for history if needed, then run the extraction script from [references/code-examples.md](references/code-examples.md) via your environment’s **evaluate / execute JavaScript** action (e.g. `browser_tool evaluate`, or the equivalent on `cursor-ide-browser`).
+Take a snapshot, scroll for history if needed, then run the extraction script from [references/code-examples.md](references/code-examples.md) via the environment's **evaluate / execute JavaScript** action (e.g. `browser_tool evaluate`, or the equivalent on `cursor-ide-browser`).
 
 If selectors fail (Discord updates class names periodically): take an annotated screenshot, inspect DOM, adapt selectors. Fallbacks: `[id^="message-content"]`, `[class*="markup"]`, `[data-list-item-id]`.
 
