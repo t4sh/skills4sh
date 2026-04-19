@@ -3,7 +3,7 @@
 ## Golden Rules
 
 1. **Always use Playwright's bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
-2. **NEVER open HTML files via `file://` paths.** Always serve them over HTTP. Relative CSS/JS paths won't resolve without an HTTP server.
+2. **Prefer HTTP; `file://` only for self-contained static HTML.** `file://` *does* resolve same-directory relative paths, so it's fine for single-file demos, inline-styled mockups, or design artifacts with only relative asset references. It breaks on: `fetch`/XHR to sibling files (CORS), `<script type="module">`, service workers, and absolute `/asset` paths (which resolve to filesystem root, not project root). If the page uses any of those, serve over HTTP. Pre-flight's zero-stylesheet warning usually signals this.
 
 ## Setup (run once per session)
 
@@ -61,6 +61,14 @@ try {
 }
 ```
 
+## Breakpoint Selection Order
+
+Resolve viewports in this order:
+
+1. **Project-defined breakpoints** — if `tailwind.config.*` or CSS media queries declare them, use those first (see [Project-Specific Breakpoints](#project-specific-breakpoints)).
+2. **Standard preset** — the 8-breakpoint default below, used when the project declares none.
+3. **Device-model overrides** — if the user names a specific device, use the labeled preset (see [Custom Breakpoints & Device-Model Labels](#custom-breakpoints--device-model-labels)).
+
 ## Standard Breakpoints
 
 ```js
@@ -76,6 +84,8 @@ const BREAKPOINTS = [
 ];
 ```
 
+### Project-Specific Breakpoints
+
 Check for project-specific breakpoints before using defaults:
 ```bash
 # Tailwind
@@ -85,6 +95,42 @@ grep -r "screens" tailwind.config.* 2>/dev/null
 grep -roh '@media.*max-width:\s*[0-9]*px' src/ --include="*.css" 2>/dev/null | sort -u
 grep -roh '@media.*min-width:\s*[0-9]*px' src/ --include="*.css" 2>/dev/null | sort -u
 ```
+
+### Custom Breakpoints & Device-Model Labels
+
+When the user asks for specific devices ("iPhone 14 Pro", "Galaxy S23", "iPad mini"), use model labels instead of generic names — the filename then documents intent:
+
+```js
+const DEVICE_PRESETS = [
+  { name: 'iphone-se',        width: 375,  height: 667  },
+  { name: 'iphone-14',        width: 390,  height: 844  },
+  { name: 'iphone-14-pro-max',width: 430,  height: 932  },
+  { name: 'pixel-7',          width: 412,  height: 915  },
+  { name: 'galaxy-s23',       width: 360,  height: 780  },
+  { name: 'ipad-mini',        width: 768,  height: 1024 },
+  { name: 'ipad-pro-11',      width: 834,  height: 1194 },
+  { name: 'ipad-pro-13',      width: 1024, height: 1366 },
+  { name: 'macbook-air-13',   width: 1440, height: 900  },
+  { name: 'macbook-pro-16',   width: 1728, height: 1117 },
+];
+```
+
+**Label conventions:** kebab-case, no vendor prefix unless disambiguating (`pixel-7`, not `google-pixel-7`). Reserve generic names (`mobile`, `tablet`, `desktop`) for the standard set.
+
+**Validation bounds** — reject viewports outside these before launching Chromium:
+
+```js
+function validateViewport({ name, width, height }) {
+  if (!Number.isInteger(width) || !Number.isInteger(height)) {
+    throw new Error(`${name}: width/height must be integers`);
+  }
+  if (width < 200 || width > 3840)  throw new Error(`${name}: width ${width} outside 200–3840`);
+  if (height < 200 || height > 2160) throw new Error(`${name}: height ${height} outside 200–2160`);
+  if (!/^[a-z0-9][a-z0-9-]*$/.test(name)) throw new Error(`${name}: label must be kebab-case`);
+}
+```
+
+Bounds rationale: below 200px Chromium clips layout primitives; above 3840×2160 (4K) screenshots balloon past useful review sizes and often OOM on CI runners.
 
 ## Canonical Screenshot Script
 
@@ -278,7 +324,7 @@ async function preflight(baseUrl) {
 
 ### Individual Check Details
 
-**Stylesheet check** — zero stylesheets means you're likely opening via `file://` instead of HTTP, or the build step hasn't run.
+**Stylesheet check** — zero stylesheets usually means the build step hasn't run, or the page is loading CSS via `fetch`/absolute `/` paths under `file://` (which fails). Self-contained HTML with inline `<style>` passes this check normally.
 
 **Content check** — for SPAs, wait for the app root:
 ```js

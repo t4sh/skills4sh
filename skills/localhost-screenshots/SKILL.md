@@ -127,7 +127,7 @@ Use Playwright for automated, repeatable screenshot sets across all breakpoints.
 ### Golden Rules
 
 1. **Always use Playwright’s bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
-2. **NEVER open HTML files via `file://` paths.** Always serve them over HTTP — relative CSS/JS paths won’t resolve without a server.
+2. **Prefer HTTP; `file://` only for self-contained static HTML.** Serve over HTTP whenever a dev server, build output, or `npx serve` is available. `file://` is acceptable *only* when the page has no `fetch`/XHR to sibling files, no `<script type="module">`, no service workers, and no absolute `/asset` paths — otherwise those will break silently. When in doubt, serve over HTTP.
 
 ### Setup (run once per session)
 
@@ -188,7 +188,7 @@ See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT 
 **On skills.sh:**
 - **[screenshot-local](https://skills.sh/antjanus/skillbox/screenshot-local)** — shot-scraper (Playwright-based) for localhost captures with custom viewports, element targeting, and batch YAML configs. Lighter-weight alternative when a full regression pipeline isn't needed
 - **[visual-regression-tester](https://skills.sh/patricio0312rev/skills/visual-regression-tester)** — automated visual regression via Playwright, Chromatic, or Percy with multi-viewport and CI/CD. Complements the pixel-diff reference in this skill
-- **[playwright-responsive-screenshots](https://skills.sh/dawiddutoit/custom-claude/playwright-responsive-screenshots)** — responsive breakpoint captures at mobile/tablet/desktop via Playwright. Same core use case with a simpler scope
+- **[playwright-responsive-screenshots](https://skills.sh/dawiddutoit/custom-claude/playwright-responsive-screenshots)** — MCP-only responsive captures at 3 breakpoints (mobile/tablet/desktop). Lighter scope; `localhost-screenshots` is a superset: two tracks (Chrome MCP for debug + Playwright for regression), 8 breakpoints with Tailwind/media-query detection, guided Playwright setup, in-page JS debugging, pre-flight checks, persistent sessions, visual-regression pipeline with pixel-diff, and framework-specific troubleshooting
 
 ---
 
