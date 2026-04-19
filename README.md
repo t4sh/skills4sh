@@ -13,13 +13,13 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 ## Install
 
 ```bash
-npx skills add t4sh/skills4sh                             # install all skills
-npx skills add t4sh/skills4sh --skill agent-memory        # only agent-memory
-npx skills add t4sh/skills4sh --skill discord-harvest     # only discord-harvest
+npx skills add t4sh/skills4sh                                # install all skills
+npx skills add t4sh/skills4sh --skill agent-memory           # only agent-memory
+npx skills add t4sh/skills4sh --skill discord-harvest        # only discord-harvest
 npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
 ```
 
-Skills install to `~/.agents/skills/` by default. Or, picks your system-wide  default. Re-running is idempotent — safe to use as a sync command.
+Skills install to `~/.agents/skills/` by default. Or, picks your system-wide default. Re-running is idempotent — safe to use as a sync command.
 
 <details>
 <summary>Backup install path (no <code>git</code> required)</summary>
@@ -27,9 +27,16 @@ Skills install to `~/.agents/skills/` by default. Or, picks your system-wide  de
 If you can't or don't want to use the `skills` CLI, this repo also ships its own pure-Node installer that fetches files directly via the GitHub API. Useful on machines without `git`, or when pinning to a specific ref.
 
 ```bash
+# Short form (uses default --repo t4sh/skills4sh):
 npx skills4sh --all
 npx skills4sh --skill agent-memory
 npx skills4sh --list
+
+# Explicit form (works against any repo):
+npx skills4sh add t4sh/skills4sh
+npx skills4sh add t4sh/skills4sh --skill agent-memory
+npx skills4sh list t4sh/skills4sh
+
 # Options: --repo <owner/repo>  --ref <sha|branch>  --dest <dir>  --no-verify
 # Env:     GITHUB_TOKEN         HTTPS_PROXY
 ```

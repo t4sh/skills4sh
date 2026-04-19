@@ -1,11 +1,10 @@
 {
   "name": "skills4sh",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot).",
   "type": "module",
   "bin": {
-    "skills4sh": "bin/install.mjs",
-    "skills": "bin/install.mjs"
+    "skills4sh": "bin/install.mjs"
   },
   "files": [
     "bin",
@@ -16,7 +15,7 @@
     "LICENSE"
   ],
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "optionalDependencies": {
     "undici": "^6.21.0"

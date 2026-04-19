@@ -8,10 +8,13 @@
 //   skills4sh --skill <name> [--dest <dir>] [--ref <sha|branch|tag>] [--repo <owner/repo>]
 //   skills4sh --all          [--dest <dir>] [--ref <sha|branch|tag>] [--repo <owner/repo>]
 
-// Runtime guard: global fetch is Node 18+. `engines` in package.json only warns
-// during `npm install`; a direct `node bin/install.mjs` on older Node must fail loud.
-if (typeof fetch !== "function") {
-  console.error(`✗ Node 18+ required (current: ${process.version}). fetch() is not available.`);
+// Runtime guard: we require Node 22+ (oldest non-EOL LTS). `engines` in
+// package.json only warns during `npm install`; a direct `node bin/install.mjs`
+// on older Node must fail loud. fetch() is the proxy check — it's been global
+// since Node 18, so its absence proves we're on something even older.
+const major = Number(process.versions.node.split(".")[0]);
+if (typeof fetch !== "function" || major < 22) {
+  console.error(`✗ Node 22+ required (current: ${process.version}).`);
   process.exit(1);
 }
 
@@ -21,9 +24,9 @@ import { fileURLToPath } from "node:url";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
 
-// Self-identify on stderr so users can tell which installer ran. This matters
-// because the `skills` bin name collides with Vercel's agent-skills CLI on npm,
-// and Node resolves symlinks on argv[1] so we can't reliably detect invocation name.
+// Self-identify on stderr so users can tell which installer ran. The published
+// `skills` bin (Vercel's agent-skills CLI) is a near-namesake; printing the
+// version makes it unambiguous which one executed.
 let pkgVersion = "?";
 try {
   const here = dirname(fileURLToPath(import.meta.url));
@@ -392,8 +395,8 @@ function printHelp() {
   console.log(`skills4sh — install agent skills from GitHub (no git required)
 
 Usage:
-  skills       add <owner/repo> [options]   # installs all skills from the repo
-  skills       list [<owner/repo>]
+  skills4sh    add <owner/repo> [options]   # installs all skills from the repo
+  skills4sh    list [<owner/repo>]
   skills4sh    --list
   skills4sh    --skill <name> [options]
   skills4sh    --all          [options]
