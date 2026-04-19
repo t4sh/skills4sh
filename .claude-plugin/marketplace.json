@@ -11,7 +11,7 @@
       "name": "skills4sh",
       "source": ".",
       "description": "Agent skills: agent-memory (persistent project memory), discord-harvest (Discord content extraction), localhost-screenshots (responsive screenshot capture)",
-      "version": "1.0.0",
+      "version": "0.2.0",
       "author": {
         "name": "t4sh"
       },
