@@ -166,11 +166,6 @@ async function installSkill(name, files) {
   console.log(`→ Installing ${name} from ${owner}/${repo}@${ref}`);
 
   const skillDir = join(dest, name);
-  if (!args.force && await hasContent(skillDir)) {
-    throw new Error(
-      `${skillDir} is not empty. Re-run with --force to overwrite (existing files will be deleted).`,
-    );
-  }
 
   // Stage in memory first, verify, then commit to disk.
   // AbortController cancels in-flight requests as soon as one fails.
@@ -182,6 +177,14 @@ async function installSkill(name, files) {
 
   const hash = computeSkillFolderHash(downloaded);
   if (!args.noVerify) await verifyAgainstLock(name, hash);
+
+  // Idempotent: if what's on disk matches what we just verified, skip the write.
+  // This is the common case for `add` when the user re-runs and nothing changed.
+  const existingHash = await hashExistingSkill(skillDir);
+  if (existingHash === hash) {
+    console.log(`  = ${name} already up to date — ${hash.slice(0, 12)}…`);
+    return;
+  }
 
   // Atomic swap: write everything into a sibling tmp dir first, then rename over skillDir.
   // On crash/failure mid-write, the original skillDir is untouched and the .tmp-<pid> dir
@@ -201,17 +204,34 @@ async function installSkill(name, files) {
     await rm(stagingDir, { recursive: true, force: true }).catch(() => {});
     throw err;
   }
+  const verb = existingHash ? "Updated" : "Installed";
   for (const f of downloaded) console.log(`  ✓ ${join(skillDir, f.rel)}`);
-  console.log(`✓ Installed ${name} (${files.length} files) — ${hash.slice(0, 12)}…`);
+  console.log(`✓ ${verb} ${name} (${files.length} files) — ${hash.slice(0, 12)}…`);
 }
 
-async function hasContent(dir) {
-  try {
-    const entries = await readdir(dir);
-    return entries.length > 0;
-  } catch {
-    return false;
+// Walk skillDir and compute the same hash scheme the installer uses, so we can
+// compare against the just-downloaded content and short-circuit idempotent re-runs.
+// Returns null if skillDir doesn't exist or is empty.
+async function hashExistingSkill(skillDir) {
+  const files = [];
+  async function walk(rel) {
+    let entries;
+    try {
+      entries = await readdir(join(skillDir, rel), { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const e of entries) {
+      const childRel = rel ? `${rel}/${e.name}` : e.name;
+      if (e.isDirectory()) await walk(childRel);
+      else if (e.isFile()) {
+        files.push({ rel: childRel, content: await readFile(join(skillDir, childRel)) });
+      }
+    }
   }
+  await walk("");
+  if (files.length === 0) return null;
+  return computeSkillFolderHash(files);
 }
 
 async function mapConcurrent(items, limit, fn, ac) {
@@ -380,7 +400,7 @@ Options:
   --repo  <owner/repo>   default: ${DEFAULT_REPO}
   --ref   <sha|branch>   default: ${DEFAULT_REF}
   --dest  <dir>          default: ${DEFAULT_DEST}
-  --force, -f            overwrite a non-empty destination
+  --force, -f            (deprecated no-op — re-runs are now idempotent)
   --no-verify            skip skills-lock.json hash verification (INSECURE)
   -y, --yes              ignored (use npx --yes <pkg> ... so npm skips the install prompt)
 
