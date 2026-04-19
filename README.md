@@ -12,34 +12,31 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 
 ## Install
 
-Two supported paths.
+```bash
+npx skills add t4sh/skills4sh                             # install all skills
+npx skills add t4sh/skills4sh --skill agent-memory        # only agent-memory
+npx skills add t4sh/skills4sh --skill discord-harvest     # only discord-harvest
+npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
+```
 
-### A. `skills4sh` — no git required (recommended)
+Skills install to `~/.claude/skills/` by default. Re-running is idempotent — safe to use as a sync command.
 
-Pure Node, Node 18+. Uses the GitHub Trees API + `raw.githubusercontent.com`. If `HTTPS_PROXY` / `HTTP_PROXY` is set, the published package includes an optional `undici` dependency so those requests can use your proxy (omit optional deps only if you do not need a proxy).
+<details>
+<summary>Backup install path (no <code>git</code> required)</summary>
+
+If you can't or don't want to use the `skills` CLI, this repo also ships its own pure-Node installer that fetches files directly via the GitHub API. Useful on machines without `git`, or when pinning to a specific ref.
 
 ```bash
-npx skills4sh --list
-npx skills4sh --skill agent-memory
 npx skills4sh --all
+npx skills4sh --skill agent-memory
+npx skills4sh --list
 # Options: --repo <owner/repo>  --ref <sha|branch>  --dest <dir>  --no-verify
 # Env:     GITHUB_TOKEN         HTTPS_PROXY
 ```
 
-### B. Subcommands: `add` / `list` (same binary as A)
+Requires Node 18+. Same atomic-write, lock-verify, and idempotency guarantees as the primary path.
 
-The package exposes two bin names — `skills4sh` and `skills` — but **both resolve from this package only when that package is what you run**. On the public npm registry, the package name **`skills`** is [another project](https://www.npmjs.com/package/skills) (Vercel’s agent-skills CLI). To run **this** installer via `npx`, use the **`skills4sh`** package name (or pin a git/tarball spec you trust).
-
-`add <owner/repo>` with no `--skill` installs all skills from the repo. Re-running `add` is safe and idempotent — if the on-disk content already matches the verified upstream, the install is skipped; if it drifted or a newer version is published, it's updated atomically. Put **npm/npx flags** (`--yes` / `-y`) **before** the package name so npm consumes them; trailing `-y` is accepted by this CLI as a no-op for convenience.
-
-```bash
-npx --yes skills4sh add t4sh/skills4sh                       # install all (no npx prompt)
-npx skills4sh add t4sh/skills4sh --skill agent-memory        # install one
-npx skills4sh list t4sh/skills4sh                            # list available
-npm install -g skills4sh && skills add t4sh/skills4sh        # global: `skills` is this repo’s bin
-```
-
-After `npm install -g skills4sh`, the `skills` command on your `PATH` is this installer (not `npx skills`, which downloads the npm package named `skills`).
+</details>
 
 ---
 
