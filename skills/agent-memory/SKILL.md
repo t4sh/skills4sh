@@ -1,6 +1,6 @@
 ---
 name: agent-memory
-description: "Use when managing project memory, initializing .agent-memory/, saving session learnings, or running memory maintenance. Handles cross-interface persistent memory for any project."
+description: "This skill should be used when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"save session learnings\", \"run memory maintenance\", or mentions cross-interface persistent memory across Claude Code, Cursor, or VS Code. Handles frontmatter-driven memory lifecycle for any project."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:

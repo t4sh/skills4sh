@@ -1,6 +1,6 @@
 ---
 name: discord-harvest
-description: "Use when extracting and downloading images, links, and files from a Discord conversation — DMs via browser, channels via bot API."
+description: "This skill should be used when the user asks to \"extract Discord images\", \"download Discord attachments\", \"harvest a Discord channel\", \"archive a DM\", or mentions scraping content from a Discord conversation. Handles DMs via browser automation and channels via the Discord bot API, producing an organized local folder with a machine-readable manifest."
 license: MIT
 compatibility: macOS, Linux, or Windows with browser or Discord bot token
 metadata:
