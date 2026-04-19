@@ -3,6 +3,7 @@
 !*.env.example
 node_modules/
 __MACOSX/
+package-lock.json
 
 # skills CLI installation artifacts
 .agents/
