@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "1.7.0"
+  version: "1.7.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,7 +13,7 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: 6435060dcb1b4d961431a02c931a42a1ea2fc94026703b91d5eebca55df20c73
+    SKILL.md: 31728741e494224407f33ccf112fa72746e9798c141153f35e32419c38c1d69a
     assets/icon.svg: 2017d8bc4fb690a7d9e3c6cda9371ea437c09b04ff5a23ad082a77105422d889
     references/code-examples.md: ddd10adec270f5a177bd7c51c421b5779706f26c2d05058ec0a0c6629b0b8dd3
     references/folder-structure.md: d74779f252a17d47f2a7ccfb53b08492c53a85b73fd8883cd5d610ca2e2ce190

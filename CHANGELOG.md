@@ -8,6 +8,11 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.3.11] — 2026-05-11
+
+### Changed
+- **`discord-harvest` 1.7.0 → 1.7.1.** Added a top-line **Trust Boundary — Read Before Running** section immediately after Installation and before "What I Can Help With". Surfaces the previously-implicit fact that the skill archives untrusted Discord content (filenames, embed titles, message text from arbitrary, sometimes-adversarial users) and enumerates the specific defenses already in place: fixed operation set with no instruction-following, `flag_suspicious()` social-engineering detection, no message text persisted, CDN allowlist on downloads (no third-party URL fetching), filename sanitization against path traversal. Code-level behavior is unchanged from 1.7.0 — this is a documentation/expectation-setting change addressing a third-party audit recommendation.
+
 ## [0.3.10] — 2026-05-11
 
 ### Security
@@ -127,7 +132,8 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.3.10...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.3.11...HEAD
+[0.3.11]: https://github.com/t4sh/skills4sh/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/t4sh/skills4sh/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/t4sh/skills4sh/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/t4sh/skills4sh/compare/v0.3.7...v0.3.8
