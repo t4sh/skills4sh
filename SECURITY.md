@@ -54,7 +54,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | Control | Implementation |
 |---------|----------------|
 | Immutable lock file (skills) | `skills-lock.json` pins all files to exact SHA-256 hashes |
-| Immutable lock file (npm) | `package-lock.json` pins full transitive dependency tree with integrity hashes |
+| Immutable lock file (npm) | `npm-shrinkwrap.json` pins full transitive dependency tree with integrity hashes |
 | Exact dependency versions | `package.json` uses exact versions (e.g. `undici: 6.25.0`), no caret/tilde ranges |
 | Single source of truth | All skills authored in this repo — no external registry pulls |
 | Pre-publish guard | `.github/scripts/check-bin-tag-parity.sh` (wired via `prepublishOnly` and `release.yml`) refuses publish when `bin/` has changed since the tag for the current `package.json` version |

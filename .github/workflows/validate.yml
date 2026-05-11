@@ -5,10 +5,16 @@ on:
     paths:
       - 'skills/**'
       - 'skills-lock.json'
+      - '.github/workflows/validate.yml'
+      - '.github/scripts/verify-versions.sh'
+      - 'bin/hash-check.mjs'
   pull_request:
     paths:
       - 'skills/**'
       - 'skills-lock.json'
+      - '.github/workflows/validate.yml'
+      - '.github/scripts/verify-versions.sh'
+      - 'bin/hash-check.mjs'
 
 permissions:
   contents: read

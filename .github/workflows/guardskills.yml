@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'skills/**'
+      - '.github/workflows/guardskills.yml'
   pull_request:
     paths:
       - 'skills/**'
+      - '.github/workflows/guardskills.yml'
   workflow_dispatch:
 
 permissions:

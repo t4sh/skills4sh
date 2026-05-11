@@ -65,7 +65,7 @@ See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability di
 
 ### Security scanning
 
-All skills are checked with [guardskills](https://www.npmjs.com/package/guardskills). **agent-memory**, **discord-harvest**, and **eleventy-nunjucks** rate **SAFE**; **localhost-screenshots** rates **WARNING** with documented false positives in code examples (see [SECURITY.md](SECURITY.md) and `.security/localhost-screenshots.yaml`).
+All four skills rate **SAFE** with [guardskills](https://www.npmjs.com/package/guardskills). Risk scores: agent-memory 0, discord-harvest 0, localhost-screenshots 21.5, eleventy-nunjucks 100 — all driven by documented false positives in instructional grep/curl/env snippets within reference docs (see [SECURITY.md](SECURITY.md) § Expected Security Findings).
 
 ```bash
 npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run;
