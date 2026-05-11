@@ -7,14 +7,25 @@ name: npm publish
 # source of truth for the ref to publish — workflow checks out exactly
 # that tag, not the branch HEAD at trigger time.
 #
+# Auth: OIDC Trusted Publisher (no NPM_TOKEN required).
+#
 # Prereqs (one-time setup):
-#   1. Secrets > Actions > new repository secret `NPM_TOKEN` — an npm
-#      Automation token with `publish` permission, generated at
-#      https://www.npmjs.com/settings/<user>/tokens/granular-access-tokens/new
-#   2. `id-token: write` permission below is what enables the OIDC token
-#      that `npm publish --provenance` consumes to sign the attestation.
-#   3. package.json `repository.url` must match this GitHub repo (already
-#      configured at https://github.com/t4sh/skills4sh.git).
+#   1. On npmjs.com, the `skills4sh` package has a Trusted Publisher
+#      configured pointing at this repo + this workflow filename:
+#      https://www.npmjs.com/package/skills4sh/access
+#      → Trusted Publishers
+#      → Repository: t4sh/skills4sh
+#      → Workflow:  npm-publish.yml
+#      → Environment: (blank)
+#   2. `id-token: write` permission below issues the OIDC token that npm
+#      verifies against the Trusted Publisher binding above. The same
+#      token signs the provenance attestation.
+#   3. package.json `repository.url` matches the GitHub repo.
+#
+# No NPM_TOKEN secret is needed. The previous token-based flow is
+# documented in git history (commit history around v0.3.1-v0.3.2) but
+# is superseded by Trusted Publishers — there's no token to rotate, no
+# token to leak, and the workflow file path itself is the trust anchor.
 #
 # Why CI-only provenance:
 #   Local `npm publish` cannot produce provenance attestations — OIDC is
@@ -23,8 +34,8 @@ name: npm publish
 #   on THIS public CI runner" — consumers verify via `npm audit signatures`.
 #
 # Manual trigger:
-#   workflow_dispatch lets you re-run the publish (e.g. after fixing an
-#   NPM_TOKEN issue) without cutting a new release.
+#   workflow_dispatch re-runs the publish from any tag/ref without
+#   cutting a new GitHub release.
 
 on:
   release:
@@ -64,20 +75,21 @@ jobs:
       - name: Run installer unit tests
         run: node --test tests/installer.test.mjs
 
-      - name: Publish to npm (with provenance)
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish to npm (OIDC Trusted Publisher + provenance)
         run: npm publish --access public --provenance
 
       - name: Verify the published tarball was attested
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           set -e
           version=$(node -p "require('./package.json').version")
           echo "Verifying provenance for skills4sh@$version..."
-          npm audit signatures --json | grep -q "skills4sh" || {
-            echo "✗ Provenance signature not found for skills4sh@$version"
+          # Query the registry for attestation metadata. `npm audit
+          # signatures` would require installing the package as a dep
+          # (skills4sh isn't a dep of itself in this checkout), so we
+          # check `dist.attestations` directly.
+          attestations=$(npm view "skills4sh@$version" dist.attestations --json 2>/dev/null || echo null)
+          if [ -z "$attestations" ] || [ "$attestations" = "null" ]; then
+            echo "✗ No attestation metadata for skills4sh@$version"
             exit 1
-          }
-          echo "✓ Provenance attestation verified"
+          fi
+          echo "✓ Attestation present: $attestations"
