@@ -75,7 +75,9 @@ jobs:
       - name: Run installer unit tests
         run: node --test tests/installer.test.mjs
 
-      - name: Publish to npm (OIDC Trusted Publisher + provenance)
+      - name: Publish to npm (NPM_TOKEN + OIDC provenance)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
 
       - name: Verify the published tarball was attested
