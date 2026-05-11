@@ -69,6 +69,17 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
 
+      # Node 22 bundles npm 10.9.x, which signs SLSA provenance via OIDC but
+      # does NOT yet authenticate the registry PUT via OIDC — it falls back
+      # to looking for _authToken in .npmrc, fails to find one under Trusted
+      # Publisher, and the registry returns 404. npm's Trusted Publisher
+      # publish-auth landed in 11.5.x. Pin to ^11 to keep the upgrade in a
+      # known-compatible major while still receiving patch fixes.
+      - name: Upgrade npm to 11.x (Trusted Publisher publish-auth)
+        run: |
+          npm install -g npm@^11
+          npm --version
+
       - name: Pre-publish guards (mirrors local prepublishOnly + validate)
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name || inputs.ref || github.ref_name }}
