@@ -8,6 +8,24 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.3] — 2026-05-12
+
+Closes two parallel-audit findings. No public CLI surface change.
+
+### Fixed
+- **`bin/install.mjs`: SIGINT/SIGTERM cleanup no longer deletes the backup mid-update.** v0.4.2's cleanup handler unconditionally `rm`s both `stagingDir` and `backupDir`. If a signal arrived during the narrow "backed-up" window (after the old skill was moved aside to `backupDir`, before `stagingDir` was renamed into place), the backup — the only intact copy of the user's old skill — would be destroyed.
+
+   New behavior: cleanup is state-aware via a pure `interruptCleanupPlan(state)` function. In the `backed-up` state it *restores* from backup rather than deleting. The backup is only deleted after promotion succeeds (state = `promoted`). Invariant pinned by 4 new unit tests in `tests/installer.test.mjs`.
+
+- **Published `package.json` no longer exposes dev scripts whose target files aren't in the tarball.** Previously `npm view skills4sh@0.4.2 scripts` listed `test`, `check:drift`, `check:guardskills`, `check:pack`, `check:release`, `setup:hooks`, `prepublishOnly` — all of which reference `bin/*-check.mjs`, `tests/`, or `.github/scripts/` that aren't shipped in the tarball. A consumer who ran `npm run check:drift` after installing would hit "module not found."
+
+   New behavior: `bin/clean-package-for-publish.mjs` runs as `prepack` (strips `scripts` from `package.json`, backs up to `package.json.prepack.bak`) and as `postpack` (restores from backup). `bin/pack-check.mjs` now asserts the published `package.json` has no `scripts` field, preventing a misconfigured hook from silently shipping a dirty manifest. 8 new tests in `tests/clean-package-for-publish.test.mjs` cover both halves of the cycle (including the recovery-from-stale-`.bak` case).
+
+### Added
+- `bin/clean-package-for-publish.mjs` — prepack/postpack helper. Idempotent; logs to stderr so `npm pack --json` output isn't polluted.
+- `interruptCleanupPlan(state)` exported from `bin/install.mjs` so the state-machine invariant is unit-tested.
+- 12 new tests (101 → 113 total).
+
 ## [0.4.2] — 2026-05-12
 
 Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-eyes audit and adds robustness around the installer's failure modes. No public CLI surface change beyond the new `npm test` script.
@@ -186,7 +204,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.2...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.3...HEAD
+[0.4.3]: https://github.com/t4sh/skills4sh/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/t4sh/skills4sh/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/t4sh/skills4sh/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/t4sh/skills4sh/compare/v0.3.11...v0.4.0

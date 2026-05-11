@@ -1,6 +1,6 @@
 {
   "name": "skills4sh",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot).",
   "type": "module",
   "bin": {
@@ -13,6 +13,8 @@
     "check:pack": "node bin/pack-check.mjs",
     "check:release": "node bin/release-check.mjs",
     "setup:hooks": "bash bin/setup-hooks.sh",
+    "prepack": "node bin/clean-package-for-publish.mjs prepack",
+    "postpack": "node bin/clean-package-for-publish.mjs postpack",
     "prepublishOnly": "npm run check:release && bash .github/scripts/check-bin-tag-parity.sh && npm run check:drift && npm run check:pack"
   },
   "files": [

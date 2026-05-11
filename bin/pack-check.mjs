@@ -30,9 +30,20 @@ try {
   run("tar", ["-xzf", tgz, "-C", tmp], { cwd: root });
   const pkg = JSON.parse(await readFile(join(extractDir, "..", "package", "package.json"), "utf8"));
   if (pkg.name !== "skills4sh") throw new Error(`packed package has unexpected name: ${pkg.name}`);
+  // Dev scripts (check:*, test, setup:hooks, prepublishOnly, prepack, postpack)
+  // reference files outside package.json#files; they're stripped from the
+  // published package.json by bin/clean-package-for-publish.mjs at prepack time.
+  // Assert here so a misconfigured prepack hook can't silently ship a broken
+  // scripts dict.
+  if (pkg.scripts && Object.keys(pkg.scripts).length > 0) {
+    throw new Error(
+      `published package.json carries scripts (${Object.keys(pkg.scripts).join(", ")}) — ` +
+      `the prepack hook (bin/clean-package-for-publish.mjs) should have stripped them.`,
+    );
+  }
   await readFile(join(extractDir, "..", "package", "npm-shrinkwrap.json"));
 
-  console.log("✓ npm pack includes npm-shrinkwrap.json");
+  console.log("✓ npm pack includes npm-shrinkwrap.json + scripts stripped from published package.json");
 } finally {
   await rm(tmp, { recursive: true, force: true });
 }

@@ -19,7 +19,7 @@ if (typeof fetch !== "function" || major < 22) {
 }
 
 import { mkdir, writeFile, rm, readdir, rename, readFile, stat } from "node:fs/promises";
-import { realpathSync, rmSync } from "node:fs";
+import { realpathSync, rmSync, renameSync } from "node:fs";
 import { join, dirname, isAbsolute, normalize } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { homedir } from "node:os";
@@ -177,6 +177,30 @@ function discoverSkills(tree) {
   return skills;
 }
 
+// Decides what an interrupt cleanup should do based on the install state at
+// the moment SIGINT/SIGTERM arrives. Pure — exported for unit tests.
+//
+// State transitions during installSkill():
+//   "writing"   files being written into stagingDir; backupDir doesn't exist
+//   "backed-up" old skillDir has been moved aside to backupDir; new content
+//               not yet promoted — the backup is the only intact copy of the
+//               user's old skill, MUST NOT be deleted on interrupt
+//   "promoted"  new content is at skillDir; backupDir is redundant; safe to rm
+//
+// Invariant: rmBackup is true ONLY when state === "promoted". The audit-flagged
+// regression (where SIGTERM during a "backed-up" window would delete the user's
+// only intact copy) is closed by this function.
+export function interruptCleanupPlan(state) {
+  if (state === "backed-up") {
+    return { restoreFromBackup: true, rmStaging: true, rmBackup: false };
+  }
+  if (state === "promoted") {
+    return { restoreFromBackup: false, rmStaging: true, rmBackup: true };
+  }
+  // "writing" or any other state — backup doesn't exist yet; never touch it.
+  return { restoreFromBackup: false, rmStaging: true, rmBackup: false };
+}
+
 // Reject any path segment that could escape the install directory.
 function assertSafePathComponent(name, label) {
   if (!name || name === "." || name === ".." || name.includes("/") || name.includes("\\") || name.includes("\0")) {
@@ -232,14 +256,33 @@ async function installSkill(name, files) {
   //   4. On success, remove the backup. On any failure, restore the backup and rethrow.
   //
   // The suffix uses crypto.randomBytes so two concurrent invocations (same PID in a
-  // container, two shells racing on the same dest) never collide. SIGTERM / SIGINT
-  // trigger best-effort cleanup so an interrupt mid-download doesn't leak staging dirs.
+  // container, two shells racing on the same dest) never collide.
+  //
+  // SIGTERM / SIGINT cleanup is STATE-AWARE — it will never delete the backup
+  // while the old skill is the only intact copy. State transitions:
+  //   "writing"   → staging is being written; old skillDir intact.
+  //   "backed-up" → skillDir has been moved aside to backupDir; new content
+  //                 not yet promoted. Interrupting here MUST restore from
+  //                 backup, NOT delete it (that would destroy the user's
+  //                 installation).
+  //   "promoted"  → new content is at skillDir; backup is redundant. Safe
+  //                 to delete on interrupt.
   const suffix = randomBytes(6).toString("hex");
   const stagingDir = `${skillDir}.tmp-${suffix}`;
   const backupDir = `${skillDir}.backup-${suffix}`;
+  let installState = "writing";
   const cleanupOnSignal = () => {
-    try { rmSync(stagingDir, { recursive: true, force: true }); } catch { /* best effort */ }
-    try { rmSync(backupDir, { recursive: true, force: true }); } catch { /* best effort */ }
+    const plan = interruptCleanupPlan(installState);
+    if (plan.restoreFromBackup) {
+      try { rmSync(skillDir, { recursive: true, force: true }); } catch { /* best effort */ }
+      try { renameSync(backupDir, skillDir); } catch { /* leave backup for manual recovery */ }
+    }
+    if (plan.rmStaging) {
+      try { rmSync(stagingDir, { recursive: true, force: true }); } catch { /* best effort */ }
+    }
+    if (plan.rmBackup) {
+      try { rmSync(backupDir, { recursive: true, force: true }); } catch { /* best effort */ }
+    }
   };
   process.once("SIGINT", cleanupOnSignal);
   process.once("SIGTERM", cleanupOnSignal);
@@ -257,8 +300,10 @@ async function installSkill(name, files) {
     if (existingHash !== null) {
       await rename(skillDir, backupDir);
       backupExists = true;
+      installState = "backed-up";
     }
     await rename(stagingDir, skillDir);
+    installState = "promoted";
     if (backupExists) {
       await rm(backupDir, { recursive: true, force: true });
       backupExists = false;
@@ -587,7 +632,8 @@ async function runMain() {
 }
 
 // Test-only exports: pure functions with no module-state dependency.
-// Tests import these without triggering runMain().
+// Tests import these without triggering runMain(). (interruptCleanupPlan is
+// already exported inline above.)
 export {
   parseArgs,
   assertSafePathComponent,
