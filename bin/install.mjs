@@ -430,6 +430,9 @@ async function runMain() {
   if (args.noVerify) {
     console.error("⚠ --no-verify: skipping hash verification (INSECURE — use only for testing)");
   }
+  if (args.force) {
+    console.error("⚠ --force is deprecated and will be removed in v1.0 — re-runs are idempotent (skipped by content hash).");
+  }
 
   await main();
 }

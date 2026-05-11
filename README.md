@@ -11,6 +11,8 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 | [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.0 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.3.0 |
 
+> **Stability note.** `eleventy-nunjucks` is pre-1.0 (v0.x) — its trigger phrasing and prompt content may change in incompatible ways between minor releases. The other three skills follow semver: breaking changes only on major bumps.
+
 ## Install
 
 ```bash

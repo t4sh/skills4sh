@@ -67,11 +67,13 @@ scanning:
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/playwright-patterns.md
       reason: "False positive. The Persistent Browser Sessions example references `process.env.HOME || process.env.USERPROFILE` to compute a `~/.cache/localhost-screenshots/` profile directory — no credentials or secrets are read; the path stores browser cookies/localStorage for multi-step screenshot workflows."
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/interaction-templates.md
       reason: "False positive. The Auth → Dashboard template reads `process.env.DEMO_USER` / `DEMO_PASS` as an example of sourcing demo-environment credentials from the environment instead of hardcoding them — this is the secure pattern guardskills R005 is intended to encourage."
     - id: R008_ENV_ACCESS

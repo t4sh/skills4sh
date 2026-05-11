@@ -3,6 +3,7 @@
 
 import { createHash } from "node:crypto";
 import { readFile, readdir, stat } from "node:fs/promises";
+import { spawnSync } from "node:child_process";
 import { join, relative } from "node:path";
 
 const root = process.cwd();
@@ -26,6 +27,18 @@ for (const skill of skills) {
   const lockEntry = lock.skills?.[skill];
   expect(Boolean(lockEntry), `${skill}: missing skills-lock.json entry`);
   expect(lockEntry?.version === fm.version, `${skill}: skills-lock version must match SKILL.md`);
+
+  // Semver monotonicity: SKILL.md version must not move backwards between commits.
+  // Skips silently when HEAD^ is unavailable (initial commit, shallow CI clone) or
+  // when the skill is new (no SKILL.md at HEAD^). Local + full-clone CI run this;
+  // shallow clones get the check via the pre-commit hook on the contributor's machine.
+  const previousVersion = readPreviousSkillVersion(skill);
+  if (previousVersion && fm.version) {
+    expect(
+      compareSemver(fm.version, previousVersion) >= 0,
+      `${skill}: SKILL.md version ${fm.version} is older than previous commit's ${previousVersion} (semver monotonicity)`,
+    );
+  }
 
   expect(readme.includes(`skills/${skill}/`), `${skill}: README skills table missing skill`);
   expect(readme.includes(`| ${fm.version} |`), `${skill}: README missing version ${fm.version}`);
@@ -174,4 +187,26 @@ async function readText(path) {
 
 async function readJson(path) {
   return JSON.parse(await readText(path));
+}
+
+function readPreviousSkillVersion(skill) {
+  const result = spawnSync("git", ["show", `HEAD^:skills/${skill}/SKILL.md`], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (result.status !== 0) return null;
+  return parseSkillFrontmatter(result.stdout).version ?? null;
+}
+
+// Returns -1, 0, or 1 for major.minor.patch comparison. Pre-release suffixes
+// (e.g. "1.2.0-rc.1") are stripped — we only care about backwards numeric drift.
+function compareSemver(a, b) {
+  const parse = (v) => String(v).split("-")[0].split(".").map((n) => Number.parseInt(n, 10) || 0);
+  const [aMa, aMi, aPa] = parse(a);
+  const [bMa, bMi, bPa] = parse(b);
+  if (aMa !== bMa) return aMa < bMa ? -1 : 1;
+  if (aMi !== bMi) return aMi < bMi ? -1 : 1;
+  if (aPa !== bPa) return aPa < bPa ? -1 : 1;
+  return 0;
 }

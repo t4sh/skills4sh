@@ -71,11 +71,13 @@ scanning:
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/build-pipeline.md
       reason: "False positive — security-hardening and audit examples mention grep patterns for secrets."
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/data-cascade.md
       reason: "False positive — env-driven data examples; no secret material."
     - id: R008_ENV_ACCESS
@@ -86,6 +88,7 @@ scanning:
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/eleventy-config-api.md
       reason: "False positive — COMMIT_SHA/BUILT_AT placeholders in config snippets."
     - id: R008_ENV_ACCESS
@@ -96,6 +99,7 @@ scanning:
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/production-patterns.md
       reason: "False positive — CSP/nginx/curl audit examples."
     - id: R008_ENV_ACCESS
@@ -106,10 +110,12 @@ scanning:
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/security-checklist.md
       reason: "False positive — checklist teaches grep for api_key/token/secret in output."
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
+      acknowledged: true
       file: references/troubleshooting.md
       reason: "False positive — diagnostic grep examples."
