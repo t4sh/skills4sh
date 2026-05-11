@@ -116,6 +116,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | guardskills | agent-memory: SAFE, discord-harvest: SAFE, eleventy-nunjucks: SAFE (risk score 100 — see [Expected Findings](#expected-security-findings)), localhost-screenshots: SAFE (risk score 21.5 — see [Expected Findings](#expected-security-findings)) |
 | CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
 | Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
+| npm provenance | `.github/workflows/npm-publish.yml` publishes via OIDC Trusted Publisher binding on npmjs.com (no shared secret) with `npm publish --provenance`. Each tarball ships a SLSA v1 attestation linking it to this repo + this workflow + the specific commit; consumers verify via `npm audit signatures`. |
 | guardskills CI | `.github/workflows/guardskills.yml` matrix-scans all four skills (agent-memory, discord-harvest, eleventy-nunjucks, localhost-screenshots) on Node 22 and 24. Triggered on push, PR, and manual dispatch. |
 
 ### AST09 — No Governance
