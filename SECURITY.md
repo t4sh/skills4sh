@@ -59,7 +59,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | Single source of truth | All skills authored in this repo — no external registry pulls |
 | Pre-publish guard | `.github/scripts/check-bin-tag-parity.sh` (wired via `prepublishOnly` and `release.yml`) refuses publish when `bin/` has changed since the tag for the current `package.json` version |
 | CI hash verification | Automated drift detection on every push and PR (`validate.yml` runs `bin/hash-check.mjs`) |
-| Pre-commit hash guard | `.githooks/pre-commit` runs `bin/hash-check.mjs` locally before any commit; wired via `npm install`'s `prepare` script |
+| Pre-commit hash guard | `.githooks/pre-commit` runs `bin/hash-check.mjs` locally before any commit; contributors opt in via `bash bin/setup-hooks.sh` |
 
 ### AST03 — Over-Privileged Skills
 
