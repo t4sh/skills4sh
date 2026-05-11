@@ -1,0 +1,57 @@
+name: Release Guards
+
+# Replicates the local `prepublishOnly` hook in CI so that:
+#   1. `bin/` drift is caught at PR / push time (before merge), not only
+#      when someone runs `npm publish` locally.
+#   2. If/when CI gains a `npm publish` step, the check sits next to it
+#      explicitly — not relying on `prepublishOnly` (which CI could bypass
+#      with `npm publish --ignore-scripts` either intentionally or by
+#      accident).
+#
+# Trigger logic:
+#   - push / pull_request when bin/ or package.json changes → catches the
+#     bug class early (someone edits install.mjs without bumping version
+#     while a tag for the current version already exists).
+#   - tag push (v*) → explicit gate before any future CI publish step.
+#     At tag time the check is trivially passing (tag === HEAD), but its
+#     presence is the contract.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'bin/**'
+      - 'package.json'
+      - '.github/scripts/check-bin-tag-parity.sh'
+      - '.github/workflows/release.yml'
+    tags:
+      - 'v*'
+  pull_request:
+    paths:
+      - 'bin/**'
+      - 'package.json'
+      - '.github/scripts/check-bin-tag-parity.sh'
+      - '.github/workflows/release.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  bin-tag-parity:
+    name: bin/ matches tag for current package.json version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history + tags needed for `git rev-parse refs/tags/vX.Y.Z`
+          # and the `git diff <tag> -- bin/` step inside the script.
+          fetch-depth: 0
+
+      - name: Setup Python (script uses python3 for JSON parsing)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3'
+
+      - name: Run prepublishOnly check
+        run: bash .github/scripts/check-bin-tag-parity.sh
