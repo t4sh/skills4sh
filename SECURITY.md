@@ -179,6 +179,17 @@ The following findings are expected and documented:
 - `PROMPT_INJECTION` (HIGH) — captured page content (a11y tree, DOM snapshot, interactive map) is now wrapped in an `{ boundary: "untrusted-page-content", source, … }` envelope, with an explicit boundary section in `SKILL.md`.
 - `R009_FILE_STAGE` — the `/tmp/chrome-debug` CDP example was removed; no temp-file staging strings remain.
 
+## Known Non-Issues
+
+Audit cycles have repeatedly raised the items below as concerns; each has been investigated and determined to be a non-issue for this codebase. Documenting them here to preempt future re-raises.
+
+| Concern | Why it isn't an issue here |
+|---|---|
+| **Symlinks inside a skill bundle could be malicious** (e.g., `references/docs.md` symlinked to `/etc/passwd`) | The installer calls [`writeFile()`](bin/install.mjs) for every downloaded file, never `symlink()`. A symlink in the source repo arrives via `raw.githubusercontent.com` as a regular blob containing the link-target string. The user gets a regular file with the literal path inside — never an actual symlink. No code path in `installSkill()` constructs symlinks. |
+| **Hash comparison is not timing-safe (`===`)** | Constant-time comparison matters when an attacker can probe the comparison via timing (e.g., remote authentication oracles). Here, the comparison is between a locally-computed SHA-256 and a locally-cached lockfile value — no remote oracle exists, no probe vector. Standard string equality is correct. |
+| **Dependabot PRs skip branch-protection-drift verification** | The workflow has an intentional carve-out at [`branch-protection-drift.yml`](.github/workflows/branch-protection-drift.yml) when `github.actor == "dependabot[bot]"` because Dependabot has a separate secret store and can't see `BRANCH_PROTECTION_TOKEN`. Threat assessment: Dependabot has no write access to branch-protection settings, and the daily cron run (with the regular secret) catches any drift within 24 hours regardless of PR cadence. The skip is a usability tradeoff with no real security impact. If you want the check on Dependabot PRs anyway, add the secret to Settings → Secrets and variables → Dependabot. |
+| **`SKIP_BIN_TAG_PARITY=1` env var bypasses the bin/tag-parity guard** | Documented bypass at [`check-bin-tag-parity.sh:24`](.github/scripts/check-bin-tag-parity.sh) for emergency hotfix / republish-after-unpublish scenarios. **Boundary: this is local-only.** The CI publish workflow (`npm-publish.yml`) runs the script directly via `bash .github/scripts/check-bin-tag-parity.sh` and does NOT propagate environment variables from outside; an attacker would need write access to the workflow file itself to exploit this from CI. Since the OIDC Trusted Publisher binding is keyed on this exact workflow file path, modifying the workflow breaks publish auth. The bypass therefore only helps a maintainer running `npm publish` locally — a path that requires admin + valid npm credentials independently. |
+
 ## Security Scanning
 
 Run security scans locally:

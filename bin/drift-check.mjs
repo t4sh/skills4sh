@@ -14,6 +14,8 @@ import {
   parseSkillFrontmatter,
   parseSecurityManifest,
   validateSecurityManifest,
+  parseExpectedFindings,
+  validateAcknowledgedReasons,
   compareSemver,
   listEqual,
 } from "./lib/parsers.mjs";
@@ -72,6 +74,12 @@ export async function runDriftChecks(rootDir) {
 
     const securityManifest = await readText(`.security/${skill}.yaml`);
     for (const schemaErr of validateSecurityManifest(securityManifest, skill)) errors.push(schemaErr);
+    // Acknowledged-reason validation: any expected_finding with
+    // acknowledged: true must carry a substantive reason. Closes the
+    // "rubber-stamp" gap where the severity floor could be silenced
+    // without explanation.
+    const findings = parseExpectedFindings(securityManifest);
+    for (const reasonErr of validateAcknowledgedReasons(findings, skill)) errors.push(reasonErr);
     const manifest = parseSecurityManifest(securityManifest);
     expect(manifest.name === skill, `${skill}: security manifest name mismatch`);
     expect(manifest.version === fm.version, `${skill}: security manifest version mismatch`);

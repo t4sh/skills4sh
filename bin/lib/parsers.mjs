@@ -139,7 +139,9 @@ export function validateSecurityManifest(text, skillName) {
 }
 
 // Parses expected_findings from a .security/<name>.yaml. Returns array of
-// { id, file, severity, acknowledged }. Severity is normalized to uppercase.
+// { id, file, severity, acknowledged, reason }. Severity is normalized to
+// uppercase. The reason field is captured for the acknowledged-reason
+// validator below.
 export function parseExpectedFindings(text) {
   const out = [];
   let current = null;
@@ -157,8 +159,43 @@ export function parseExpectedFindings(text) {
     if (severity) current.severity = severity[1].toUpperCase();
     const acknowledged = line.match(/^\s+acknowledged:\s*(true|false)\s*$/);
     if (acknowledged) current.acknowledged = acknowledged[1] === "true";
+    const reason = line.match(/^\s+reason:\s*(.*)$/);
+    if (reason) current.reason = stripQuotes(reason[1]);
   }
   return out.filter((finding) => finding.id && finding.file);
+}
+
+// Validates that every acknowledged: true expected_finding has a substantive
+// reason. Prevents rubber-stamping HIGH/CRITICAL findings with empty or
+// trivial rationale ("false positive" alone isn't enough to audit).
+//
+// Closes a v0.4.6 audit finding: the severity-floor policy required
+// `acknowledged: true` on HIGH/CRITICAL but didn't require any justification
+// to accompany it. A maintainer could blindly check the flag.
+//
+// Default minReasonLength=20: "False positive" is 14 chars; "False positive
+// — env example" is 32. Twenty is a low bar that still rules out the
+// rubber-stamp case.
+export function validateAcknowledgedReasons(findings, skillName, minReasonLength = 20) {
+  const errors = [];
+  for (const f of findings) {
+    if (f.acknowledged !== true) continue;
+    if (typeof f.reason !== "string" || f.reason.trim().length === 0) {
+      errors.push(
+        `${skillName}: expected_finding ${f.id} (${f.file}) has acknowledged: true but no reason — ` +
+        `add a non-empty reason: explaining why this finding is benign`,
+      );
+      continue;
+    }
+    if (f.reason.trim().length < minReasonLength) {
+      errors.push(
+        `${skillName}: expected_finding ${f.id} (${f.file}) has acknowledged: true but reason ` +
+        `is too short (${f.reason.trim().length} chars; minimum ${minReasonLength}). ` +
+        `Substantive rationale prevents rubber-stamping. Current reason: ${JSON.stringify(f.reason)}`,
+      );
+    }
+  }
+  return errors;
 }
 
 // guardskills' BLOCKING_SEVERITIES policy — any actual finding at this

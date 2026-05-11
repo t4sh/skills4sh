@@ -8,6 +8,31 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.6] — 2026-05-12
+
+Closes the remaining fresh-audit polish items, plus four cosmetic / documentation fixes the auditor surfaced. No breaking change for normal install/list flows; **`skills4sh` against a repo without `skills-lock.json` now requires explicit `--no-verify`** (closes the silent-lockfile-removal downgrade attack).
+
+### Security
+- **Missing `skills-lock.json` is now a hard error.** Pre-v0.4.6 silently skipped verification with a warning if a repo had no lockfile. That was a downgrade-attack vector — an attacker who could push a malicious commit removing the lockfile would silently disable hash verification on the next install of that ref. New behavior: missing lockfile is an error with a directed message explaining the fix (`--no-verify` for repos that genuinely don't have one, or fix the source repo).
+- **Per-file 50 MiB size cap on downloads.** `fetchRaw` now checks `Content-Length` headers before reading the body and the actual buffer length after. Refuses downloads exceeding the cap with a `413`-style error. Defensive against `--repo` installs pointed at attacker-controlled sources; current bundled skills are hash-pinned so they can't grow silently anyway.
+- **`acknowledged: true` expected_findings now require a non-empty `reason:`.** New `validateAcknowledgedReasons()` exported from `bin/lib/parsers.mjs`, wired into `drift-check` per skill. Minimum reason length is 20 characters — enough to rule out rubber-stamping like `"false positive"` without explanation, lenient enough to accept normal rationale.
+
+### Added
+- **`--version` / `-v` flag** — prints version to stdout and exits 0. Standard CLI affordance for scripted tooling.
+
+### Changed
+- **Dry-run runs verification too.** Pre-v0.4.6 dry-run returned BEFORE `verifyAgainstLock()`, so `skills4sh --dry-run` against a repo with a missing lockfile would falsely report "would install" — a real install would fail. Verification now runs first; dry-run output reflects what a real install would actually do.
+- **Parse-error output is quieter** — no more dumping the full help text on every unknown-flag error. Just the error + one-line hint (`Run \`skills4sh --help\` for usage.`). Less noise in CI logs.
+- **Dry-run error path emits JSON envelope on stdout** — `{ schemaVersion: 1, command, dryRun: true, error: { message, code, status } }`. Tooling that parses dry-run JSON keeps getting parseable output even on failure paths. Human-facing error still goes to stderr.
+- **Hash-verification log moved to stderr** — was `console.log`, now `console.error`. Status message, not output. Critical for `--dry-run` where stdout must contain only the JSON envelope.
+
+### Documentation
+- **`SECURITY.md` "Known Non-Issues" section.** Documents four concerns audit cycles repeatedly raise that don't apply to this codebase: (a) symlinks inside skill bundles can't smuggle real symlinks because `installSkill` only uses `writeFile()`, (b) hash comparison is not timing-safe by design (no remote oracle), (c) Dependabot drift-check skip is an accepted tradeoff with no real impact (daily cron catches drift independently), (d) `SKIP_BIN_TAG_PARITY=1` is local-publish-only — CI runs the script directly and OIDC binding is keyed to the workflow file.
+- **`CHANGELOG.md`** historical fix — v0.3.10 entry said "6 workflow files" but the actual count was 7 (branch-protection-drift.yml was added in the same release).
+
+### Tests
+- 138 → **153** (+15 covering reason validation, `--version`, parse-error quietness, dry-run error envelope, lockfile-404 hard error, lockfile-404 + `--no-verify` opt-in, oversized-file cap).
+
 ## [0.4.5] — 2026-05-12
 
 Closes six fresh-eyes audit findings in a single release. Four CLI safety + UX fixes, two test-coverage fills. **No breaking change for normal install/list flows**; the `remove --all` path now requires explicit `--yes` confirmation (was previously silent destructive bulk).
@@ -124,7 +149,7 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ## [0.3.10] — 2026-05-11
 
 ### Security
-- **All GitHub Actions are now SHA-pinned.** Every `uses:` directive across the 6 workflow files references a commit SHA (`actions/checkout@34e114876…`) with a `# vX.Y.Z` comment for human readability. Floating major tags (`@v4`) reflect whatever upstream pushes to that ref; an upstream account compromise would land on every CI run on the next refresh — the same class of attack as the tj-actions/changed-files 2025 incident. Pinning to SHAs freezes that surface; Dependabot moves it forward under review.
+- **All GitHub Actions are now SHA-pinned.** Every `uses:` directive across the 7 workflow files references a commit SHA (`actions/checkout@34e114876…`) with a `# vX.Y.Z` comment for human readability. Floating major tags (`@v4`) reflect whatever upstream pushes to that ref; an upstream account compromise would land on every CI run on the next refresh — the same class of attack as the tj-actions/changed-files 2025 incident. Pinning to SHAs freezes that surface; Dependabot moves it forward under review.
 - **`.github/dependabot.yml` added** for the `github-actions` ecosystem. Weekly grouped PRs, batched so a single security gate covers the batch. Each PR hits the full required-checks matrix (validate, guardskills, codeql, dependency-review, release-guards) before merge.
 - **Branch-protection drift detection (opt-in).** New workflow `.github/workflows/branch-protection-drift.yml` plus checked-in snapshot `.github/branch-protection.expected.json` capture the intended `refs/heads/main` protection state (14 required status checks, strict mode, linear history, no force-push, no deletion, conversation resolution required). The workflow is inert by default — the default `GITHUB_TOKEN` does not support `Administration: read`. Setting a `BRANCH_PROTECTION_TOKEN` repo secret (fine-grained PAT scoped to this repo, `Administration: Read-only`) enables the daily drift assertion. Without the secret the workflow logs the setup recipe and exits cleanly.
 
@@ -240,7 +265,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.5...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.6...HEAD
+[0.4.6]: https://github.com/t4sh/skills4sh/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/t4sh/skills4sh/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/t4sh/skills4sh/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/t4sh/skills4sh/compare/v0.4.2...v0.4.3

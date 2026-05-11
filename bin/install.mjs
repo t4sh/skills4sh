@@ -34,6 +34,13 @@ const RAW = process.env.SKILLS4SH_RAW_BASE ?? "https://raw.githubusercontent.com
 const DOWNLOAD_CONCURRENCY = 8;
 const FETCH_RETRIES = 1;
 const FETCH_RETRY_DELAY_MS = 500;
+// Per-file size cap. Skills are markdown bundles plus small assets; a
+// single file exceeding 50 MiB is almost certainly malicious or
+// misconfigured. Hash-pinned skills can't grow silently (computedHash
+// changes), but a `--repo` install pointed at an attacker-controlled repo
+// has no other defense. The cap is enforced via Content-Length when
+// available and at body-read time as a backstop.
+const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
 
 // Module-scoped runtime state. Populated by runMain() when invoked as CLI;
 // remains undefined when the module is imported (e.g. by tests). Functions
@@ -294,6 +301,12 @@ async function installSkill(name, files) {
   }), ac);
 
   const hash = computeSkillFolderHash(downloaded);
+  // Run verification BEFORE the dry-run early return so that "would this
+  // install succeed?" gives the right answer. Dry-run that silently skips
+  // verification is misleading — it would say "yes" even when a real install
+  // would fail. (Pre-v0.4.6 had this bug; missing lockfile passed dry-run
+  // silently but failed real install.)
+  if (!args.noVerify) await verifyAgainstLock(name, hash);
   if (args.dryRun) {
     console.log(JSON.stringify({
       schemaVersion: 1, command: "install", dryRun: true,
@@ -302,7 +315,6 @@ async function installSkill(name, files) {
     }, null, 2));
     return;
   }
-  if (!args.noVerify) await verifyAgainstLock(name, hash);
 
   // Idempotent: if what's on disk matches what we just verified, skip the write.
   // This is the common case for `add` when the user re-runs and nothing changed.
@@ -452,7 +464,30 @@ async function fetchRaw(repoPath, ac) {
         },
         signal: ac?.signal,
       });
-      if (res.ok) return Buffer.from(await res.arrayBuffer());
+      if (res.ok) {
+        // Per-file size cap. Check Content-Length first (cheap; rejects before
+        // body read), then check actual buffer length (backstop for missing
+        // or lying headers — server could advertise small but send large).
+        const contentLength = Number(res.headers.get("content-length"));
+        if (Number.isFinite(contentLength) && contentLength > MAX_FILE_SIZE_BYTES) {
+          const err = new Error(
+            `${repoPath} exceeds ${MAX_FILE_SIZE_BYTES} byte size cap ` +
+            `(Content-Length: ${contentLength}). Refusing to download.`,
+          );
+          err.status = 413;
+          throw err;
+        }
+        const buf = Buffer.from(await res.arrayBuffer());
+        if (buf.length > MAX_FILE_SIZE_BYTES) {
+          const err = new Error(
+            `${repoPath} exceeds ${MAX_FILE_SIZE_BYTES} byte size cap ` +
+            `(actual: ${buf.length} bytes). Refusing.`,
+          );
+          err.status = 413;
+          throw err;
+        }
+        return buf;
+      }
       if (res.status >= 500 && attempt < FETCH_RETRIES) {
         lastErr = new Error(`GET ${url} → ${res.status}`);
         await new Promise((r) => setTimeout(r, FETCH_RETRY_DELAY_MS));
@@ -492,8 +527,22 @@ async function verifyAgainstLock(name, got) {
     raw = await fetchRaw("skills-lock.json");
   } catch (err) {
     if (err.status === 404) {
-      console.error(`  ⚠ skills-lock.json not present in ${owner}/${repo}@${ref} — skipping verification`);
-      return;
+      // Lockfile is not present in this ref. Used to silently skip verification
+      // ("⚠ skipping" warning) but that was a downgrade-attack vector: an
+      // attacker who could remove the lockfile in a malicious commit would
+      // bypass hash verification on that commit. v0.4.6 hardens this — a
+      // missing lockfile is now a hard error. Users who genuinely have no
+      // lockfile (or want to skip verification for testing) must pass
+      // --no-verify explicitly.
+      throw new Error(
+        `skills-lock.json not present in ${owner}/${repo}@${ref}.\n` +
+        `    Without a lockfile, hash verification cannot proceed. Either:\n` +
+        `      (a) the source repo needs a skills-lock.json checked in, or\n` +
+        `      (b) you can pass --no-verify to skip verification (INSECURE — only for\n` +
+        `          local testing or repos you fully trust without integrity checks).\n` +
+        `    Skipping silently on missing lockfile would be a downgrade-attack vector\n` +
+        `    (an attacker removing the lockfile would silently disable verification).`,
+      );
     }
     throw new Error(`failed to fetch skills-lock.json: ${err.message}`);
   }
@@ -521,7 +570,9 @@ async function verifyAgainstLock(name, got) {
       `hash mismatch for ${name}\n    expected ${expected}\n    got      ${got}`,
     );
   }
-  console.log(`  ✓ hash verified`);
+  // Use stderr — status message, not output. Critical for dry-run where
+  // stdout must contain only the JSON envelope.
+  console.error(`  ✓ hash verified`);
 }
 
 function parseArgs(argv) {
@@ -652,6 +703,16 @@ async function runMain() {
     const pkg = JSON.parse(await readFile(join(here, "..", "package.json"), "utf8"));
     pkgVersion = pkg.version;
   } catch { /* best effort */ }
+
+  // --version / -v: print only the version to stdout and exit 0. Standard
+  // CLI affordance for scripted tooling that wants to query the version
+  // without parsing stderr or running a full operation.
+  const rawArgs = process.argv.slice(2);
+  if (rawArgs.includes("--version") || rawArgs.includes("-v")) {
+    console.log(pkgVersion);
+    process.exit(0);
+  }
+
   console.error(`skills4sh v${pkgVersion}`);
 
   // Optional proxy support: Node's native fetch does not honor HTTPS_PROXY env on its own.
@@ -668,8 +729,10 @@ async function runMain() {
   try {
     args = parseArgs(process.argv.slice(2));
   } catch (err) {
+    // Don't dump the full help text on every arg-parse error — it's verbose
+    // and pollutes CI logs. Just print the error and a one-line hint.
     console.error(`✗ ${err.message}`);
-    printHelp();
+    console.error(`    Run \`skills4sh --help\` for usage.`);
     process.exit(1);
   }
   if (args.help || (!args.list && !args.all && !args.skill && !args.remove)) {
@@ -678,7 +741,7 @@ async function runMain() {
   }
   if (args.remove && !args.skill && !args.all) {
     console.error("✗ remove: requires a skill name or --all");
-    printHelp();
+    console.error("    Run `skills4sh --help` for usage.");
     process.exit(1);
   }
 
@@ -735,6 +798,18 @@ if (process.argv[1]) {
   }
   if (import.meta.url === pathToFileURL(invokedFile).href) {
     runMain().catch((err) => {
+      // If we're in dry-run mode, emit a JSON error envelope on stdout so
+      // downstream tooling that expects dry-run JSON still gets parseable
+      // output. The human-facing error always goes to stderr regardless.
+      if (args?.dryRun) {
+        const command = args.remove ? "remove" : (args.list ? "list" : "install");
+        const envelope = {
+          schemaVersion: 1, command, dryRun: true,
+          error: { message: err.message, code: err.code, status: err.status },
+        };
+        try { console.log(JSON.stringify(envelope, null, 2)); }
+        catch { /* malformed envelope; fall through to stderr */ }
+      }
       console.error(`✗ ${err.message}`);
       process.exit(1);
     });

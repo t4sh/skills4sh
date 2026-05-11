@@ -150,6 +150,122 @@ test("remove --force --all is rejected (bulk + force is too dangerous)", async (
   }
 });
 
+test("missing lockfile is a hard error since v0.4.6 (was silent skip)", async () => {
+  // Fixture omits the lockfile from the served files but still announces
+  // skills/demo/SKILL.md in the tree. v0.4.5 would have silently skipped
+  // verification and installed. v0.4.6 fails hard.
+  const fixture = await startFixture({ omitLockfile: true });
+  const dest = await tempDir();
+  try {
+    const result = await runSkills4sh([
+      "--repo", "owner/repo",
+      "--ref", "main",
+      "--dest", dest,
+      "--skill", "demo",
+    ], fixture.env);
+    assert.notEqual(result.status, 0, "install with missing lockfile should fail");
+    assert.match(result.stderr, /skills-lock\.json not present/);
+    assert.match(result.stderr, /downgrade-attack vector/);
+    assert.match(result.stderr, /--no-verify/);
+  } finally {
+    await fixture.close();
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("missing lockfile + --no-verify allows install (explicit opt-in only)", async () => {
+  const fixture = await startFixture({ omitLockfile: true });
+  const dest = await tempDir();
+  try {
+    const result = await runSkills4sh([
+      "--repo", "owner/repo",
+      "--ref", "main",
+      "--dest", dest,
+      "--skill", "demo",
+      "--no-verify",
+    ], fixture.env);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(existsSync(join(dest, "demo", "SKILL.md")), true);
+  } finally {
+    await fixture.close();
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("--version prints version on stdout and exits 0", async () => {
+  const r = await runSkills4sh(["--version"]);
+  assert.equal(r.status, 0);
+  // Should be a clean version string with no other output.
+  assert.match(r.stdout.trim(), /^\d+\.\d+\.\d+/);
+  assert.equal(r.stderr.trim(), "", "stderr should be empty for --version");
+});
+
+test("-v alias also prints version", async () => {
+  const r = await runSkills4sh(["-v"]);
+  assert.equal(r.status, 0);
+  assert.match(r.stdout.trim(), /^\d+\.\d+\.\d+/);
+});
+
+test("parse-error doesn't dump full help (just one-line hint)", async () => {
+  const r = await runSkills4sh(["--nonsense-flag"]);
+  assert.notEqual(r.status, 0);
+  assert.match(r.stderr, /unknown argument/);
+  assert.match(r.stderr, /skills4sh --help/);
+  // Full help is ~40 lines; error output should be much shorter.
+  const lines = r.stderr.split("\n").filter((l) => l.length > 0);
+  assert.ok(lines.length < 10, `parse-error output should be short, got ${lines.length} lines:\n${r.stderr}`);
+});
+
+test("dry-run error path emits JSON envelope on stdout", async () => {
+  const fixture = await startFixture({ omitLockfile: true });
+  const dest = await tempDir();
+  try {
+    // Force an error in dry-run mode. Missing lockfile throws.
+    const r = await runSkills4sh([
+      "--repo", "owner/repo",
+      "--ref", "main",
+      "--dest", dest,
+      "--skill", "demo",
+      "--dry-run",
+    ], fixture.env);
+    assert.notEqual(r.status, 0);
+    // The error message also goes to stderr (human readable).
+    assert.match(r.stderr, /skills-lock\.json not present/);
+    // The dry-run envelope goes to stdout for tooling.
+    const envelope = JSON.parse(r.stdout);
+    assert.equal(envelope.schemaVersion, 1);
+    assert.equal(envelope.command, "install");
+    assert.equal(envelope.dryRun, true);
+    assert.ok(envelope.error, "envelope should contain error block");
+    assert.match(envelope.error.message, /skills-lock\.json not present/);
+  } finally {
+    await fixture.close();
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("per-file size cap rejects oversized downloads", async () => {
+  // Build a fixture that announces a file in the tree but serves an
+  // oversized body. The cap is 50 MiB; we serve a body just over that
+  // limit via Content-Length so the early-reject branch fires.
+  const fixture = await startFixture({ oversizedFile: true });
+  const dest = await tempDir();
+  try {
+    const r = await runSkills4sh([
+      "--repo", "owner/repo",
+      "--ref", "main",
+      "--dest", dest,
+      "--skill", "demo",
+      "--no-verify",
+    ], fixture.env);
+    assert.notEqual(r.status, 0, "oversized file should be rejected");
+    assert.match(r.stderr, /size cap|Content-Length/i);
+  } finally {
+    await fixture.close();
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
 test("dry-run remove prints versioned envelope", async () => {
   const dest = await tempDir();
   try {
@@ -295,6 +411,23 @@ async function startFixture(options = {}) {
       if (repoPath === options.failRawPath) {
         res.writeHead(500, { "content-type": "text/plain" });
         res.end("boom");
+        return;
+      }
+      if (repoPath === "skills-lock.json" && options.omitLockfile) {
+        // Simulate a repo that has no lockfile (v0.4.6: hard error).
+        res.writeHead(404);
+        res.end("not found");
+        return;
+      }
+      if (options.oversizedFile && repoPath === "skills/demo/SKILL.md") {
+        // Advertise a huge Content-Length to trigger the per-file size cap.
+        // The actual body doesn't need to be that large — the early-reject
+        // branch fires from the header alone.
+        res.writeHead(200, {
+          "content-type": "text/plain",
+          "content-length": String(100 * 1024 * 1024), // 100 MiB > 50 MiB cap
+        });
+        res.end(""); // body intentionally smaller; the cap rejects before reading
         return;
       }
       const body = repoPath === "skills-lock.json" ? lock : files[repoPath];

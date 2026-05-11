@@ -16,6 +16,7 @@ import {
   parseSecurityManifest,
   validateSecurityManifest,
   parseExpectedFindings,
+  validateAcknowledgedReasons,
   findUnacknowledgedBlocking,
   BLOCKING_SEVERITIES,
 } from "../bin/lib/parsers.mjs";
@@ -269,6 +270,12 @@ describe("parseExpectedFindings", () => {
     assert.equal(out[1].severity, "LOW");
   });
 
+  test("reason is captured (v0.4.6+)", () => {
+    const out = parseExpectedFindings(YAML);
+    assert.equal(out[0].reason, "false positive");
+    assert.equal(out[1].reason, "documented usage");
+  });
+
   test("acknowledged absent → undefined (not false)", () => {
     const out = parseExpectedFindings(YAML);
     assert.equal(out[1].acknowledged, undefined);
@@ -328,5 +335,59 @@ describe("findUnacknowledgedBlocking", () => {
     assert.equal(BLOCKING_SEVERITIES.has("MEDIUM"), false);
     assert.equal(BLOCKING_SEVERITIES.has("LOW"), false);
     assert.equal(BLOCKING_SEVERITIES.size, 2);
+  });
+});
+
+describe("validateAcknowledgedReasons (v0.4.6 — rubber-stamp prevention)", () => {
+  test("acknowledged with substantive reason passes", () => {
+    const findings = [{
+      id: "R005", file: "x.md", acknowledged: true,
+      reason: "False positive — env-var read for browser profile dir, not a credential",
+    }];
+    assert.deepEqual(validateAcknowledgedReasons(findings, "skill"), []);
+  });
+
+  test("acknowledged with missing reason fails", () => {
+    const findings = [{ id: "R005", file: "x.md", acknowledged: true }];
+    const errors = validateAcknowledgedReasons(findings, "skill");
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /no reason/);
+  });
+
+  test("acknowledged with empty reason fails", () => {
+    const findings = [{ id: "R005", file: "x.md", acknowledged: true, reason: "" }];
+    const errors = validateAcknowledgedReasons(findings, "skill");
+    assert.equal(errors.length, 1);
+  });
+
+  test("acknowledged with whitespace-only reason fails", () => {
+    const findings = [{ id: "R005", file: "x.md", acknowledged: true, reason: "   " }];
+    const errors = validateAcknowledgedReasons(findings, "skill");
+    assert.equal(errors.length, 1);
+  });
+
+  test("acknowledged with too-short reason (<20 chars) fails", () => {
+    const findings = [{ id: "R005", file: "x.md", acknowledged: true, reason: "false positive" }];
+    const errors = validateAcknowledgedReasons(findings, "skill");
+    assert.equal(errors.length, 1);
+    assert.match(errors[0], /too short/);
+  });
+
+  test("non-acknowledged findings are ignored regardless of reason", () => {
+    const findings = [
+      { id: "R005", file: "x.md", acknowledged: false },
+      { id: "R008", file: "y.md" },
+      { id: "R006", file: "z.md", acknowledged: false, reason: "" },
+    ];
+    assert.deepEqual(validateAcknowledgedReasons(findings, "skill"), []);
+  });
+
+  test("custom minReasonLength is honored", () => {
+    const findings = [{
+      id: "R005", file: "x.md", acknowledged: true,
+      reason: "false positive — env example",   // 28 chars
+    }];
+    assert.deepEqual(validateAcknowledgedReasons(findings, "skill", 20), []);
+    assert.equal(validateAcknowledgedReasons(findings, "skill", 50).length, 1);
   });
 });
