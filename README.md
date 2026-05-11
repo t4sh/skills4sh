@@ -8,6 +8,7 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 |-------|-------------|---------|
 | [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.7.0 |
 | [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.0 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.0 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.2.0 |
 
 ## Install
@@ -16,6 +17,7 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 npx skills add t4sh/skills4sh                                # install all skills
 npx skills add t4sh/skills4sh --skill agent-memory           # only agent-memory
 npx skills add t4sh/skills4sh --skill discord-harvest        # only discord-harvest
+npx skills add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nunjucks
 npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
 ```
 
@@ -41,7 +43,7 @@ npx skills4sh list t4sh/skills4sh
 # Env:     GITHUB_TOKEN         HTTPS_PROXY
 ```
 
-Requires Node 18+. Same atomic-write, lock-verify, and idempotency guarantees as the primary path.
+Requires Node 22+. Same atomic-write, lock-verify, and idempotency guarantees as the primary path.
 
 </details>
 
@@ -63,11 +65,12 @@ See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability di
 
 ### Security scanning
 
-All skills are checked with [guardskills](https://www.npmjs.com/package/guardskills). **agent-memory** and **discord-harvest** rate **SAFE**; **localhost-screenshots** rates **WARNING** with documented false positives in code examples (see [SECURITY.md](SECURITY.md) and `.security/localhost-screenshots.yaml`).
+All skills are checked with [guardskills](https://www.npmjs.com/package/guardskills). **agent-memory**, **discord-harvest**, and **eleventy-nunjucks** rate **SAFE**; **localhost-screenshots** rates **WARNING** with documented false positives in code examples (see [SECURITY.md](SECURITY.md) and `.security/localhost-screenshots.yaml`).
 
 ```bash
 npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run;
 npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run;
+npx guardskills add t4sh/skills4sh --skill eleventy-nunjucks --dry-run;
 npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run;
 ```
 

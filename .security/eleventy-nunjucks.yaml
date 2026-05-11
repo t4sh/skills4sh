@@ -1,0 +1,115 @@
+# OWASP Agentic Skills Top 10 (AST10) Manifest
+# Canonical security manifest for eleventy-nunjucks skill
+# https://owasp.org/www-project-agentic-skills-top-10/
+
+skill:
+  name: eleventy-nunjucks
+  version: "0.1.0"
+  license: MIT
+  author: t4sh
+  repository: https://github.com/t4sh/skills4sh
+  path: skills/eleventy-nunjucks
+
+integrity:
+  hash_algorithm: sha256
+  files:
+    SKILL.md: 2a380a636c4f6690d7ff6d6ebc5c406c7992d5344cef0087eeb48302db4cab5b
+    references/eleventy-config-api.md: a77814abd9342d29ee8e7c1692682fc38189f19d022432374b7254012ab8aaff
+    references/conventions.md: 6566fc3ef859a13f9d39b24faea448add59b08a78bc518faefa71fb20eba5572
+    references/data-cascade.md: 06ce2a42d3188d0fa7ff726b4525c7eee0da0d2c185e8dfa832bd24583aca652
+    references/filters.md: 8fdb85b67f714cef5bef8eb3edcf04bb50a404bbd905bbcf8ab0f35294e1543e
+    references/nunjucks-syntax.md: c833d4ce0720eab0db4814cb06db0966696b050ba4b4fa9d15629c6a483f889a
+    references/build-pipeline.md: f4f362602d5005d66d9be9f660cb0fbcd927196c368df4e55533c91e2568e129
+    references/production-patterns.md: 77f33d4dc04dc0e22ab76a820b05a81e9789da66dca66641d048866190547d39
+    references/review-shipping.md: 34ba4e1a1ed2953791d03e942d56ddb804924cbdfe2bfbe0fff938eefc9f8b6f
+    references/security-checklist.md: 0743d16f3cab355b920581cbbe9c826cdd389ff9d9367e48fabeff2b9a05c6e5
+    references/troubleshooting.md: 5ce06e6dd46f9b7863b93ba270d32dcfd1b8c067e1ab3866e94b6d5c5f95e12d
+
+permissions:
+  alwaysAllow: []
+  rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
+
+execution_context:
+  sandbox: host-agent
+  network: none
+  filesystem: read-write
+  shell: none
+  risk_tier: low
+
+dependencies:
+  - name: "@11ty/eleventy"
+    type: npm
+    optional: false
+    version: ">=3.0.0"
+    reason: "Skill encodes Eleventy v3 conventions; v2 APIs differ"
+  - name: markdown-it
+    type: npm
+    optional: false
+    version: ">=14.0.0"
+    reason: "Markdown engine used in all referenced project patterns"
+  - name: tailwindcss
+    type: npm
+    optional: true
+    version: ">=4.0.0"
+    reason: "Tooling pairing for the dev/build pipeline; skill is usable without it"
+  - name: prettier-plugin-jinja-template
+    type: npm
+    optional: true
+    reason: ".njk formatting; recommended for consistent template formatting"
+  - name: concurrently
+    type: npm
+    optional: true
+    reason: "Used in the canonical dev script to run Tailwind + 11ty in parallel"
+
+scanning:
+  guardskills: SAFE
+  guardskills_risk_score: 100
+  guardskills_note: "guardskills scan-local reports CRITICAL from R005_SECRET_READ on instructional grep/curl/bash snippets (audit how-tos, not exfiltration). No executable scripts in the skill; treat as documentation false positives."
+  snyk: pass
+  codeql: pass
+  expected_findings:
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      file: references/build-pipeline.md
+      reason: "False positive — security-hardening and audit examples mention grep patterns for secrets."
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      file: references/data-cascade.md
+      reason: "False positive — env-driven data examples; no secret material."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: references/data-cascade.md
+      reason: "Documentation references process.env with fallbacks for build-time data."
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      file: references/eleventy-config-api.md
+      reason: "False positive — COMMIT_SHA/BUILT_AT placeholders in config snippets."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: references/eleventy-config-api.md
+      reason: "process.env in documented Eleventy config patterns."
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      file: references/production-patterns.md
+      reason: "False positive — CSP/nginx/curl audit examples."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: references/production-patterns.md
+      reason: "Documented build/runMode patterns."
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      file: references/security-checklist.md
+      reason: "False positive — checklist teaches grep for api_key/token/secret in output."
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      file: references/troubleshooting.md
+      reason: "False positive — diagnostic grep examples."

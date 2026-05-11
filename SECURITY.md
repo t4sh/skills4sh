@@ -8,6 +8,7 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 |-------|---------|-----------|
 | agent-memory | 2.7.0 | Yes |
 | discord-harvest | 1.7.0 | Yes |
+| eleventy-nunjucks | 0.1.0 | Yes |
 | localhost-screenshots | 3.2.0 | Yes |
 
 ## Reporting a Vulnerability
@@ -32,6 +33,7 @@ Each skill has a canonical security manifest containing integrity hashes, permis
 |-------|----------|
 | agent-memory | [`.security/agent-memory.yaml`](.security/agent-memory.yaml) |
 | discord-harvest | [`.security/discord-harvest.yaml`](.security/discord-harvest.yaml) |
+| eleventy-nunjucks | [`.security/eleventy-nunjucks.yaml`](.security/eleventy-nunjucks.yaml) |
 | localhost-screenshots | [`.security/localhost-screenshots.yaml`](.security/localhost-screenshots.yaml) |
 
 ## OWASP AST10 Compliance
@@ -107,7 +109,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | agent-memory: SAFE, discord-harvest: SAFE, localhost-screenshots: SAFE (risk score 21.5 — see [Expected Findings](#expected-security-findings)) |
+| guardskills | agent-memory: SAFE, discord-harvest: SAFE, eleventy-nunjucks: SAFE (risk score 100 — see [Expected Findings](#expected-security-findings)), localhost-screenshots: SAFE (risk score 21.5 — see [Expected Findings](#expected-security-findings)) |
 | Snyk | Continuous vulnerability scanning via Snyk integration |
 | CodeQL | Static analysis on GitHub Actions (weekly + PR) |
 | guardskills CI | Automated scanning on every PR via `guardskills.yml` workflow |
@@ -133,6 +135,13 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 
 The following findings are expected and documented:
 
+### eleventy-nunjucks
+
+| Finding | Severity | File(s) | Explanation |
+|---------|----------|---------|-------------|
+| `R005_SECRET_READ` | HIGH/medium | `references/build-pipeline.md`, `references/data-cascade.md`, `references/eleventy-config-api.md`, `references/production-patterns.md`, `references/security-checklist.md`, `references/troubleshooting.md` | False positive. Triggered by instructional `grep`/`curl` snippets that teach how to audit for secrets — no credential reads. |
+| `R008_ENV_ACCESS` | LOW | `references/data-cascade.md`, `references/eleventy-config-api.md`, `references/production-patterns.md` | Documented `process.env` usage in Eleventy config and build examples. |
+
 ### localhost-screenshots
 
 | Finding | Severity | File(s) | Explanation |
@@ -150,10 +159,14 @@ Run security scans locally:
 # guardskills (skill-specific)
 npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run
 npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
+npx guardskills add t4sh/skills4sh --skill eleventy-nunjucks --dry-run
 npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run
 
+# Local scan before the skill exists on GitHub default branch:
+# npx guardskills scan-local skills/eleventy-nunjucks --json
+
 # Verify content hashes (includes references/ subdirectory)
-for skill in agent-memory discord-harvest localhost-screenshots; do
+for skill in agent-memory discord-harvest eleventy-nunjucks localhost-screenshots; do
   echo "=== $skill ==="
   find "skills/$skill" -type f -not -name '.DS_Store' | sort | while read -r f; do
     relpath="${f#skills/$skill/}"

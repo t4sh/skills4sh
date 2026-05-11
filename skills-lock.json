@@ -13,6 +13,12 @@
       "version": "1.7.0",
       "computedHash": "e2499adee175d0650b94014d468c855df1e0be43e302ed2f2cb72849ab6bf2a3"
     },
+    "eleventy-nunjucks": {
+      "source": "t4sh/skills4sh",
+      "sourceType": "github",
+      "version": "0.1.0",
+      "computedHash": "4168b14037811c97a5b7bd4eb0611cbf79c4c8ac3d561ee564575113eb64d6aa"
+    },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",

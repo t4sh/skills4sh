@@ -166,7 +166,8 @@ function assertSafeRelPath(rel, fullPath) {
 }
 
 async function installSkill(name, files) {
-  console.log(`→ Installing ${name} from ${owner}/${repo}@${ref}`);
+  if (args.dryRun) console.error(`→ Dry-run ${name} from ${owner}/${repo}@${ref} (no write)`);
+  else console.log(`→ Installing ${name} from ${owner}/${repo}@${ref}`);
 
   const skillDir = join(dest, name);
 
@@ -179,6 +180,10 @@ async function installSkill(name, files) {
   }), ac);
 
   const hash = computeSkillFolderHash(downloaded);
+  if (args.dryRun) {
+    console.log(JSON.stringify({ skill: name, computedHash: hash }, null, 2));
+    return;
+  }
   if (!args.noVerify) await verifyAgainstLock(name, hash);
 
   // Idempotent: if what's on disk matches what we just verified, skip the write.
@@ -377,6 +382,7 @@ function parseArgs(argv) {
     else if (a === "--ref") out.ref = needsValue("--ref");
     else if (a === "--repo") out.repo = needsValue("--repo");
     else if (a === "--no-verify") out.noVerify = true;
+    else if (a === "--dry-run") out.dryRun = true;
     else if (a === "--force" || a === "-f") out.force = true;
     else if (a === "-h" || a === "--help") out.help = true;
     // Users often confuse npm's `--yes` / `--global` (which must appear before
@@ -407,6 +413,7 @@ Options:
   --dest  <dir>          default: ${DEFAULT_DEST}
   --force, -f            (deprecated no-op — re-runs are now idempotent)
   --no-verify            skip skills-lock.json hash verification (INSECURE)
+  --dry-run              download and hash only; print JSON with computedHash; no disk write
   -y, --yes              ignored (use npx --yes <pkg> ... so npm skips the install prompt)
   -g, --global           ignored (npm's global-install flag must come before the package name)
 
