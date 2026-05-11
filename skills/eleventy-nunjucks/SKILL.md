@@ -1,6 +1,6 @@
 ---
 name: eleventy-nunjucks
-description: Use when the user asks to "create an 11ty page", "add a Nunjucks filter", "fix my layout chain", "review my .njk template", "set up Eleventy", "set up Build Awesome", or "audit my static site"; when working on any 11ty, Eleventy, Build Awesome, or Nunjucks static site; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `src/_includes/`, or `src/_data/`; or when debugging Eleventy builds, permalinks, layout chains, filters, shortcodes, autoescape behavior, or static-site security.
+description: "This skill should be used when the user asks to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", \"set up Build Awesome\", or \"audit my static site\"; when working on any 11ty, Eleventy, Build Awesome, or Nunjucks static site; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `src/_includes/`, or `src/_data/`; or when debugging Eleventy builds, permalinks, layout chains, filters, shortcodes, autoescape behavior, or static-site security."
 license: MIT
 compatibility: macOS, Linux, or Windows with Node >=18 (20 LTS recommended)
 metadata:
