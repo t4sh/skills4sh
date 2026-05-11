@@ -17,22 +17,9 @@ on:
       - '.github/scripts/verify-versions.sh'
       - 'bin/**'
       - 'tests/**'
+  # Always run on PRs so branch-protection can require `validate (22)` and
+  # `validate (24)` without blocking PRs that don't touch the listed paths.
   pull_request:
-    paths:
-      - 'skills/**'
-      - 'skills-lock.json'
-      - 'npm-shrinkwrap.json'
-      - 'package.json'
-      - 'README.md'
-      - 'SECURITY.md'
-      - 'AGENTS.md'
-      - '.security/**'
-      - '.cursor-plugin/**'
-      - '.claude-plugin/**'
-      - '.github/workflows/validate.yml'
-      - '.github/scripts/verify-versions.sh'
-      - 'bin/**'
-      - 'tests/**'
 
 permissions:
   contents: read

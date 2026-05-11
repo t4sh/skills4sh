@@ -28,13 +28,9 @@ on:
       - '.github/workflows/release.yml'
     tags:
       - 'v*'
+  # Always run on PRs so branch-protection can require `bin/ matches tag…`
+  # without blocking PRs that didn't touch bin/ or the package manifest.
   pull_request:
-    paths:
-      - 'bin/**'
-      - 'package.json'
-      - 'npm-shrinkwrap.json'
-      - '.github/scripts/check-bin-tag-parity.sh'
-      - '.github/workflows/release.yml'
   workflow_dispatch: {}
 
 permissions:
