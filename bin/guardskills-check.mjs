@@ -4,12 +4,16 @@
 import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
+import {
+  parseExpectedFindings,
+  findUnacknowledgedBlocking,
+  BLOCKING_SEVERITIES,
+} from "./lib/parsers.mjs";
 
 const GUARDSKILLS_VERSION = "1.2.1";
-// Default-deny: any actual finding at this severity or above MUST be matched by an
-// expected entry that carries `acknowledged: true`. Closes the audit gap where a real
-// HIGH/CRITICAL could be silenced by merely listing it in .security/<skill>.yaml.
-const BLOCKING_SEVERITIES = new Set(["HIGH", "CRITICAL"]);
+// BLOCKING_SEVERITIES is imported from lib/parsers.mjs — default-deny on
+// HIGH/CRITICAL findings. Any actual finding at this severity MUST be matched
+// by an expected entry carrying acknowledged: true.
 const root = process.cwd();
 const requested = process.argv.slice(2);
 const skills = requested.length > 0
@@ -64,11 +68,7 @@ for (const skill of skills) {
 
   // Severity floor: HIGH/CRITICAL findings must carry `acknowledged: true` on their
   // matching expected entry. Pre-declaring an id+file pair alone is insufficient.
-  const blockingUnacknowledged = actual.filter((finding) => {
-    if (!BLOCKING_SEVERITIES.has(finding.severity)) return false;
-    const match = expected.find((item) => sameFinding(item, finding));
-    return !match || match.acknowledged !== true;
-  });
+  const blockingUnacknowledged = findUnacknowledgedBlocking(actual, expected);
   if (blockingUnacknowledged.length) {
     ok = false;
     console.error(`✗ ${skill}: ${blockingUnacknowledged.length} HIGH/CRITICAL finding(s) require explicit \`acknowledged: true\` in .security/${skill}.yaml`);
@@ -92,22 +92,5 @@ function sameFinding(a, b) {
 
 async function expectedFindings(skill) {
   const text = await readFile(join(root, ".security", `${skill}.yaml`), "utf8");
-  const out = [];
-  let current = null;
-  for (const line of text.split("\n")) {
-    const id = line.match(/^\s+- id:\s*(\S+)\s*$/);
-    if (id) {
-      current = { id: id[1] };
-      out.push(current);
-      continue;
-    }
-    if (!current) continue;
-    const file = line.match(/^\s+file:\s*(\S+)\s*$/);
-    if (file) current.file = file[1];
-    const severity = line.match(/^\s+severity:\s*(\S+)\s*$/);
-    if (severity) current.severity = severity[1].toUpperCase();
-    const acknowledged = line.match(/^\s+acknowledged:\s*(true|false)\s*$/);
-    if (acknowledged) current.acknowledged = acknowledged[1] === "true";
-  }
-  return out.filter((finding) => finding.id && finding.file);
+  return parseExpectedFindings(text);
 }

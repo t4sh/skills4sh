@@ -8,6 +8,30 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.2] — 2026-05-12
+
+Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-eyes audit and adds robustness around the installer's failure modes. No public CLI surface change beyond the new `npm test` script.
+
+### Added
+- **`bin/lib/parsers.mjs`** — pure helpers (parsers, semver, schema validators) shared between `drift-check.mjs` and `guardskills-check.mjs`, now testable in isolation.
+- **Hand-rolled schema validation for `.security/<name>.yaml`** in `validateSecurityManifest()`. Validates presence of all required blocks (skill, integrity, permissions, execution_context), enforces enum constraints (`risk_tier`, `network`, `filesystem`, `shell`, `hash_algorithm: sha256`), and requires `SKILL.md` in `integrity.files`. Zero new npm dependencies — consistent with the package's no-runtime-deps posture.
+- **42 unit tests for `bin/lib/parsers.mjs`** (`tests/parsers.test.mjs`) — covering `compareSemver`, `parseSkillFrontmatter`, `parseSecurityManifest`, `validateSecurityManifest`, `parseExpectedFindings`, and `findUnacknowledgedBlocking` (guardskills severity-floor logic). Total test count now 100 (53 installer + 6 integration + 42 parsers, minus 1 reclassified).
+- **`npm test` script** — `node --test tests/*.test.mjs`. Closes the drift where CONTRIBUTING.md referenced `npm test` but `package.json` had no such script.
+
+### Security / Robustness
+- **Installer staging directory uses crypto-random suffix** instead of `process.pid`. Two concurrent invocations on the same destination (rare but possible in containers / re-execed wrappers) no longer collide. `bin/install.mjs` now uses `randomBytes(6).toString("hex")`.
+- **SIGINT / SIGTERM cleanup handler** registered around the staging dir for the duration of each `installSkill` call. An interrupt mid-download no longer leaks `.tmp-*` orphans.
+- **Rollback-safe install (backup → rename → restore-on-fail).** Previously, the installer did `rm(skillDir)` *then* `rename(stagingDir, skillDir)` — if the rename failed after the rm, the previous skill was gone with no recovery. New flow: rename existing skill to `.backup-<random>`, rename staging into place, remove backup on success. On any failure, restore the backup automatically; if restore also fails, the error message surfaces both paths so the user can recover manually.
+- **GitHub branch protection enforces signed commits at the branch level.** `required_signatures: true` is now live on `refs/heads/main`; complements the existing release-time commit-signature verification in `bin/release-check.mjs`. The snapshot at `.github/branch-protection.expected.json` is updated to match.
+- **`branch-protection-drift.yml` trigger changed to run on every PR** (no path filter), so it can serve as a required branch-protection context. The skip-on-no-secret behavior keeps it cheap (~5s) for PRs when no PAT is configured.
+
+### Changed
+- `bin/drift-check.mjs` and `bin/guardskills-check.mjs` now import from `bin/lib/parsers.mjs` instead of inlining the parsers. Behavior is unchanged; the refactor exists so the helpers are unit-testable.
+- `bin/drift-check.mjs` now invokes `validateSecurityManifest()` for each skill — any `.security/*.yaml` missing a required field, with an invalid enum value, or lacking a `SKILL.md` hash will fail the drift check loudly.
+
+### Pending maintainer action (one-click in GH UI)
+- Add `assert protection matches .github/branch-protection.expected.json` to the required-status-checks list at Settings → Branches → Edit rule for `main`. (The check itself runs and asserts no drift on every PR after this release; only the *required* gate needs to be set in the UI. The sandbox blocked me from doing this via API.)
+
 ## [0.4.1] — 2026-05-11
 
 ### Security
@@ -162,7 +186,8 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.2...HEAD
+[0.4.2]: https://github.com/t4sh/skills4sh/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/t4sh/skills4sh/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/t4sh/skills4sh/compare/v0.3.11...v0.4.0
 [0.3.11]: https://github.com/t4sh/skills4sh/compare/v0.3.10...v0.3.11

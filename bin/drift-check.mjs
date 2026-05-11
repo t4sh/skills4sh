@@ -5,6 +5,13 @@ import { createHash } from "node:crypto";
 import { readFile, readdir, stat } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { join, relative } from "node:path";
+import {
+  parseSkillFrontmatter,
+  parseSecurityManifest,
+  validateSecurityManifest,
+  compareSemver,
+  listEqual,
+} from "./lib/parsers.mjs";
 
 const root = process.cwd();
 const errors = [];
@@ -50,6 +57,7 @@ for (const skill of skills) {
   expect(cursorEntry?.path === `skills/${skill}`, `${skill}: .cursor-plugin skill entry missing or wrong path`);
 
   const securityManifest = await readText(`.security/${skill}.yaml`);
+  for (const schemaErr of validateSecurityManifest(securityManifest, skill)) errors.push(schemaErr);
   const manifest = parseSecurityManifest(securityManifest);
   expect(manifest.name === skill, `${skill}: security manifest name mismatch`);
   expect(manifest.version === fm.version, `${skill}: security manifest version mismatch`);
@@ -98,47 +106,6 @@ async function skillInventory() {
   return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
 }
 
-function parseSkillFrontmatter(markdown) {
-  const block = markdown.match(/^---\n([\s\S]*?)\n---/);
-  if (!block) return {};
-  const out = {};
-  let inMetadata = false;
-  for (const line of block[1].split("\n")) {
-    if (/^metadata:\s*$/.test(line)) {
-      inMetadata = true;
-      continue;
-    }
-    if (/^\S/.test(line)) inMetadata = false;
-    const top = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
-    if (top) out[top[1]] = stripQuotes(top[2]);
-    const version = inMetadata && line.match(/^\s+version:\s*(.*)$/);
-    if (version) out.version = stripQuotes(version[1]);
-  }
-  return out;
-}
-
-function parseSecurityManifest(text) {
-  const out = { files: {} };
-  const name = text.match(/^  name:\s*(.+)$/m);
-  const version = text.match(/^  version:\s*"?([^"\n]+)"?$/m);
-  if (name) out.name = stripQuotes(name[1]);
-  if (version) out.version = stripQuotes(version[1]);
-
-  const lines = text.split("\n");
-  let inFiles = false;
-  for (const line of lines) {
-    if (/^  files:\s*$/.test(line)) {
-      inFiles = true;
-      continue;
-    }
-    if (inFiles && /^\S/.test(line)) break;
-    if (!inFiles) continue;
-    const match = line.match(/^    ([^:]+):\s*([a-f0-9]{64})\s*$/);
-    if (match) out.files[match[1]] = match[2];
-  }
-  return out;
-}
-
 async function listFiles(dir) {
   const base = join(root, dir);
   const out = [];
@@ -169,16 +136,8 @@ async function anySkillHasDir(name) {
   return false;
 }
 
-function listEqual(a, b) {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
-}
-
 function expect(condition, message) {
   if (!condition) errors.push(message);
-}
-
-function stripQuotes(value) {
-  return String(value).trim().replace(/^["']|["']$/g, "");
 }
 
 async function readText(path) {
@@ -197,16 +156,4 @@ function readPreviousSkillVersion(skill) {
   });
   if (result.status !== 0) return null;
   return parseSkillFrontmatter(result.stdout).version ?? null;
-}
-
-// Returns -1, 0, or 1 for major.minor.patch comparison. Pre-release suffixes
-// (e.g. "1.2.0-rc.1") are stripped — we only care about backwards numeric drift.
-function compareSemver(a, b) {
-  const parse = (v) => String(v).split("-")[0].split(".").map((n) => Number.parseInt(n, 10) || 0);
-  const [aMa, aMi, aPa] = parse(a);
-  const [bMa, bMi, bPa] = parse(b);
-  if (aMa !== bMa) return aMa < bMa ? -1 : 1;
-  if (aMi !== bMi) return aMi < bMi ? -1 : 1;
-  if (aPa !== bPa) return aPa < bPa ? -1 : 1;
-  return 0;
 }

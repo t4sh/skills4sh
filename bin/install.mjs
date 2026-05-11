@@ -19,11 +19,11 @@ if (typeof fetch !== "function" || major < 22) {
 }
 
 import { mkdir, writeFile, rm, readdir, rename, readFile, stat } from "node:fs/promises";
-import { realpathSync } from "node:fs";
+import { realpathSync, rmSync } from "node:fs";
 import { join, dirname, isAbsolute, normalize } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { homedir } from "node:os";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 
 const DEFAULT_REPO = "t4sh/skills4sh";
 const DEFAULT_REF = "main";
@@ -225,23 +225,62 @@ async function installSkill(name, files) {
     return;
   }
 
-  // Atomic swap: write everything into a sibling tmp dir first, then rename over skillDir.
-  // On crash/failure mid-write, the original skillDir is untouched and the .tmp-<pid> dir
-  // is removed. rename() is atomic on POSIX and near-atomic on Windows for same-volume moves.
-  const stagingDir = `${skillDir}.tmp-${process.pid}`;
-  await rm(stagingDir, { recursive: true, force: true });
+  // Atomic swap with backup-and-restore:
+  //   1. Write all files into a sibling staging dir (.tmp-<random>).
+  //   2. If skillDir exists, rename it aside to .backup-<random> (cheap, atomic).
+  //   3. Rename staging into place.
+  //   4. On success, remove the backup. On any failure, restore the backup and rethrow.
+  //
+  // The suffix uses crypto.randomBytes so two concurrent invocations (same PID in a
+  // container, two shells racing on the same dest) never collide. SIGTERM / SIGINT
+  // trigger best-effort cleanup so an interrupt mid-download doesn't leak staging dirs.
+  const suffix = randomBytes(6).toString("hex");
+  const stagingDir = `${skillDir}.tmp-${suffix}`;
+  const backupDir = `${skillDir}.backup-${suffix}`;
+  const cleanupOnSignal = () => {
+    try { rmSync(stagingDir, { recursive: true, force: true }); } catch { /* best effort */ }
+    try { rmSync(backupDir, { recursive: true, force: true }); } catch { /* best effort */ }
+  };
+  process.once("SIGINT", cleanupOnSignal);
+  process.once("SIGTERM", cleanupOnSignal);
+
+  let backupExists = false;
   try {
     for (const f of downloaded) {
       const out = join(stagingDir, f.rel);
       await mkdir(dirname(out), { recursive: true });
       await writeFile(out, f.content);
     }
-    await rm(skillDir, { recursive: true, force: true });
     await mkdir(dirname(skillDir), { recursive: true });
+    // Move old skill aside (rename is cheap and atomic on same volume); we only
+    // delete it once the new content is safely in place.
+    if (existingHash !== null) {
+      await rename(skillDir, backupDir);
+      backupExists = true;
+    }
     await rename(stagingDir, skillDir);
+    if (backupExists) {
+      await rm(backupDir, { recursive: true, force: true });
+      backupExists = false;
+    }
   } catch (err) {
+    // Restore the old skill from backup if the new content didn't land cleanly.
+    if (backupExists) {
+      try {
+        await rm(skillDir, { recursive: true, force: true });
+        await rename(backupDir, skillDir);
+      } catch (restoreErr) {
+        // Both the new install AND the restore failed. Surface both — the user
+        // may need to manually inspect skillDir and backupDir.
+        err.message = `${err.message}\n    restore also failed: ${restoreErr.message}\n    inspect ${backupDir} for the prior version`;
+        throw err;
+      }
+    }
     await rm(stagingDir, { recursive: true, force: true }).catch(() => {});
     throw err;
+  } finally {
+    process.removeListener("SIGINT", cleanupOnSignal);
+    process.removeListener("SIGTERM", cleanupOnSignal);
   }
   const verb = existingHash ? "Updated" : "Installed";
   for (const f of downloaded) console.log(`  ✓ ${join(skillDir, f.rel)}`);

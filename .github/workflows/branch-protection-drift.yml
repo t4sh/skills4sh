@@ -38,10 +38,10 @@ on:
   schedule:
     # Daily at 06:15 UTC — soon after CodeQL's Monday scan.
     - cron: "15 6 * * *"
+  # Run on every PR (no path filter) so this check can serve as a required
+  # branch-protection context. The skip-on-no-secret branch below keeps it
+  # cheap (~5s) when no PAT is configured.
   pull_request:
-    paths:
-      - '.github/branch-protection.expected.json'
-      - '.github/workflows/branch-protection-drift.yml'
   workflow_dispatch:
 
 permissions:
