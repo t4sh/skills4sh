@@ -29,18 +29,25 @@ name: Branch Protection Drift
 #      3. Use actions/create-github-app-token to mint a short-lived token
 #         and pass it as GH_TOKEN below.
 #
-# Without one of those secrets configured, this workflow is intentionally
-# inert — it logs the setup instructions and exits 0 rather than spamming
-# failure notifications. The snapshot file is still the source of truth
-# for documented intent; the workflow only verifies live state matches.
+# Behavior when BRANCH_PROTECTION_TOKEN is absent:
+#   - Dependabot context (github.actor == "dependabot[bot]"): skip cleanly,
+#     exit 0. Dependabot has its own secret store and won't see this repo's
+#     regular secrets; skipping keeps action-upgrade PRs unblocked.
+#   - Every other context (push, schedule, workflow_dispatch, human PR):
+#     HARD FAIL. This check is required-status-check; silently passing on
+#     missing secret would be a bypass vector (anyone with delete-secrets
+#     permission could disable the drift control while CI stays green).
+#
+# Prior to v0.4.3 the workflow exited 0 unconditionally on missing secret —
+# fine when this check was opt-in / not required, but a vulnerability once
+# it became a required-status-check. Fixed in response to audit feedback.
 
 on:
   schedule:
     # Daily at 06:15 UTC — soon after CodeQL's Monday scan.
     - cron: "15 6 * * *"
   # Run on every PR (no path filter) so this check can serve as a required
-  # branch-protection context. The skip-on-no-secret branch below keeps it
-  # cheap (~5s) when no PAT is configured.
+  # branch-protection context.
   pull_request:
   workflow_dispatch:
 
@@ -56,25 +63,41 @@ jobs:
 
       - name: Fetch live protection and diff against expected
         env:
-          # Prefer the dedicated PAT/App token; fall back to GITHUB_TOKEN
-          # so the workflow parses and runs, but the API call will then
-          # 403 — handled below with an explicit instructional message.
-          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
+          # The PAT (or GitHub App token) is required for the API call to
+          # /branches/main/protection — GITHUB_TOKEN does not carry the
+          # Administration scope. We surface it via env var so bash can
+          # check presence safely without expression-injection risk.
+          BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
         run: |
           set -euo pipefail
 
-          if [ -z "${{ secrets.BRANCH_PROTECTION_TOKEN }}" ]; then
+          if [ -z "${BRANCH_PROTECTION_TOKEN:-}" ]; then
+            # Dependabot-triggered workflows can't see regular repo secrets
+            # (Dependabot has its own secret store at Settings → Secrets and
+            # variables → Dependabot). Skip cleanly so action-upgrade PRs
+            # aren't blocked. For every other context — push, schedule,
+            # workflow_dispatch, human PR — a missing secret is a HARD FAIL:
+            # this check is in the required-status-checks list, and silently
+            # passing would be a bypass vector (anyone with admin: delete on
+            # secrets could disable the drift control while keeping green CI).
+            if [ "${{ github.actor }}" = "dependabot[bot]" ]; then
+              echo "⏭  Dependabot context — BRANCH_PROTECTION_TOKEN not available in Dependabot's secret store."
+              echo "    Skipping cleanly. Add the secret at Settings → Secrets and variables →"
+              echo "    Dependabot if you want this check to run on Dependabot PRs."
+              exit 0
+            fi
+            echo "✗ BRANCH_PROTECTION_TOKEN secret is required but absent."
             echo ""
-            echo "⏭  Skipping — BRANCH_PROTECTION_TOKEN secret is not configured."
+            echo "  This check is in the required-status-checks list — silently passing"
+            echo "  here would defeat its purpose (anyone with permission to delete repo"
+            echo "  secrets could disable the drift control while CI stays green)."
             echo ""
-            echo "    To enable this drift check, create a fine-grained PAT with"
-            echo "    Administration: Read-only on this repo and save it as the"
-            echo "    BRANCH_PROTECTION_TOKEN secret. See header comment in this"
-            echo "    file for the full setup recipe."
-            echo ""
-            echo "    The expected branch-protection state remains documented in"
-            echo "    .github/branch-protection.expected.json regardless."
-            exit 0
+            echo "  Either restore the BRANCH_PROTECTION_TOKEN secret (fine-grained PAT"
+            echo "  with Administration: Read-only on this repo) or remove this check"
+            echo "  from required-status-checks in branch protection if it's intentionally"
+            echo "  being retired."
+            exit 1
           fi
 
           # Distill live config to the same invariants the expected file tracks.

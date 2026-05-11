@@ -10,7 +10,7 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [0.4.3] — 2026-05-12
 
-Closes two parallel-audit findings. No public CLI surface change.
+Closes three parallel-audit findings. No public CLI surface change.
 
 ### Fixed
 - **`bin/install.mjs`: SIGINT/SIGTERM cleanup no longer deletes the backup mid-update.** v0.4.2's cleanup handler unconditionally `rm`s both `stagingDir` and `backupDir`. If a signal arrived during the narrow "backed-up" window (after the old skill was moved aside to `backupDir`, before `stagingDir` was renamed into place), the backup — the only intact copy of the user's old skill — would be destroyed.
@@ -20,6 +20,8 @@ Closes two parallel-audit findings. No public CLI surface change.
 - **Published `package.json` no longer exposes dev scripts whose target files aren't in the tarball.** Previously `npm view skills4sh@0.4.2 scripts` listed `test`, `check:drift`, `check:guardskills`, `check:pack`, `check:release`, `setup:hooks`, `prepublishOnly` — all of which reference `bin/*-check.mjs`, `tests/`, or `.github/scripts/` that aren't shipped in the tarball. A consumer who ran `npm run check:drift` after installing would hit "module not found."
 
    New behavior: `bin/clean-package-for-publish.mjs` runs as `prepack` (strips `scripts` from `package.json`, backs up to `package.json.prepack.bak`) and as `postpack` (restores from backup). `bin/pack-check.mjs` now asserts the published `package.json` has no `scripts` field, preventing a misconfigured hook from silently shipping a dirty manifest. 8 new tests in `tests/clean-package-for-publish.test.mjs` cover both halves of the cycle (including the recovery-from-stale-`.bak` case).
+
+- **`.github/workflows/branch-protection-drift.yml` no longer exits 0 when `BRANCH_PROTECTION_TOKEN` is absent.** Once this workflow became a required-status-check (post-v0.4.2), the skip-on-no-secret path turned into a bypass vector: anyone with permission to delete repo secrets could disable the drift control while keeping green CI. New behavior: hard fail when secret absent, with the one carve-out for Dependabot-triggered runs (Dependabot has a separate secret store and can't see regular repo secrets; skipping there keeps action-upgrade PRs unblocked without leaving a generic bypass open).
 
 ### Added
 - `bin/clean-package-for-publish.mjs` — prepack/postpack helper. Idempotent; logs to stderr so `npm pack --json` output isn't polluted.
