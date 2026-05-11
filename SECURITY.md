@@ -54,10 +54,10 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | Control | Implementation |
 |---------|----------------|
 | Immutable lock file (skills) | `skills-lock.json` pins all files to exact SHA-256 hashes |
-| Immutable lock file (npm) | `npm-shrinkwrap.json` pins full transitive dependency tree with integrity hashes |
+| Immutable lock file (npm) | `npm-shrinkwrap.json` pins full transitive dependency tree with integrity hashes and is included in the published npm tarball |
 | Exact dependency versions | `package.json` uses exact versions (e.g. `undici: 6.25.0`), no caret/tilde ranges |
 | Single source of truth | All skills authored in this repo — no external registry pulls |
-| Pre-publish guard | `.github/scripts/check-bin-tag-parity.sh` (wired via `prepublishOnly` and `release.yml`) refuses publish when `bin/` has changed since the tag for the current `package.json` version |
+| Pre-publish guard | `.github/scripts/check-bin-tag-parity.sh` plus `bin/pack-check.mjs` (wired via `prepublishOnly`, `validate.yml`, `release.yml`, and `npm-publish.yml`) refuse publish when `bin/` has changed since the tag for the current `package.json` version or the tarball omits `npm-shrinkwrap.json` |
 | CI hash verification | Automated drift detection on every push and PR (`validate.yml` runs `bin/hash-check.mjs`) |
 | Pre-commit hash guard | `.githooks/pre-commit` runs `bin/hash-check.mjs` locally before any commit; contributors opt in via `bash bin/setup-hooks.sh` |
 
@@ -113,10 +113,10 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | agent-memory: SAFE, discord-harvest: SAFE, eleventy-nunjucks: SAFE (risk score 100 — see [Expected Findings](#expected-security-findings)), localhost-screenshots: SAFE (risk score 21.5 — see [Expected Findings](#expected-security-findings)) |
+| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory` and `discord-harvest` scan without overrides; `eleventy-nunjucks` and `localhost-screenshots` have documented expected findings that must match this file before overrides are accepted. |
 | CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
 | Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
-| npm provenance | `.github/workflows/npm-publish.yml` publishes via OIDC Trusted Publisher binding on npmjs.com (no shared secret) with `npm publish --provenance`. Each tarball ships a SLSA v1 attestation linking it to this repo + this workflow + the specific commit; consumers verify via `npm audit signatures`. |
+| npm provenance | `.github/workflows/npm-publish.yml` currently authenticates with `NPM_TOKEN` and publishes with `npm publish --provenance`. Each tarball ships a SLSA v1 attestation linking it to this repo + this workflow + the specific commit; consumers verify via `npm audit signatures`. OIDC Trusted Publisher can replace token auth only after it is configured and verified on npmjs.com. |
 | guardskills CI | `.github/workflows/guardskills.yml` matrix-scans all four skills (agent-memory, discord-harvest, eleventy-nunjucks, localhost-screenshots) on Node 22 and 24. Triggered on push, PR, and manual dispatch. |
 
 ### AST09 — No Governance
@@ -161,11 +161,11 @@ The following findings are expected and documented:
 Run security scans locally:
 
 ```bash
-# guardskills (skill-specific)
-npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run
-npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
-npx guardskills add t4sh/skills4sh --skill eleventy-nunjucks --dry-run
-npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run
+# guardskills (skill-specific; pinned to CI version)
+npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run
+npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run
+npx guardskills@1.2.1 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force
+npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run
 
 # Local scan-local (any skill folder, useful before or after pushing):
 # npx guardskills scan-local skills/<name> --json

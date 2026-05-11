@@ -21,29 +21,27 @@ npx skills add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nun
 npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
 ```
 
-Skills install to `~/.claude/skills/` by default (matches `bin/install.mjs` → `DEFAULT_DEST = ~/.claude/skills`). Override with `--dest <dir>` to target `~/.cursor/skills/`, `~/.agents/skills/`, or any path. Re-running is idempotent — safe to use as a sync command.
+This is the Marketplace-compatible install path and the recommended way to consume the skills from this repo. Re-running is idempotent — safe to use as a sync command.
 
 <details>
-<summary>Backup install path (no <code>git</code> required)</summary>
+<summary>Secondary supporting installer: <code>npx skills4sh</code></summary>
 
-If you can't or don't want to use the `skills` CLI, this repo also ships its own pure-Node installer that fetches files directly via the GitHub API. Useful on machines without `git`, or when pinning to a specific ref.
+The published `skills4sh` package is a no-git supporting installer for machines that cannot use the `skills` CLI, need explicit destination control, or need to pin a specific ref.
 
 ```bash
-# Short form (uses default --repo t4sh/skills4sh):
-npx skills4sh --all
-npx skills4sh --skill agent-memory
-npx skills4sh --list
-
-# Explicit form (works against any repo):
-npx skills4sh add t4sh/skills4sh
-npx skills4sh add t4sh/skills4sh --skill agent-memory
-npx skills4sh list t4sh/skills4sh
-
-# Options: --repo <owner/repo>  --ref <sha|branch>  --dest <dir>  --no-verify
-# Env:     GITHUB_TOKEN         HTTPS_PROXY
+npx skills4sh --all                                # install all skills
+npx skills4sh --skill agent-memory                 # only agent-memory
+npx skills4sh --skill discord-harvest              # only discord-harvest
+npx skills4sh --skill eleventy-nunjucks            # only eleventy-nunjucks
+npx skills4sh --skill localhost-screenshots        # only localhost-screenshots
 ```
 
-Requires Node 22+. Same atomic-write, lock-verify, and idempotency guarantees as the primary path.
+```bash
+npx skills4sh add t4sh/skills4sh --ref <sha|branch|tag>
+npx skills4sh list t4sh/skills4sh
+```
+
+The supporting installer defaults to `~/.claude/skills/` (matches `bin/install.mjs` → `DEFAULT_DEST = ~/.claude/skills`). Override with `--dest <dir>` to target `~/.cursor/skills/`, `~/.agents/skills/`, or any path. Requires Node 22+.
 
 </details>
 
@@ -53,10 +51,11 @@ Requires Node 22+. Same atomic-write, lock-verify, and idempotency guarantees as
 
 Each skill follows the [Agent Skills specification](https://agentskills.io/specification):
 
-```
+```text
 skills/<skill-name>/
 ├── SKILL.md          # Required: metadata + instructions
-└── references/       # Supporting documentation
+├── references/       # Supporting documentation
+└── assets/           # Optional icons or static assets
 ```
 
 ## Security
@@ -65,13 +64,13 @@ See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability di
 
 ### Security scanning
 
-All four skills rate **SAFE** with [guardskills](https://www.npmjs.com/package/guardskills). Risk scores: agent-memory 0, discord-harvest 0, localhost-screenshots 21.5, eleventy-nunjucks 100 — all driven by documented false positives in instructional grep/curl/env snippets within reference docs (see [SECURITY.md](SECURITY.md) § Expected Security Findings).
+Security scans are pinned to [guardskills](https://www.npmjs.com/package/guardskills) `1.2.1`. `agent-memory` and `discord-harvest` scan without overrides. `localhost-screenshots` and `eleventy-nunjucks` have documented false-positive findings from instructional browser/profile/env/grep snippets; the CI matrix only accepts those known findings when they match [SECURITY.md](SECURITY.md) § Expected Security Findings.
 
 ```bash
-npx guardskills add t4sh/skills4sh --skill agent-memory --dry-run;
-npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run;
-npx guardskills add t4sh/skills4sh --skill eleventy-nunjucks --dry-run;
-npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run;
+npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run;
+npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run;
+npx guardskills@1.2.1 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force;
+npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run;
 ```
 
 Skills contain no shell scripts or executable code — only SKILL.md instructions and reference documentation.
