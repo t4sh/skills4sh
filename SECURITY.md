@@ -128,7 +128,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | PR review checklist | `.github/PULL_REQUEST_TEMPLATE.md` includes security review items |
 | Skill review workflow | Skill changes should go through PR review; branch protection recommended for team repos |
 | Supported versions | Clear table of which versions receive security updates |
-| Branch-protection drift detection | `.github/workflows/branch-protection-drift.yml` runs daily (06:15 UTC) and on changes to its snapshot file; asserts that the live protection config on `refs/heads/main` matches the checked-in expected state at `.github/branch-protection.expected.json`. Closes the audit gap where protection settings (living in GitHub Settings, not in the repo) could silently drift from the documented policy. Workflow uses `permissions: administration: read` on the default GITHUB_TOKEN — no PAT or external secret introduced. |
+| Branch-protection drift detection | `.github/workflows/branch-protection-drift.yml` runs daily (06:15 UTC) and on changes to its snapshot file; asserts that the live protection config on `refs/heads/main` matches the checked-in expected state at `.github/branch-protection.expected.json`. The default `GITHUB_TOKEN` does not support `Administration: read`, so the check is **opt-in** — set the `BRANCH_PROTECTION_TOKEN` repo secret to a fine-grained PAT scoped to this repo with `Administration: Read-only` (or use a GitHub App equivalent). Without the secret the workflow logs setup instructions and exits 0. The snapshot file is the source of truth for documented intent regardless of whether the check is enabled. |
 
 ### AST10 — Cross-Platform Reuse
 

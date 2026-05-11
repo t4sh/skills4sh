@@ -8,9 +8,31 @@ name: Branch Protection Drift
 # and prone to silent drift if someone toggles a checkbox. This workflow
 # fails loudly when the live config diverges from the documented intent.
 #
-# To intentionally change protection settings: update the expected JSON in
-# the same PR that changes the GitHub UI setting (or update GitHub first,
-# then run this workflow, then sync the JSON to make the diff zero).
+# Reading branch protection requires `Administration: read` scope. The
+# default GITHUB_TOKEN does NOT support that permission (it's not in the
+# permitted scope list for workflow-issued tokens — verified empirically:
+# `permissions: administration: read` is rejected at workflow parse time
+# with HTTP 422 "Unexpected value 'administration'").
+#
+# Two ways to enable the check (pick one, both are read-only):
+#
+#   A. Fine-grained PAT (simplest)
+#      1. https://github.com/settings/personal-access-tokens/new
+#      2. Resource owner: yourself (t4sh); Repository access: only this repo
+#      3. Permissions → Repository → Administration: Read-only
+#      4. Save the token as repo secret BRANCH_PROTECTION_TOKEN.
+#      Scope is narrow: read-only, this repo only, can be revoked any time.
+#
+#   B. GitHub App
+#      1. Create a private GitHub App with Administration: Read-only.
+#      2. Install on this repo.
+#      3. Use actions/create-github-app-token to mint a short-lived token
+#         and pass it as GH_TOKEN below.
+#
+# Without one of those secrets configured, this workflow is intentionally
+# inert — it logs the setup instructions and exits 0 rather than spamming
+# failure notifications. The snapshot file is still the source of truth
+# for documented intent; the workflow only verifies live state matches.
 
 on:
   schedule:
@@ -24,11 +46,6 @@ on:
 
 permissions:
   contents: read
-  # administration: read lets GITHUB_TOKEN call the branches/<branch>/protection
-  # endpoint. Without this scope, the API returns 403. This permission is
-  # supported for the default GITHUB_TOKEN on personal and org repos as of
-  # 2025-11 — no PAT required, no long-lived secret introduced.
-  administration: read
 
 jobs:
   check-drift:
@@ -39,13 +56,28 @@ jobs:
 
       - name: Fetch live protection and diff against expected
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Prefer the dedicated PAT/App token; fall back to GITHUB_TOKEN
+          # so the workflow parses and runs, but the API call will then
+          # 403 — handled below with an explicit instructional message.
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
 
+          if [ -z "${{ secrets.BRANCH_PROTECTION_TOKEN }}" ]; then
+            echo ""
+            echo "⏭  Skipping — BRANCH_PROTECTION_TOKEN secret is not configured."
+            echo ""
+            echo "    To enable this drift check, create a fine-grained PAT with"
+            echo "    Administration: Read-only on this repo and save it as the"
+            echo "    BRANCH_PROTECTION_TOKEN secret. See header comment in this"
+            echo "    file for the full setup recipe."
+            echo ""
+            echo "    The expected branch-protection state remains documented in"
+            echo "    .github/branch-protection.expected.json regardless."
+            exit 0
+          fi
+
           # Distill live config to the same invariants the expected file tracks.
-          # Strip GitHub-added URL/href fields that vary by API call but carry
-          # no policy meaning; preserve only the security-relevant properties.
           gh api "repos/${GITHUB_REPOSITORY}/branches/main/protection" \
             | jq '{
                 required_status_checks: {
@@ -81,8 +113,8 @@ jobs:
             echo ""
             echo "✗ DRIFT — live protection differs from .github/branch-protection.expected.json"
             echo ""
-            echo "If the drift is intentional, update .github/branch-protection.expected.json"
-            echo "to match the new policy in the same PR that documents the change."
+            echo "If the drift is intentional, update the snapshot in the same PR"
+            echo "that documents the policy change."
             echo ""
             echo "If the drift is unintentional, restore the documented policy via"
             echo "Settings → Branches → Edit rule for 'main' on github.com."
