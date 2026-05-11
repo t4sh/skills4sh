@@ -27,7 +27,7 @@ test("fixture GitHub API installs a skill and cleans staging dirs", async () => 
   }
 });
 
-test("dry-run install prints the computed hash and writes no files", async () => {
+test("dry-run install prints versioned envelope with computed hash, writes no files", async () => {
   const fixture = await startFixture();
   const dest = await tempDir();
   try {
@@ -40,11 +40,132 @@ test("dry-run install prints the computed hash and writes no files", async () =>
     ], fixture.env);
     assert.equal(result.status, 0, result.stderr);
     const body = JSON.parse(result.stdout);
+    // Versioned envelope (v0.4.5+): downstream tooling can rely on schemaVersion/command.
+    assert.equal(body.schemaVersion, 1);
+    assert.equal(body.command, "install");
+    assert.equal(body.dryRun, true);
     assert.equal(body.skill, "demo");
     assert.equal(body.computedHash, fixture.hash);
+    assert.deepEqual(body.source, { owner: "owner", repo: "repo", ref: "main" });
     assert.equal(existsSync(join(dest, "demo")), false);
   } finally {
     await fixture.close();
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("remove --all requires --yes", async () => {
+  const dest = await tempDir();
+  try {
+    // Create a fake installed skill so we exercise the gate (not the "nothing to do" path).
+    await mkdir(join(dest, "demo"));
+    await writeFile(join(dest, "demo", "SKILL.md"), "---\nname: demo\n---\n");
+
+    // Without --yes: must refuse.
+    const refused = await runSkills4sh(["remove", "--all", "--dest", dest]);
+    assert.notEqual(refused.status, 0, "remove --all without --yes should fail");
+    assert.match(refused.stderr, /remove --all requires explicit confirmation/);
+    assert.match(refused.stderr, /--yes/);
+    assert.equal(existsSync(join(dest, "demo")), true, "skill must still be on disk");
+
+    // With --yes: proceeds.
+    const ok = await runSkills4sh(["remove", "--all", "--yes", "--dest", dest]);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.equal(existsSync(join(dest, "demo")), false);
+  } finally {
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("remove refuses to follow symlinks by default; --force unlinks the symlink only", async () => {
+  const dest = await tempDir();
+  const elsewhere = await tempDir();
+  try {
+    // Set up real content at `elsewhere`; symlink `dest/foo` → `elsewhere/data`.
+    const target = join(elsewhere, "data");
+    await mkdir(target);
+    await writeFile(join(target, "important.txt"), "DO NOT DELETE\n");
+    const { symlinkSync } = await import("node:fs");
+    symlinkSync(target, join(dest, "foo"));
+
+    // Default: refuse.
+    const refused = await runSkills4sh(["remove", "foo", "--dest", dest]);
+    assert.notEqual(refused.status, 0, "remove should refuse symlink without --force");
+    assert.match(refused.stderr, /path is a symlink/);
+    assert.match(refused.stderr, /target directory is left intact/);
+    assert.equal(existsSync(join(target, "important.txt")), true, "target file must still exist");
+    assert.equal(existsSync(join(dest, "foo")), true, "symlink must still exist");
+
+    // With --force: unlink the symlink, leave the target alone.
+    const ok = await runSkills4sh(["remove", "foo", "--force", "--dest", dest]);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.equal(existsSync(join(dest, "foo")), false, "symlink should be gone");
+    assert.equal(
+      existsSync(join(target, "important.txt")), true,
+      "INVARIANT: --force unlinks the symlink only; the target's contents must survive",
+    );
+  } finally {
+    await rm(dest, { recursive: true, force: true });
+    await rm(elsewhere, { recursive: true, force: true });
+  }
+});
+
+test("remove --force lets you clean up a half-installed dir without SKILL.md", async () => {
+  const dest = await tempDir();
+  try {
+    // Half-installed: directory exists but SKILL.md is missing.
+    await mkdir(join(dest, "broken"));
+    await writeFile(join(dest, "broken", "leftover.txt"), "stale content\n");
+
+    // Default: refuse.
+    const refused = await runSkills4sh(["remove", "broken", "--dest", dest]);
+    assert.notEqual(refused.status, 0);
+    assert.match(refused.stderr, /no SKILL.md inside/);
+    assert.match(refused.stderr, /--force/);
+
+    // With --force: remove anyway.
+    const ok = await runSkills4sh(["remove", "broken", "--force", "--dest", dest]);
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.equal(existsSync(join(dest, "broken")), false);
+  } finally {
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("remove --force --all is rejected (bulk + force is too dangerous)", async () => {
+  const dest = await tempDir();
+  try {
+    await mkdir(join(dest, "demo"));
+    await writeFile(join(dest, "demo", "SKILL.md"), "---\nname: demo\n---\n");
+    // Add a dir without SKILL.md to make --force "meaningful" — should still be rejected.
+    await mkdir(join(dest, "stray"));
+
+    const result = await runSkills4sh(["remove", "--all", "--yes", "--force", "--dest", dest]);
+    assert.notEqual(result.status, 0, "--force + --all should fail");
+    assert.match(result.stderr, /--force cannot be combined with --all/);
+    // Importantly: nothing should have been touched yet.
+    assert.equal(existsSync(join(dest, "stray")), true);
+  } finally {
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("dry-run remove prints versioned envelope", async () => {
+  const dest = await tempDir();
+  try {
+    await mkdir(join(dest, "demo"));
+    await writeFile(join(dest, "demo", "SKILL.md"), "---\nname: demo\n---\n");
+
+    const r = await runSkills4sh(["remove", "demo", "--dry-run", "--dest", dest]);
+    assert.equal(r.status, 0, r.stderr);
+    const body = JSON.parse(r.stdout);
+    assert.equal(body.schemaVersion, 1);
+    assert.equal(body.command, "remove");
+    assert.equal(body.dryRun, true);
+    assert.equal(body.skill, "demo");
+    assert.equal(body.kind, "skill");
+    assert.equal(existsSync(join(dest, "demo")), true, "dry-run must not delete");
+  } finally {
     await rm(dest, { recursive: true, force: true });
   }
 });

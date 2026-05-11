@@ -46,12 +46,13 @@ npx skills4sh list t4sh/skills4sh
 **Uninstall** (v0.4.0+):
 
 ```bash
-npx skills4sh remove agent-memory                  # uninstall a single skill
-npx skills4sh remove --all                         # uninstall every installed skill
-npx skills4sh remove agent-memory --dry-run        # show what would be deleted, no disk write
+npx skills4sh remove agent-memory                       # uninstall a single skill
+npx skills4sh remove --all --yes                        # uninstall every installed skill (since v0.4.5, --yes required)
+npx skills4sh remove agent-memory --dry-run             # show what would be deleted, no disk write
+npx skills4sh remove some-broken-dir --force            # remove a dir without SKILL.md (e.g., half-installed)
 ```
 
-`remove` only deletes directories under `--dest` that contain a `SKILL.md` — unrelated files and dirs are left untouched. Refuses destructive ops on misconfigured paths.
+`remove` only deletes directories under `--dest` that contain a `SKILL.md` — unrelated files and dirs are left untouched. Symlinks under `<dest>` are refused unless `--force` is passed (which unlinks the symlink itself without following it). `--all` requires `--yes` confirmation. `--all` cannot be combined with `--force`.
 
 The supporting installer defaults to `~/.claude/skills/` (matches `bin/install.mjs` → `DEFAULT_DEST = ~/.claude/skills`). Override with `--dest <dir>` to target `~/.cursor/skills/`, `~/.agents/skills/`, or any path. Requires Node 22+.
 

@@ -8,6 +8,28 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.5] — 2026-05-12
+
+Closes six fresh-eyes audit findings in a single release. Four CLI safety + UX fixes, two test-coverage fills. **No breaking change for normal install/list flows**; the `remove --all` path now requires explicit `--yes` confirmation (was previously silent destructive bulk).
+
+### Added (CLI safety + UX)
+- **`remove --all` requires `--yes`.** Destructive bulk op was previously silent. Without `--yes` it now exits 1 with a directed error: `remove --all requires explicit confirmation. Re-run with --yes:` …
+- **`--force` in `remove` is now meaningfully implemented** (was previously documented as "NOT IMPLEMENTED"). Two real uses:
+  1. Remove a half-installed directory missing its SKILL.md gate (was the only escape hatch).
+  2. With a symlink path, unlinks the symlink itself WITHOUT following it (target preserved).
+  3. Cannot be combined with `--all` — bulk + force defeats the safety net; rejected at `removeMain` before any iteration.
+- **Symlink-safe remove.** `removeSkill` now uses `lstat` to detect symlinks BEFORE following. Default behavior: refuse with directed error. With `--force`: unlink the symlink only — never follow it. Closes a class of "user has `~/.claude/skills/foo` symlinked elsewhere; bulk rm follows the link" scenarios.
+- **Versioned `--dry-run` output schema** for both install and remove. Output now wraps in `{ schemaVersion: 1, command: "install"|"remove", dryRun: true, ... }`. Downstream tooling that parses dry-run JSON now has a stable contract; future field additions don't silently break parsers.
+
+### Added (test coverage — fills the "verifiers verified" gap)
+- **`bin/drift-check.mjs` is now importable** as `runDriftChecks(rootDir)`. CLI invocation still works as before (top-level call against `process.cwd()`); tests can now exercise the full check pipeline against fixture repos in tmpdirs without spawning subprocesses.
+- **`tests/drift-check.test.mjs` (new, 12 tests)** — fixture-based e2e coverage of the drift checker. Builds a complete fixture repo (skills/, .security/, lockfile, README, AGENTS, SECURITY, plugin manifests) and exercises: clean baseline, hash mismatch, version mismatch, missing skill rows, schema-invalid manifest (bad enum value), broken markdown link, anchored link, external URL, code-fenced link, and link escaping skill dir.
+- **Markdown-link validation** (item 6) added to drift-check. Every relative-path link in a `*.md` file under each skill must resolve to a file in the skill's inventory. External URLs / `mailto:` / `#anchor`-only / code-fenced links are correctly excluded. Links escaping the skill directory (`../../etc/passwd`) are rejected. The current four bundled skills all pass.
+
+### Stats
+- Test count: 118 → **138** (+20: 13 for items 1-4, 12 for items 5-6, minus 5 reorganized).
+- No public CLI API breakage for install/list. `remove --all` now requires `--yes` (was silent before; arguably the prior behavior was a bug — the destructive op had no confirmation gate).
+
 ## [0.4.4] — 2026-05-12
 
 ### Fixed
@@ -218,7 +240,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.4...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.5...HEAD
+[0.4.5]: https://github.com/t4sh/skills4sh/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/t4sh/skills4sh/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/t4sh/skills4sh/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/t4sh/skills4sh/compare/v0.4.1...v0.4.2

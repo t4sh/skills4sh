@@ -18,7 +18,7 @@ if (typeof fetch !== "function" || major < 22) {
   process.exit(1);
 }
 
-import { mkdir, writeFile, rm, readdir, rename, readFile, stat } from "node:fs/promises";
+import { mkdir, writeFile, rm, readdir, rename, readFile, stat, lstat } from "node:fs/promises";
 import { realpathSync, rmSync, renameSync } from "node:fs";
 import { join, dirname, isAbsolute, normalize } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -65,8 +65,29 @@ async function main() {
 }
 
 async function removeMain() {
-  const installed = await discoverInstalledSkills();
   if (args.all) {
+    // --force semantics is "skip the safety gate for a specific named skill."
+    // Combining --force with --all defeats the per-skill safety net — reject
+    // unconditionally before iterating anything, so we never partially-delete.
+    if (args.force) {
+      throw new Error(
+        `--force cannot be combined with --all. Force-removing only makes sense\n` +
+        `    for a specific named skill where you've verified the path is correct.\n` +
+        `    For bulk removal, drop --force and let the SKILL.md safety gate apply.`,
+      );
+    }
+    // remove --all is destructive — wipes every installed skill in <dest>.
+    // Require explicit --yes to prevent typo accidents (e.g. running
+    // `remove --all` when you meant `remove <one-skill>`). Equivalent of
+    // the "are you sure?" prompt without needing stdin interactivity.
+    if (!args.yes) {
+      throw new Error(
+        `remove --all requires explicit confirmation. Re-run with --yes:\n` +
+        `    skills4sh remove --all --yes --dest ${dest}\n` +
+        `    (the --yes is required because --all wipes every installed skill in <dest>)`,
+      );
+    }
+    const installed = await discoverInstalledSkills();
     if (installed.length === 0) {
       console.log(`No skills installed at ${dest}.`);
       return;
@@ -105,9 +126,14 @@ async function removeSkill(name) {
   assertSafePathComponent(name, "skill name");
   const skillDir = join(dest, name);
 
-  let dirStat;
+  // lstat (not stat) so we can detect a symlink BEFORE following it. If a
+  // user has e.g. `~/.claude/skills/foo` symlinked to `/some/external/dir`,
+  // `rm({ recursive: true })` on the symlink would follow it and delete the
+  // target's contents. Refuse outright unless --force, in which case unlink
+  // ONLY the symlink itself, never the target.
+  let lst;
   try {
-    dirStat = await stat(skillDir);
+    lst = await lstat(skillDir);
   } catch (err) {
     if (err.code === "ENOENT") {
       console.log(`  - ${name} not installed at ${dest}`);
@@ -115,30 +141,63 @@ async function removeSkill(name) {
     }
     throw err;
   }
-  if (!dirStat.isDirectory()) {
+  if (lst.isSymbolicLink()) {
+    if (args.force) {
+      if (args.dryRun) {
+        console.error(`→ Dry-run remove (symlink) ${name} from ${dest} (no delete)`);
+        console.log(JSON.stringify({
+          schemaVersion: 1, command: "remove", dryRun: true,
+          skill: name, path: skillDir, kind: "symlink",
+        }, null, 2));
+        return;
+      }
+      console.log(`→ Unlinking symlink ${name} from ${dest} (target left intact)`);
+      await rm(skillDir);
+      console.log(`✓ Unlinked symlink ${name}`);
+      return;
+    }
+    throw new Error(
+      `refusing to remove ${skillDir}: path is a symlink.\n` +
+      `    Pass --force to unlink the symlink itself (the target directory is left intact).\n` +
+      `    Without --force, this CLI refuses to follow symlinks under <dest> to avoid\n` +
+      `    accidentally deleting unrelated content the symlink points at.`,
+    );
+  }
+  if (!lst.isDirectory()) {
     throw new Error(`refusing to remove: ${skillDir} is not a directory`);
   }
 
   // Only remove dirs that look like installed skills. Catches typos (rm of an
   // unrelated dir under dest) and prevents removing dirs that were never
   // created by this CLI — the SKILL.md is the proof-of-managed signal.
+  // --force bypasses this check (e.g., clean up a half-installed skill where
+  // SKILL.md is missing). --force is NOT compatible with --all to keep the
+  // bulk-destructive op constrained.
+  let hasSkillMd = false;
   try {
     const s = await stat(join(skillDir, "SKILL.md"));
-    if (!s.isFile()) throw new Error("SKILL.md is not a file");
-  } catch {
+    hasSkillMd = s.isFile();
+  } catch { /* hasSkillMd stays false */ }
+
+  if (!hasSkillMd && !args.force) {
     throw new Error(
       `refusing to remove ${skillDir}: no SKILL.md inside (not a skill directory).\n` +
-      `    Pass --force to override (NOT IMPLEMENTED in this version — remove manually if needed).`,
+      `    Pass --force to override and remove the directory anyway.`,
     );
   }
+  // The --force + --all guard lives in removeMain so we reject before iterating.
 
   if (args.dryRun) {
     console.error(`→ Dry-run remove ${name} from ${dest} (no delete)`);
-    console.log(JSON.stringify({ skill: name, action: "remove", path: skillDir }, null, 2));
+    console.log(JSON.stringify({
+      schemaVersion: 1, command: "remove", dryRun: true,
+      skill: name, path: skillDir,
+      kind: hasSkillMd ? "skill" : "force-other-dir",
+    }, null, 2));
     return;
   }
 
-  console.log(`→ Removing ${name} from ${dest}`);
+  console.log(`→ Removing ${name} from ${dest}${hasSkillMd ? "" : " (--force, no SKILL.md)"}`);
   await rm(skillDir, { recursive: true });
   console.log(`✓ Removed ${name}`);
 }
@@ -236,7 +295,11 @@ async function installSkill(name, files) {
 
   const hash = computeSkillFolderHash(downloaded);
   if (args.dryRun) {
-    console.log(JSON.stringify({ skill: name, computedHash: hash }, null, 2));
+    console.log(JSON.stringify({
+      schemaVersion: 1, command: "install", dryRun: true,
+      skill: name, computedHash: hash,
+      source: { owner, repo, ref },
+    }, null, 2));
     return;
   }
   if (!args.noVerify) await verifyAgainstLock(name, hash);
@@ -514,10 +577,15 @@ function parseArgs(argv) {
     else if (a === "--dry-run") out.dryRun = true;
     else if (a === "--force" || a === "-f") out.force = true;
     else if (a === "-h" || a === "--help") out.help = true;
-    // Users often confuse npm's `--yes` / `--global` (which must appear before
-    // the package name) with trailing CLI flags. Accept both as silent no-ops
-    // so e.g. `npx skills add <repo> -g -y` never errors if we shadow npx.
-    else if (a === "-y" || a === "--yes" || a === "-g" || a === "--global") {
+    // `--yes`/`-y` is now meaningful: it's the explicit confirmation required
+    // for `remove --all`. It's also still tolerated as a silent no-op for
+    // install/list operations (where it was historically used to swallow
+    // npm's --yes prompt).
+    else if (a === "-y" || a === "--yes") out.yes = true;
+    // npm's --global must appear before the package name; if a user passes
+    // it trailing we tolerate it as a no-op so `npx skills add <repo> -g`
+    // doesn't error.
+    else if (a === "-g" || a === "--global") {
       /* no-op */
     } else throw new Error(`unknown argument: ${a}`);
   }
@@ -532,8 +600,8 @@ function printHelp() {
 Usage:
   skills4sh    add <owner/repo> [options]   # installs all skills from the repo
   skills4sh    list [<owner/repo>]
-  skills4sh    remove <name>                # uninstall a single skill from <dest>
-  skills4sh    remove --all                 # uninstall all installed skills from <dest>
+  skills4sh    remove <name> [options]      # uninstall a single skill from <dest>
+  skills4sh    remove --all --yes           # uninstall all installed skills from <dest>
   skills4sh    --list
   skills4sh    --skill <name> [options]
   skills4sh    --all          [options]
@@ -542,17 +610,25 @@ Options:
   --repo  <owner/repo>   default: ${DEFAULT_REPO}                            (install only)
   --ref   <sha|branch>   default: ${DEFAULT_REF}                                          (install only)
   --dest  <dir>          default: ${DEFAULT_DEST}
-  --force, -f            (deprecated no-op — re-runs are now idempotent)
+  --force, -f            install: deprecated no-op (re-runs are idempotent)
+                         remove:  override the SKILL.md safety gate (removes a directory
+                                  that's missing SKILL.md). Not compatible with --all.
+                                  For symlink paths, --force unlinks the symlink itself
+                                  WITHOUT following it.
   --no-verify            skip skills-lock.json hash verification (INSECURE)  (install only)
   --dry-run              install: download and hash only, no disk write
                          remove:  print what would be deleted, no disk delete
-  -y, --yes              ignored (use npx --yes <pkg> ... so npm skips the install prompt)
+                         Output is JSON with { schemaVersion: 1, command, dryRun, ... }
+  -y, --yes              REQUIRED for \`remove --all\` (explicit confirmation for the
+                         destructive bulk op). No-op for install/list operations.
   -g, --global           ignored (npm's global-install flag must come before the package name)
 
 Remove semantics:
-  Only directories under <dest> that contain a SKILL.md are eligible for removal.
-  Anything else (unrelated files, dirs without SKILL.md) is left untouched. Refuses
-  destructive ops on misconfigured paths; rm manually if you need to override.
+  - By default, only directories containing a SKILL.md are eligible for removal.
+  - Symlinks under <dest> are refused by default; --force unlinks the symlink only
+    (never follows it).
+  - --force lets you clean up a half-installed directory missing its SKILL.md.
+  - --all wipes every installed skill in <dest>; requires --yes as confirmation.
 
 Env:
   GITHUB_TOKEN           raises the 60 req/hr anonymous rate limit
