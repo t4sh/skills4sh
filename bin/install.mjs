@@ -20,20 +20,9 @@ if (typeof fetch !== "function" || major < 22) {
 
 import { mkdir, writeFile, rm, readdir, rename, readFile } from "node:fs/promises";
 import { join, dirname, isAbsolute, normalize } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { homedir } from "node:os";
 import { createHash } from "node:crypto";
-
-// Self-identify on stderr so users can tell which installer ran. The published
-// `skills` bin (Vercel's agent-skills CLI) is a near-namesake; printing the
-// version makes it unambiguous which one executed.
-let pkgVersion = "?";
-try {
-  const here = dirname(fileURLToPath(import.meta.url));
-  const pkg = JSON.parse(await readFile(join(here, "..", "package.json"), "utf8"));
-  pkgVersion = pkg.version;
-} catch { /* best effort */ }
-console.error(`skills4sh v${pkgVersion}`);
 
 const DEFAULT_REPO = "t4sh/skills4sh";
 const DEFAULT_REF = "main";
@@ -45,53 +34,11 @@ const DOWNLOAD_CONCURRENCY = 8;
 const FETCH_RETRIES = 1;
 const FETCH_RETRY_DELAY_MS = 500;
 
-// Optional proxy support: Node's native fetch does not honor HTTPS_PROXY env on its own.
-const proxy = process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy;
-if (proxy) {
-  try {
-    const { ProxyAgent, setGlobalDispatcher } = await import("undici");
-    setGlobalDispatcher(new ProxyAgent(proxy));
-  } catch {
-    console.error(`⚠ HTTPS_PROXY set but 'undici' unavailable — proxy not applied.`);
-  }
-}
-
-let args;
-try {
-  args = parseArgs(process.argv.slice(2));
-} catch (err) {
-  console.error(`✗ ${err.message}`);
-  printHelp();
-  process.exit(1);
-}
-if (args.help || (!args.list && !args.all && !args.skill)) {
-  printHelp();
-  process.exit(args.help ? 0 : 1);
-}
-
-const repoArg = args.repo ?? DEFAULT_REPO;
-if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repoArg)) {
-  console.error(`✗ invalid --repo value: ${repoArg} (expected owner/repo)`);
-  process.exit(1);
-}
-const [owner, repo] = repoArg.split("/");
-const ref = args.ref ?? DEFAULT_REF;
-const dest = args.dest ?? DEFAULT_DEST;
-const token = process.env.GITHUB_TOKEN;
-const headers = {
-  Accept: "application/vnd.github+json",
-  "User-Agent": "skills4sh-installer",
-  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-};
-
-if (args.noVerify) {
-  console.error("⚠ --no-verify: skipping hash verification (INSECURE — use only for testing)");
-}
-
-main().catch((err) => {
-  console.error(`✗ ${err.message}`);
-  process.exit(1);
-});
+// Module-scoped runtime state. Populated by runMain() when invoked as CLI;
+// remains undefined when the module is imported (e.g. by tests). Functions
+// like ghTree() and installSkill() reference these — tests must only call
+// the pure exports below, which don't touch this state.
+let args, owner, repo, ref, dest, headers, token;
 
 async function main() {
   const tree = await ghTree();
@@ -424,4 +371,83 @@ Hash scheme:
   sha256(hex) matching vercel-labs/skills computedHash
   (sorted relPath + content, no separators, forward slashes).
 `);
+}
+
+// CLI entry point. Wraps everything that has runtime side effects so tests
+// can import the pure functions above without triggering version-print,
+// proxy setup, arg parsing, or main().
+async function runMain() {
+  // Self-identify on stderr so users can tell which installer ran. The published
+  // `skills` bin (Vercel's agent-skills CLI) is a near-namesake; printing the
+  // version makes it unambiguous which one executed.
+  let pkgVersion = "?";
+  try {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const pkg = JSON.parse(await readFile(join(here, "..", "package.json"), "utf8"));
+    pkgVersion = pkg.version;
+  } catch { /* best effort */ }
+  console.error(`skills4sh v${pkgVersion}`);
+
+  // Optional proxy support: Node's native fetch does not honor HTTPS_PROXY env on its own.
+  const proxy = process.env.HTTPS_PROXY || process.env.https_proxy || process.env.HTTP_PROXY || process.env.http_proxy;
+  if (proxy) {
+    try {
+      const { ProxyAgent, setGlobalDispatcher } = await import("undici");
+      setGlobalDispatcher(new ProxyAgent(proxy));
+    } catch {
+      console.error(`⚠ HTTPS_PROXY set but 'undici' unavailable — proxy not applied.`);
+    }
+  }
+
+  try {
+    args = parseArgs(process.argv.slice(2));
+  } catch (err) {
+    console.error(`✗ ${err.message}`);
+    printHelp();
+    process.exit(1);
+  }
+  if (args.help || (!args.list && !args.all && !args.skill)) {
+    printHelp();
+    process.exit(args.help ? 0 : 1);
+  }
+
+  const repoArg = args.repo ?? DEFAULT_REPO;
+  if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repoArg)) {
+    console.error(`✗ invalid --repo value: ${repoArg} (expected owner/repo)`);
+    process.exit(1);
+  }
+  [owner, repo] = repoArg.split("/");
+  ref = args.ref ?? DEFAULT_REF;
+  dest = args.dest ?? DEFAULT_DEST;
+  token = process.env.GITHUB_TOKEN;
+  headers = {
+    Accept: "application/vnd.github+json",
+    "User-Agent": "skills4sh-installer",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  if (args.noVerify) {
+    console.error("⚠ --no-verify: skipping hash verification (INSECURE — use only for testing)");
+  }
+
+  await main();
+}
+
+// Test-only exports: pure functions with no module-state dependency.
+// Tests import these without triggering runMain().
+export {
+  parseArgs,
+  assertSafePathComponent,
+  assertSafeRelPath,
+  computeSkillFolderHash,
+  discoverSkills,
+};
+
+// CLI guard: runMain only fires when invoked as the entry script
+// (`node bin/install.mjs ...` or `skills4sh ...`), not when imported.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  runMain().catch((err) => {
+    console.error(`✗ ${err.message}`);
+    process.exit(1);
+  });
 }

@@ -8,6 +8,8 @@ on:
       - '.github/workflows/validate.yml'
       - '.github/scripts/verify-versions.sh'
       - 'bin/hash-check.mjs'
+      - 'bin/install.mjs'
+      - 'tests/**'
   pull_request:
     paths:
       - 'skills/**'
@@ -15,6 +17,8 @@ on:
       - '.github/workflows/validate.yml'
       - '.github/scripts/verify-versions.sh'
       - 'bin/hash-check.mjs'
+      - 'bin/install.mjs'
+      - 'tests/**'
 
 permissions:
   contents: read
@@ -90,3 +94,6 @@ jobs:
 
       - name: Verify version consistency (AST07)
         run: bash .github/scripts/verify-versions.sh
+
+      - name: Run installer unit tests
+        run: node --test tests/installer.test.mjs
