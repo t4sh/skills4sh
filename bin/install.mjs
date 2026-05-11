@@ -29,8 +29,8 @@ const DEFAULT_REPO = "t4sh/skills4sh";
 const DEFAULT_REF = "main";
 // Windows maps homedir() to %USERPROFILE%, so this becomes e.g. C:\Users\x\.claude\skills.
 const DEFAULT_DEST = join(homedir(), ".claude", "skills");
-const API = "https://api.github.com";
-const RAW = "https://raw.githubusercontent.com";
+const API = process.env.SKILLS4SH_API_BASE ?? "https://api.github.com";
+const RAW = process.env.SKILLS4SH_RAW_BASE ?? "https://raw.githubusercontent.com";
 const DOWNLOAD_CONCURRENCY = 8;
 const FETCH_RETRIES = 1;
 const FETCH_RETRY_DELAY_MS = 500;
