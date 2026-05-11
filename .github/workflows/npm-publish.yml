@@ -7,16 +7,28 @@ name: npm publish
 # source of truth for the ref to publish — workflow checks out exactly
 # that tag, not the branch HEAD at trigger time.
 #
-# Auth today: NPM_TOKEN for registry authentication plus GitHub Actions OIDC
-# for npm provenance (`npm publish --provenance`). Trusted Publisher can
-# replace NPM_TOKEN only after npmjs.com is configured and verified for this
-# repository/workflow.
+# Auth: OIDC Trusted Publisher (no NPM_TOKEN required).
 #
-# Prereqs:
-#   1. `NPM_TOKEN` secret has publish rights for `skills4sh`.
-#   2. `id-token: write` permission below lets npm produce provenance.
+# Prereqs (one-time setup):
+#   1. On npmjs.com, the `skills4sh` package has a Trusted Publisher
+#      configured pointing at this repo + this workflow filename:
+#      https://www.npmjs.com/package/skills4sh/access
+#      → Trusted Publishers
+#      → Repository: t4sh/skills4sh
+#      → Workflow:  npm-publish.yml
+#      → Environment: (blank)
+#      AND "Publishing access" is set to "Require 2FA and disallow tokens".
+#   2. `id-token: write` permission below issues the OIDC token that npm
+#      verifies against the Trusted Publisher binding above. The same token
+#      signs the provenance attestation — one credential, two purposes.
 #   3. package.json `repository.url` matches the GitHub repo.
 #   4. Release tags are annotated, signed, immutable, and named vX.Y.Z.
+#
+# No NPM_TOKEN secret is needed. The previous token-based flow lived from
+# v0.3.0 through v0.3.8; superseded here. No token to rotate, no token to
+# leak. The workflow file path itself is the trust anchor — renaming this
+# file (or moving the publish to a different workflow) breaks the binding
+# until npmjs.com is reconfigured to match.
 #
 # Why CI-only provenance:
 #   Local `npm publish` cannot produce provenance attestations — OIDC is
@@ -72,11 +84,10 @@ jobs:
       - name: Run installer unit tests
         run: node --test tests/*.test.mjs
 
-      - name: Publish to npm (NPM_TOKEN + OIDC provenance)
+      - name: Publish to npm (OIDC Trusted Publisher + provenance)
         env:
           RELEASE_TAG: ${{ github.event.release.tag_name || inputs.ref || github.ref_name }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
 
       - name: Verify published registry metadata

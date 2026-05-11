@@ -32,6 +32,12 @@ jobs:
         node-version: ['22', '24']
     steps:
       - uses: actions/checkout@v4
+        with:
+          # drift-check.mjs uses `git show HEAD^:skills/<x>/SKILL.md` for the
+          # semver monotonicity check. Default fetch-depth (1) hides HEAD^ on
+          # push events and the check silently skips. Depth 2 is the minimum
+          # needed for the previous-commit comparison.
+          fetch-depth: 2
 
       - name: Setup Node ${{ matrix.node-version }}
         uses: actions/setup-node@v4

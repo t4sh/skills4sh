@@ -8,6 +8,16 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.3.9] — 2026-05-11
+
+### Security
+- **npm publish auth migrated to OIDC Trusted Publisher.** `npm-publish.yml` no longer references `NPM_TOKEN` / `NODE_AUTH_TOKEN`; the GitHub Actions OIDC token authenticates the publish against the Trusted Publisher binding configured on npmjs.com (Repository: `t4sh/skills4sh`, Workflow: `npm-publish.yml`). The same token signs the provenance attestation. **There is no long-lived publish secret to rotate or leak.** Previous token-based flow (v0.3.0 — v0.3.8) is superseded.
+
+### Fixed
+- **`validate.yml` shallow clone bypassed the v0.3.8 semver monotonicity check.** `actions/checkout@v4` defaults to `fetch-depth: 1`, which hides `HEAD^` from `bin/drift-check.mjs`'s `git show` call — the check was silently skipping in CI on push events. Set `fetch-depth: 2` so the previous-commit comparison runs in CI as designed.
+
+## [0.3.8] — 2026-05-11
+
 ### Added
 - `CONTRIBUTING.md` documenting the skill-authoring workflow (frontmatter contract, seven-place version-sync surface, `.security/<name>.yaml` manifest schema, hook setup, PR expectations).
 - `CHANGELOG.md` (this file) — reconstructed from git history; reflects per-tag release notes.
@@ -20,9 +30,6 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 - `.security/eleventy-nunjucks.yaml`: 6 HIGH-severity `expected_findings` entries now carry `acknowledged: true` (no behavior change; explicit acknowledgement per new severity-floor policy).
 - `.security/localhost-screenshots.yaml`: 2 HIGH-severity `expected_findings` entries now carry `acknowledged: true`.
 - `package.json#files` now includes `CHANGELOG.md`.
-
-### Fixed
-- N/A.
 
 ## [0.3.7] — 2026-05-11
 
@@ -106,7 +113,9 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.3.7...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.3.9...HEAD
+[0.3.9]: https://github.com/t4sh/skills4sh/compare/v0.3.8...v0.3.9
+[0.3.8]: https://github.com/t4sh/skills4sh/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/t4sh/skills4sh/compare/v0.3.6...v0.3.7
 [0.3.6]: https://github.com/t4sh/skills4sh/compare/v0.3.5...v0.3.6
 [0.3.5]: https://github.com/t4sh/skills4sh/compare/v0.3.4...v0.3.5
