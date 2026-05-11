@@ -74,6 +74,8 @@ jobs:
 
       - name: Publish to npm (NPM_TOKEN + OIDC provenance)
         env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.ref || github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
 
