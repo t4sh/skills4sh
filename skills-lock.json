@@ -10,8 +10,8 @@
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.7.0",
-      "computedHash": "e2499adee175d0650b94014d468c855df1e0be43e302ed2f2cb72849ab6bf2a3"
+      "version": "1.7.1",
+      "computedHash": "99b74dbd78181356e55ba1444a681ea482af2989cbaf1b55f07f873760fe8dfd"
     },
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",

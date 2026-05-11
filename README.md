@@ -7,7 +7,7 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 | Skill | Description | Version |
 |-------|-------------|---------|
 | [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.7.0 |
-| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.0 |
+| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.1 |
 | [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.0 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.3.0 |
 
@@ -42,6 +42,16 @@ npx skills4sh --skill localhost-screenshots        # only localhost-screenshots
 npx skills4sh add t4sh/skills4sh --ref <sha|branch|tag>
 npx skills4sh list t4sh/skills4sh
 ```
+
+**Uninstall** (v0.4.0+):
+
+```bash
+npx skills4sh remove agent-memory                  # uninstall a single skill
+npx skills4sh remove --all                         # uninstall every installed skill
+npx skills4sh remove agent-memory --dry-run        # show what would be deleted, no disk write
+```
+
+`remove` only deletes directories under `--dest` that contain a `SKILL.md` — unrelated files and dirs are left untouched. Refuses destructive ops on misconfigured paths.
 
 The supporting installer defaults to `~/.claude/skills/` (matches `bin/install.mjs` → `DEFAULT_DEST = ~/.claude/skills`). Override with `--dest <dir>` to target `~/.cursor/skills/`, `~/.agents/skills/`, or any path. Requires Node 22+.
 
