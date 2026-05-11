@@ -13,7 +13,7 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: a012d963b634db45fd05cf3f1e0e249d031e2487c7260807fa20e69f38bba32c
+    SKILL.md: e73ce1ce3e7019b1eb05a8ea64b9cd9a66c60f323a237f59a09f87b3203d3011
     references/templates.md: ab61fb061f97b3220ec6e6738bac5236e38f23a556ef4b37d8c7b9aa5f5e2ac3
     references/display-conventions.md: 69145723e247db19313834a5a1f30a44f14b136ec44f49648cb5bb68eebc6745
     assets/icon.svg: 0e08a6de46d8356fff0051deb0076206ef46384fa1e3a9bf9aa5d9ef6abc58e7

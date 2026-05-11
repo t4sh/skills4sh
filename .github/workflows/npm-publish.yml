@@ -1,31 +1,22 @@
 name: npm publish
 
-# Publish skills4sh to the npm registry with OIDC provenance attestation.
+# Publish skills4sh to the npm registry with provenance attestation.
 #
 # Fires on GitHub release publish (the same `gh release create` we run
 # manually for each version). The release event's `tag_name` is the
 # source of truth for the ref to publish — workflow checks out exactly
 # that tag, not the branch HEAD at trigger time.
 #
-# Auth: OIDC Trusted Publisher (no NPM_TOKEN required).
+# Auth today: NPM_TOKEN for registry authentication plus GitHub Actions OIDC
+# for npm provenance (`npm publish --provenance`). Trusted Publisher can
+# replace NPM_TOKEN only after npmjs.com is configured and verified for this
+# repository/workflow.
 #
-# Prereqs (one-time setup):
-#   1. On npmjs.com, the `skills4sh` package has a Trusted Publisher
-#      configured pointing at this repo + this workflow filename:
-#      https://www.npmjs.com/package/skills4sh/access
-#      → Trusted Publishers
-#      → Repository: t4sh/skills4sh
-#      → Workflow:  npm-publish.yml
-#      → Environment: (blank)
-#   2. `id-token: write` permission below issues the OIDC token that npm
-#      verifies against the Trusted Publisher binding above. The same
-#      token signs the provenance attestation.
+# Prereqs:
+#   1. `NPM_TOKEN` secret has publish rights for `skills4sh`.
+#   2. `id-token: write` permission below lets npm produce provenance.
 #   3. package.json `repository.url` matches the GitHub repo.
-#
-# No NPM_TOKEN secret is needed. The previous token-based flow is
-# documented in git history (commit history around v0.3.1-v0.3.2) but
-# is superseded by Trusted Publishers — there's no token to rotate, no
-# token to leak, and the workflow file path itself is the trust anchor.
+#   4. Release tags are annotated, signed, immutable, and named vX.Y.Z.
 #
 # Why CI-only provenance:
 #   Local `npm publish` cannot produce provenance attestations — OIDC is
@@ -43,7 +34,7 @@ on:
   workflow_dispatch:
     inputs:
       ref:
-        description: "Git ref (tag or sha) to publish from"
+        description: "Signed version tag to publish from (vX.Y.Z)"
         required: true
         default: ""
 
@@ -67,31 +58,24 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Pre-publish guards (mirrors local prepublishOnly + validate)
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name || inputs.ref || github.ref_name }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          node bin/release-check.mjs
           bash .github/scripts/check-bin-tag-parity.sh
           bash .github/scripts/verify-versions.sh
           node bin/hash-check.mjs
+          npm run check:drift
+          npm run check:pack
 
       - name: Run installer unit tests
-        run: node --test tests/installer.test.mjs
+        run: node --test tests/*.test.mjs
 
       - name: Publish to npm (NPM_TOKEN + OIDC provenance)
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
 
-      - name: Verify the published tarball was attested
-        run: |
-          set -e
-          version=$(node -p "require('./package.json').version")
-          echo "Verifying provenance for skills4sh@$version..."
-          # Query the registry for attestation metadata. `npm audit
-          # signatures` would require installing the package as a dep
-          # (skills4sh isn't a dep of itself in this checkout), so we
-          # check `dist.attestations` directly.
-          attestations=$(npm view "skills4sh@$version" dist.attestations --json 2>/dev/null || echo null)
-          if [ -z "$attestations" ] || [ "$attestations" = "null" ]; then
-            echo "✗ No attestation metadata for skills4sh@$version"
-            exit 1
-          fi
-          echo "✓ Attestation present: $attestations"
+      - name: Verify published registry metadata
+        run: node bin/verify-published.mjs

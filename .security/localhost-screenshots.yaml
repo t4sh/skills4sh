@@ -13,8 +13,8 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: b20cdc9283f5953c24c564f95fcebce03f63415cbab1b5e0a022d902b9beaa40
-    references/playwright-patterns.md: 1a7b31bf7efee13ce628529e639b42be832fb979c8997cc3347839ca4cb2e075
+    SKILL.md: 159755c1f32d877482c3ee314d01bb06a57bcefc52c5f2e723973772865f7b94
+    references/playwright-patterns.md: 76dfb1e1804f310f6be14cdf811338a24fa67b8d697275748d44a581e8f47e33
     references/visual-regression.md: 6a5c9e1e86db76a904d95a0f84057c8e723b68ccf96471effc35493156c418d7
     references/interaction-templates.md: 965fcd298c4d29a4ba63dce70469bb9ba61129df61644869f6f4e30087159c2c
     references/ai-snapshots.md: 26872bf79640327b7e9770cc4cc9224b51b56af668169de58305588ac19fef0c

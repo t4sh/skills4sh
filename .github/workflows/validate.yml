@@ -5,19 +5,33 @@ on:
     paths:
       - 'skills/**'
       - 'skills-lock.json'
+      - 'npm-shrinkwrap.json'
+      - 'package.json'
+      - 'README.md'
+      - 'SECURITY.md'
+      - 'AGENTS.md'
+      - '.security/**'
+      - '.cursor-plugin/**'
+      - '.claude-plugin/**'
       - '.github/workflows/validate.yml'
       - '.github/scripts/verify-versions.sh'
-      - 'bin/hash-check.mjs'
-      - 'bin/install.mjs'
+      - 'bin/**'
       - 'tests/**'
   pull_request:
     paths:
       - 'skills/**'
       - 'skills-lock.json'
+      - 'npm-shrinkwrap.json'
+      - 'package.json'
+      - 'README.md'
+      - 'SECURITY.md'
+      - 'AGENTS.md'
+      - '.security/**'
+      - '.cursor-plugin/**'
+      - '.claude-plugin/**'
       - '.github/workflows/validate.yml'
       - '.github/scripts/verify-versions.sh'
-      - 'bin/hash-check.mjs'
-      - 'bin/install.mjs'
+      - 'bin/**'
       - 'tests/**'
 
 permissions:
@@ -79,15 +93,28 @@ jobs:
 
       - name: Check skill completeness
         run: |
+          errors=0
           for dir in skills/*/; do
             name=$(basename "$dir")
             echo "Checking $name completeness..."
 
-            [ -f "$dir/SKILL.md" ] || { echo "  WARN: Missing SKILL.md"; }
-            [ -f ".security/$(basename "$dir").yaml" ] || { echo "  WARN: Missing .security/$(basename "$dir").yaml"; }
+            [ -f "$dir/SKILL.md" ] || { echo "  ERROR: Missing SKILL.md"; errors=$((errors + 1)); }
+            [ -f ".security/$name.yaml" ] || { echo "  ERROR: Missing .security/$name.yaml"; errors=$((errors + 1)); }
+            python3 - <<PY || errors=$((errors + 1))
+import json
+name = "$name"
+lock = json.load(open("skills-lock.json"))
+if name not in lock.get("skills", {}):
+    raise SystemExit(f"  ERROR: Missing skills-lock.json entry for {name}")
+PY
 
             echo "  OK"
           done
+          if [ "$errors" -gt 0 ]; then
+            echo ""
+            echo "Found $errors completeness error(s)"
+            exit 1
+          fi
 
       - name: Verify content hashes (AST01/AST02)
         run: node bin/hash-check.mjs
@@ -95,5 +122,11 @@ jobs:
       - name: Verify version consistency (AST07)
         run: bash .github/scripts/verify-versions.sh
 
+      - name: Verify docs and security manifests do not drift
+        run: npm run check:drift
+
+      - name: Verify npm package payload
+        run: npm run check:pack
+
       - name: Run installer unit tests
-        run: node --test tests/installer.test.mjs
+        run: node --test tests/*.test.mjs

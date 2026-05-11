@@ -14,7 +14,8 @@ name: Release Guards
 #     while a tag for the current version already exists).
 #   - tag push (v*) → explicit gate before any future CI publish step.
 #     At tag time the check is trivially passing (tag === HEAD), but its
-#     presence is the contract.
+#     presence is the contract. Publish still requires an annotated signed
+#     version tag verified by bin/release-check.mjs.
 
 on:
   push:
@@ -22,6 +23,7 @@ on:
     paths:
       - 'bin/**'
       - 'package.json'
+      - 'npm-shrinkwrap.json'
       - '.github/scripts/check-bin-tag-parity.sh'
       - '.github/workflows/release.yml'
     tags:
@@ -30,6 +32,7 @@ on:
     paths:
       - 'bin/**'
       - 'package.json'
+      - 'npm-shrinkwrap.json'
       - '.github/scripts/check-bin-tag-parity.sh'
       - '.github/workflows/release.yml'
   workflow_dispatch: {}
@@ -54,4 +57,6 @@ jobs:
           python-version: '3'
 
       - name: Run prepublishOnly check
-        run: bash .github/scripts/check-bin-tag-parity.sh
+        run: |
+          bash .github/scripts/check-bin-tag-parity.sh
+          npm run check:pack
