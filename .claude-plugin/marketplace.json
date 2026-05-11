@@ -10,8 +10,8 @@
     {
       "name": "skills4sh",
       "source": ".",
-      "description": "Agent skills: agent-memory (persistent project memory), discord-harvest (Discord content extraction), localhost-screenshots (responsive screenshot capture)",
-      "version": "0.2.0",
+      "description": "Agent skills: agent-memory (persistent project memory), discord-harvest (Discord content extraction), eleventy-nunjucks (11ty + Nunjucks conventions), localhost-screenshots (responsive screenshot capture)",
+      "version": "0.3.0",
       "author": {
         "name": "t4sh"
       },

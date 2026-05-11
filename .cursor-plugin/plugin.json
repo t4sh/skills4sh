@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": {
     "name": "t4sh"
   },
@@ -17,6 +17,11 @@
       "name": "discord-harvest",
       "path": "skills/discord-harvest",
       "description": "Extract and download images, links, and files from Discord conversations"
+    },
+    {
+      "name": "eleventy-nunjucks",
+      "path": "skills/eleventy-nunjucks",
+      "description": "11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists"
     },
     {
       "name": "localhost-screenshots",

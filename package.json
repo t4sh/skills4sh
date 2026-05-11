@@ -1,10 +1,13 @@
 {
   "name": "skills4sh",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot).",
   "type": "module",
   "bin": {
     "skills4sh": "bin/install.mjs"
+  },
+  "scripts": {
+    "prepublishOnly": "bash .github/scripts/check-bin-tag-parity.sh"
   },
   "files": [
     "bin",
