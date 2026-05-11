@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Pre-commit guard: skills-lock.json must match skills/ content.
+#
+# Wired via: git config --local core.hooksPath .githooks
+#   (the `prepare` script in package.json does this automatically on
+#   `npm install` inside a git clone — see package.json scripts.prepare)
+#
+# Bypass for emergencies: git commit --no-verify
+
+if ! node bin/hash-check.mjs; then
+  echo ""
+  echo "  ↳ Fix:    node bin/hash-check.mjs --write && git add skills-lock.json"
+  echo "  ↳ Bypass: git commit --no-verify     (emergencies only)"
+  exit 1
+fi
