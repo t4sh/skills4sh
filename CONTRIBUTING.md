@@ -16,7 +16,7 @@ skills/<name>/              # the skill itself (SKILL.md + references/ + optiona
 .security/<name>.yaml       # OWASP AST10 manifest mirroring the skill
 skills-lock.json            # canonical version + computed folder hash per skill
 bin/                        # CLI + check scripts (Node 22+, ESM)
-.github/workflows/          # 6 workflows: validate, guardskills, release, npm-publish, codeql, dependency-review
+.github/workflows/          # 7 workflows: validate, guardskills, release, npm-publish, codeql, dependency-review, branch-protection-drift
 tests/                      # installer + integration tests (node:test)
 ```
 
