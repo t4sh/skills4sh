@@ -8,6 +8,18 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.4] — 2026-05-12
+
+### Fixed
+- **`bin/clean-package-for-publish.mjs`: scripts now stripped from npm registry metadata too, not just the tarball.** v0.4.3's postpack restored `package.json` BEFORE `npm publish` constructed the registry metadata POSTed to npm. Result: tarball was clean (consumer install path was correct), but `npm view skills4sh@0.4.3 scripts` and `https://registry.npmjs.org/skills4sh/0.4.3` still exposed the dev scripts. v0.4.3 verified the audit's consumer-install concern (tarball clean) but missed the metadata-exposure half.
+
+   New behavior: `postpack` checks `process.env.npm_command` — if it's `"publish"`, restore is deferred to a new `postpublish` hook that runs *after* the registry metadata is sent. For plain `npm pack`, `postpack` restores as before (no publish follows). 5 new unit tests pin this distinction (full publish simulation, pack-only path, mixed cases).
+
+   After this fix:
+   ```bash
+   curl -sL https://registry.npmjs.org/skills4sh/0.4.4 | jq .scripts  # → null
+   ```
+
 ## [0.4.3] — 2026-05-12
 
 Closes three parallel-audit findings. No public CLI surface change.
@@ -206,7 +218,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.3...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.4...HEAD
+[0.4.4]: https://github.com/t4sh/skills4sh/compare/v0.4.3...v0.4.4
 [0.4.3]: https://github.com/t4sh/skills4sh/compare/v0.4.2...v0.4.3
 [0.4.2]: https://github.com/t4sh/skills4sh/compare/v0.4.1...v0.4.2
 [0.4.1]: https://github.com/t4sh/skills4sh/compare/v0.4.0...v0.4.1

@@ -33,8 +33,12 @@ function setupTmp() {
   return { dir, pkgPath, bakPath, original };
 }
 
-function runScript(cwd, mode) {
-  return spawnSync("node", [SCRIPT, mode], { cwd, encoding: "utf8" });
+function runScript(cwd, mode, env = {}) {
+  return spawnSync("node", [SCRIPT, mode], {
+    cwd,
+    encoding: "utf8",
+    env: { ...process.env, ...env },
+  });
 }
 
 describe("clean-package-for-publish prepack", () => {
@@ -135,6 +139,104 @@ describe("clean-package-for-publish full prepack/postpack cycle", () => {
       const after = JSON.parse(readFileSync(pkgPath, "utf8"));
       assert.deepEqual(after.scripts, original.scripts);
       assert.equal(existsSync(bakPath), false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("clean-package-for-publish publish-vs-pack distinction (v0.4.4+)", () => {
+  // v0.4.3 had a hole: postpack restored scripts BEFORE npm publish constructed
+  // registry metadata, so the tarball was clean but the registry metadata still
+  // carried scripts. Fix: postpack defers when npm_command === "publish";
+  // postpublish does the restore. These tests pin that behavior.
+
+  test("postpack with npm_command=publish defers restore", () => {
+    const { dir, pkgPath, bakPath, original } = setupTmp();
+    try {
+      runScript(dir, "prepack");
+      const pre = JSON.parse(readFileSync(pkgPath, "utf8"));
+      assert.equal(pre.scripts, undefined);
+
+      const r = runScript(dir, "postpack", { npm_command: "publish" });
+      assert.equal(r.status, 0);
+      assert.match(r.stderr, /deferring restore to postpublish/);
+
+      // Critical: package.json must STILL be stripped after publish-context
+      // postpack — that's what npm publish will read for registry metadata.
+      const afterPostpack = JSON.parse(readFileSync(pkgPath, "utf8"));
+      assert.equal(
+        afterPostpack.scripts, undefined,
+        "INVARIANT: postpack in publish context must NOT restore (would leak scripts to registry metadata)",
+      );
+      assert.equal(existsSync(bakPath), true, ".bak preserved for postpublish");
+
+      // postpublish then does the restore.
+      assert.equal(runScript(dir, "postpublish").status, 0);
+      const after = JSON.parse(readFileSync(pkgPath, "utf8"));
+      assert.deepEqual(after.scripts, original.scripts);
+      assert.equal(existsSync(bakPath), false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("postpack without npm_command still restores (npm pack alone)", () => {
+    const { dir, pkgPath, original } = setupTmp();
+    try {
+      runScript(dir, "prepack");
+      // No npm_command env — simulates `npm pack` not `npm publish`.
+      const r = runScript(dir, "postpack");
+      assert.equal(r.status, 0);
+      const after = JSON.parse(readFileSync(pkgPath, "utf8"));
+      assert.deepEqual(after.scripts, original.scripts, "pack-only context should restore as before");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("postpack with npm_command=pack (explicit) restores", () => {
+    const { dir, pkgPath, original } = setupTmp();
+    try {
+      runScript(dir, "prepack");
+      const r = runScript(dir, "postpack", { npm_command: "pack" });
+      assert.equal(r.status, 0);
+      const after = JSON.parse(readFileSync(pkgPath, "utf8"));
+      assert.deepEqual(after.scripts, original.scripts);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("full publish simulation: prepack → publish-postpack → postpublish", () => {
+    const { dir, pkgPath, bakPath, original } = setupTmp();
+    try {
+      // Phase 1: prepack strips
+      assert.equal(runScript(dir, "prepack").status, 0);
+      assert.equal(JSON.parse(readFileSync(pkgPath, "utf8")).scripts, undefined);
+
+      // Phase 2: postpack under publish defers
+      assert.equal(runScript(dir, "postpack", { npm_command: "publish" }).status, 0);
+      // package.json still stripped → registry metadata constructed here would be clean
+      assert.equal(JSON.parse(readFileSync(pkgPath, "utf8")).scripts, undefined);
+
+      // Phase 3: postpublish restores
+      assert.equal(runScript(dir, "postpublish").status, 0);
+      assert.deepEqual(JSON.parse(readFileSync(pkgPath, "utf8")).scripts, original.scripts);
+      assert.equal(existsSync(bakPath), false);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("postpublish without preceding prepack is a no-op", () => {
+    const { dir, pkgPath, original } = setupTmp();
+    try {
+      const r = runScript(dir, "postpublish");
+      assert.equal(r.status, 0);
+      assert.match(r.stderr, /no \.bak to restore/);
+      const pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+      assert.deepEqual(pkg.scripts, original.scripts);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
