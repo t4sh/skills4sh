@@ -19,6 +19,7 @@ if (typeof fetch !== "function" || major < 22) {
 }
 
 import { mkdir, writeFile, rm, readdir, rename, readFile } from "node:fs/promises";
+import { realpathSync } from "node:fs";
 import { join, dirname, isAbsolute, normalize } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { homedir } from "node:os";
@@ -444,10 +445,24 @@ export {
 };
 
 // CLI guard: runMain only fires when invoked as the entry script
-// (`node bin/install.mjs ...` or `skills4sh ...`), not when imported.
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  runMain().catch((err) => {
-    console.error(`✗ ${err.message}`);
-    process.exit(1);
-  });
+// (`node bin/install.mjs ...` or via the `skills4sh` bin symlink npm
+// creates at `node_modules/.bin/skills4sh`), not when imported.
+//
+// realpathSync resolves the symlink: when invoked via npm's `.bin/`
+// symlink, process.argv[1] is the symlink path while import.meta.url
+// is the resolved target. A direct equality check fails and the CLI
+// stays silent — that bug shipped in v0.3.1 (#TODO post-mortem link).
+if (process.argv[1]) {
+  let invokedFile;
+  try {
+    invokedFile = realpathSync(process.argv[1]);
+  } catch {
+    invokedFile = process.argv[1];
+  }
+  if (import.meta.url === pathToFileURL(invokedFile).href) {
+    runMain().catch((err) => {
+      console.error(`✗ ${err.message}`);
+      process.exit(1);
+    });
+  }
 }
