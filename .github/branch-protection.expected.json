@@ -20,7 +20,7 @@
       "validate (24)"
     ]
   },
-  "enforce_admins": false,
+  "enforce_admins": true,
   "required_pull_request_reviews": null,
   "required_signatures": true,
   "required_linear_history": true,

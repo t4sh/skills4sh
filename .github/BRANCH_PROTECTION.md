@@ -26,7 +26,7 @@ Additional policies enforced on `refs/heads/main`:
 - **Linear history required** (`required_linear_history: true`) — no merge commits.
 - **Conversation resolution required** before merge.
 - **No force pushes, no deletions, no fork-syncing.**
-- **Admin bypass enabled** (`enforce_admins: false`) — accepted residual risk for single-maintainer governance; flagged in `SECURITY.md`.
+- **Admin bypass disabled** (`enforce_admins: true` since v0.4.6) — administrators are also subject to all configured branch protection rules. No admin escape hatch for force-push, deletion, or check-bypass. The maintainer's direct pushes to `main` still work because no PR review is required (`required_pull_request_reviews: null`), but they must satisfy linear history, signed commits, and all 15 required status checks.
 
 The full snapshot lives at `.github/branch-protection.expected.json` and is the source of truth.
 
