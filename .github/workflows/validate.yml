@@ -96,11 +96,12 @@ jobs:
           errors=0
           for dir in skills/*/; do
             name=$(basename "$dir")
+            skill_errors=0
             echo "Checking $name completeness..."
 
-            [ -f "$dir/SKILL.md" ] || { echo "  ERROR: Missing SKILL.md"; errors=$((errors + 1)); }
-            [ -f ".security/$name.yaml" ] || { echo "  ERROR: Missing .security/$name.yaml"; errors=$((errors + 1)); }
-            python3 - <<PY || errors=$((errors + 1))
+            [ -f "$dir/SKILL.md" ] || { echo "  ERROR: Missing SKILL.md"; errors=$((errors + 1)); skill_errors=$((skill_errors + 1)); }
+            [ -f ".security/$name.yaml" ] || { echo "  ERROR: Missing .security/$name.yaml"; errors=$((errors + 1)); skill_errors=$((skill_errors + 1)); }
+            python3 - <<PY || { errors=$((errors + 1)); skill_errors=$((skill_errors + 1)); }
 import json
 name = "$name"
 lock = json.load(open("skills-lock.json"))
@@ -108,7 +109,9 @@ if name not in lock.get("skills", {}):
     raise SystemExit(f"  ERROR: Missing skills-lock.json entry for {name}")
 PY
 
-            echo "  OK"
+            if [ "$skill_errors" -eq 0 ]; then
+              echo "  OK"
+            fi
           done
           if [ "$errors" -gt 0 ]; then
             echo ""
