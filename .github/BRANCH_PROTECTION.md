@@ -26,8 +26,36 @@ Additional policies enforced on `refs/heads/main`:
 - **Linear history required** (`required_linear_history: true`) — no merge commits.
 - **Conversation resolution required** before merge.
 - **No force pushes, no deletions, no fork-syncing.**
-- **Admin bypass disabled** (`enforce_admins: true` since v0.4.6) — administrators are also subject to all configured branch protection rules. No admin escape hatch for force-push, deletion, or check-bypass. The maintainer's direct pushes to `main` still work because no PR review is required (`required_pull_request_reviews: null`), but they must satisfy linear history, signed commits, and all 15 required status checks.
+- **Admin bypass disabled** (`enforce_admins: true` since v0.4.6) — administrators are also subject to all configured branch protection rules. No admin escape hatch for force-push, deletion, or check-bypass. **Practical consequence: direct push to `main` from admin is rejected** with `protected branch hook declined` because the pushed commit hasn't satisfied the 15 required status checks yet (chicken-and-egg with direct push). Use PR flow.
 
 The full snapshot lives at `.github/branch-protection.expected.json` and is the source of truth.
+
+## Recovery — if branch protection locks you out
+
+If a future change breaks a required check workflow (renames a check, introduces a fatal CI bug, or otherwise creates a state where no PR can merge), the maintainer can't fix it via direct push because `enforce_admins: true`. The escape hatch:
+
+```bash
+# Temporarily disable admin enforcement (admin-only, no other gate)
+gh api -X DELETE /repos/t4sh/skills4sh/branches/main/protection/enforce_admins
+
+# Push the fix directly
+git push origin main
+
+# Re-enable
+gh api -X POST  /repos/t4sh/skills4sh/branches/main/protection/enforce_admins \
+  -H "Accept: application/vnd.github+json"
+
+# Verify
+gh api /repos/t4sh/skills4sh/branches/main/protection/enforce_admins --jq '.enabled'  # → true
+```
+
+Each toggle is one API call and visible in the repo audit log. The window of admin bypass should be measured in seconds, not minutes. If recovery requires multiple rounds, that itself is a signal that the broken check needs more careful work via a PR (in which case, leave enforce_admins disabled until the PR is verified to be the actual fix).
+
+Same pattern applies if you ever need to retire / replace a required check entirely:
+1. Disable `enforce_admins` temporarily
+2. Update the required-checks list via UI or `gh api PATCH .../protection/required_status_checks`
+3. Update `.github/branch-protection.expected.json` snapshot to match
+4. Commit and push the snapshot via direct push (now allowed)
+5. Re-enable `enforce_admins`
 
 Publishing is allowed only from an annotated signed `vX.Y.Z` tag that points at the workflow checkout commit. `npm-publish.yml` verifies the tag before publish and verifies npm registry metadata after publish, including `_hasShrinkwrap`, `gitHead`, and provenance attestation.

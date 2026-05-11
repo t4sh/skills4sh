@@ -206,6 +206,22 @@ test("-v alias also prints version", async () => {
   assert.match(r.stdout.trim(), /^\d+\.\d+\.\d+/);
 });
 
+test("--version combined with other args is rejected (v0.4.7 — strict)", async () => {
+  // Prior to v0.4.7, --version anywhere in argv would print and exit 0.
+  // That surprised users running `skills4sh --skill foo --version` who
+  // expected -v / --version to be an operation-specific flag. Strict
+  // form: --version must be the only argument.
+  const r = await runSkills4sh(["--skill", "foo", "--version"]);
+  assert.notEqual(r.status, 0, "--version with other args should be rejected");
+  assert.match(r.stderr, /unknown argument: --version/);
+});
+
+test("-v combined with other args is rejected (v0.4.7 — strict)", async () => {
+  const r = await runSkills4sh(["add", "t4sh/skills4sh", "-v"]);
+  assert.notEqual(r.status, 0, "-v with other args should be rejected");
+  assert.match(r.stderr, /unknown argument/);
+});
+
 test("parse-error doesn't dump full help (just one-line hint)", async () => {
   const r = await runSkills4sh(["--nonsense-flag"]);
   assert.notEqual(r.status, 0);
@@ -238,6 +254,33 @@ test("dry-run error path emits JSON envelope on stdout", async () => {
     assert.equal(envelope.dryRun, true);
     assert.ok(envelope.error, "envelope should contain error block");
     assert.match(envelope.error.message, /skills-lock\.json not present/);
+  } finally {
+    await fixture.close();
+    await rm(dest, { recursive: true, force: true });
+  }
+});
+
+test("size cap streaming-aborts when Content-Length is absent and body exceeds cap", async () => {
+  // v0.4.7 critical fix: previously the cap could be bypassed by an
+  // attacker-controlled server that omitted Content-Length and streamed an
+  // unbounded body — the bare `await res.arrayBuffer()` would buffer the
+  // whole thing into memory before any check fired. The streaming reader
+  // must catch the overrun BEFORE memory exhaustion.
+  const fixture = await startFixture({ oversizedStreamingNoContentLength: true });
+  const dest = await tempDir();
+  try {
+    const r = await runSkills4sh([
+      "--repo", "owner/repo",
+      "--ref", "main",
+      "--dest", dest,
+      "--skill", "demo",
+      "--no-verify",
+    ], fixture.env);
+    assert.notEqual(r.status, 0, "oversized streaming body should be rejected");
+    assert.match(r.stderr, /size cap/i, "error should mention size cap");
+    assert.match(r.stderr, /streamed/i, "error should indicate streaming abort path");
+    // The skill must NOT have been installed.
+    assert.equal(existsSync(join(dest, "demo")), false);
   } finally {
     await fixture.close();
     await rm(dest, { recursive: true, force: true });
@@ -428,6 +471,28 @@ async function startFixture(options = {}) {
           "content-length": String(100 * 1024 * 1024), // 100 MiB > 50 MiB cap
         });
         res.end(""); // body intentionally smaller; the cap rejects before reading
+        return;
+      }
+      if (options.oversizedStreamingNoContentLength && repoPath === "skills/demo/SKILL.md") {
+        // No Content-Length header (chunked transfer encoding implicit via
+        // res.write before res.end). Streams chunks totaling > 50 MiB so the
+        // streaming reader must abort, not the header check. Sends 1 MiB
+        // chunks until either 60 MiB total or the client cancels the stream.
+        res.writeHead(200, { "content-type": "text/plain" });
+        const chunk = Buffer.alloc(1024 * 1024, "A");
+        let sent = 0;
+        const TOTAL_TARGET = 60 * 1024 * 1024;
+        const writeChunk = () => {
+          if (res.destroyed || res.writableEnded) return;
+          if (sent >= TOTAL_TARGET) { res.end(); return; }
+          sent += chunk.byteLength;
+          if (!res.write(chunk)) {
+            res.once("drain", writeChunk);
+          } else {
+            setImmediate(writeChunk);
+          }
+        };
+        writeChunk();
         return;
       }
       const body = repoPath === "skills-lock.json" ? lock : files[repoPath];

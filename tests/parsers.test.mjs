@@ -288,6 +288,91 @@ describe("parseExpectedFindings", () => {
 `;
     assert.deepEqual(parseExpectedFindings(yaml), []);
   });
+
+  test("literal block scalar (|) captures multi-line reason with newlines", () => {
+    const yaml = `expected_findings:
+    - id: R005
+      file: x.md
+      acknowledged: true
+      reason: |
+        Line one explanation.
+        Line two with more detail.
+    - id: R008
+      file: y.md
+      reason: "next entry"
+`;
+    const out = parseExpectedFindings(yaml);
+    assert.equal(out.length, 2);
+    assert.equal(out[0].id, "R005");
+    assert.equal(out[0].reason, "Line one explanation.\nLine two with more detail.");
+    // Critically: the next finding must still parse correctly (block-scalar
+    // parsing must end when indent decreases).
+    assert.equal(out[1].id, "R008");
+    assert.equal(out[1].reason, "next entry");
+  });
+
+  test("folded block scalar (>) joins multi-line with spaces", () => {
+    const yaml = `expected_findings:
+    - id: R005
+      file: x.md
+      acknowledged: true
+      reason: >
+        Folded text spans
+        multiple lines but
+        joins with spaces.
+`;
+    const out = parseExpectedFindings(yaml);
+    assert.equal(out[0].reason, "Folded text spans multiple lines but joins with spaces.");
+  });
+
+  test("chomping markers (|- and >-) are recognized", () => {
+    const yaml = `expected_findings:
+    - id: R001
+      file: a.md
+      reason: |-
+        strip-newline literal style
+    - id: R002
+      file: b.md
+      reason: >-
+        strip-newline folded style
+`;
+    const out = parseExpectedFindings(yaml);
+    assert.equal(out[0].reason, "strip-newline literal style");
+    assert.equal(out[1].reason, "strip-newline folded style");
+  });
+
+  test("block scalar followed by next finding stops at dedent", () => {
+    const yaml = `expected_findings:
+    - id: R005
+      file: x.md
+      reason: |
+        First reason
+        continues here
+    - id: R006
+      file: y.md
+      severity: high
+      reason: "short"
+`;
+    const out = parseExpectedFindings(yaml);
+    assert.equal(out.length, 2);
+    assert.equal(out[0].reason, "First reason\ncontinues here");
+    assert.equal(out[1].severity, "HIGH");
+    assert.equal(out[1].reason, "short");
+  });
+
+  test("block-scalar reason satisfies validateAcknowledgedReasons", () => {
+    const yaml = `expected_findings:
+    - id: R005
+      file: x.md
+      acknowledged: true
+      reason: |
+        This is a substantive multi-line rationale
+        explaining why the finding is benign.
+`;
+    const findings = parseExpectedFindings(yaml);
+    const errors = validateAcknowledgedReasons(findings, "skill");
+    assert.deepEqual(errors, [], `multi-line reason should pass validator:\n${errors.join("\n")}`);
+  });
 });
 
 describe("findUnacknowledgedBlocking", () => {
