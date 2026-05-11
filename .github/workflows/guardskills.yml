@@ -29,4 +29,15 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Scan ${{ matrix.skill }}
-        run: npx guardskills add t4sh/skills4sh --skill ${{ matrix.skill }} --ci --yes
+        run: |
+          # eleventy-nunjucks has documented R005_SECRET_READ false positives
+          # from instructional grep/curl snippets in reference docs (see
+          # .security/eleventy-nunjucks.yaml `expected_findings` — every
+          # finding is pre-reviewed and traceable to documentation, not
+          # exfiltration code). --force overrides the UNSAFE outcome for
+          # this specific skill. All other skills run without --force.
+          flags="--ci --yes"
+          if [ "${{ matrix.skill }}" = "eleventy-nunjucks" ]; then
+            flags="$flags --force"
+          fi
+          npx guardskills add t4sh/skills4sh --skill ${{ matrix.skill }} $flags
