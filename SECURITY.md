@@ -9,7 +9,7 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 | agent-memory | 2.7.0 | Yes |
 | discord-harvest | 1.7.0 | Yes |
 | eleventy-nunjucks | 0.1.0 | Yes |
-| localhost-screenshots | 3.2.0 | Yes |
+| localhost-screenshots | 3.3.0 | Yes |
 
 ## Reporting a Vulnerability
 
@@ -151,10 +151,17 @@ The following findings are expected and documented:
 
 | Finding | Severity | File(s) | Explanation |
 |---------|----------|---------|-------------|
-| `R005_SECRET_READ` | HIGH/medium | `SKILL.md` | False positive. Triggered by `--user-data-dir=/tmp/chrome-debug` (Chrome CDP debugging flag) and `process.env.HOME \|\| process.env.USERPROFILE, '.cache', 'localhost-screenshots'` (Playwright persistent browser profile path). These are code examples for browser automation — no credentials or secrets are read. The `user-data-dir` is a throwaway temp directory for remote debugging sessions. |
-| `R005_SECRET_READ` | HIGH/medium | `references/playwright-patterns.md` | False positive. Triggered by `process.env.HOME \|\| process.env.USERPROFILE, '.cache', 'localhost-screenshots'` — a code example showing how to set up persistent browser sessions. Stores browser cookies/localStorage for multi-step screenshot workflows, not secrets. |
-| `R009_FILE_STAGE` | LOW | `SKILL.md` | Triggered by `/tmp/chrome-debug` in the CDP debugging code example. This is a standard Chrome flag for isolated debugging profiles, not malicious temp file staging. |
-| `R008_ENV_ACCESS` | LOW | `SKILL.md`, `references/playwright-patterns.md`, `references/visual-regression.md` | Code examples reference `process.env.HOME`/`USERPROFILE` for browser profile and session directories. |
+| `R005_SECRET_READ` | HIGH/medium | `references/playwright-patterns.md` | False positive. The Persistent Browser Sessions example references `process.env.HOME` / `USERPROFILE` to compute a `~/.cache/localhost-screenshots/` profile directory — no credentials or secrets are read; the path stores browser cookies/localStorage for multi-step screenshot workflows. |
+| `R005_SECRET_READ` | HIGH/medium | `references/interaction-templates.md` | False positive. The Auth → Dashboard template reads `process.env.DEMO_USER` / `DEMO_PASS` as an example of sourcing demo-environment credentials from the environment instead of hardcoding them — this is the secure pattern guardskills R005 is intended to encourage. |
+| `R008_ENV_ACCESS` | LOW | `references/playwright-patterns.md` | Code examples reference `process.env.HOME` / `USERPROFILE` for the optional persistent-session browser-profile directory used in multi-step screenshot workflows. |
+| `R008_ENV_ACCESS` | LOW | `references/visual-regression.md` | Code examples reference environment variables (`PORT`, etc.) in the CI workflow snippet. |
+| `R008_ENV_ACCESS` | LOW | `references/interaction-templates.md` | Login-flow template reads `process.env.DEMO_USER` / `DEMO_PASS` so example credentials live in the environment rather than being hardcoded. |
+
+**Resolved in 3.3.0** — the following 3.2.0 findings are no longer flagged:
+
+- `COMMAND_EXECUTION` (HIGH) — `sudo npx playwright install-deps` removed; `node -e "require('playwright')"` replaced with `test -d node_modules/playwright`; stdin `node -e "…"` templates moved to versioned `assets/scripts/*.js`.
+- `PROMPT_INJECTION` (HIGH) — captured page content (a11y tree, DOM snapshot, interactive map) is now wrapped in an `{ boundary: "untrusted-page-content", source, … }` envelope, with an explicit boundary section in `SKILL.md`.
+- `R009_FILE_STAGE` — the `/tmp/chrome-debug` CDP example was removed; no temp-file staging strings remain.
 
 ## Security Scanning
 

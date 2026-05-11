@@ -46,10 +46,11 @@ const fs = require('fs');
   const context = await browser.newContext();
   const page = await context.newPage();
 
-  // Step 1: Login
+  // Step 1: Login — credentials come from the environment, never hardcoded.
+  // Set DEMO_USER / DEMO_PASS before running, or wire to a secrets manager.
   await page.goto('http://localhost:3000/login');
-  await page.fill('#email', 'admin@example.com');
-  await page.fill('#password', 'password');
+  await page.fill('#email',    process.env.DEMO_USER || 'demo@example.com');
+  await page.fill('#password', process.env.DEMO_PASS || '');
   await page.click('button[type="submit"]');
   await page.waitForURL('**/dashboard');
 
@@ -138,8 +139,10 @@ const fs = require('fs');
   await page.reload({ waitUntil: 'networkidle' });
   await page.screenshot({ path: '_screenshots/states/populated.png', fullPage: true });
 
-  // Error state — intercept API
-  await page.route('**/api/tasks', route =>
+  // Error state — intercept API.
+  // Route interception is a screenshotting/test tool. Use it to capture rare states;
+  // never use it to mask real production traffic or to bypass server-side auth.
+  await page.route('**/api/tasks', (route) =>
     route.fulfill({ status: 500, body: 'Internal Server Error' })
   );
   await page.reload({ waitUntil: 'networkidle' });
