@@ -8,6 +8,15 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.1] — 2026-05-11
+
+### Security
+- **`bin/release-check.mjs` now also verifies the release commit's signature** (in addition to the tag's). The tag-signature check that's been in place since v0.3.0 attests "this tag was created by the maintainer"; the new commit-signature check attests "the *source code* shipped at this tag was committed by the maintainer." Tag and commit signatures are independent in git (`tag.gpgsign` and `commit.gpgsign` are separate config keys), so both must hold to close the lock-file integrity gap from the external audit (Tier 1c). Closes the audit-flagged "lock file not separately signed" concern via the existing signing chain rather than introducing a new signing mechanism.
+- **`SECURITY.md` AST02 — release-integrity chain documented in full.** New subsection enumerates the four-link consumer-verifiable chain: signed commit → signed tag pointing at that commit → SLSA-attested tarball produced by GitHub Actions OIDC from that commit → registry `gitHead` recording the same commit SHA. Acknowledges single-maintainer as the residual architectural risk (flagged for v1.0+ governance).
+
+### Changed
+- All GitHub Actions bumped to latest majors via Dependabot PR #1: `actions/checkout` v4.3.1 → v6.0.2; `actions/setup-node` v4.4.0 → v6.4.0; `actions/setup-python` v5.6.0 → v6.2.0; `github/codeql-action` v3 → v4.35.4; `actions/dependency-review-action` v4.9.0 → v5.0.0. All checks passed on the rebased PR before merge.
+
 ## [0.4.0] — 2026-05-11
 
 ### Added
@@ -153,7 +162,8 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/t4sh/skills4sh/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/t4sh/skills4sh/compare/v0.3.11...v0.4.0
 [0.3.11]: https://github.com/t4sh/skills4sh/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/t4sh/skills4sh/compare/v0.3.9...v0.3.10

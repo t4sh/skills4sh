@@ -61,6 +61,19 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | CI hash verification | Automated drift detection on every push and PR (`validate.yml` runs `bin/hash-check.mjs`) |
 | Pre-commit hash guard | `.githooks/pre-commit` runs `bin/hash-check.mjs` locally before any commit; contributors opt in via `bash bin/setup-hooks.sh` |
 
+#### Release-integrity chain (consumer-verifiable)
+
+The `skills-lock.json` file is not separately signed — it doesn't need to be, because the **release commit and tag are both signed and GitHub-verifies them independently**, and the published tarball carries a SLSA v1 provenance attestation that pins back to a specific commit SHA. The chain a consumer can verify:
+
+1. **Release tag is annotated and SSH-signed.** Enforced locally by `git tag -a` (with `tag.gpgsign=true`) and verified at publish by `bin/release-check.mjs` via GitHub's `/git/tags/<sha>` API — `verification.verified` must be `true`.
+2. **Release commit is GitHub-verified.** Since v0.4.1, `bin/release-check.mjs` also asserts `commit.verification.verified === true` for the tag's target commit via `/commits/<sha>`. Tag and commit signatures are independent in git; both must hold.
+3. **Tarball provenance attests the build environment.** `npm publish --provenance` from OIDC Trusted Publisher produces a SLSA v1 attestation linking the tarball to (repo, workflow, commit SHA). Anyone can verify with `npm audit signatures skills4sh@<v>`. The attestation is published to the Sigstore transparency log — `https://search.sigstore.dev/?logIndex=<n>` (the index is printed in the publish workflow's log).
+4. **`gitHead` published with the tarball matches.** `bin/verify-published.mjs` (runs as the last step of `npm-publish.yml`) asserts the registry-side `gitHead` field on the published version equals the commit just shipped.
+
+Chain in one sentence: **maintainer-signed commit → maintainer-signed tag pointing at that commit → SLSA-attested tarball produced by GitHub Actions OIDC from that commit → registry metadata records that same commit SHA.** Any link broken by an attacker would fail at least one of the four verifications above.
+
+**Residual risk: single maintainer.** All four links above resolve to the same maintainer identity (the SSH key on the repo's verification status). Compromise of that key would let an attacker forge each link. Real multi-key governance (release-signing key separate from commit-signing key, m-of-n quorum) is the only architectural fix — out of scope at single-maintainer scale, but flagged here for future v1.0+ governance.
+
 ### AST03 — Over-Privileged Skills
 
 | Control | Implementation |

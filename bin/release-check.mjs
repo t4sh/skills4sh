@@ -36,7 +36,7 @@ if (process.env.GITHUB_REPOSITORY && process.env.GITHUB_TOKEN) {
   }
 }
 
-console.log(`✓ release tag ${expectedTag} is signed and points at HEAD ${head}`);
+console.log(`✓ release tag ${expectedTag} is signed, points at HEAD ${head}, and the commit signature is GitHub-verified`);
 
 function exactTag() {
   const result = spawnSync("git", ["describe", "--exact-match", "--tags", "HEAD"], {
@@ -69,6 +69,21 @@ async function verifyGitHubTag(tagName, expectedHead) {
   }
   if (tagObject.verification?.verified !== true) {
     throw new Error(`${tagName} is not GitHub-verified: ${tagObject.verification?.reason ?? "unknown reason"}`);
+  }
+
+  // Chain the trust: the tag is signed, but the tag's signature only attests
+  // to the maintainer's identity at tag time. To close the lock-file / source-
+  // integrity gap, also assert that the release COMMIT itself is GitHub-
+  // verified. Tag and commit are signed independently (git's tag.gpgsign and
+  // commit.gpgsign are separate); a hypothetical attacker who signed the tag
+  // but pushed an unsigned commit (e.g. via a compromised runner) would fail
+  // this check.
+  const commit = await githubJson(`/repos/${process.env.GITHUB_REPOSITORY}/commits/${expectedHead}`);
+  if (commit.commit?.verification?.verified !== true) {
+    throw new Error(
+      `release commit ${expectedHead.slice(0, 12)} is not GitHub-verified: ${commit.commit?.verification?.reason ?? "unknown reason"}\n` +
+      `    Tag ${tagName} is signed, but the commit it points at is not. The full release-integrity chain requires both.`,
+    );
   }
 }
 
