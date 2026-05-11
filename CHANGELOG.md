@@ -8,6 +8,13 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+### Changed
+- `.github/workflows/npm-publish.yml` — runner upgraded from Node 22 (npm 10.9) to Node 24 (npm 11.x). Discovered during the v0.3.9 OIDC migration: npm 10 signs SLSA provenance via OIDC but does not authenticate the registry `PUT` via OIDC, falling back to `_authToken` which is absent under Trusted Publisher (registry returns 404). npm 11.5+ added OIDC publish-auth. Node 24 ships with npm 11 natively, avoiding the npm 10→11 in-place self-upgrade failure mode (`MODULE_NOT_FOUND: 'promise-retry'`). `engines.node` and consumer compatibility are unchanged.
+- `SECURITY.md` — `AST08 → npm provenance` row rewritten to reflect OIDC Trusted Publisher as the auth path. Documents the npm ≥ 11.5 / Node 24 runner requirement, the npmjs.com binding fields, and that no `NPM_TOKEN` secret exists.
+
+### Removed
+- `NPM_TOKEN` repo secret. No publish secret remains; nothing to rotate, nothing to leak.
+
 ## [0.3.9] — 2026-05-11
 
 ### Security
