@@ -21,7 +21,7 @@ npx skills add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nun
 npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
 ```
 
-Skills install to `~/.agents/skills/` by default. Or, picks your system-wide default. Re-running is idempotent — safe to use as a sync command.
+Skills install to `~/.claude/skills/` by default (matches `bin/install.mjs` → `DEFAULT_DEST = ~/.claude/skills`). Override with `--dest <dir>` to target `~/.cursor/skills/`, `~/.agents/skills/`, or any path. Re-running is idempotent — safe to use as a sync command.
 
 <details>
 <summary>Backup install path (no <code>git</code> required)</summary>
