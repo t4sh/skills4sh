@@ -5,6 +5,7 @@
     "contexts": [
       "Analyze (actions)",
       "Analyze (javascript-typescript)",
+      "assert protection matches .github/branch-protection.expected.json",
       "bin/ matches tag for current package.json version",
       "dependency-review",
       "scan (agent-memory, 22)",
