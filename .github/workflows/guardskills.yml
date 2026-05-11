@@ -9,12 +9,6 @@ on:
       - 'package.json'
       - '.github/workflows/guardskills.yml'
   pull_request:
-    paths:
-      - 'skills/**'
-      - '.security/**'
-      - 'bin/guardskills-check.mjs'
-      - 'package.json'
-      - '.github/workflows/guardskills.yml'
   workflow_dispatch:
 
 permissions:

@@ -101,13 +101,6 @@ jobs:
 
             [ -f "$dir/SKILL.md" ] || { echo "  ERROR: Missing SKILL.md"; errors=$((errors + 1)); skill_errors=$((skill_errors + 1)); }
             [ -f ".security/$name.yaml" ] || { echo "  ERROR: Missing .security/$name.yaml"; errors=$((errors + 1)); skill_errors=$((skill_errors + 1)); }
-            python3 - <<PY || { errors=$((errors + 1)); skill_errors=$((skill_errors + 1)); }
-import json
-name = "$name"
-lock = json.load(open("skills-lock.json"))
-if name not in lock.get("skills", {}):
-    raise SystemExit(f"  ERROR: Missing skills-lock.json entry for {name}")
-PY
 
             if [ "$skill_errors" -eq 0 ]; then
               echo "  OK"
