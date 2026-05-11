@@ -17,13 +17,13 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "0.1.0",
-      "computedHash": "4168b14037811c97a5b7bd4eb0611cbf79c4c8ac3d561ee564575113eb64d6aa"
+      "computedHash": "555a565e43a1d960acecdbd8fe9528f28e1343e00dc1c6514ed9590c3fbf8b3c"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "3.2.0",
-      "computedHash": "d027614bb5b3c0236ce04665ae8ea0fdc15d525f1431b6857aa77e83048cd3f9"
+      "computedHash": "a0ae245df765a37398288221ed6d55e0a6b8cab248f77343a9170524572447cb"
     }
   }
 }

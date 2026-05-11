@@ -13,7 +13,7 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: 2a380a636c4f6690d7ff6d6ebc5c406c7992d5344cef0087eeb48302db4cab5b
+    SKILL.md: 6a020aec10c812cd8bb28123da7d9d6cecea8c58c899b4f79c6e6e69b8db9439
     references/eleventy-config-api.md: a77814abd9342d29ee8e7c1692682fc38189f19d022432374b7254012ab8aaff
     references/conventions.md: 6566fc3ef859a13f9d39b24faea448add59b08a78bc518faefa71fb20eba5572
     references/data-cascade.md: 06ce2a42d3188d0fa7ff726b4525c7eee0da0d2c185e8dfa832bd24583aca652
