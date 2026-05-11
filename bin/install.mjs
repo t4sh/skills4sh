@@ -465,9 +465,16 @@ async function fetchRaw(repoPath, ac) {
         signal: ac?.signal,
       });
       if (res.ok) {
-        // Per-file size cap. Check Content-Length first (cheap; rejects before
-        // body read), then check actual buffer length (backstop for missing
-        // or lying headers — server could advertise small but send large).
+        // Per-file size cap, enforced by streaming. Critical: a bare
+        // `await res.arrayBuffer()` reads the entire body into memory BEFORE
+        // any size check could fire — an attacker-controlled server that
+        // omits Content-Length (or uses chunked-encoded transfer) could OOM
+        // the process before we got a chance to refuse. Streaming with a
+        // running byte counter aborts as soon as the cap is exceeded, even
+        // on missing/lying Content-Length headers.
+        //
+        // Optimization: when Content-Length IS present and clearly oversized,
+        // reject upfront so the body is never streamed at all.
         const contentLength = Number(res.headers.get("content-length"));
         if (Number.isFinite(contentLength) && contentLength > MAX_FILE_SIZE_BYTES) {
           const err = new Error(
@@ -477,16 +484,31 @@ async function fetchRaw(repoPath, ac) {
           err.status = 413;
           throw err;
         }
-        const buf = Buffer.from(await res.arrayBuffer());
-        if (buf.length > MAX_FILE_SIZE_BYTES) {
-          const err = new Error(
-            `${repoPath} exceeds ${MAX_FILE_SIZE_BYTES} byte size cap ` +
-            `(actual: ${buf.length} bytes). Refusing.`,
-          );
-          err.status = 413;
-          throw err;
+
+        const reader = res.body.getReader();
+        const chunks = [];
+        let total = 0;
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            total += value.byteLength;
+            if (total > MAX_FILE_SIZE_BYTES) {
+              await reader.cancel().catch(() => {});
+              const err = new Error(
+                `${repoPath} exceeds ${MAX_FILE_SIZE_BYTES} byte size cap ` +
+                `(streamed ${total} bytes before abort; honest Content-Length absent or false). ` +
+                `Refusing to buffer further.`,
+              );
+              err.status = 413;
+              throw err;
+            }
+            chunks.push(value);
+          }
+        } finally {
+          try { reader.releaseLock(); } catch { /* already released */ }
         }
-        return buf;
+        return Buffer.concat(chunks);
       }
       if (res.status >= 500 && attempt < FETCH_RETRIES) {
         lastErr = new Error(`GET ${url} → ${res.status}`);
@@ -667,7 +689,11 @@ Options:
                                   For symlink paths, --force unlinks the symlink itself
                                   WITHOUT following it.
   --no-verify            skip skills-lock.json hash verification (INSECURE)  (install only)
-  --dry-run              install: download and hash only, no disk write
+  --dry-run              install: download + hash + verify against skills-lock.json,
+                                  no disk write. Since v0.4.6, --dry-run runs
+                                  verification too (so it reflects what a real
+                                  install would do); this adds one network fetch
+                                  per dry-run for the lockfile itself.
                          remove:  print what would be deleted, no disk delete
                          Output is JSON with { schemaVersion: 1, command, dryRun, ... }
   -y, --yes              REQUIRED for \`remove --all\` (explicit confirmation for the
@@ -707,8 +733,12 @@ async function runMain() {
   // --version / -v: print only the version to stdout and exit 0. Standard
   // CLI affordance for scripted tooling that wants to query the version
   // without parsing stderr or running a full operation.
+  //
+  // Strict: --version must be the sole argument. `skills4sh add foo -v`
+  // returning just the version would surprise users who expect -v to mean
+  // something operation-specific. Require it standalone.
   const rawArgs = process.argv.slice(2);
-  if (rawArgs.includes("--version") || rawArgs.includes("-v")) {
+  if (rawArgs.length === 1 && (rawArgs[0] === "--version" || rawArgs[0] === "-v")) {
     console.log(pkgVersion);
     process.exit(0);
   }

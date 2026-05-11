@@ -140,12 +140,44 @@ export function validateSecurityManifest(text, skillName) {
 
 // Parses expected_findings from a .security/<name>.yaml. Returns array of
 // { id, file, severity, acknowledged, reason }. Severity is normalized to
-// uppercase. The reason field is captured for the acknowledged-reason
-// validator below.
+// uppercase. The reason field supports both single-line scalars and YAML
+// block scalars (| literal-style, > folded-style) so multi-line rationale
+// is captured correctly for the acknowledged-reason validator below.
 export function parseExpectedFindings(text) {
   const out = [];
   let current = null;
-  for (const line of text.split("\n")) {
+  // Block-scalar state. When non-null, we're collecting continuation lines
+  // for the current finding's reason field. The base indent is set by the
+  // first continuation line; lines at or above that indent are content,
+  // lines below it close the block.
+  let blockFinding = null;
+  let blockStyle = "|";       // "|" preserves newlines; ">" folds to spaces
+  let blockBaseIndent = null; // null until first continuation line sets it
+  const lines = text.split("\n");
+  for (const line of lines) {
+    // Handle block-scalar continuation FIRST so the regex matching below
+    // doesn't misinterpret continuation lines as new fields.
+    if (blockFinding) {
+      if (line.trim() === "") {
+        // Blank line — preserves a newline in literal style, ignored in folded.
+        if (blockStyle === "|" && blockFinding.reason) blockFinding.reason += "\n";
+        continue;
+      }
+      const indent = line.length - line.trimStart().length;
+      if (blockBaseIndent === null) blockBaseIndent = indent;
+      if (indent >= blockBaseIndent) {
+        const content = line.slice(blockBaseIndent);
+        const sep = blockFinding.reason
+          ? (blockStyle === "|" ? "\n" : " ")
+          : "";
+        blockFinding.reason += sep + content;
+        continue;
+      }
+      // Indent decreased — block ended. Fall through to normal line handling.
+      blockFinding = null;
+      blockBaseIndent = null;
+    }
+
     const id = line.match(/^\s+- id:\s*(\S+)\s*$/);
     if (id) {
       current = { id: id[1] };
@@ -160,7 +192,20 @@ export function parseExpectedFindings(text) {
     const acknowledged = line.match(/^\s+acknowledged:\s*(true|false)\s*$/);
     if (acknowledged) current.acknowledged = acknowledged[1] === "true";
     const reason = line.match(/^\s+reason:\s*(.*)$/);
-    if (reason) current.reason = stripQuotes(reason[1]);
+    if (reason) {
+      const value = reason[1].trim();
+      // YAML block-scalar markers: |, >, with optional chomping (+/-)
+      // — see https://yaml.org/spec/1.2.2/#chapter-8-block-style-productions
+      const blockMarker = value.match(/^([|>])[-+]?\s*$/);
+      if (blockMarker) {
+        blockFinding = current;
+        blockStyle = blockMarker[1];
+        blockBaseIndent = null;       // First continuation line sets it
+        current.reason = "";
+      } else {
+        current.reason = stripQuotes(value);
+      }
+    }
   }
   return out.filter((finding) => finding.id && finding.file);
 }

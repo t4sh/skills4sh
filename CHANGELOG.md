@@ -8,6 +8,24 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.7] — 2026-05-12
+
+Closes 6 internal code-review findings, including one critical safety bug that defeated the v0.4.6 size cap. **No breaking change for normal users.**
+
+### Security (Critical)
+- **Size cap is now stream-enforced**, not buffer-enforced. v0.4.6's `fetchRaw` advertised a 50 MiB per-file size cap but actually called `await res.arrayBuffer()` BEFORE checking the buffer length — an attacker-controlled server (the threat model the cap was supposed to defend against) could send a body without Content-Length or with a deliberately small/false Content-Length and OOM the process before any check fired. v0.4.7 uses `res.body.getReader()` with a running byte counter that aborts the stream as soon as the cap is exceeded, even on chunked-encoded responses with no Content-Length header. The Content-Length check is kept as an upfront optimization (rejects without ever opening the stream) but is no longer the only line of defense.
+
+### Changed
+- **YAML block-scalar `reason:` fields now supported.** `parseExpectedFindings` correctly parses literal (`|`), folded (`>`), and chomping (`|-` / `>-`) styles. Multi-line rationale text is captured fully (was being silently truncated to the marker `"|"` or `">"` itself, which would then fail `validateAcknowledgedReasons` with a confusing 1-character-reason error). Current bundled manifests all use single-line scalars; this just removes the footgun for future skills.
+- **`--version` is now strict — must be the sole argument.** Pre-v0.4.7 `skills4sh --skill foo --version` silently exited 0 with just the version, never installing. Now combining `--version` (or `-v`) with any other argument is rejected with `unknown argument: --version`. The standalone form (`skills4sh --version`) still works.
+
+### Documentation
+- **`BRANCH_PROTECTION.md` recovery escape hatch documented.** Now that `enforce_admins: true` blocks all admin direct pushes to main, a broken-required-check scenario could lock the maintainer out. Documents the temporary-disable / push-fix / re-enable cycle via `gh api`.
+- **`--help` describes the v0.4.6 dry-run/verify behavior** — `--dry-run` now fetches the lockfile (one extra network call per dry-run). Worth knowing for users near GitHub API rate limits.
+
+### Tests
+- 153 → **161** (+8): streaming-abort, block-scalar parsing (5 cases), strict `--version` (2 cases).
+
 ## [0.4.6] — 2026-05-12
 
 Closes the remaining fresh-audit polish items, plus four cosmetic / documentation fixes the auditor surfaced. No breaking change for normal install/list flows; **`skills4sh` against a repo without `skills-lock.json` now requires explicit `--no-verify`** (closes the silent-lockfile-removal downgrade attack).
@@ -265,7 +283,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.6...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.7...HEAD
+[0.4.7]: https://github.com/t4sh/skills4sh/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/t4sh/skills4sh/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/t4sh/skills4sh/compare/v0.4.4...v0.4.5
 [0.4.4]: https://github.com/t4sh/skills4sh/compare/v0.4.3...v0.4.4
