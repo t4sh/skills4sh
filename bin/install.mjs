@@ -18,7 +18,7 @@ if (typeof fetch !== "function" || major < 22) {
   process.exit(1);
 }
 
-import { mkdir, writeFile, rm, readdir, rename, readFile } from "node:fs/promises";
+import { mkdir, writeFile, rm, readdir, rename, readFile, stat } from "node:fs/promises";
 import { realpathSync } from "node:fs";
 import { join, dirname, isAbsolute, normalize } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -42,6 +42,10 @@ const FETCH_RETRY_DELAY_MS = 500;
 let args, owner, repo, ref, dest, headers, token;
 
 async function main() {
+  // Uninstall path: pure-local, no GitHub fetch needed. Bail before any
+  // network call so `remove` works offline and never needs GITHUB_TOKEN.
+  if (args.remove) return removeMain();
+
   const tree = await ghTree();
   const skills = discoverSkills(tree);
 
@@ -58,6 +62,85 @@ async function main() {
     if (!skills[name]) throw new Error(`skill not found: ${name}`);
     await installSkill(name, skills[name]);
   }
+}
+
+async function removeMain() {
+  const installed = await discoverInstalledSkills();
+  if (args.all) {
+    if (installed.length === 0) {
+      console.log(`No skills installed at ${dest}.`);
+      return;
+    }
+    for (const name of installed) await removeSkill(name);
+    return;
+  }
+  await removeSkill(args.skill);
+}
+
+// Walk dest and find subdirs that contain a SKILL.md. Anything else under dest
+// (sibling files, unrelated dirs) is left alone — this CLI manages only skills.
+async function discoverInstalledSkills() {
+  let entries;
+  try {
+    entries = await readdir(dest, { withFileTypes: true });
+  } catch (err) {
+    if (err.code === "ENOENT") return [];
+    throw err;
+  }
+  const found = [];
+  for (const e of entries) {
+    if (!e.isDirectory()) continue;
+    assertSafePathComponent(e.name, "installed skill name");
+    try {
+      const s = await stat(join(dest, e.name, "SKILL.md"));
+      if (s.isFile()) found.push(e.name);
+    } catch {
+      // No SKILL.md — not a managed skill, skip silently.
+    }
+  }
+  return found.sort();
+}
+
+async function removeSkill(name) {
+  assertSafePathComponent(name, "skill name");
+  const skillDir = join(dest, name);
+
+  let dirStat;
+  try {
+    dirStat = await stat(skillDir);
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      console.log(`  - ${name} not installed at ${dest}`);
+      return;
+    }
+    throw err;
+  }
+  if (!dirStat.isDirectory()) {
+    throw new Error(`refusing to remove: ${skillDir} is not a directory`);
+  }
+
+  // Only remove dirs that look like installed skills. Catches typos (rm of an
+  // unrelated dir under dest) and prevents removing dirs that were never
+  // created by this CLI — the SKILL.md is the proof-of-managed signal.
+  try {
+    const s = await stat(join(skillDir, "SKILL.md"));
+    if (!s.isFile()) throw new Error("SKILL.md is not a file");
+  } catch {
+    throw new Error(
+      `refusing to remove ${skillDir}: no SKILL.md inside (not a skill directory).\n` +
+      `    Pass --force to override (NOT IMPLEMENTED in this version — remove manually if needed).`,
+    );
+  }
+
+  if (args.dryRun) {
+    console.error(`→ Dry-run remove ${name} from ${dest} (no delete)`);
+    console.log(JSON.stringify({ skill: name, action: "remove", path: skillDir }, null, 2));
+    return;
+  }
+
+  console.log(`→ Removing ${name} from ${dest}`);
+  await rm(skillDir, { recursive: true });
+  console.log(`✓ Removed ${name}`);
 }
 
 async function ghTree() {
@@ -296,23 +379,37 @@ async function verifyAgainstLock(name, got) {
 
 function parseArgs(argv) {
   const out = {};
-  // Subcommand-style: `skills4sh add <owner/repo> [flags]` / `skills4sh list [<owner/repo>]`.
-  // Same argv when the `skills` bin from *this* package is on PATH (e.g. after `npm i -g skills4sh`).
+  // Subcommand-style: `skills4sh add <owner/repo>` / `skills4sh list [<owner/repo>]` /
+  // `skills4sh remove <skill>`. Same argv when the `skills` bin from *this*
+  // package is on PATH (e.g. after `npm i -g skills4sh`).
   let i = 0;
-  if (argv[0] === "add" || argv[0] === "list") {
+  if (argv[0] === "add" || argv[0] === "list" || argv[0] === "remove") {
     const sub = argv[0];
-    if (argv[0] === "list") out.list = true;
+    if (sub === "list") out.list = true;
+    if (sub === "remove") out.remove = true;
     i = 1;
-    if (argv[i] && !argv[i].startsWith("-") && argv[i].includes("/")) {
-      out.repo = argv[i];
-      i++;
-    } else if (argv[i] && !argv[i].startsWith("-")) {
-      throw new Error(
-        `invalid ${sub} target: ${JSON.stringify(argv[i])} (expected owner/repo, e.g. t4sh/skills4sh)`,
-      );
+    if (argv[i] && !argv[i].startsWith("-")) {
+      if (sub === "remove") {
+        // `remove` positional is a skill name (no slash). Reject owner/repo by
+        // accident — that would be misleading at best, destructive at worst.
+        if (argv[i].includes("/")) {
+          throw new Error(
+            `remove: expected skill name, got ${JSON.stringify(argv[i])} (no slash; use --skill <name> if you must)`,
+          );
+        }
+        out.skill = argv[i];
+        i++;
+      } else if (argv[i].includes("/")) {
+        out.repo = argv[i];
+        i++;
+      } else {
+        throw new Error(
+          `invalid ${sub} target: ${JSON.stringify(argv[i])} (expected owner/repo, e.g. t4sh/skills4sh)`,
+        );
+      }
     }
     // `add <repo>` with no --skill/--all defaults to installing all skills.
-    if (argv[0] === "add") out._subcommandAdd = true;
+    if (sub === "add") out._subcommandAdd = true;
   }
   for (; i < argv.length; i++) {
     const a = argv[i];
@@ -351,19 +448,27 @@ function printHelp() {
 Usage:
   skills4sh    add <owner/repo> [options]   # installs all skills from the repo
   skills4sh    list [<owner/repo>]
+  skills4sh    remove <name>                # uninstall a single skill from <dest>
+  skills4sh    remove --all                 # uninstall all installed skills from <dest>
   skills4sh    --list
   skills4sh    --skill <name> [options]
   skills4sh    --all          [options]
 
 Options:
-  --repo  <owner/repo>   default: ${DEFAULT_REPO}
-  --ref   <sha|branch>   default: ${DEFAULT_REF}
+  --repo  <owner/repo>   default: ${DEFAULT_REPO}                            (install only)
+  --ref   <sha|branch>   default: ${DEFAULT_REF}                                          (install only)
   --dest  <dir>          default: ${DEFAULT_DEST}
   --force, -f            (deprecated no-op — re-runs are now idempotent)
-  --no-verify            skip skills-lock.json hash verification (INSECURE)
-  --dry-run              download and hash only; print JSON with computedHash; no disk write
+  --no-verify            skip skills-lock.json hash verification (INSECURE)  (install only)
+  --dry-run              install: download and hash only, no disk write
+                         remove:  print what would be deleted, no disk delete
   -y, --yes              ignored (use npx --yes <pkg> ... so npm skips the install prompt)
   -g, --global           ignored (npm's global-install flag must come before the package name)
+
+Remove semantics:
+  Only directories under <dest> that contain a SKILL.md are eligible for removal.
+  Anything else (unrelated files, dirs without SKILL.md) is left untouched. Refuses
+  destructive ops on misconfigured paths; rm manually if you need to override.
 
 Env:
   GITHUB_TOKEN           raises the 60 req/hr anonymous rate limit
@@ -407,9 +512,14 @@ async function runMain() {
     printHelp();
     process.exit(1);
   }
-  if (args.help || (!args.list && !args.all && !args.skill)) {
+  if (args.help || (!args.list && !args.all && !args.skill && !args.remove)) {
     printHelp();
     process.exit(args.help ? 0 : 1);
+  }
+  if (args.remove && !args.skill && !args.all) {
+    console.error("✗ remove: requires a skill name or --all");
+    printHelp();
+    process.exit(1);
   }
 
   const repoArg = args.repo ?? DEFAULT_REPO;

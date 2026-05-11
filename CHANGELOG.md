@@ -8,6 +8,27 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.0] — 2026-05-11
+
+### Added
+- **`skills4sh remove` uninstall command.** Completes the installer lifecycle (previously users had to `rm -rf ~/.claude/skills/<name>` manually). Three forms:
+  ```bash
+  skills4sh remove <name>             # uninstall a single skill from --dest
+  skills4sh remove --all              # uninstall every installed skill from --dest
+  skills4sh remove <name> --dry-run   # print what would be deleted, no disk write
+  ```
+  Pure-local — never makes a GitHub fetch and never needs `GITHUB_TOKEN`.
+
+  **Safety: only directories under `--dest` that contain a `SKILL.md` are eligible for removal.** Sibling files, unrelated directories, and anything without a `SKILL.md` are left untouched. Refuses destructive ops on misconfigured paths — the user must `rm` manually if they really need to delete something outside this contract.
+
+  Closes Tier-2 #6 from the external audit (lifecycle UX gap).
+
+### Changed
+- README install section gains an "Uninstall" subsection with the three command forms.
+
+### Bumped
+- `0.3.11` → `0.4.0`. Minor bump because new public CLI surface (`remove` subcommand). Installer code is otherwise unchanged from v0.3.11; existing install/list flows behave identically.
+
 ## [0.3.11] — 2026-05-11
 
 ### Changed
@@ -132,7 +153,8 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.3.11...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/t4sh/skills4sh/compare/v0.3.11...v0.4.0
 [0.3.11]: https://github.com/t4sh/skills4sh/compare/v0.3.10...v0.3.11
 [0.3.10]: https://github.com/t4sh/skills4sh/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/t4sh/skills4sh/compare/v0.3.8...v0.3.9
