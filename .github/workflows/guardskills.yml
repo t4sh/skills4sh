@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        skill: [agent-memory, discord-harvest, localhost-screenshots]
+        skill: [agent-memory, discord-harvest, eleventy-nunjucks, localhost-screenshots]
         node-version: ['22', '24']
     steps:
       - uses: actions/checkout@v4

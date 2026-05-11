@@ -53,10 +53,13 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 
 | Control | Implementation |
 |---------|----------------|
-| Immutable lock file | `skills-lock.json` pins all files to exact SHA-256 hashes |
-| No version ranges | Dependencies (if any) locked to specific versions |
+| Immutable lock file (skills) | `skills-lock.json` pins all files to exact SHA-256 hashes |
+| Immutable lock file (npm) | `package-lock.json` pins full transitive dependency tree with integrity hashes |
+| Exact dependency versions | `package.json` uses exact versions (e.g. `undici: 6.25.0`), no caret/tilde ranges |
 | Single source of truth | All skills authored in this repo — no external registry pulls |
-| CI hash verification | Automated drift detection on every push and PR |
+| Pre-publish guard | `.github/scripts/check-bin-tag-parity.sh` (wired via `prepublishOnly` and `release.yml`) refuses publish when `bin/` has changed since the tag for the current `package.json` version |
+| CI hash verification | Automated drift detection on every push and PR (`validate.yml` runs `bin/hash-check.mjs`) |
+| Pre-commit hash guard | `.githooks/pre-commit` runs `bin/hash-check.mjs` locally before any commit; wired via `npm install`'s `prepare` script |
 
 ### AST03 — Over-Privileged Skills
 
@@ -70,6 +73,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 |-------|-------------|-----------|
 | agent-memory | None (all gated) | Low |
 | discord-harvest | None (all gated) | Medium |
+| eleventy-nunjucks | None (all gated) | Low |
 | localhost-screenshots | None (all gated) | Low |
 
 ### AST04 — Insecure Metadata
@@ -110,9 +114,9 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 | Control | Implementation |
 |---------|----------------|
 | guardskills | agent-memory: SAFE, discord-harvest: SAFE, eleventy-nunjucks: SAFE (risk score 100 — see [Expected Findings](#expected-security-findings)), localhost-screenshots: SAFE (risk score 21.5 — see [Expected Findings](#expected-security-findings)) |
-| Snyk | Continuous vulnerability scanning via Snyk integration |
-| CodeQL | Static analysis on GitHub Actions (weekly + PR) |
-| guardskills CI | Automated scanning on every PR via `guardskills.yml` workflow |
+| CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
+| Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
+| guardskills CI | `.github/workflows/guardskills.yml` matrix-scans all four skills (agent-memory, discord-harvest, eleventy-nunjucks, localhost-screenshots) on Node 22 and 24. Triggered on push, PR, and manual dispatch. |
 
 ### AST09 — No Governance
 
@@ -162,8 +166,8 @@ npx guardskills add t4sh/skills4sh --skill discord-harvest --dry-run
 npx guardskills add t4sh/skills4sh --skill eleventy-nunjucks --dry-run
 npx guardskills add t4sh/skills4sh --skill localhost-screenshots --dry-run
 
-# Local scan before the skill exists on GitHub default branch:
-# npx guardskills scan-local skills/eleventy-nunjucks --json
+# Local scan-local (any skill folder, useful before or after pushing):
+# npx guardskills scan-local skills/<name> --json
 
 # Verify content hashes (includes references/ subdirectory)
 for skill in agent-memory discord-harvest eleventy-nunjucks localhost-screenshots; do
