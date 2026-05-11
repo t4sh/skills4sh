@@ -8,9 +8,16 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.3.10] — 2026-05-11
+
+### Security
+- **All GitHub Actions are now SHA-pinned.** Every `uses:` directive across the 6 workflow files references a commit SHA (`actions/checkout@34e114876…`) with a `# vX.Y.Z` comment for human readability. Floating major tags (`@v4`) reflect whatever upstream pushes to that ref; an upstream account compromise would land on every CI run on the next refresh — the same class of attack as the tj-actions/changed-files 2025 incident. Pinning to SHAs freezes that surface; Dependabot moves it forward under review.
+- **`.github/dependabot.yml` added** for the `github-actions` ecosystem. Weekly grouped PRs, batched so a single security gate covers the batch. Each PR hits the full required-checks matrix (validate, guardskills, codeql, dependency-review, release-guards) before merge.
+- **Branch-protection drift detection.** New workflow `.github/workflows/branch-protection-drift.yml` runs daily and on changes to its snapshot; asserts that `refs/heads/main` live protection matches the checked-in expected state at `.github/branch-protection.expected.json`. Closes the audit gap where protection settings (which live in GitHub Settings, not in the repo) could silently drift from documented intent. Uses `permissions: administration: read` on the default `GITHUB_TOKEN` — no PAT, no long-lived secret.
+
 ### Changed
-- `.github/workflows/npm-publish.yml` — runner upgraded from Node 22 (npm 10.9) to Node 24 (npm 11.x). Discovered during the v0.3.9 OIDC migration: npm 10 signs SLSA provenance via OIDC but does not authenticate the registry `PUT` via OIDC, falling back to `_authToken` which is absent under Trusted Publisher (registry returns 404). npm 11.5+ added OIDC publish-auth. Node 24 ships with npm 11 natively, avoiding the npm 10→11 in-place self-upgrade failure mode (`MODULE_NOT_FOUND: 'promise-retry'`). `engines.node` and consumer compatibility are unchanged.
-- `SECURITY.md` — `AST08 → npm provenance` row rewritten to reflect OIDC Trusted Publisher as the auth path. Documents the npm ≥ 11.5 / Node 24 runner requirement, the npmjs.com binding fields, and that no `NPM_TOKEN` secret exists.
+- `.github/workflows/npm-publish.yml` — runner upgraded from Node 22 (npm 10.9) to Node 24 (npm 11.x) in the prior unreleased period. Captured here for completeness.
+- `SECURITY.md` — AST08 row updated to reflect OIDC Trusted Publisher + SHA-pinning. AST09 row updated to reference the new branch-protection drift control.
 
 ### Removed
 - `NPM_TOKEN` repo secret. No publish secret remains; nothing to rotate, nothing to leak.
@@ -120,7 +127,8 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.3.9...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.3.10...HEAD
+[0.3.10]: https://github.com/t4sh/skills4sh/compare/v0.3.9...v0.3.10
 [0.3.9]: https://github.com/t4sh/skills4sh/compare/v0.3.8...v0.3.9
 [0.3.8]: https://github.com/t4sh/skills4sh/compare/v0.3.7...v0.3.8
 [0.3.7]: https://github.com/t4sh/skills4sh/compare/v0.3.6...v0.3.7

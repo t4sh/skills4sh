@@ -1,0 +1,37 @@
+version: 2
+
+# Dependabot keeps SHA-pinned GitHub Actions moving forward.
+#
+# Why SHAs: floating major tags (e.g. actions/checkout@v4) reflect whatever
+# the upstream maintainer pushes to that ref. An upstream account compromise
+# would land on every workflow run on the next refresh — exactly the class
+# of supply-chain attack documented in the tj-actions/changed-files incident.
+# Pinning to a commit SHA freezes that surface. Dependabot then proposes
+# upgrades as PRs that human reviewers can verify.
+#
+# Updates create PRs on the schedule below. The PRs hit branch protection
+# the same as any other change: validate, guardskills, codeql, dependency-
+# review, release-guards all run; merging requires the same gates.
+
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Etc/UTC
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: ci(deps)
+      include: scope
+    labels:
+      - dependencies
+      - github-actions
+    groups:
+      # Group all action bumps into a single PR per week so the security
+      # gate runs once for the batch instead of N times. Override per-action
+      # when an individual upgrade needs isolated review.
+      actions:
+        patterns:
+          - "*"

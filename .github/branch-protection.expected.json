@@ -1,0 +1,32 @@
+{
+  "_": "Expected branch-protection configuration for refs/heads/main. Snapshot maintained as part of AST09 governance — see SECURITY.md.  Drift is checked daily by .github/workflows/branch-protection-drift.yml. To intentionally change protection settings: update this file in the same PR that changes them on github.com (or update first, then sync settings on GitHub).",
+  "required_status_checks": {
+    "strict": true,
+    "contexts": [
+      "Analyze (actions)",
+      "Analyze (javascript-typescript)",
+      "bin/ matches tag for current package.json version",
+      "dependency-review",
+      "scan (agent-memory, 22)",
+      "scan (agent-memory, 24)",
+      "scan (discord-harvest, 22)",
+      "scan (discord-harvest, 24)",
+      "scan (eleventy-nunjucks, 22)",
+      "scan (eleventy-nunjucks, 24)",
+      "scan (localhost-screenshots, 22)",
+      "scan (localhost-screenshots, 24)",
+      "validate (22)",
+      "validate (24)"
+    ]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "required_signatures": false,
+  "required_linear_history": true,
+  "allow_force_pushes": false,
+  "allow_deletions": false,
+  "required_conversation_resolution": true,
+  "lock_branch": false,
+  "allow_fork_syncing": false,
+  "block_creations": false
+}

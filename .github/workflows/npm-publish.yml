@@ -59,12 +59,12 @@ jobs:
     name: publish to npm with provenance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           ref: ${{ github.event.release.tag_name || inputs.ref || github.ref }}
           fetch-depth: 0     # check-bin-tag-parity.sh needs the tag history
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           # Node 24 (active LTS) ships with npm 11.x, which has OIDC-based
           # registry-PUT auth for Trusted Publisher. Node 22 ships with npm

@@ -1,0 +1,90 @@
+name: Branch Protection Drift
+
+# Asserts that refs/heads/main branch-protection configuration matches the
+# checked-in snapshot at .github/branch-protection.expected.json.
+#
+# Why: SECURITY.md / AST09 documents branch protection as a control, but
+# the actual settings live in GitHub Repo Settings — invisible to the repo
+# and prone to silent drift if someone toggles a checkbox. This workflow
+# fails loudly when the live config diverges from the documented intent.
+#
+# To intentionally change protection settings: update the expected JSON in
+# the same PR that changes the GitHub UI setting (or update GitHub first,
+# then run this workflow, then sync the JSON to make the diff zero).
+
+on:
+  schedule:
+    # Daily at 06:15 UTC — soon after CodeQL's Monday scan.
+    - cron: "15 6 * * *"
+  pull_request:
+    paths:
+      - '.github/branch-protection.expected.json'
+      - '.github/workflows/branch-protection-drift.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  # administration: read lets GITHUB_TOKEN call the branches/<branch>/protection
+  # endpoint. Without this scope, the API returns 403. This permission is
+  # supported for the default GITHUB_TOKEN on personal and org repos as of
+  # 2025-11 — no PAT required, no long-lived secret introduced.
+  administration: read
+
+jobs:
+  check-drift:
+    name: assert protection matches .github/branch-protection.expected.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Fetch live protection and diff against expected
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Distill live config to the same invariants the expected file tracks.
+          # Strip GitHub-added URL/href fields that vary by API call but carry
+          # no policy meaning; preserve only the security-relevant properties.
+          gh api "repos/${GITHUB_REPOSITORY}/branches/main/protection" \
+            | jq '{
+                required_status_checks: {
+                  strict: .required_status_checks.strict,
+                  contexts: (.required_status_checks.contexts | sort)
+                },
+                enforce_admins: .enforce_admins.enabled,
+                required_pull_request_reviews: (.required_pull_request_reviews // null),
+                required_signatures: .required_signatures.enabled,
+                required_linear_history: .required_linear_history.enabled,
+                allow_force_pushes: .allow_force_pushes.enabled,
+                allow_deletions: .allow_deletions.enabled,
+                required_conversation_resolution: .required_conversation_resolution.enabled,
+                lock_branch: .lock_branch.enabled,
+                allow_fork_syncing: .allow_fork_syncing.enabled,
+                block_creations: .block_creations.enabled
+              }' \
+            > /tmp/protection.live.json
+
+          # Drop the explanatory "_" comment key from expected before diffing.
+          jq 'del(._)' .github/branch-protection.expected.json > /tmp/protection.expected.json
+
+          echo "=== expected ==="
+          cat /tmp/protection.expected.json
+          echo ""
+          echo "=== live ==="
+          cat /tmp/protection.live.json
+          echo ""
+
+          if diff -u /tmp/protection.expected.json /tmp/protection.live.json; then
+            echo "✓ branch protection matches expected snapshot"
+          else
+            echo ""
+            echo "✗ DRIFT — live protection differs from .github/branch-protection.expected.json"
+            echo ""
+            echo "If the drift is intentional, update .github/branch-protection.expected.json"
+            echo "to match the new policy in the same PR that documents the change."
+            echo ""
+            echo "If the drift is unintentional, restore the documented policy via"
+            echo "Settings → Branches → Edit rule for 'main' on github.com."
+            exit 1
+          fi
