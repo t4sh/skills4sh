@@ -25,6 +25,19 @@ npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-sc
 
 This is the Marketplace-compatible install path and the recommended way to consume the skills from this repo. Re-running is idempotent — safe to use as a sync command.
 
+Append `-g -y` to install globally (user-level) without interactive prompts — useful in CI or scripted setups: `npx skills add t4sh/skills4sh -g -y`.
+
+### Uninstall
+
+```bash
+npx skills remove agent-memory                               # remove agent-memory
+npx skills remove discord-harvest                            # remove discord-harvest
+npx skills remove eleventy-nunjucks                          # remove eleventy-nunjucks
+npx skills remove localhost-screenshots                      # remove localhost-screenshots
+```
+
+Add `-g` to remove from global scope. `skills remove --all` is intentionally **not** listed: it wipes every skill across every agent, not just those installed from this repo.
+
 <details>
 <summary>Secondary supporting installer: <code>npx skills4sh</code></summary>
 
@@ -38,23 +51,16 @@ npx skills4sh --skill eleventy-nunjucks            # only eleventy-nunjucks
 npx skills4sh --skill localhost-screenshots        # only localhost-screenshots
 ```
 
-```bash
-npx skills4sh add t4sh/skills4sh --ref <sha|branch|tag>
-npx skills4sh list t4sh/skills4sh
-```
-
 **Uninstall** (v0.4.0+):
 
 ```bash
-npx skills4sh remove agent-memory                       # uninstall a single skill
-npx skills4sh remove --all --yes                        # uninstall every installed skill (since v0.4.5, --yes required)
-npx skills4sh remove agent-memory --dry-run             # show what would be deleted, no disk write
-npx skills4sh remove some-broken-dir --force            # remove a dir without SKILL.md (e.g., half-installed)
+npx skills4sh remove agent-memory                       # uninstall agent-memory
+npx skills4sh remove discord-harvest                    # uninstall discord-harvest
+npx skills4sh remove eleventy-nunjucks                  # uninstall eleventy-nunjucks
+npx skills4sh remove localhost-screenshots              # uninstall localhost-screenshots
 ```
 
-`remove` only deletes directories under `--dest` that contain a `SKILL.md` — unrelated files and dirs are left untouched. Symlinks under `<dest>` are refused unless `--force` is passed (which unlinks the symlink itself without following it). `--all` requires `--yes` confirmation. `--all` cannot be combined with `--force`.
-
-The supporting installer defaults to `~/.claude/skills/` (matches `bin/install.mjs` → `DEFAULT_DEST = ~/.claude/skills`). Override with `--dest <dir>` to target `~/.cursor/skills/`, `~/.agents/skills/`, or any path. Requires Node 22+.
+Defaults to `~/.claude/skills/`. Override with `--dest <dir>` to target `~/.cursor/skills/`, `~/.agents/skills/`, or any path. Requires Node 22+. `skills4sh remove --all --yes` is intentionally **not** listed: it wipes every skill in `<dest>`, not just those installed by this package.
 
 </details>
 
