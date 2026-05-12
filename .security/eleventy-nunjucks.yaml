@@ -4,7 +4,7 @@
 
 skill:
   name: eleventy-nunjucks
-  version: "0.1.0"
+  version: "0.1.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,12 +13,12 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: 6a020aec10c812cd8bb28123da7d9d6cecea8c58c899b4f79c6e6e69b8db9439
-    references/eleventy-config-api.md: a77814abd9342d29ee8e7c1692682fc38189f19d022432374b7254012ab8aaff
+    SKILL.md: aae75f45de25d18033ffb71bbca368e5b713bb7e1188284113263632d13d092c
+    references/eleventy-config-api.md: 4b0339093afe17d190b2f5834f93d07b4291ac87fc3f7261ccb70c2826383a00
     references/conventions.md: 6566fc3ef859a13f9d39b24faea448add59b08a78bc518faefa71fb20eba5572
-    references/data-cascade.md: 06ce2a42d3188d0fa7ff726b4525c7eee0da0d2c185e8dfa832bd24583aca652
-    references/filters.md: 8fdb85b67f714cef5bef8eb3edcf04bb50a404bbd905bbcf8ab0f35294e1543e
-    references/nunjucks-syntax.md: c833d4ce0720eab0db4814cb06db0966696b050ba4b4fa9d15629c6a483f889a
+    references/data-cascade.md: c6ddbbe43dedfd0e74f0744e020c3aaf38b817e1c141718b51f408cf8646a767
+    references/filters.md: f0b533c48dc8d2f472361ddc853434831937163620079b8d725d442d1a36f42f
+    references/nunjucks-syntax.md: c0b2f80418acab15777e29c6c2154edf43830d578a98673b3b9a5e4761efcae2
     references/build-pipeline.md: f4f362602d5005d66d9be9f660cb0fbcd927196c368df4e55533c91e2568e129
     references/production-patterns.md: 77f33d4dc04dc0e22ab76a820b05a81e9789da66dca66641d048866190547d39
     references/review-shipping.md: 34ba4e1a1ed2953791d03e942d56ddb804924cbdfe2bfbe0fff938eefc9f8b6f

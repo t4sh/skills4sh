@@ -253,21 +253,19 @@ Before adding a filter, walk this list:
 
 ## Async filters
 
-For filters that need IO (rarely needed in static builds — prefer doing the IO in `_data/*.js`):
+Prefer synchronous, pure filters. If async is unavoidable, keep inputs local and deterministic; do network refreshes in a separate audited prebuild step that writes normalized data for `_data/*.js` to read.
 
 ```js
-eleventyConfig.addAsyncFilter("fetchTitle", async (url) => {
-  const res = await fetch(url);
-  const html = await res.text();
-  return html.match(/<title>(.*?)<\/title>/)?.[1] ?? url;
+eleventyConfig.addAsyncFilter("titleFor", async (url, titles = {}) => {
+  return titles[url] ?? url;
 });
 ```
 
 **Caveats:**
 - Async filters slow the build linearly with the number of usages
-- Build retries hit external services again — be careful with rate limits
+- No network IO inside filters: retries multiply calls, make builds non-deterministic, and expose templates to untrusted third-party content
 - Failure mode matters: an unhandled rejection aborts the build with no partial output
-- Prefer fetching once in `_data/links.js` and caching in JSON
+- Prefer loading precomputed data in `_data/*.js` and passing it into the filter
 
 ## Shortcodes vs filters — quick rule
 

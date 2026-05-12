@@ -8,7 +8,7 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 |-------|---------|-----------|
 | agent-memory | 2.7.0 | Yes |
 | discord-harvest | 1.7.1 | Yes |
-| eleventy-nunjucks | 0.1.0 | Yes |
+| eleventy-nunjucks | 0.1.1 | Yes |
 | localhost-screenshots | 3.3.0 | Yes |
 
 ## Reporting a Vulnerability

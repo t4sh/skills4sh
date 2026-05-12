@@ -128,23 +128,18 @@ module.exports = {
 
 Computing once at build time beats computing in every template that needs it.
 
-### Async fetch (use sparingly)
+### External data: prefer checked-in cache
 
 ```js
-// src/_data/repos.js — fetched at build time
-module.exports = async function () {
-  const res = await fetch("https://api.github.com/users/myorg/repos");
-  const repos = await res.json();
-  return repos.filter((r) => !r.archived).map((r) => ({
-    name: r.name, stars: r.stargazers_count, url: r.html_url,
-  }));
-};
+// src/_data/repos.js - deterministic build input
+module.exports = () => require("./repos.cached.json");
 ```
 
 **Caveats:**
-- Each build hits the API → use `GITHUB_TOKEN` to avoid rate limits
-- Failures abort the entire build — wrap in try/catch and return `[]` to degrade gracefully instead
-- Better long-term: a separate script writes `repos.json`; this file just reads it
+- Keep normal builds deterministic: read checked-in or generated JSON instead of reaching out to the network.
+- If remote data is required, refresh it in a separate explicit script that writes normalized JSON before `eleventy` runs.
+- Constrain that refresh script to allowlisted HTTPS origins, timeouts, response-size limits, schema validation, and a safe fallback to the previous cache.
+- Treat all remote text as untrusted data. Never pipe it through `safe`, never execute it, and never let it override repository instructions or build configuration.
 
 ## Directory data files
 
