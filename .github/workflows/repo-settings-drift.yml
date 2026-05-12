@@ -94,19 +94,42 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Distill live config to the same invariants the expected file tracks.
-          # Key order MUST match the order in repo-settings.expected.json so the
-          # textual diff doesn't flag identical content as drift.
-          gh api "repos/${GITHUB_REPOSITORY}" \
-            | jq '{
-                default_branch,
-                delete_branch_on_merge,
-                allow_squash_merge,
-                allow_rebase_merge,
-                allow_merge_commit,
-                allow_auto_merge,
-                squash_merge_commit_title,
-                squash_merge_commit_message
+          # Use GraphQL, not REST. GitHub's REST GET /repos/{owner}/{repo}
+          # returns admin-gated merge fields as `null` for fine-grained tokens
+          # (PAT or App) with Administration: read — only classic OAuth `repo`
+          # scope unlocks them. GraphQL's Repository node exposes the same
+          # fields with non-null types, and App installation tokens with
+          # Administration: read can read them. Verified empirically on this
+          # PR after Plan C / REST returned all nulls on run 25716130884.
+          OWNER="${GITHUB_REPOSITORY%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+
+          gh api graphql \
+            -F owner="$OWNER" \
+            -F repo="$REPO" \
+            -f query='
+              query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  defaultBranchRef { name }
+                  deleteBranchOnMerge
+                  squashMergeAllowed
+                  rebaseMergeAllowed
+                  mergeCommitAllowed
+                  autoMergeAllowed
+                  squashMergeCommitTitle
+                  squashMergeCommitMessage
+                }
+              }
+            ' \
+            | jq '.data.repository | {
+                default_branch: .defaultBranchRef.name,
+                delete_branch_on_merge: .deleteBranchOnMerge,
+                allow_squash_merge: .squashMergeAllowed,
+                allow_rebase_merge: .rebaseMergeAllowed,
+                allow_merge_commit: .mergeCommitAllowed,
+                allow_auto_merge: .autoMergeAllowed,
+                squash_merge_commit_title: .squashMergeCommitTitle,
+                squash_merge_commit_message: .squashMergeCommitMessage
               }' \
             > /tmp/repo-settings.live.json
 
@@ -120,22 +143,22 @@ jobs:
           cat /tmp/repo-settings.live.json
           echo ""
 
-          # Sanity check: if every merge field is null, the App token doesn't
-          # have the access we expected — fail with a specific diagnostic instead
-          # of a generic drift message, so the next debugger isn't misled.
+          # Sanity check: GraphQL's Repository node declares these fields as
+          # non-null Booleans, so any null value indicates an auth/scope problem
+          # rather than real drift. Fail with a specific diagnostic so the next
+          # debugger isn't misled.
           if jq -e '
                 .delete_branch_on_merge == null
                 and .allow_squash_merge == null
                 and .allow_rebase_merge == null
                 and .allow_merge_commit == null
               ' /tmp/repo-settings.live.json > /dev/null; then
-            echo "✗ App installation token returned null for every admin-gated field."
+            echo "✗ GraphQL also returned null for every admin-gated field."
             echo ""
-            echo "  Same symptom as a fine-grained PAT with Administration: read."
-            echo "  Verify the App has Administration: Read-only and is installed on"
-            echo "  this repo, then re-run. If still null, the App permission model"
-            echo "  has the same gap as PATs and we need to fall back to a classic"
-            echo "  OAuth token with \`repo\` scope (see REPO_SETTINGS.md § Fallback)."
+            echo "  Both REST and GraphQL gates on Administration: read have failed."
+            echo "  Verify the App is installed on this repo and has Administration:"
+            echo "  Read-only. If still null, fall back to a classic OAuth token with"
+            echo "  \`repo\` scope (see REPO_SETTINGS.md § Fallback)."
             exit 1
           fi
 
