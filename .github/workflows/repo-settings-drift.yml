@@ -9,9 +9,13 @@ name: Repo Settings Drift
 # checkbox. This is the same governance pattern as branch-protection-drift,
 # scoped to repo-wide settings instead of refs/heads/main rules.
 #
-# Unlike branch-protection-drift, no PAT is needed: `GET /repos/{owner}/{repo}`
-# is accessible with the default GITHUB_TOKEN's always-granted `metadata:read`
-# scope. The Administration scope is only required for the protection endpoint.
+# Token scope: the default GITHUB_TOKEN returns admin-gated repo fields
+# (delete_branch_on_merge, allow_*_merge, squash_merge_commit_*) as `null`.
+# `Administration: read` is required. Reuses the same fine-grained PAT
+# (`BRANCH_PROTECTION_TOKEN`) that branch-protection-drift uses — see
+# .github/workflows/branch-protection-drift.yml for setup instructions.
+# Empirically verified on PR #6: every admin-gated field was null until the
+# PAT was wired in.
 
 on:
   schedule:
@@ -33,9 +37,35 @@ jobs:
 
       - name: Fetch live repo settings and diff against expected
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT with Administration: read on this repo. Same secret as
+          # branch-protection-drift — see that workflow's header for setup.
+          BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
+          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
         run: |
           set -euo pipefail
+
+          if [ -z "${BRANCH_PROTECTION_TOKEN:-}" ]; then
+            # Dependabot-triggered workflows can't see regular repo secrets
+            # (Dependabot has its own secret store at Settings → Secrets and
+            # variables → Dependabot). Skip cleanly so action-upgrade PRs
+            # aren't blocked. For every other context — push, schedule,
+            # workflow_dispatch, human PR — a missing secret is a HARD FAIL.
+            if [ "${{ github.actor }}" = "dependabot[bot]" ]; then
+              echo "⏭  Dependabot context — BRANCH_PROTECTION_TOKEN not available in Dependabot's secret store."
+              echo "    Skipping cleanly. Add the secret at Settings → Secrets and variables →"
+              echo "    Dependabot if you want this check to run on Dependabot PRs."
+              exit 0
+            fi
+            echo "✗ BRANCH_PROTECTION_TOKEN secret is required but absent."
+            echo ""
+            echo "  Without Administration: read scope, the merge-related fields"
+            echo "  (delete_branch_on_merge, allow_*_merge, squash_merge_commit_*)"
+            echo "  return as \`null\` and the drift check cannot detect real drift."
+            echo ""
+            echo "  Restore the BRANCH_PROTECTION_TOKEN secret (same PAT as the"
+            echo "  branch-protection-drift workflow uses) or remove this check."
+            exit 1
+          fi
 
           # Distill live config to the same invariants the expected file tracks.
           # Key order MUST match the order in repo-settings.expected.json so the

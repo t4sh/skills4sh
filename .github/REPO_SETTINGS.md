@@ -25,12 +25,14 @@ The full snapshot lives at `.github/repo-settings.expected.json` and is the sour
 
 This file covers **repo-wide** settings via `GET /repos/{owner}/{repo}`. Branch-level rules on `refs/heads/main` (required checks, signed commits, linear history, force-push policy, etc.) are governed separately by [`BRANCH_PROTECTION.md`](BRANCH_PROTECTION.md) + `branch-protection.expected.json`.
 
-The two checks are deliberately split because they require different API endpoints and different token scopes:
+The two checks are deliberately split because they target different API endpoints, even though both require the same token scope:
 
 | Drift check | Endpoint | Token scope | Required check on `main`? |
 |---|---|---|---|
 | Branch Protection Drift | `/branches/main/protection` | `Administration: read` (fine-grained PAT) | Yes |
-| Repo Settings Drift | `/repos/{owner}/{repo}` | `metadata: read` (default `GITHUB_TOKEN`) | Not yet — promote separately once stable |
+| Repo Settings Drift | `/repos/{owner}/{repo}` | `Administration: read` (fine-grained PAT) | Not yet — promote separately once stable |
+
+Both reuse the same `BRANCH_PROTECTION_TOKEN` repo secret. The default `GITHUB_TOKEN` is not sufficient: admin-gated fields (`delete_branch_on_merge`, `allow_*_merge`, `squash_merge_commit_*`) come back as `null` without Administration scope, which would defeat the drift check.
 
 ## Promoting to a required status check
 
