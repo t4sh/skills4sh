@@ -25,14 +25,38 @@ The full snapshot lives at `.github/repo-settings.expected.json` and is the sour
 
 This file covers **repo-wide** settings via `GET /repos/{owner}/{repo}`. Branch-level rules on `refs/heads/main` (required checks, signed commits, linear history, force-push policy, etc.) are governed separately by [`BRANCH_PROTECTION.md`](BRANCH_PROTECTION.md) + `branch-protection.expected.json`.
 
-The two checks are deliberately split because they target different API endpoints, even though both require the same token scope:
+The two checks are deliberately split because they target different API endpoints **and** need different token mechanics:
 
-| Drift check | Endpoint | Token scope | Required check on `main`? |
+| Drift check | Endpoint | Token mechanism | Required check on `main`? |
 |---|---|---|---|
-| Branch Protection Drift | `/branches/main/protection` | `Administration: read` (fine-grained PAT) | Yes |
-| Repo Settings Drift | `/repos/{owner}/{repo}` | `Administration: read` (fine-grained PAT) | Not yet — promote separately once stable |
+| Branch Protection Drift | `/branches/main/protection` | Fine-grained PAT, `Administration: read` (`BRANCH_PROTECTION_TOKEN`) | Yes |
+| Repo Settings Drift | `/repos/{owner}/{repo}` | GitHub App installation token, `Administration: read` (`REPO_SETTINGS_APP_ID` + `REPO_SETTINGS_APP_PRIVATE_KEY`) | Not yet — promote separately once stable |
 
-Both reuse the same `BRANCH_PROTECTION_TOKEN` repo secret. The default `GITHUB_TOKEN` is not sufficient: admin-gated fields (`delete_branch_on_merge`, `allow_*_merge`, `squash_merge_commit_*`) come back as `null` without Administration scope, which would defeat the drift check.
+The reason the two checks use different mechanisms: empirically (verified on this PR's first two CI runs), `GET /repos/{owner}/{repo}` returns admin-gated fields (`delete_branch_on_merge`, `allow_*_merge`, `squash_merge_commit_*`) as `null` when called with a fine-grained PAT — even one that has `Administration: read` and works fine for `/branches/main/protection`. Classic OAuth tokens with `repo` scope return the fields, but the broad scope is the wrong tradeoff for a read-only governance check. GitHub App installation tokens with the same `Administration: read` permission do return the fields.
+
+## Setup
+
+One-time configuration for the Repo Settings Drift check:
+
+1. **Create a private GitHub App** at <https://github.com/settings/apps/new>
+   - **GitHub App name**: e.g. `skills4sh-repo-settings-drift` (must be globally unique)
+   - **Homepage URL**: <https://github.com/t4sh/skills4sh>
+   - **Webhook**: untick "Active" (no callbacks needed)
+   - **Repository permissions** → **Administration**: Read-only
+   - **Where can this GitHub App be installed?**: Only on this account
+   - Click **Create GitHub App**.
+2. **Generate a private key** on the App settings page (scroll down to "Private keys" → "Generate a private key"). A `.pem` file downloads.
+3. **Note the App ID** at the top of the App settings page (it's a numeric ID, not the slug).
+4. **Install the App** on this repo: App settings sidebar → **Install App** → click **Install** on your account → **Only select repositories** → check `skills4sh` → **Install**.
+5. **Add repo secrets** at <https://github.com/t4sh/skills4sh/settings/secrets/actions>:
+   - `REPO_SETTINGS_APP_ID` — the numeric App ID from step 3.
+   - `REPO_SETTINGS_APP_PRIVATE_KEY` — paste the full contents of the `.pem` file (including the `-----BEGIN`/`END` lines).
+
+The App needs no write permissions and is installed on exactly one repo. The private key is the only sensitive material; rotate it from the App settings page if it ever leaks.
+
+## Fallback if the App approach also returns null
+
+If after Setup the workflow still emits the "App installation token returned null for every admin-gated field" diagnostic, the App permission model has the same gap as fine-grained PATs (unlikely but possible). The next escalation is a classic OAuth token with `repo` scope, stored as a separate secret. This trades scope discipline for working drift detection — decide explicitly rather than silently widening.
 
 ## Promoting to a required status check
 

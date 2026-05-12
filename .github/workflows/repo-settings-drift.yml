@@ -6,16 +6,31 @@ name: Repo Settings Drift
 # Why: merge-related settings (delete_branch_on_merge, allow_merge_commit,
 # allow_squash_merge, allow_rebase_merge) live in GitHub Repo Settings —
 # invisible to the repo and prone to silent drift if someone toggles a
-# checkbox. This is the same governance pattern as branch-protection-drift,
-# scoped to repo-wide settings instead of refs/heads/main rules.
+# checkbox. Same governance pattern as branch-protection-drift, scoped to
+# repo-wide settings instead of refs/heads/main rules.
 #
-# Token scope: the default GITHUB_TOKEN returns admin-gated repo fields
-# (delete_branch_on_merge, allow_*_merge, squash_merge_commit_*) as `null`.
-# `Administration: read` is required. Reuses the same fine-grained PAT
-# (`BRANCH_PROTECTION_TOKEN`) that branch-protection-drift uses — see
-# .github/workflows/branch-protection-drift.yml for setup instructions.
-# Empirically verified on PR #6: every admin-gated field was null until the
-# PAT was wired in.
+# Token approach: short-lived GitHub App installation token, minted at
+# job start via actions/create-github-app-token. Empirically required
+# because fine-grained PATs with `Administration: read` return the admin-
+# gated merge fields (delete_branch_on_merge, allow_*_merge, squash_merge_
+# commit_*) as `null` on /repos/{owner}/{repo}, even though the same PAT
+# works fine for /branches/main/protection — verified on PR #6's first
+# two CI runs. App installation tokens with the same Administration: read
+# permission do return the fields. Classic OAuth tokens with `repo` scope
+# also work, but the broad scope makes them a worse choice for a
+# read-only governance check.
+#
+# Setup (see REPO_SETTINGS.md § Setup for the full walkthrough):
+#   1. https://github.com/settings/apps/new — create a private App
+#      - Permissions: Administration: Read-only, Metadata: Read-only
+#      - Webhook: disabled
+#      - Where: Only on this account
+#      - Generate a private key (.pem) and download it
+#   2. Install on this repo: App settings → Install App → Only select
+#      repositories → skills4sh
+#   3. Add repo secrets at Settings → Secrets and variables → Actions:
+#      - REPO_SETTINGS_APP_ID         = <numeric App ID from app settings>
+#      - REPO_SETTINGS_APP_PRIVATE_KEY = <full content of the .pem file>
 
 on:
   schedule:
@@ -35,37 +50,49 @@ jobs:
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Fetch live repo settings and diff against expected
+      - name: Check App secrets are configured
+        id: check-secrets
         env:
-          # PAT with Administration: read on this repo. Same secret as
-          # branch-protection-drift — see that workflow's header for setup.
-          BRANCH_PROTECTION_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
-          GH_TOKEN: ${{ secrets.BRANCH_PROTECTION_TOKEN }}
+          APP_ID: ${{ secrets.REPO_SETTINGS_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.REPO_SETTINGS_APP_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-
-          if [ -z "${BRANCH_PROTECTION_TOKEN:-}" ]; then
-            # Dependabot-triggered workflows can't see regular repo secrets
-            # (Dependabot has its own secret store at Settings → Secrets and
-            # variables → Dependabot). Skip cleanly so action-upgrade PRs
-            # aren't blocked. For every other context — push, schedule,
-            # workflow_dispatch, human PR — a missing secret is a HARD FAIL.
-            if [ "${{ github.actor }}" = "dependabot[bot]" ]; then
-              echo "⏭  Dependabot context — BRANCH_PROTECTION_TOKEN not available in Dependabot's secret store."
-              echo "    Skipping cleanly. Add the secret at Settings → Secrets and variables →"
-              echo "    Dependabot if you want this check to run on Dependabot PRs."
-              exit 0
-            fi
-            echo "✗ BRANCH_PROTECTION_TOKEN secret is required but absent."
-            echo ""
-            echo "  Without Administration: read scope, the merge-related fields"
-            echo "  (delete_branch_on_merge, allow_*_merge, squash_merge_commit_*)"
-            echo "  return as \`null\` and the drift check cannot detect real drift."
-            echo ""
-            echo "  Restore the BRANCH_PROTECTION_TOKEN secret (same PAT as the"
-            echo "  branch-protection-drift workflow uses) or remove this check."
-            exit 1
+          if [ -n "${APP_ID:-}" ] && [ -n "${APP_PRIVATE_KEY:-}" ]; then
+            echo "have-secrets=true" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          # Dependabot-triggered workflows can't see regular repo secrets
+          # (Dependabot has its own secret store at Settings → Secrets and
+          # variables → Dependabot). Skip cleanly so action-upgrade PRs
+          # aren't blocked. For every other context — push, schedule,
+          # workflow_dispatch, human PR — a missing secret is a HARD FAIL.
+          if [ "${{ github.actor }}" = "dependabot[bot]" ]; then
+            echo "⏭  Dependabot context — App secrets not in Dependabot's secret store."
+            echo "    Skipping cleanly. Mirror the secrets at Settings → Secrets and"
+            echo "    variables → Dependabot if you want this check to run on Dependabot PRs."
+            echo "have-secrets=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "✗ REPO_SETTINGS_APP_ID and/or REPO_SETTINGS_APP_PRIVATE_KEY are absent."
+          echo ""
+          echo "  See REPO_SETTINGS.md § Setup for the GitHub App + secret"
+          echo "  walkthrough. The App needs only Administration: Read on this repo."
+          exit 1
+
+      - name: Mint App installation token
+        id: app-token
+        if: steps.check-secrets.outputs.have-secrets == 'true'
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          app-id: ${{ secrets.REPO_SETTINGS_APP_ID }}
+          private-key: ${{ secrets.REPO_SETTINGS_APP_PRIVATE_KEY }}
+
+      - name: Fetch live repo settings and diff against expected
+        if: steps.check-secrets.outputs.have-secrets == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
 
           # Distill live config to the same invariants the expected file tracks.
           # Key order MUST match the order in repo-settings.expected.json so the
@@ -92,6 +119,25 @@ jobs:
           echo "=== live ==="
           cat /tmp/repo-settings.live.json
           echo ""
+
+          # Sanity check: if every merge field is null, the App token doesn't
+          # have the access we expected — fail with a specific diagnostic instead
+          # of a generic drift message, so the next debugger isn't misled.
+          if jq -e '
+                .delete_branch_on_merge == null
+                and .allow_squash_merge == null
+                and .allow_rebase_merge == null
+                and .allow_merge_commit == null
+              ' /tmp/repo-settings.live.json > /dev/null; then
+            echo "✗ App installation token returned null for every admin-gated field."
+            echo ""
+            echo "  Same symptom as a fine-grained PAT with Administration: read."
+            echo "  Verify the App has Administration: Read-only and is installed on"
+            echo "  this repo, then re-run. If still null, the App permission model"
+            echo "  has the same gap as PATs and we need to fall back to a classic"
+            echo "  OAuth token with \`repo\` scope (see REPO_SETTINGS.md § Fallback)."
+            exit 1
+          fi
 
           if diff -u /tmp/repo-settings.expected.json /tmp/repo-settings.live.json; then
             echo "✓ repo settings match expected snapshot"
