@@ -1,0 +1,78 @@
+name: Repo Settings Drift
+
+# Asserts that repo-level settings match the checked-in snapshot at
+# .github/repo-settings.expected.json.
+#
+# Why: merge-related settings (delete_branch_on_merge, allow_merge_commit,
+# allow_squash_merge, allow_rebase_merge) live in GitHub Repo Settings —
+# invisible to the repo and prone to silent drift if someone toggles a
+# checkbox. This is the same governance pattern as branch-protection-drift,
+# scoped to repo-wide settings instead of refs/heads/main rules.
+#
+# Unlike branch-protection-drift, no PAT is needed: `GET /repos/{owner}/{repo}`
+# is accessible with the default GITHUB_TOKEN's always-granted `metadata:read`
+# scope. The Administration scope is only required for the protection endpoint.
+
+on:
+  schedule:
+    # Daily at 06:20 UTC — 5 min after branch-protection-drift so the two
+    # show up adjacent in the daily activity feed.
+    - cron: "20 6 * * *"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-drift:
+    name: assert repo-settings matches .github/repo-settings.expected.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Fetch live repo settings and diff against expected
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Distill live config to the same invariants the expected file tracks.
+          # Key order MUST match the order in repo-settings.expected.json so the
+          # textual diff doesn't flag identical content as drift.
+          gh api "repos/${GITHUB_REPOSITORY}" \
+            | jq '{
+                default_branch,
+                delete_branch_on_merge,
+                allow_squash_merge,
+                allow_rebase_merge,
+                allow_merge_commit,
+                allow_auto_merge,
+                squash_merge_commit_title,
+                squash_merge_commit_message
+              }' \
+            > /tmp/repo-settings.live.json
+
+          # Drop the explanatory "_" comment key from expected before diffing.
+          jq 'del(._)' .github/repo-settings.expected.json > /tmp/repo-settings.expected.json
+
+          echo "=== expected ==="
+          cat /tmp/repo-settings.expected.json
+          echo ""
+          echo "=== live ==="
+          cat /tmp/repo-settings.live.json
+          echo ""
+
+          if diff -u /tmp/repo-settings.expected.json /tmp/repo-settings.live.json; then
+            echo "✓ repo settings match expected snapshot"
+          else
+            echo ""
+            echo "✗ DRIFT — live repo settings differ from .github/repo-settings.expected.json"
+            echo ""
+            echo "If the drift is intentional, update the snapshot in the same PR"
+            echo "that documents the policy change."
+            echo ""
+            echo "If the drift is unintentional, restore the documented policy via"
+            echo "Settings → General → Pull Requests on github.com."
+            exit 1
+          fi
