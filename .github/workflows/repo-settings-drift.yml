@@ -1,0 +1,177 @@
+name: Repo Settings Drift
+
+# Asserts that repo-level settings match the checked-in snapshot at
+# .github/repo-settings.expected.json.
+#
+# Why: merge-related settings (delete_branch_on_merge, allow_merge_commit,
+# allow_squash_merge, allow_rebase_merge) live in GitHub Repo Settings —
+# invisible to the repo and prone to silent drift if someone toggles a
+# checkbox. Same governance pattern as branch-protection-drift, scoped to
+# repo-wide settings instead of refs/heads/main rules.
+#
+# Token approach: short-lived GitHub App installation token, minted at
+# job start via actions/create-github-app-token. Empirically required
+# because fine-grained PATs with `Administration: read` return the admin-
+# gated merge fields (delete_branch_on_merge, allow_*_merge, squash_merge_
+# commit_*) as `null` on /repos/{owner}/{repo}, even though the same PAT
+# works fine for /branches/main/protection — verified on PR #6's first
+# two CI runs. App installation tokens with the same Administration: read
+# permission do return the fields. Classic OAuth tokens with `repo` scope
+# also work, but the broad scope makes them a worse choice for a
+# read-only governance check.
+#
+# Setup (see REPO_SETTINGS.md § Setup for the full walkthrough):
+#   1. https://github.com/settings/apps/new — create a private App
+#      - Permissions: Administration: Read-only, Metadata: Read-only
+#      - Webhook: disabled
+#      - Where: Only on this account
+#      - Generate a private key (.pem) and download it
+#   2. Install on this repo: App settings → Install App → Only select
+#      repositories → skills4sh
+#   3. Add repo secrets at Settings → Secrets and variables → Actions:
+#      - REPO_SETTINGS_APP_ID         = <numeric App ID from app settings>
+#      - REPO_SETTINGS_APP_PRIVATE_KEY = <full content of the .pem file>
+
+on:
+  schedule:
+    # Daily at 06:20 UTC — 5 min after branch-protection-drift so the two
+    # show up adjacent in the daily activity feed.
+    - cron: "20 6 * * *"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-drift:
+    name: assert repo-settings matches .github/repo-settings.expected.json
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Check App secrets are configured
+        id: check-secrets
+        env:
+          APP_ID: ${{ secrets.REPO_SETTINGS_APP_ID }}
+          APP_PRIVATE_KEY: ${{ secrets.REPO_SETTINGS_APP_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -n "${APP_ID:-}" ] && [ -n "${APP_PRIVATE_KEY:-}" ]; then
+            echo "have-secrets=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Dependabot-triggered workflows can't see regular repo secrets
+          # (Dependabot has its own secret store at Settings → Secrets and
+          # variables → Dependabot). Skip cleanly so action-upgrade PRs
+          # aren't blocked. For every other context — push, schedule,
+          # workflow_dispatch, human PR — a missing secret is a HARD FAIL.
+          if [ "${{ github.actor }}" = "dependabot[bot]" ]; then
+            echo "⏭  Dependabot context — App secrets not in Dependabot's secret store."
+            echo "    Skipping cleanly. Mirror the secrets at Settings → Secrets and"
+            echo "    variables → Dependabot if you want this check to run on Dependabot PRs."
+            echo "have-secrets=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "✗ REPO_SETTINGS_APP_ID and/or REPO_SETTINGS_APP_PRIVATE_KEY are absent."
+          echo ""
+          echo "  See REPO_SETTINGS.md § Setup for the GitHub App + secret"
+          echo "  walkthrough. The App needs only Administration: Read on this repo."
+          exit 1
+
+      - name: Mint App installation token
+        id: app-token
+        if: steps.check-secrets.outputs.have-secrets == 'true'
+        uses: actions/create-github-app-token@1b10c78c7865c340bc4f6099eb2f838309f1e8c3 # v3.1.1
+        with:
+          app-id: ${{ secrets.REPO_SETTINGS_APP_ID }}
+          private-key: ${{ secrets.REPO_SETTINGS_APP_PRIVATE_KEY }}
+
+      - name: Fetch live repo settings and diff against expected
+        if: steps.check-secrets.outputs.have-secrets == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          set -euo pipefail
+
+          # Use GraphQL, not REST. GitHub's REST GET /repos/{owner}/{repo}
+          # returns admin-gated merge fields as `null` for fine-grained tokens
+          # (PAT or App) with Administration: read — only classic OAuth `repo`
+          # scope unlocks them. GraphQL's Repository node exposes the same
+          # fields with non-null types, and App installation tokens with
+          # Administration: read can read them. Verified empirically on this
+          # PR after Plan C / REST returned all nulls on run 25716130884.
+          OWNER="${GITHUB_REPOSITORY%/*}"
+          REPO="${GITHUB_REPOSITORY#*/}"
+
+          gh api graphql \
+            -F owner="$OWNER" \
+            -F repo="$REPO" \
+            -f query='
+              query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  defaultBranchRef { name }
+                  deleteBranchOnMerge
+                  squashMergeAllowed
+                  rebaseMergeAllowed
+                  mergeCommitAllowed
+                  autoMergeAllowed
+                  squashMergeCommitTitle
+                  squashMergeCommitMessage
+                }
+              }
+            ' \
+            | jq '.data.repository | {
+                default_branch: .defaultBranchRef.name,
+                delete_branch_on_merge: .deleteBranchOnMerge,
+                allow_squash_merge: .squashMergeAllowed,
+                allow_rebase_merge: .rebaseMergeAllowed,
+                allow_merge_commit: .mergeCommitAllowed,
+                allow_auto_merge: .autoMergeAllowed,
+                squash_merge_commit_title: .squashMergeCommitTitle,
+                squash_merge_commit_message: .squashMergeCommitMessage
+              }' \
+            > /tmp/repo-settings.live.json
+
+          # Drop the explanatory "_" comment key from expected before diffing.
+          jq 'del(._)' .github/repo-settings.expected.json > /tmp/repo-settings.expected.json
+
+          echo "=== expected ==="
+          cat /tmp/repo-settings.expected.json
+          echo ""
+          echo "=== live ==="
+          cat /tmp/repo-settings.live.json
+          echo ""
+
+          # Sanity check: GraphQL's Repository node declares these fields as
+          # non-null Booleans, so any null value indicates an auth/scope problem
+          # rather than real drift. Fail with a specific diagnostic so the next
+          # debugger isn't misled.
+          if jq -e '
+                .delete_branch_on_merge == null
+                and .allow_squash_merge == null
+                and .allow_rebase_merge == null
+                and .allow_merge_commit == null
+              ' /tmp/repo-settings.live.json > /dev/null; then
+            echo "✗ GraphQL also returned null for every admin-gated field."
+            echo ""
+            echo "  Both REST and GraphQL gates on Administration: read have failed."
+            echo "  Verify the App is installed on this repo and has Administration:"
+            echo "  Read-only. If still null, fall back to a classic OAuth token with"
+            echo "  \`repo\` scope (see REPO_SETTINGS.md § Fallback)."
+            exit 1
+          fi
+
+          if diff -u /tmp/repo-settings.expected.json /tmp/repo-settings.live.json; then
+            echo "✓ repo settings match expected snapshot"
+          else
+            echo ""
+            echo "✗ DRIFT — live repo settings differ from .github/repo-settings.expected.json"
+            echo ""
+            echo "If the drift is intentional, update the snapshot in the same PR"
+            echo "that documents the policy change."
+            echo ""
+            echo "If the drift is unintentional, restore the documented policy via"
+            echo "Settings → General → Pull Requests on github.com."
+            exit 1
+          fi

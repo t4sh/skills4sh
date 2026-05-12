@@ -1,0 +1,11 @@
+{
+  "_": "Expected repo-level settings for t4sh/skills4sh. Snapshot maintained alongside .github/branch-protection.expected.json — see REPO_SETTINGS.md. Drift is checked daily by .github/workflows/repo-settings-drift.yml. To intentionally change a setting: update the live value on github.com (Settings → General → Pull Requests), then update this file in the same PR (the drift check on the PR is the verification step).",
+  "default_branch": "main",
+  "delete_branch_on_merge": true,
+  "allow_squash_merge": true,
+  "allow_rebase_merge": true,
+  "allow_merge_commit": false,
+  "allow_auto_merge": false,
+  "squash_merge_commit_title": "COMMIT_OR_PR_TITLE",
+  "squash_merge_commit_message": "COMMIT_MESSAGES"
+}
