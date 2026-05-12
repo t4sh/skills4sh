@@ -80,11 +80,11 @@ Falsy values: `false`, `null`, `undefined`, `0`, `""`, `[]` (empty array), `{}` 
 {# Use asyncEach / asyncAll only when the loop body contains async filters or extensions. #}
 {# Regular {% for %} will fail if filters in the body are async. #}
 {% asyncEach item in items %}
-  <li>{{ item.url | fetchTitle }}</li>
+  <li>{{ item.url | titleFor(titleCache) }}</li>
 {% endeach %}
 ```
 
-`asyncAll` runs iterations in parallel; `asyncEach` runs sequentially. Prefer `asyncAll` unless ordering matters or rate limits are a concern.
+`asyncAll` runs iterations in parallel; `asyncEach` runs sequentially. Prefer `asyncAll` for local deterministic work unless ordering matters. Do not use async loops to fetch arbitrary third-party URLs from templates.
 
 ## Variables
 
@@ -298,18 +298,13 @@ Prefer per-value `| safe` over `{% autoescape false %}` blocks — narrower blas
 
 ```js
 // Standalone Nunjucks API — note the 3rd `true` arg
-env.addFilter("fetchTitle", function (url, callback) {
-  fetch(url)
-    .then((r) => r.text())
-    .then((html) => callback(null, html.match(/<title>(.*?)<\/title>/)?.[1] ?? url))
-    .catch((err) => callback(err));
+env.addFilter("titleFor", function (url, titles, callback) {
+  callback(null, titles?.[url] ?? url);
 }, true);  // ← marks this as async
 
 // Eleventy — prefer addAsyncFilter or addFilter with async fn (v3 handles both)
-eleventyConfig.addAsyncFilter("fetchTitle", async (url) => {
-  const r = await fetch(url);
-  const html = await r.text();
-  return html.match(/<title>(.*?)<\/title>/)?.[1] ?? url;
+eleventyConfig.addAsyncFilter("titleFor", async (url, titles = {}) => {
+  return titles[url] ?? url;
 });
 ```
 
@@ -317,6 +312,7 @@ eleventyConfig.addAsyncFilter("fetchTitle", async (url) => {
 - Templates using async filters must be rendered through async render paths
 - Eleventy handles this automatically; standalone Nunjucks needs `env.render` with a callback or `renderString` returning a Promise
 - An async filter in a `{% for %}` loop without `asyncEach`/`asyncAll` will fail
+- Keep async filters local and deterministic. Network refresh belongs in an explicit prebuild step that writes validated JSON for templates to consume.
 
 ## Jinja2 divergence — what's different
 

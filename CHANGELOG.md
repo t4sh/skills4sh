@@ -8,6 +8,9 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+### Changed
+- **`eleventy-nunjucks` 0.1.1** constrains third-party fetch examples: build data now prefers checked-in/generated JSON, async filters are documented as local/deterministic only, and upstream-doc lookup is framed as constrained official-doc reference material.
+
 ## [0.4.7] — 2026-05-12
 
 Closes 6 internal code-review findings, including one critical safety bug that defeated the v0.4.6 size cap. **No breaking change for normal users.**

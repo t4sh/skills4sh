@@ -8,7 +8,7 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 |-------|-------------|---------|
 | [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.7.0 |
 | [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.1 |
-| [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.0 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.1 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.3.0 |
 
 > **Stability note.** `eleventy-nunjucks` is pre-1.0 (v0.x) — its trigger phrasing and prompt content may change in incompatible ways between minor releases. The other three skills follow semver: breaking changes only on major bumps.

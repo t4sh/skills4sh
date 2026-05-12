@@ -16,8 +16,8 @@
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.0",
-      "computedHash": "555a565e43a1d960acecdbd8fe9528f28e1343e00dc1c6514ed9590c3fbf8b3c"
+      "version": "0.1.1",
+      "computedHash": "3afa4863028bf8f98690964b6cbbc7907945fca0d8e9d930c97854568d83455b"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
