@@ -1,0 +1,5 @@
+# Gitleaks config - extend the default ruleset.
+# Add repo-specific allowlist entries only after triaging confirmed false positives.
+
+[extend]
+useDefault = true
