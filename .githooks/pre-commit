@@ -1,11 +1,26 @@
 #!/usr/bin/env bash
-# Pre-commit guard: skills-lock.json must match skills/ content.
+# Pre-commit guards:
+# - skills-lock.json must match skills/ content.
+# - staged changes must not contain secrets detectable by Gitleaks.
 #
 # Wired via: git config --local core.hooksPath .githooks
-#   (the `prepare` script in package.json does this automatically on
-#   `npm install` inside a git clone — see package.json scripts.prepare)
+#   (run `npm run setup:hooks` once inside a git clone)
 #
 # Bypass for emergencies: git commit --no-verify
+
+if command -v gitleaks >/dev/null 2>&1; then
+  if ! gitleaks protect --staged --redact; then
+    echo ""
+    echo "  ↳ Fix:    remove the secret from the commit, then rotate it if it was real"
+    echo "  ↳ Bypass: git commit --no-verify     (emergencies only)"
+    exit 1
+  fi
+else
+  echo "✗ gitleaks is not installed; install it to run the secret-scan pre-commit guard." >&2
+  echo "  ↳ macOS:  brew install gitleaks" >&2
+  echo "  ↳ Bypass: git commit --no-verify     (emergencies only)" >&2
+  exit 1
+fi
 
 if ! node bin/hash-check.mjs; then
   echo ""
