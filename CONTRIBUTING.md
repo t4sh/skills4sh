@@ -180,7 +180,7 @@ Never declare a real security issue as `acknowledged: true`. If the underlying i
 1. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) — the OWASP AST10 checklist is the bar for skill changes.
 2. Required CI checks (configured in [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md)) — all must pass:
    - `validate` (Node 22 + 24)
-   - `guardskills` (each of the 4 skills × Node 22 + 24)
+   - `guardskills` (each of the 5 skills × Node 22 + 24)
    - `release-guards` (bin-tag-parity)
    - `codeql`
    - `dependency-review`

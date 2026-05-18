@@ -1,6 +1,6 @@
 # Branch Protection Contract
 
-Protect `main` and require pull requests to pass these **15 checks** before merge:
+Protect `main` and require pull requests to pass these **17 checks** before merge:
 
 - `Validate Skills / validate (22)`
 - `Validate Skills / validate (24)`
@@ -10,6 +10,8 @@ Protect `main` and require pull requests to pass these **15 checks** before merg
 - `guardskills Scan / scan (discord-harvest, 24)`
 - `guardskills Scan / scan (eleventy-nunjucks, 22)`
 - `guardskills Scan / scan (eleventy-nunjucks, 24)`
+- `guardskills Scan / scan (figma-to-code, 22)`
+- `guardskills Scan / scan (figma-to-code, 24)`
 - `guardskills Scan / scan (localhost-screenshots, 22)`
 - `guardskills Scan / scan (localhost-screenshots, 24)`
 - `Release Guards / bin/ matches tag for current package.json version`
@@ -26,7 +28,7 @@ Additional policies enforced on `refs/heads/main`:
 - **Linear history required** (`required_linear_history: true`) — no merge commits.
 - **Conversation resolution required** before merge.
 - **No force pushes, no deletions, no fork-syncing.**
-- **Admin bypass disabled** (`enforce_admins: true` since v0.4.6) — administrators are also subject to all configured branch protection rules. No admin escape hatch for force-push, deletion, or check-bypass. **Practical consequence: direct push to `main` from admin is rejected** with `protected branch hook declined` because the pushed commit hasn't satisfied the 15 required status checks yet (chicken-and-egg with direct push). Use PR flow.
+- **Admin bypass disabled** (`enforce_admins: true` since v0.4.6) — administrators are also subject to all configured branch protection rules. No admin escape hatch for force-push, deletion, or check-bypass. **Practical consequence: direct push to `main` from admin is rejected** with `protected branch hook declined` because the pushed commit hasn't satisfied the 17 required status checks yet (chicken-and-egg with direct push). Use PR flow.
 
 The full snapshot lives at `.github/branch-protection.expected.json` and is the source of truth.
 

@@ -88,7 +88,7 @@ See [SECURITY.md](SECURITY.md) for the full compliance mapping, vulnerability di
 
 ### Security scanning
 
-Security scans are pinned to [guardskills](https://www.npmjs.com/package/guardskills) `1.2.1`. `agent-memory` and `discord-harvest` scan without overrides. `localhost-screenshots` and `eleventy-nunjucks` have documented false-positive findings from instructional browser/profile/env/grep snippets; the CI matrix only accepts those known findings when they match [SECURITY.md](SECURITY.md) § Expected Security Findings.
+Security scans are pinned to [guardskills](https://www.npmjs.com/package/guardskills) `1.2.1`. `agent-memory`, `discord-harvest`, and `figma-to-code` scan without overrides. `localhost-screenshots` and `eleventy-nunjucks` have documented false-positive findings from instructional browser/profile/env/grep snippets; the CI matrix only accepts those known findings when they match [SECURITY.md](SECURITY.md) § Expected Security Findings.
 
 ```bash
 npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run;

@@ -129,12 +129,12 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory` and `discord-harvest` scan without overrides; `eleventy-nunjucks` and `localhost-screenshots` have documented expected findings that must match this file before overrides are accepted. |
+| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory`, `discord-harvest`, and `figma-to-code` scan without overrides; `eleventy-nunjucks` and `localhost-screenshots` have documented expected findings that must match this file before overrides are accepted. |
 | CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
 | Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
 | GitHub Actions SHA-pinning | All `uses:` directives across every workflow are pinned to a commit SHA (with a trailing `# vX.Y.Z` comment for human readability). Floating major tags (`@v4`) would expose CI to upstream compromise — see e.g. the tj-actions/changed-files 2025 incident. `.github/dependabot.yml` opens grouped weekly PRs to keep the SHAs moving forward; each upgrade PR hits the full required-checks matrix before merge. |
 | npm provenance & publish auth | `.github/workflows/npm-publish.yml` authenticates via **OIDC Trusted Publisher** (no `NPM_TOKEN` secret since v0.3.9). The GitHub Actions OIDC token both authenticates the registry `PUT` and signs the SLSA v1 provenance attestation. Trusted Publisher binding on npmjs.com: Repository `t4sh/skills4sh`, Workflow `npm-publish.yml`. Package "Publishing access" is set to "Require 2FA and disallow tokens". Runner uses Node 24 / npm ≥ 11.5 (Trusted Publisher publish-auth requires npm 11+; Node 22's bundled npm 10 can only sign provenance, not authenticate publishes). Consumers verify each tarball via `npm audit signatures`. |
-| guardskills CI | `.github/workflows/guardskills.yml` matrix-scans all four skills (agent-memory, discord-harvest, eleventy-nunjucks, localhost-screenshots) on Node 22 and 24. Triggered on push, PR, and manual dispatch. |
+| guardskills CI | `.github/workflows/guardskills.yml` matrix-scans all five skills (agent-memory, discord-harvest, eleventy-nunjucks, figma-to-code, localhost-screenshots) on Node 22 and 24. Triggered on push, PR, and manual dispatch. |
 
 ### AST09 — No Governance
 
