@@ -15,6 +15,8 @@
       "scan (discord-harvest, 24)",
       "scan (eleventy-nunjucks, 22)",
       "scan (eleventy-nunjucks, 24)",
+      "scan (figma-to-code, 22)",
+      "scan (figma-to-code, 24)",
       "scan (localhost-screenshots, 22)",
       "scan (localhost-screenshots, 24)",
       "validate (22)",

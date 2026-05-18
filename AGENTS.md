@@ -13,6 +13,15 @@ This is a mono-repo of agent skills. Each skill lives in `skills/<skill-name>/` 
 
 Always **copy**, never symlink.
 
+## Release and npm publish rules
+
+Use [`docs/RELEASE_PROCESS.md`](docs/RELEASE_PROCESS.md) as the canonical
+release and npm publishing runbook.
+
+Key invariant: only create a `vX.Y.Z` tag after the PR containing
+`package.json` version `X.Y.Z` has been merged to `main`. The GitHub release
+for that tag triggers npm Trusted Publishing and checks out exactly that tag.
+
 ## Skill authoring standard
 
 When creating, reviewing, or improving skills in this repository, use
