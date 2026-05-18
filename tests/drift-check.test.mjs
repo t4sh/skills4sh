@@ -174,6 +174,18 @@ describe("drift-check — clean baseline", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  test("ignored macOS metadata files do not create manifest drift", async () => {
+    const dir = setupTmp();
+    try {
+      await buildFixture(dir);
+      await writeFile(join(dir, "skills/demo/.DS_Store"), "local metadata");
+      const { errors } = await runDriftChecks(dir);
+      assert.deepEqual(errors, [], `expected no errors, got:\n${errors.join("\n")}`);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("drift-check — content integrity failures", () => {

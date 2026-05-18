@@ -84,6 +84,7 @@ async function walk(base, cur, out) {
       if (e.name === ".git" || e.name === "node_modules") continue;
       await walk(base, join(cur, e.name), out);
     } else if (e.isFile()) {
+      if (e.name === ".DS_Store") continue;
       out.push({
         rel: relative(base, join(cur, e.name)).split("\\").join("/"),
         content: await readFile(join(cur, e.name)),

@@ -146,6 +146,7 @@ async function walk(dir, out) {
       if (entry.name === ".git" || entry.name === "node_modules") continue;
       await walk(path, out);
     } else if (entry.isFile()) {
+      if (entry.name === ".DS_Store") continue;
       out.push(path);
     }
   }
