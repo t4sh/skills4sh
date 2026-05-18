@@ -24,6 +24,7 @@ integrity:
     references/review-shipping.md: 34ba4e1a1ed2953791d03e942d56ddb804924cbdfe2bfbe0fff938eefc9f8b6f
     references/security-checklist.md: 0743d16f3cab355b920581cbbe9c826cdd389ff9d9367e48fabeff2b9a05c6e5
     references/troubleshooting.md: 5ce06e6dd46f9b7863b93ba270d32dcfd1b8c067e1ab3866e94b6d5c5f95e12d
+    assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
 
 permissions:
   alwaysAllow: []

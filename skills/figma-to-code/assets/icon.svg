@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?><!-- Icon for https://skills.sh/t4sh/skills4sh/figma-to-code -->
+<svg width="800px" height="800px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><title>Figma to Code</title>
+<g clip-path="url(#clip0_figma_to_code)">
+<path d="M8.33331 9.49998C8.33331 10.0746 8.56159 10.6257 8.96791 11.032C9.37424 11.4384 9.92534 11.6666 10.5 11.6666C11.0746 11.6666 11.6257 11.4384 12.032 11.032C12.4384 10.6257 12.6666 10.0746 12.6666 9.49998C12.6666 8.92534 12.4384 8.37424 12.032 7.96791C11.6257 7.56159 11.0746 7.33331 10.5 7.33331C9.92534 7.33331 9.37424 7.56159 8.96791 7.96791C8.56159 8.37424 8.33331 8.92534 8.33331 9.49998Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M4 5.16667C4 4.59203 4.22827 4.04093 4.6346 3.6346C5.04093 3.22827 5.59203 3 6.16667 3H10.5C11.0746 3 11.6257 3.22827 12.0321 3.6346C12.4384 4.04093 12.6667 4.59203 12.6667 5.16667C12.6667 5.7413 12.4384 6.2924 12.0321 6.69873C11.6257 7.10506 11.0746 7.33333 10.5 7.33333H6.16667C5.59203 7.33333 5.04093 7.10506 4.6346 6.69873C4.22827 6.2924 4 5.7413 4 5.16667Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M6.16667 7.33333C5.59203 7.33333 5.04093 7.56161 4.6346 7.96793C4.22827 8.37426 4 8.92536 4 9.5C4 10.0746 4.22827 10.6257 4.6346 11.0321C5.04093 11.4384 5.59203 11.6667 6.16667 11.6667M6.16667 11.6667H8.33333M6.16667 11.6667C5.73814 11.6667 5.31924 11.7937 4.96293 12.0318C4.60663 12.2699 4.32892 12.6083 4.16493 13.0042C4.00094 13.4001 3.95803 13.8357 4.04163 14.256C4.12523 14.6763 4.33159 15.0624 4.6346 15.3654C4.93762 15.6684 5.32368 15.8748 5.74397 15.9584C6.16426 16.042 6.59991 15.9991 6.99581 15.8351C7.39172 15.6711 7.73011 15.3934 7.96818 15.0371C8.20626 14.6808 8.33333 14.2619 8.33333 13.8333V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M13.125 13.25L10.875 15.5L13.125 17.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M18.75 13.25L21 15.5L18.75 17.75" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17.0625 11L14.8125 20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</g>
+<defs>
+<clipPath id="clip0_figma_to_code">
+<rect width="24" height="24" fill="currentColor"/>
+</clipPath>
+</defs>
+</svg>

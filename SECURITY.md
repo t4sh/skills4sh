@@ -9,6 +9,7 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 | agent-memory | 2.7.0 | Yes |
 | discord-harvest | 1.7.1 | Yes |
 | eleventy-nunjucks | 0.1.1 | Yes |
+| figma-to-code | 0.1.1 | Yes |
 | localhost-screenshots | 3.3.0 | Yes |
 
 ## Reporting a Vulnerability
@@ -34,6 +35,7 @@ Each skill has a canonical security manifest containing integrity hashes, permis
 | agent-memory | [`.security/agent-memory.yaml`](.security/agent-memory.yaml) |
 | discord-harvest | [`.security/discord-harvest.yaml`](.security/discord-harvest.yaml) |
 | eleventy-nunjucks | [`.security/eleventy-nunjucks.yaml`](.security/eleventy-nunjucks.yaml) |
+| figma-to-code | [`.security/figma-to-code.yaml`](.security/figma-to-code.yaml) |
 | localhost-screenshots | [`.security/localhost-screenshots.yaml`](.security/localhost-screenshots.yaml) |
 
 ## OWASP AST10 Compliance
@@ -87,6 +89,7 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 | agent-memory | None (all gated) | Low |
 | discord-harvest | None (all gated) | Medium |
 | eleventy-nunjucks | None (all gated) | Low |
+| figma-to-code | None (all gated) | Low |
 | localhost-screenshots | None (all gated) | Low |
 
 ### AST04 — Insecure Metadata
@@ -199,13 +202,14 @@ Run security scans locally:
 npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force
+npx guardskills@1.2.1 add t4sh/skills4sh --skill figma-to-code --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run
 
 # Local scan-local (any skill folder, useful before or after pushing):
 # npx guardskills scan-local skills/<name> --json
 
 # Verify content hashes (includes references/ subdirectory)
-for skill in agent-memory discord-harvest eleventy-nunjucks localhost-screenshots; do
+for skill in agent-memory discord-harvest eleventy-nunjucks figma-to-code localhost-screenshots; do
   echo "=== $skill ==="
   find "skills/$skill" -type f -not -name '.DS_Store' | sort | while read -r f; do
     relpath="${f#skills/$skill/}"
