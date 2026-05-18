@@ -9,9 +9,10 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 | [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.7.0 |
 | [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.1 |
 | [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.1 |
+| [figma-to-code](skills/figma-to-code/) | Repo-first Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect | 0.1.1 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.3.0 |
 
-> **Stability note.** `eleventy-nunjucks` is pre-1.0 (v0.x) — its trigger phrasing and prompt content may change in incompatible ways between minor releases. The other three skills follow semver: breaking changes only on major bumps.
+> **Stability note.** `eleventy-nunjucks` and `figma-to-code` are pre-1.0 (v0.x) — their trigger phrasing and prompt content may change in incompatible ways between minor releases. The other three skills (agent-memory, discord-harvest, localhost-screenshots) follow semver: breaking changes only on major bumps.
 
 ## Install
 
@@ -20,6 +21,7 @@ npx skills add t4sh/skills4sh                                # install all skill
 npx skills add t4sh/skills4sh --skill agent-memory           # only agent-memory
 npx skills add t4sh/skills4sh --skill discord-harvest        # only discord-harvest
 npx skills add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nunjucks
+npx skills add t4sh/skills4sh --skill figma-to-code          # only figma-to-code
 npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
 ```
 
@@ -33,6 +35,7 @@ Append `-g -y` to install globally (user-level) without interactive prompts — 
 npx skills remove agent-memory                               # remove agent-memory
 npx skills remove discord-harvest                            # remove discord-harvest
 npx skills remove eleventy-nunjucks                          # remove eleventy-nunjucks
+npx skills remove figma-to-code                              # remove figma-to-code
 npx skills remove localhost-screenshots                      # remove localhost-screenshots
 ```
 
@@ -48,6 +51,7 @@ npx skills4sh --all                                # install all skills
 npx skills4sh --skill agent-memory                 # only agent-memory
 npx skills4sh --skill discord-harvest              # only discord-harvest
 npx skills4sh --skill eleventy-nunjucks            # only eleventy-nunjucks
+npx skills4sh --skill figma-to-code                # only figma-to-code
 npx skills4sh --skill localhost-screenshots        # only localhost-screenshots
 ```
 
@@ -57,6 +61,7 @@ npx skills4sh --skill localhost-screenshots        # only localhost-screenshots
 npx skills4sh remove agent-memory                       # uninstall agent-memory
 npx skills4sh remove discord-harvest                    # uninstall discord-harvest
 npx skills4sh remove eleventy-nunjucks                  # uninstall eleventy-nunjucks
+npx skills4sh remove figma-to-code                      # uninstall figma-to-code
 npx skills4sh remove localhost-screenshots              # uninstall localhost-screenshots
 ```
 
@@ -89,6 +94,7 @@ Security scans are pinned to [guardskills](https://www.npmjs.com/package/guardsk
 npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run;
 npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run;
 npx guardskills@1.2.1 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force;
+npx guardskills@1.2.1 add t4sh/skills4sh --skill figma-to-code --dry-run;
 npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run;
 ```
 

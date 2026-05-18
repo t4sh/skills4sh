@@ -10,14 +10,14 @@
     {
       "name": "skills4sh",
       "source": ".",
-      "description": "Agent skills: agent-memory (persistent project memory), discord-harvest (Discord content extraction), eleventy-nunjucks (11ty + Nunjucks conventions), localhost-screenshots (responsive screenshot capture)",
-      "version": "0.4.7",
+      "description": "Agent skills: agent-memory (persistent project memory), discord-harvest (Discord content extraction), eleventy-nunjucks (11ty + Nunjucks conventions), figma-to-code (repo-first Figma MCP implementation, tokens, rules, and Code Connect), localhost-screenshots (responsive screenshot capture)",
+      "version": "0.4.8",
       "author": {
         "name": "t4sh"
       },
       "repository": "https://github.com/t4sh/skills4sh",
       "license": "MIT",
-      "keywords": ["memory", "screenshots", "discord", "eleventy", "11ty", "nunjucks", "static-site", "agent-skills"]
+      "keywords": ["memory", "screenshots", "discord", "eleventy", "11ty", "nunjucks", "static-site", "figma", "design-to-code", "agent-skills"]
     }
   ]
 }

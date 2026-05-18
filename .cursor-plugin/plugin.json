@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)",
-  "version": "0.4.7",
+  "version": "0.4.8",
   "author": {
     "name": "t4sh"
   },
@@ -22,6 +22,11 @@
       "name": "eleventy-nunjucks",
       "path": "skills/eleventy-nunjucks",
       "description": "11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists"
+    },
+    {
+      "name": "figma-to-code",
+      "path": "skills/figma-to-code",
+      "description": "Repo-first Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect"
     },
     {
       "name": "localhost-screenshots",

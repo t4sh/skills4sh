@@ -20,4 +20,5 @@ Always **copy**, never symlink.
 | agent-memory | `skills/agent-memory/` |
 | discord-harvest | `skills/discord-harvest/` |
 | eleventy-nunjucks | `skills/eleventy-nunjucks/` |
+| figma-to-code | `skills/figma-to-code/` |
 | localhost-screenshots | `skills/localhost-screenshots/` |
