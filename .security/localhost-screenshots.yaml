@@ -19,7 +19,7 @@ integrity:
     references/interaction-templates.md: f0afda29a1d4b57b1dc71ea14c4f6f37ad6a6f5323d5e61a066c02a5a8c3e46a
     references/ai-snapshots.md: 0f432c92e54af564df641ad162de51323b5d217e017fa05f649f155082d4ef9d
     references/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
-    assets/icon.svg: 02a222c0a31a7e53369bf21df0c7e4c4a2626a1131830ed85ee57a5cd5fa21e6
+    assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
     assets/scripts/quick.js: 08a6b35dcc8b016b5cdd1cb6a71bb7ff9a9a3f2ef445305b6c4ac6d7ee3d61e1
     assets/scripts/multi-breakpoint.js: eab0ad3ceb08067d252d22ef45241724dba05e2eb62db77181a2643cd412ce14
     assets/scripts/screenshot-a11y.js: cb0e50c1a703e874a739ee6bbc8c1a3c74a327bd1f47b1cc10b49bb5cff3669e
