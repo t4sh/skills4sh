@@ -22,3 +22,42 @@ Use these recovery steps when MCP tools are unavailable, missing, or failing. Pr
 2. Reduce scope to a smaller frame or selected child node.
 3. For auth or permissions errors, try `mcp_auth` on Cursor's Figma plugin server when applicable, then stop and ask for sign-in, file permission, plan upgrade (Code Connect), or a different Figma URL.
 4. For rate limits, stop after one narrowed retry and report that the Figma MCP server is rate-limiting the workflow.
+
+## Truncated Context
+
+1. Keep or refresh the full screenshot as the visual source of truth.
+2. Call `get_metadata` on the parent frame.
+3. Choose the smallest useful child nodes for each region or component.
+4. Call `get_design_context` for each chosen child.
+5. Compare the final assembly against the full screenshot, not only against child contexts.
+
+If child context still truncates, repeat metadata narrowing one level deeper. Avoid implementing from partial data without naming the uncertainty.
+
+## Missing Screenshot
+
+Do not implement from generated code alone when a screenshot tool is available.
+
+1. Retry the screenshot for the same node.
+2. Retry a parent frame if the selected child fails.
+3. Retry a smaller child node if the parent is too large.
+4. If retries fail, ask whether to proceed with reduced fidelity.
+
+When proceeding without a screenshot, state that pixel/visual parity was not fully verifiable.
+
+## Missing Assets
+
+1. Inspect design context for image, SVG, and asset endpoint references.
+2. Prefer MCP-provided URLs, including localhost asset sources.
+3. Use the repository's normal asset pipeline for persistent files.
+4. If assets are unavailable, ask for the missing file or document the exact blocked layer.
+
+Do not invent grey boxes, approximate SVGs, or new icon packages when the Figma payload already indicates a real asset.
+
+## Reduced-Fidelity Fallbacks
+
+Continue without full MCP fidelity only when the user accepts it or the task is explicitly exploratory. In the completion summary, include:
+
+- Which MCP capability was unavailable.
+- Which source was used instead: screenshot, export, static spec, or user description.
+- What could not be verified.
+- What follow-up would restore full fidelity.

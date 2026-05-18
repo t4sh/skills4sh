@@ -26,6 +26,8 @@ A skill is **pure documentation**: SKILL.md instructions plus optional reference
 
 ## Adding a new skill
 
+Follow the repository [Skill Authoring Standard](docs/SKILL_AUTHORING_STANDARD.md) for structure, frontmatter, body-size targets, progressive disclosure, and validation expectations. In short: `Skill Development` is the primary structural standard for this repo, `writing-skills` contributes validation discipline, and Codex's system `skill-creator` is treated as compatibility guidance.
+
 ### 1. Create the skill directory
 
 ```text

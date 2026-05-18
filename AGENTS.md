@@ -13,6 +13,16 @@ This is a mono-repo of agent skills. Each skill lives in `skills/<skill-name>/` 
 
 Always **copy**, never symlink.
 
+## Skill authoring standard
+
+When creating, reviewing, or improving skills in this repository, use
+[`docs/SKILL_AUTHORING_STANDARD.md`](docs/SKILL_AUTHORING_STANDARD.md) as the canonical rubric.
+
+In summary:
+- `Skill Development` is the primary structural standard.
+- `writing-skills` contributes validation discipline.
+- Codex system `skill-creator` is compatibility guidance, not the repo's primary rubric.
+
 ## Available skills
 
 | Skill | Path |
