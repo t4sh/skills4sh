@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "generated": "2026-05-19T12:00:00Z"
+  },
+  "sections": [
+    {
+      "id": "hero",
+      "name": "Hero",
+      "bgToken": "color/bg/default",
+      "nodes": [
+        {
+          "text": "Ship tokens, not screenshots",
+          "fontFamilyToken": "font/family/display",
+          "fontSizeToken": "font/size/2xl",
+          "letterSpacingToken": "font/tracking/tight",
+          "colorToken": "color/text/strong"
+        },
+        {
+          "text": "Figma mirrors exactly what the code renders.",
+          "fontFamilyToken": "font/family/body",
+          "fontSizeToken": "font/size/md",
+          "colorToken": "color/text/muted"
+        }
+      ]
+    },
+    {
+      "id": "cta",
+      "name": "Call to action",
+      "bgToken": "color/bg/accent",
+      "nodes": [
+        {
+          "text": "Get started",
+          "fontFamilyToken": "font/family/display",
+          "fontSizeToken": "font/size/lg",
+          "colorToken": "color/text/on-accent"
+        }
+      ]
+    }
+  ]
+}

@@ -1,9 +1,10 @@
 # Contributing to skills4sh
 
-Thanks for your interest. This repo ships agent skills (markdown bundles) over a small Node CLI. Most contributions fall into one of two shapes:
+Thanks for your interest. This repo ships agent skills (markdown bundles) over a small Node CLI, plus supporting tooling and standalone plugins. Most contributions fall into one of these shapes:
 
 1. **Adding or updating a skill** — covered in detail below.
 2. **Changing the installer / tooling / CI** — see [SECURITY.md](SECURITY.md) for the supply-chain posture and [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md) for the required-checks matrix.
+3. **Adding or updating a plugin or script** — see [Plugins and scripts](#plugins-and-scripts) below. Unlike skills, these contain executable code and are documented per-folder rather than through the skill version-sync surface.
 
 If you are unsure whether a change fits, open a draft PR or an issue first.
 
@@ -16,11 +17,14 @@ skills/<name>/              # the skill itself (SKILL.md + references/ + optiona
 .security/<name>.yaml       # OWASP AST10 manifest mirroring the skill
 skills-lock.json            # canonical version + computed folder hash per skill
 bin/                        # CLI + check scripts (Node 22+, ESM)
+plugins/<name>/             # standalone plugins (executable code + per-folder README)
 .github/workflows/          # 7 workflows: validate, guardskills, release, npm-publish, codeql, dependency-review, branch-protection-drift
 tests/                      # installer + integration tests (node:test)
 ```
 
 A skill is **pure documentation**: SKILL.md instructions plus optional reference markdown and static assets. No shell scripts, no executable code, no install hooks. The installer (`bin/install.mjs`) only copies files to a destination directory; it never executes anything from the skill.
+
+Code that *is* executable lives in two places: `bin/` (the installer and check scripts) and `plugins/` (standalone plugins that run in their own host, e.g. Figma). Neither is delivered by `bin/install.mjs` and neither participates in the skill version-sync surface — they are documented in their own folders and reviewed as code.
 
 ---
 
@@ -122,6 +126,36 @@ Then open Claude Code or Cursor and invoke a request that should match the skill
 6. Run the full local check suite (next section) and open a PR.
 
 **Semver monotonicity is enforced.** `npm run check:drift` compares the current SKILL.md version against the previous commit's version (`HEAD^`) and fails if it went backwards. If you genuinely need to roll back a version, do it in a separate commit with an explicit `BREAKING:` note.
+
+---
+
+## Plugins and scripts
+
+`plugins/<name>/` and `bin/` hold **executable code**, not documentation bundles. They do not have a `.security/<name>.yaml` manifest, do not appear in `skills-lock.json`, and are not part of the seven-place version-sync surface. They are reviewed as code and documented in-folder.
+
+### Adding a plugin
+
+```text
+plugins/<your-plugin>/
+├── README.md            # required — what it does, the data/flow, setup, and any access scopes
+├── <entry files>        # the plugin's own runtime files (e.g. manifest.json, code.js, ui.html)
+└── ...
+```
+
+Requirements:
+
+1. **Folder name is kebab-case** and matches the plugin's stable id (e.g. `tokens-sync-to-figma`). The host-facing *display* name may differ and is set in the plugin's own manifest.
+2. **A per-folder `README.md`** that explains: what the plugin does, the data flow / contract (document any JSON or message schema it consumes), setup steps, and every external access scope it requests (network domains, document/filesystem access) with the reason.
+3. **No private or project-internal identifiers.** No customer names, internal collection/page names, internal hostnames, or org jargon hardcoded in source. Use generic, configurable names. This repo is public.
+4. **No secrets.** No tokens, gist URLs tied to a private account, or credentials committed. User-supplied URLs/keys belong in plugin UI inputs, not source.
+5. **Least-privilege access.** Declare the narrowest host/permission scope the plugin needs (e.g. an explicit `networkAccess.allowedDomains` allowlist rather than allow-all) and justify it in the README.
+6. **License.** State MIT in the README and point at the repository [LICENSE](LICENSE).
+
+Plugins are not delivered by `npx skills add`; they are imported directly into their host per the plugin README.
+
+### Changing scripts (`bin/`)
+
+`bin/` is the installer and the check scripts (Node 22+, ESM). Changes here are tooling changes — keep them covered by `tests/`, run the full local check suite, and follow the supply-chain posture in [SECURITY.md](SECURITY.md).
 
 ---
 

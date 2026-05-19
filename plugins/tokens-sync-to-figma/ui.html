@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 11px;
+    background: #fff;
+    color: #333;
+    padding: 12px;
+  }
+  label { display: block; font-weight: 600; margin-bottom: 4px; }
+  input[type="text"] {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 11px;
+    margin-bottom: 8px;
+  }
+  .opt { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 8px; font-weight: 400; }
+  .opt input { margin-top: 1px; }
+  .opt label { font-weight: 400; margin: 0; }
+  button {
+    width: 100%;
+    padding: 8px;
+    background: #000;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 6px;
+  }
+  button.secondary { background: #fff; color: #333; border: 1px solid #ccc; }
+  button:disabled { background: #999; cursor: not-allowed; }
+  .hidden { display: none; }
+  #status {
+    margin-top: 6px;
+    padding: 8px;
+    border-radius: 4px;
+    background: #f5f5f5;
+    min-height: 28px;
+    word-break: break-word;
+    line-height: 1.4;
+  }
+  #status.error { background: #fff0f0; color: #c00; }
+  #status.ok    { background: #f0fff4; color: #060; }
+  .note { color: #888; line-height: 1.4; margin-top: 8px; }
+</style>
+</head>
+<body>
+
+<label for="gistUrl">Gist raw URL</label>
+<input id="gistUrl" type="text"
+  placeholder="https://gist.githubusercontent.com/…/raw/figma-export.json">
+
+<div class="opt">
+  <input id="previewChk" type="checkbox">
+  <label for="previewChk">Build into a separate preview page (don't replace the canonical page)</label>
+</div>
+
+<button id="syncBtn" type="button">Sync from CI</button>
+
+<div id="confirmWrap" class="hidden">
+  <button id="confirmBtn" type="button">Confirm &amp; rebuild</button>
+  <button id="cancelBtn" type="button" class="secondary">Cancel</button>
+</div>
+
+<div id="status">Paste the Gist raw URL above, then click Sync.</div>
+
+<div class="note">Mirrors code → Figma only. To push Figma changes back to code, use the <strong>figma-to-code</strong> skill.</div>
+
+<script>
+var btn       = document.getElementById('syncBtn');
+var urlEl     = document.getElementById('gistUrl');
+var previewEl = document.getElementById('previewChk');
+var confirmW  = document.getElementById('confirmWrap');
+var confirmB  = document.getElementById('confirmBtn');
+var cancelB   = document.getElementById('cancelBtn');
+var status    = document.getElementById('status');
+
+var pendingData = null;
+
+// Restore saved URL + mode
+try {
+  var savedUrl = localStorage.getItem('tokens-sync-gist-url');
+  if (savedUrl) urlEl.value = savedUrl;
+  if (localStorage.getItem('tokens-sync-preview') === '1') previewEl.checked = true;
+} catch(e) {}
+
+// Ask the sandbox how fresh the canonical page is (continuous-freshness cue)
+parent.postMessage({ pluginMessage: { type: 'status' } }, '*');
+
+function ageInDays(iso) {
+  var t = Date.parse(iso);
+  if (isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86400000);
+}
+
+function setStatus(msg, type) {
+  status.textContent = msg;
+  status.className = type || '';
+}
+
+function showIdle() {
+  confirmW.className = 'hidden';
+  btn.className = '';
+  btn.disabled = false;
+}
+
+function showConfirm() {
+  btn.className = 'hidden';
+  confirmW.className = '';
+}
+
+function fmtDate(s) { return s ? s.slice(0, 10) : 'unknown'; }
+
+function describePlan(p) {
+  var inc = p.incoming, ex = p.existing;
+  var target = previewEl.checked
+    ? 'a separate "Tokens Sync — preview" page'
+    : 'the "Tokens Sync" page';
+  if (previewEl.checked) {
+    return 'Build ' + inc.sections + ' sections (code snapshot ' + fmtDate(inc.generated)
+      + ') into ' + target + '. The canonical page is left untouched.';
+  }
+  if (!ex.exists) {
+    return 'Create ' + target + ' with ' + inc.sections + ' sections (code snapshot '
+      + fmtDate(inc.generated) + ').';
+  }
+  return 'Replace ' + ex.sections + ' existing sections (snapshot ' + fmtDate(ex.generated)
+    + ') with ' + inc.sections + ' sections from code snapshot ' + fmtDate(inc.generated)
+    + ' on ' + target + '. This rebuilds the page to match code.';
+}
+
+btn.addEventListener('click', function() {
+  var url = urlEl.value.trim();
+  if (!url) { setStatus('Enter a Gist raw URL.', 'error'); return; }
+  try {
+    localStorage.setItem('tokens-sync-gist-url', url);
+    localStorage.setItem('tokens-sync-preview', previewEl.checked ? '1' : '0');
+  } catch(e) {}
+  btn.disabled = true;
+  setStatus('Fetching…');
+  fetch(url)
+    .then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      pendingData = data;
+      setStatus('Inspecting current page…');
+      parent.postMessage({ pluginMessage: { type: 'inspect', data: data } }, '*');
+    })
+    .catch(function(err) {
+      showIdle();
+      setStatus('Fetch error: ' + err.message, 'error');
+    });
+});
+
+confirmB.addEventListener('click', function() {
+  if (!pendingData) { showIdle(); return; }
+  setStatus('Building frames…');
+  parent.postMessage({
+    pluginMessage: {
+      type: 'apply',
+      data: pendingData,
+      mode: previewEl.checked ? 'preview' : 'replace'
+    }
+  }, '*');
+  confirmW.className = 'hidden';
+});
+
+cancelB.addEventListener('click', function() {
+  pendingData = null;
+  showIdle();
+  setStatus('Cancelled. Nothing was changed.');
+});
+
+window.onmessage = function(event) {
+  var msg = event.data.pluginMessage;
+  if (!msg) return;
+  if (msg.type === 'freshness') {
+    if (!msg.exists) {
+      setStatus('No "Tokens Sync" page yet — the first sync will create it.');
+    } else if (!msg.generated) {
+      setStatus('"Tokens Sync" page exists; code snapshot date unknown — re-sync to record it.');
+    } else {
+      var d = ageInDays(msg.generated);
+      var age = d === null ? '' : ' (' + d + ' day' + (d === 1 ? '' : 's') + ' old)';
+      setStatus('Figma reflects code as of ' + fmtDate(msg.generated) + age
+        + '. Sync to refresh.');
+    }
+  } else if (msg.type === 'plan') {
+    setStatus(describePlan(msg));
+    showConfirm();
+  } else if (msg.type === 'progress') {
+    setStatus(msg.text);
+  } else if (msg.type === 'done') {
+    pendingData = null;
+    showIdle();
+    setStatus(msg.text, 'ok');
+  } else if (msg.type === 'error') {
+    pendingData = null;
+    showIdle();
+    setStatus('Error: ' + msg.text, 'error');
+  }
+};
+</script>
+</body>
+</html>
