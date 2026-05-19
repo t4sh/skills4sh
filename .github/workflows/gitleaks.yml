@@ -3,8 +3,6 @@ name: gitleaks
 on:
   pull_request:
   push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -12,16 +10,23 @@ permissions:
   pull-requests: read
 
 jobs:
-  scan:
-    name: scan
+  gitleaks:
+    name: gitleaks
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # actions/checkout@v4
         with:
           fetch-depth: 0
-
       - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  scan:
+    name: scan
+    runs-on: ubuntu-latest
+    needs: gitleaks
+    steps:
+      - name: Confirm gitleaks passed
+        run: echo "gitleaks passed; preserving existing required scan context"
