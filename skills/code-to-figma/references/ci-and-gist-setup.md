@@ -37,6 +37,8 @@ Create a PAT at [github.com/settings/tokens](https://github.com/settings/tokens)
 
 ## 3 — CI workflow template
 
+The template below assumes **pnpm + Turborepo + static export**. Adapt the setup/build steps to the detected stack: swap `pnpm/action-setup` + `pnpm install` for the project's package manager (npm `actions/setup-node` cache `npm` + `npm ci`; yarn/bun equivalents), and replace the `pnpm turbo run build` line with the project's real build (`next build` with `output: 'export'`, `npm run build`, `eleventy`, etc.). Only the `node scripts/figma-export/walk-*.mjs` and Gist-patch steps are stack-agnostic.
+
 ```yaml
 name: Figma sync
 
@@ -171,5 +173,7 @@ The plugin reports how old the snapshot is when it opens ("Figma reflects code a
 | `GIST_TOKEN: ` (empty in CI log) | Secret not set | `gh secret set GIST_TOKEN ...` |
 | `GIST_PATCH failed: 404` | GIST_ID wrong or Gist deleted | Check `gh api gists/<id>` |
 | `GIST_PATCH failed: 403` | PAT missing `gist` scope | Create new PAT with gist scope |
+| `ENOENT` on the walker's `readFileSync(... index.html)` | Next.js (or other SSR/streamed framework) emitted no static HTML file | Enable `output: 'export'` in `next.config` and rebuild, or point the walker at a fully-static prerendered route — see the Next.js note in `walker-patterns.md`. Do not guess a `.next/server/app/page.html` path. |
+| `ENOENT` on the CSS read | CSS filename is content-hashed (Next.js `.next/static/css/*.css`) | Glob the hashed CSS name instead of hard-coding `tailwind.css`; feed all matched CSS into `parseClassVarMap` |
 | Plugin shows 0 sections | Walker found no section elements | Check section selectors in walker; verify the built HTML exists at the expected path |
 | Token binding fallback to grey | Token path not in variable collection | Confirm `tokenPath()` matches Figma variable names exactly |

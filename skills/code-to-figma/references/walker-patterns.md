@@ -90,6 +90,8 @@ function extractThemeVars(css) {
   const props = {};
   const re    = /--([a-zA-Z0-9_-]+):/g;
   re.lastIndex = open;
+  // 8000 = heuristic window over the @theme block. Raise it if the project's
+  // @theme declares more vars than fit in ~8 KB, or scan to the matching `}`.
   const chunk = css.slice(open, open + 8000);
   let m;
   while ((m = re.exec(chunk)) !== null) props[m[1]] = true;
@@ -373,9 +375,14 @@ Set `utilityMap = {}` and `themeText = ''`. All binding comes from `parseClassVa
 
 Point `parseClassVarMap` at the generated `variables.css`. The `tokenPath()` function may be simpler if Style Dictionary already emits slash-separated groups.
 
-### Next.js / React (pre-rendered)
+### Next.js / React
 
-The built HTML is in `.next/server/app/page.html` or similar. Sections identified by `data-testid` or `aria-label` are more reliable than element selectors in SSR output.
+A default Next.js build (App **or** Pages router) does **not** emit a single walkable HTML file — pages are server-rendered/streamed. The walker needs static HTML, so one of these is required:
+
+- **Static export (recommended):** set `output: 'export'` in `next.config` and build. This emits `out/index.html` (and `out/<route>/index.html`) — point `OUT_DIR` at `out/`, exactly like the default template. State this `next.config` change to the user; it is a behaviour-changing prerequisite, not optional.
+- **Per-route prerender:** for a statically-prerenderable route, the prerendered markup is under `.next/server/app/<route>.html` (App Router) or `.next/server/pages/<route>.html` (Pages Router) **only when that route is fully static**. Dynamic/streamed routes produce no such file — do not assume `page.html` exists.
+
+Next.js CSS is content-hashed under `.next/static/css/*.css` (not a predictable `tailwind.css`/`components.css` pair). With static export the hashed CSS is copied into `out/...`. Resolve the CSS file by globbing the hashed name rather than hard-coding it, and feed all matched CSS into `parseClassVarMap` (there may be a single combined file, not the two-file split the Tailwind v4 template assumes). Sections identified by `data-testid` or `aria-label` are more reliable than element selectors in framework output.
 
 ### Eleventy / Nunjucks
 

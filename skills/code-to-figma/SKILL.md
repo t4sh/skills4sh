@@ -47,7 +47,7 @@ Read in this order before generating anything:
    - Custom CSS: look for a file with `--token-name: value;` custom property declarations
    - Style Dictionary: `tokens.json`, `variables.css`, or generated output in `dist/`
 3. **Component CSS** — look for a `components.css` or `utilities.css` alongside the main CSS file
-4. **Built HTML** — the compiled output page, not source templates. Common paths: `out/index.html`, `dist/index.html`, `_site/index.html`
+4. **Built HTML** — the compiled output page, not source templates. Common paths: `out/index.html`, `dist/index.html`, `_site/index.html`. **Next.js**: a default build emits no single HTML file; require `output: 'export'` (yields `out/index.html`) before proceeding — see the Next.js note in [`references/walker-patterns.md`](references/walker-patterns.md). If no static HTML artifact can be produced, stop and tell the user rather than guessing a path.
 5. **Token naming convention** — read the CSS custom property names, extract the prefix-to-group mapping (e.g. `beige-*` → `palette/beige/`, `fs-*` → `typography/scale/`)
 6. **Section structure** — scan the HTML for how sections are delimited: `<section id="...">`, `[data-section]`, `<article>`, header/footer landmarks, etc.
 

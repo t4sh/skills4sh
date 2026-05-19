@@ -13,11 +13,11 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: 1b181c616f93a2e4d4e8f6a17ba125d21cdac1792bd103a4450f1f287b0253c2
+    SKILL.md: e70c15d26d86ea7586a917c20d15167eecf66eeffa7e16f420f91b854bfef638
     references/benchmarks.md: fe2f9f9b199a6c5195d70f9ef825e4f534a35387a2280f585fa6d7f85a002872
-    references/ci-and-gist-setup.md: 8305ee86c0593d13274d0f9adc672a825db044398516551e8c9a37bf44869e3a
+    references/ci-and-gist-setup.md: 38a1c06d36c5daebe9536e4ef1b5ac31db48180bcf17d0a42058728d76d7990b
     references/figma-export-contract.md: 08e0cc4939a35249077438662e90c00ab2d1513e52c375bfb4636166ee991bb8
-    references/walker-patterns.md: f8a839621af8c12e8acf056c5bf993644ae996095bfd91c85bc28d6d15dfc0b5
+    references/walker-patterns.md: 58f4a64943c499fee78152b0f944192abe586601954b63df8bdb02d39142c194
 
 permissions:
   alwaysAllow: []
