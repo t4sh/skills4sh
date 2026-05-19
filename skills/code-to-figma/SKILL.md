@@ -1,6 +1,6 @@
 ---
 name: code-to-figma
-description: "Use this skill when the user asks to 'sync code to Figma', 'export design tokens to Figma', 'set up a Figma sync pipeline', 'wire up the tokens-sync-to-figma plugin', 'generate a figma-export.json', 'create a page walker', or 'keep Figma up to date with the codebase'. It assesses the target project's CSS/token system and page structure, generates a project-specific walker script and supporting scripts, wires CI, and connects to a GitHub Gist that the tokens-sync-to-figma Figma plugin consumes."
+description: "This skill should be used when the user asks to 'sync code to Figma', 'export design tokens to Figma', 'set up a Figma sync pipeline', 'wire up the tokens-sync-to-figma plugin', 'generate a figma-export.json', 'create a page walker', or 'keep Figma up to date with the codebase'. It assesses the target project's CSS/token system and page structure, generates a project-specific walker script and supporting scripts, wires CI, and connects to a GitHub Gist that the tokens-sync-to-figma Figma plugin consumes."
 license: MIT
 compatibility: macOS, Linux, or Windows with Node.js and the GitHub CLI (`gh`)
 metadata:

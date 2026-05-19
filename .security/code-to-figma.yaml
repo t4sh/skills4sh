@@ -13,7 +13,7 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: ac86513149838f813ae8c67d7b85f09c723ed60e194464e191eb08bcaeeb220b
+    SKILL.md: 7bb2185f5a05805ad5b13e8a0261044fecdb49640cbb1656b1e7d66b1d151be5
     references/benchmarks.md: fe2f9f9b199a6c5195d70f9ef825e4f534a35387a2280f585fa6d7f85a002872
     references/ci-and-gist-setup.md: 8305ee86c0593d13274d0f9adc672a825db044398516551e8c9a37bf44869e3a
     references/figma-export-contract.md: 08e0cc4939a35249077438662e90c00ab2d1513e52c375bfb4636166ee991bb8
