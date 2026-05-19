@@ -8,6 +8,7 @@
       "assert protection matches .github/branch-protection.expected.json",
       "bin/ matches tag for current package.json version",
       "dependency-review",
+      "gitleaks",
       "scan",
       "scan (agent-memory, 22)",
       "scan (agent-memory, 24)",
