@@ -92,6 +92,15 @@ try {
   if (localStorage.getItem('tokens-sync-preview') === '1') previewEl.checked = true;
 } catch(e) {}
 
+// Ask the sandbox how fresh the canonical page is (continuous-freshness cue)
+parent.postMessage({ pluginMessage: { type: 'status' } }, '*');
+
+function ageInDays(iso) {
+  var t = Date.parse(iso);
+  if (isNaN(t)) return null;
+  return Math.floor((Date.now() - t) / 86400000);
+}
+
 function setStatus(msg, type) {
   status.textContent = msg;
   status.className = type || '';
@@ -175,7 +184,18 @@ cancelB.addEventListener('click', function() {
 window.onmessage = function(event) {
   var msg = event.data.pluginMessage;
   if (!msg) return;
-  if (msg.type === 'plan') {
+  if (msg.type === 'freshness') {
+    if (!msg.exists) {
+      setStatus('No "Tokens Sync" page yet — the first sync will create it.');
+    } else if (!msg.generated) {
+      setStatus('"Tokens Sync" page exists; code snapshot date unknown — re-sync to record it.');
+    } else {
+      var d = ageInDays(msg.generated);
+      var age = d === null ? '' : ' (' + d + ' day' + (d === 1 ? '' : 's') + ' old)';
+      setStatus('Figma reflects code as of ' + fmtDate(msg.generated) + age
+        + '. Sync to refresh.');
+    }
+  } else if (msg.type === 'plan') {
     setStatus(describePlan(msg));
     showConfirm();
   } else if (msg.type === 'progress') {

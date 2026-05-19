@@ -28,9 +28,20 @@ In one line: **CI-anchored, designer-operated, zero-credential token sync** — 
 2. **Export → Gist.** CI publishes that JSON to a GitHub Gist and exposes its **raw** URL.
 3. **Gist → Figma.** A designer opens the plugin, pastes the Gist raw URL once (it is remembered), and clicks **Sync from CI**. The plugin rebuilds a page named **`Tokens Sync`**, one auto-layout frame per section, with every fill, font, size, and spacing **bound to a variable** in the local **`Design Tokens`** collection.
 
-### "…and back"
+### One half of a deliberate pair
 
-The plugin itself is one-directional (code → Figma): it never writes back to your repo. The round-trip is closed by **variables**, not by the plugin overwriting code. Because every imported property is bound to a named variable in the `Design Tokens` collection (rather than a hard-coded value), designers edit *tokens*, not detached styles. Those token names match the code-side tokens 1:1, so a design change is expressed in the same vocabulary the codebase uses — making it reviewable and portable back into code by your normal token workflow. The codebase stays the source of truth; Figma stays a faithful, re-syncable mirror.
+This plugin is **intentionally one-directional: code → Figma only.** It is the *freshness* leg — its single job is keeping Figma continuously current with code changes, with the lowest possible recurring friction. It never writes back to your repo.
+
+The reverse leg (Figma → code) is a separate, explicitly different tool: the **`figma-to-code`** skill in this repo. That separation is the design, not a gap:
+
+| Direction | Tool | Job |
+|---|---|---|
+| code → Figma | **this plugin** | Keep Figma a faithful, re-syncable mirror of committed code — zero-credential, designer-operated. |
+| Figma → code | [`figma-to-code`](../../skills/figma-to-code/) skill | Bring design-side changes back into the codebase via the agent/MCP workflow. |
+
+Because every imported property is bound to a *named* variable in the `Design Tokens` collection (not a hard-coded value), designers edit tokens whose names match the code-side tokens 1:1 — which is exactly what makes the `figma-to-code` leg tractable. The codebase stays the source of truth; this plugin keeps Figma honest about it.
+
+Freshness is surfaced, not assumed: on open, the plugin reports how old the mirrored snapshot is (e.g. *"Figma reflects code as of 2026-05-19 (3 days old)"*) so a stale mirror is visible before anyone designs against it.
 
 ## Setup in Figma
 
@@ -66,7 +77,25 @@ The collection and variables are **not created by the plugin** — generate them
 }
 ```
 
-All `*Token` fields are optional. A missing or unmatched token falls back to a sane default (neutral grey / Inter / 14px) rather than failing the import.
+All `*Token` fields are optional. A missing or unmatched token falls back to a sane default (neutral grey / Inter / 14px) rather than failing the import. A malformed export (no `sections` array, non-array `nodes`) is rejected **before** any page is touched — the mirror is never wiped for a bad artifact.
+
+A complete, valid sample is in [`example/figma-export.json`](example/figma-export.json) — paste its Gist-hosted equivalent to try the plugin without wiring CI first.
+
+## Generating the export in CI
+
+The plugin does not care *how* the export is produced — only that the `{ meta, sections[] }` shape is honoured. [`example/generate-figma-export.mjs`](example/generate-figma-export.mjs) is an illustrative generator; adapt its `loadLayout()` to your real token source (Style Dictionary build, theme module, etc.). A minimal GitHub Actions step:
+
+```yaml
+- name: Publish figma-export.json
+  run: |
+    node example/generate-figma-export.mjs > figma-export.json
+    gh gist edit "$FIGMA_EXPORT_GIST_ID" -f figma-export.json
+  env:
+    GH_TOKEN: ${{ secrets.GIST_TOKEN }}
+    FIGMA_EXPORT_GIST_ID: ${{ vars.FIGMA_EXPORT_GIST_ID }}
+```
+
+The Gist's **raw** URL is what a designer pastes once into the plugin. After the first paste the URL and the preview-mode choice are remembered, so each subsequent refresh is a single click.
 
 ## Install (local / unpublished)
 
@@ -78,6 +107,16 @@ All `*Token` fields are optional. A missing or unmatched token falls back to a s
 
 - `documentAccess: "dynamic-page"` — required by current Figma; pages/variables are loaded via the async APIs (`getLocalVariablesAsync`, `loadAllPagesAsync`, `setCurrentPageAsync`).
 - `networkAccess.allowedDomains: ["https://gist.githubusercontent.com"]` — the only outbound host; the plugin fetches the export JSON and nothing else.
+
+## Changelog
+
+### 0.1.0
+
+- Initial release: CI-anchored, zero-credential code → Figma token sync.
+- Inspect-then-confirm flow with schema validation before any destructive rebuild.
+- Optional preview page (build without replacing the canonical page).
+- Continuous-freshness indicator: reports how old the mirrored snapshot is on open.
+- Sample export + illustrative CI generator under `example/`.
 
 ## License
 

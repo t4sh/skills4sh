@@ -186,6 +186,17 @@ async function buildSection(sectionData, yOffset) {
   return frame;
 }
 
+// ── Step 0: status — report how fresh the canonical page is, no write ─────
+async function runStatus() {
+  await figma.loadAllPagesAsync();
+  var page = findPage(PAGE_NAME);
+  figma.ui.postMessage({
+    type: 'freshness',
+    exists: !!page,
+    generated: page ? (page.getPluginData(GENERATED_KEY) || '') : ''
+  });
+}
+
 // ── Step 1: inspect — validate + describe the change, never write ─────────
 async function runInspect(exportData) {
   var err = validateExport(exportData);
@@ -252,7 +263,11 @@ async function runApply(exportData, mode) {
 // ── Message handler ────────────────────────────────────────────────────────
 figma.ui.onmessage = function(msg) {
   if (!msg) return;
-  if (msg.type === 'inspect') {
+  if (msg.type === 'status') {
+    runStatus().catch(function(err) {
+      figma.ui.postMessage({ type: 'error', text: err.message });
+    });
+  } else if (msg.type === 'inspect') {
     runInspect(msg.data).catch(function(err) {
       figma.ui.postMessage({ type: 'error', text: err.message });
     });

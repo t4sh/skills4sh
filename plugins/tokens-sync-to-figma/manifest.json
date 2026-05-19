@@ -1,6 +1,7 @@
 {
   "name": "Tokens sync to Figma",
   "id": "tokens-sync-to-figma",
+  "version": "0.1.0",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "ui.html",
