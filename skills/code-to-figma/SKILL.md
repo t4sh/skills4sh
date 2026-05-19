@@ -2,7 +2,7 @@
 name: code-to-figma
 description: "Use this skill when the user asks to 'sync code to Figma', 'export design tokens to Figma', 'set up a Figma sync pipeline', 'wire up the tokens-sync-to-figma plugin', 'generate a figma-export.json', 'create a page walker', or 'keep Figma up to date with the codebase'. It assesses the target project's CSS/token system and page structure, generates a project-specific walker script and supporting scripts, wires CI, and connects to a GitHub Gist that the tokens-sync-to-figma Figma plugin consumes."
 license: MIT
-compatibility: Any Node.js project with CSS custom properties or a token system
+compatibility: macOS, Linux, or Windows with Node.js and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
   version: "0.1.0"
@@ -187,6 +187,8 @@ Report:
 | Sync an existing Gist manually | `/code-to-figma sync` |
 
 This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the Figma-side consumer — this skill produces the artifact it reads.
+
+See [`references/benchmarks.md`](references/benchmarks.md) for peer skills on [skills.sh](https://skills.sh) and positioning notes.
 
 ## Operating Principles
 

@@ -1,0 +1,83 @@
+# OWASP Agentic Skills Top 10 (AST10) Manifest
+# Canonical security manifest for code-to-figma skill
+# https://owasp.org/www-project-agentic-skills-top-10/
+
+skill:
+  name: code-to-figma
+  version: "0.1.0"
+  license: MIT
+  author: t4sh
+  repository: https://github.com/t4sh/skills4sh
+  path: skills/code-to-figma
+
+integrity:
+  hash_algorithm: sha256
+  files:
+    SKILL.md: ac86513149838f813ae8c67d7b85f09c723ed60e194464e191eb08bcaeeb220b
+    references/benchmarks.md: fe2f9f9b199a6c5195d70f9ef825e4f534a35387a2280f585fa6d7f85a002872
+    references/ci-and-gist-setup.md: 8305ee86c0593d13274d0f9adc672a825db044398516551e8c9a37bf44869e3a
+    references/figma-export-contract.md: 08e0cc4939a35249077438662e90c00ab2d1513e52c375bfb4636166ee991bb8
+    references/walker-patterns.md: f8a839621af8c12e8acf056c5bf993644ae996095bfd91c85bc28d6d15dfc0b5
+
+permissions:
+  alwaysAllow: []
+  rationale: "No always-allowed permissions; script generation, CLI calls, and Gist writes are all gated by user approval at runtime"
+
+execution_context:
+  sandbox: host-agent
+  network: outbound-only
+  filesystem: read-write
+  shell: limited
+  risk_tier: medium
+
+dependencies:
+  - name: Node.js
+    type: system
+    optional: false
+    reason: "Runs the generated walker and token-conversion scripts (.mjs)"
+  - name: GitHub CLI (gh)
+    type: system
+    optional: false
+    reason: "Creates the export Gist, sets repository secrets, and triggers/inspects the CI workflow"
+  - name: node-html-parser
+    type: npm
+    optional: false
+    reason: "The generated walker parses compiled HTML to resolve class -> token bindings"
+  - name: jq
+    type: system
+    optional: true
+    reason: "Used in verification snippets to validate the generated figma-export.json"
+
+scanning:
+  guardskills: SAFE
+  guardskills_risk_score: 25.5
+  guardskills_note: "guardskills@1.2.1 scan-local reports SAFE. Findings are instructional script/CI templates, not runtime behavior of the skill itself. See expected_findings."
+  snyk: pass
+  codeql: pass
+  expected_findings:
+    - id: R009_FILE_STAGE
+      severity: low
+      confidence: low
+      file: SKILL.md
+      reason: "Instructional `/tmp/figma-export.json` staging in the sync/verify command examples — documentation, not skill-side file staging."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: references/ci-and-gist-setup.md
+      reason: "CI workflow template references GIST_TOKEN / GIST_ID via GitHub Actions secrets — the secure pattern, shown as an example."
+    - id: R009_FILE_STAGE
+      severity: low
+      confidence: low
+      file: references/ci-and-gist-setup.md
+      reason: "Instructional `/tmp/figma-export-init.json` and `/tmp/figma-export.json` staging in the Gist-setup and CI guide — documentation snippets."
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      acknowledged: true
+      file: references/walker-patterns.md
+      reason: "False positive. The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — this is the recommended way to source a token from the environment rather than hardcoding it. No secret file or credential store is read; the value is supplied by CI secrets at runtime, and the script is an adaptable template, not executed by the skill."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: references/walker-patterns.md
+      reason: "The generic pusher template reads `process.env.GIST_TOKEN` / `GIST_ID` so credentials come from the environment instead of being hardcoded — the secure pattern guardskills encourages."

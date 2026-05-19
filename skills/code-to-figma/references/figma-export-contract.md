@@ -8,7 +8,7 @@ The Gist artifact consumed by the `tokens-sync-to-figma` Figma plugin.
 {
   "meta": {
     "generated": "2026-05-19T12:00:00Z",  // ISO timestamp — shown in plugin done message
-    "source": "apps/web-neo/out/index.html", // optional, for traceability
+    "source": "apps/site/out/index.html", // optional, for traceability
     "variableCollection": "Design Tokens",   // Figma variable collection name, optional
     "figmaFile": "<file-key>"                // optional
   },

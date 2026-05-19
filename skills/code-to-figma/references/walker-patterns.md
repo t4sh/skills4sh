@@ -19,7 +19,7 @@ const ROOT      = resolve(__dirname, '../../');
 
 // ── Project-specific paths ────────────────────────────────────────────────────
 // Adapt to the actual build output directory and CSS file names.
-const OUT_DIR   = resolve(ROOT, 'apps/web-neo/out');       // ← adapt
+const OUT_DIR   = resolve(ROOT, 'apps/site/out');       // ← adapt
 const ASSETS    = resolve(OUT_DIR, 'assets/css');           // ← adapt if different
 
 // ── CSS var name → W3C DTCG slash path ───────────────────────────────────────
@@ -188,7 +188,7 @@ const sections = [];
 // Adapt selectors to the project's actual HTML structure.
 
 // Pattern A: named header landmark
-const heroEl = root.querySelector('header.neo-hero') || root.querySelector('[class*=hero]');
+const heroEl = root.querySelector('header.site-hero') || root.querySelector('[class*=hero]');
 if (heroEl) {
   const classes = (heroEl.getAttribute('class') || '').split(/\s+/).filter(Boolean);
   sections.push({
@@ -220,7 +220,7 @@ for (const el of root.querySelectorAll('section[id]')) {
 const output = {
   meta: {
     generated: new Date().toISOString(),
-    source: 'apps/web-neo/out/index.html',  // ← adapt
+    source: 'apps/site/out/index.html',  // ← adapt
   },
   sections,
 };
@@ -252,7 +252,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // ── Adapt: point to the compiled CSS with custom property declarations ─────────
-const css = readFileSync(resolve(__dirname, '../../apps/web-neo/out/assets/css/tailwind.css'), 'utf8');
+const css = readFileSync(resolve(__dirname, '../../apps/site/out/assets/css/tailwind.css'), 'utf8');
 
 // ── MUST match tokenPath() in the walker exactly ──────────────────────────────
 function tokenPath(name) {

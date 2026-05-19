@@ -8,7 +8,10 @@
       "computedHash": "7bda0207f4c429f34d8095b76fab34738f068e2a3ebaf54f5140943b821f0a9c"
     },
     "code-to-figma": {
-      "computedHash": "7316af0a009987de7e2ad9f51b2a9ef1b1da35efd4ee3855fc58197370ff9447"
+      "source": "t4sh/skills4sh",
+      "sourceType": "github",
+      "version": "0.1.0",
+      "computedHash": "350afe9191d5441ab98df809cc7c7a0c3e0432150323513af252409d00ff7e0a"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
