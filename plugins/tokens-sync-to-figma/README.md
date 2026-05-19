@@ -53,6 +53,8 @@ Freshness is surfaced, not assumed: on open, the plugin reports how old the mirr
 
 The collection and variables are **not created by the plugin** — generate them from the same code tokens (e.g. a Variables import step) so both sides share one naming scheme.
 
+> **v1 scope note.** Creating the variable collection is a one-time prerequisite you handle separately in v1. In v1.1 the Gist will carry a `tokens` section (W3C DTCG format) alongside `sections`, and the plugin will create or update the collection automatically on every sync — eliminating this prerequisite entirely. That work is paired with a companion `code-to-figma` skill that does the intelligent extraction on the code side and populates both halves of the Gist.
+
 ## `figma-export.json` contract
 
 ```jsonc
