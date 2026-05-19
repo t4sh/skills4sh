@@ -12,6 +12,8 @@
       "scan",
       "scan (agent-memory, 22)",
       "scan (agent-memory, 24)",
+      "scan (code-to-figma, 22)",
+      "scan (code-to-figma, 24)",
       "scan (discord-harvest, 22)",
       "scan (discord-harvest, 24)",
       "scan (eleventy-nunjucks, 22)",

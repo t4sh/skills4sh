@@ -7,6 +7,12 @@
       "version": "2.7.0",
       "computedHash": "7bda0207f4c429f34d8095b76fab34738f068e2a3ebaf54f5140943b821f0a9c"
     },
+    "code-to-figma": {
+      "source": "t4sh/skills4sh",
+      "sourceType": "github",
+      "version": "0.1.0",
+      "computedHash": "05842c44e041e3bb866022381eb6ed78378b29e2e2f49fbdada2602b8d91371b"
+    },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
