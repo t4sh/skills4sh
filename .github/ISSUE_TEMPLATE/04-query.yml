@@ -1,0 +1,49 @@
+name: Query or clarification
+description: Ask a non-security query about usage, contribution process, docs, or project direction.
+title: "[Query]: "
+labels: ["question", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for non-security queries or questions. Security reports belong in the private disclosure process linked from SECURITY.md.
+  - type: checkboxes
+    id: existing
+    attributes:
+      label: Existing issue check
+      options:
+        - label: I have searched existing issues and the README/CONTRIBUTING docs first.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Related area
+      description: Pick the most specific area for this question.
+      options:
+        - agent-memory skill
+        - code-to-figma skill
+        - discord-harvest skill
+        - eleventy-nunjucks skill
+        - figma-to-code skill
+        - localhost-screenshots skill
+        - tokens-sync-to-figma plugin
+        - installer / CLI
+        - CI / release / security
+        - documentation
+        - repository / general
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What do you need clarified?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to do, and what docs or commands have you already checked?
+    validations:
+      required: false

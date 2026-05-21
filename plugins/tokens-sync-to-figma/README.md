@@ -122,4 +122,4 @@ The Gist's **raw** URL is what a designer pastes once into the plugin. After the
 
 ## License
 
-MIT — see the repository [LICENSE](../../LICENSE).
+MIT - see [LICENSE](LICENSE) for Details. The root repository license is also available at [../../LICENSE](../../LICENSE).
