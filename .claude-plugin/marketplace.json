@@ -11,7 +11,7 @@
       "name": "skills4sh",
       "source": ".",
       "description": "Agent skills: agent-memory (persistent project memory), code-to-figma (CI-anchored code → Figma token export pipeline), discord-harvest (Discord content extraction), eleventy-nunjucks (11ty + Nunjucks conventions), figma-to-code (repo-first Figma MCP implementation, tokens, rules, and Code Connect), localhost-screenshots (responsive screenshot capture)",
-      "version": "0.4.8",
+      "version": "0.4.9",
       "author": {
         "name": "t4sh"
       },

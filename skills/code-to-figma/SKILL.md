@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Node.js and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.1.0"
+  version: "0.1.1"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 

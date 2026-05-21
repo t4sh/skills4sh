@@ -1,0 +1,63 @@
+name: Feature request
+description: Request new behavior or capability for a skill, plugin, installer, CI, docs, or repository workflow.
+title: "[Feature]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests should name the exact skill, plugin, or general area and describe the user workflow it improves.
+  - type: checkboxes
+    id: existing
+    attributes:
+      label: Existing issue check
+      options:
+        - label: I have searched existing issues and confirmed this is not a duplicate.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Pick the most specific area for this feature.
+      options:
+        - agent-memory skill
+        - code-to-figma skill
+        - discord-harvest skill
+        - eleventy-nunjucks skill
+        - figma-to-code skill
+        - localhost-screenshots skill
+        - tokens-sync-to-figma plugin
+        - installer / CLI
+        - CI / release / security
+        - documentation
+        - repository / general
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or workflow gap
+      description: What user workflow is blocked, slow, unsafe, or unclear today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed feature
+      description: Describe the feature, including expected behavior and any inputs/outputs.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Mention workarounds or different approaches you considered.
+    validations:
+      required: false
+  - type: textarea
+    id: compatibility
+    attributes:
+      label: Compatibility and verification notes
+      description: Note affected hosts, operating systems, package versions, security permissions, or tests that should prove the feature.
+    validations:
+      required: false

@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.3.0"
+  version: "3.3.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,16 +13,18 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    SKILL.md: a3b908cd8ef8ed3ff72d484c8412c2f788286b58ac921c313ed6c4271c0cde31
-    references/playwright-patterns.md: 7c7fef9a9b11a32022adc174245312e0eb83b47bf8e2a78cc8b6c47919ec8898
-    references/visual-regression.md: 6a5c9e1e86db76a904d95a0f84057c8e723b68ccf96471effc35493156c418d7
-    references/interaction-templates.md: f0afda29a1d4b57b1dc71ea14c4f6f37ad6a6f5323d5e61a066c02a5a8c3e46a
-    references/ai-snapshots.md: 0f432c92e54af564df641ad162de51323b5d217e017fa05f649f155082d4ef9d
-    references/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
+    SKILL.md: 6f9495a872ae2c46b712dfeaf521973e39571ce2e4e8196b7baf188f4fb7e1ff
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
-    assets/scripts/quick.js: 08a6b35dcc8b016b5cdd1cb6a71bb7ff9a9a3f2ef445305b6c4ac6d7ee3d61e1
     assets/scripts/multi-breakpoint.js: eab0ad3ceb08067d252d22ef45241724dba05e2eb62db77181a2643cd412ce14
+    assets/scripts/quick.js: 08a6b35dcc8b016b5cdd1cb6a71bb7ff9a9a3f2ef445305b6c4ac6d7ee3d61e1
     assets/scripts/screenshot-a11y.js: cb0e50c1a703e874a739ee6bbc8c1a3c74a327bd1f47b1cc10b49bb5cff3669e
+    references/ai-snapshots.md: 0f432c92e54af564df641ad162de51323b5d217e017fa05f649f155082d4ef9d
+    references/interaction-templates.md: f0afda29a1d4b57b1dc71ea14c4f6f37ad6a6f5323d5e61a066c02a5a8c3e46a
+    references/playwright-patterns.md: 7c7fef9a9b11a32022adc174245312e0eb83b47bf8e2a78cc8b6c47919ec8898
+    references/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
+    references/visual-regression.md: 6a5c9e1e86db76a904d95a0f84057c8e723b68ccf96471effc35493156c418d7
+
 
 permissions:
   alwaysAllow: []

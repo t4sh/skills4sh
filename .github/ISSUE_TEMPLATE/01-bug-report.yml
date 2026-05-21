@@ -1,0 +1,88 @@
+name: Bug report
+description: Report reproducible broken behavior in a skill, plugin, installer, CI, docs, or repository workflow.
+title: "[Bug]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please identify the exact skill, plugin, or repository area so it can be routed quickly.
+  - type: checkboxes
+    id: existing
+    attributes:
+      label: Existing issue check
+      options:
+        - label: I have searched existing issues and confirmed this is not a duplicate.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Pick the most specific area affected by the bug.
+      options:
+        - agent-memory skill
+        - code-to-figma skill
+        - discord-harvest skill
+        - eleventy-nunjucks skill
+        - figma-to-code skill
+        - localhost-screenshots skill
+        - tokens-sync-to-figma plugin
+        - installer / CLI
+        - CI / release / security
+        - documentation
+        - repository / general
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or ref
+      description: Package version, skill version, commit SHA, branch, or plugin version if known.
+      placeholder: "skills4sh 0.4.8, agent-memory 2.7.0, main@<sha>, etc."
+    validations:
+      required: false
+  - type: textarea
+    id: current
+    attributes:
+      label: What happened?
+      description: Describe the observed behavior and why it is wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: Describe the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the smallest command, skill invocation, plugin action, or CI path that reproduces the bug.
+      placeholder: |
+        1. Run ...
+        2. Open ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      value: |
+        - OS:
+        - Node:
+        - Agent / host app:
+        - Package manager:
+      render: markdown
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Paste relevant logs, terminal output, CI links, or screenshots. Remove secrets before submitting.
+      render: shell
+    validations:
+      required: false

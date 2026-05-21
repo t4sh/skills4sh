@@ -8,7 +8,14 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+### Added
+- GitHub issue forms for bug reports, feature requests, suggestions, and questions, each requiring the affected skill, plugin, or general repository area.
+- Folder-local MIT `LICENSE` files for every skill and plugin so individually installed bundles carry their license text.
+
 ### Changed
+- PR template now requires a `feature/`, `fix/`, `docs/`, `chore/`, or `update/` category, affected-area selection, and explicit mandatory-check reporting for all PRs.
+- Contributor guidance now documents issue form usage, PR categories, and package/payload verification expectations.
+- Package metadata bumped to 0.4.9 and skill bundle patch versions bumped for the per-folder license inclusion.
 - **`eleventy-nunjucks` 0.1.1** constrains third-party fetch examples: build data now prefers checked-in/generated JSON, async filters are documented as local/deterministic only, and upstream-doc lookup is framed as constrained official-doc reference material.
 
 ## [0.4.7] — 2026-05-12

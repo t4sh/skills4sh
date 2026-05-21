@@ -1,0 +1,56 @@
+name: Suggestion or improvement
+description: Suggest a refinement, cleanup, wording improvement, or process change that is not a full feature request.
+title: "[Suggestion]: "
+labels: ["suggestion", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Suggestions are for improvements that may not require new functionality. Please still identify the affected skill, plugin, or general area.
+  - type: checkboxes
+    id: existing
+    attributes:
+      label: Existing issue check
+      options:
+        - label: I have searched existing issues and confirmed this is not a duplicate.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      description: Pick the most specific area for this suggestion.
+      options:
+        - agent-memory skill
+        - code-to-figma skill
+        - discord-harvest skill
+        - eleventy-nunjucks skill
+        - figma-to-code skill
+        - localhost-screenshots skill
+        - tokens-sync-to-figma plugin
+        - installer / CLI
+        - CI / release / security
+        - documentation
+        - repository / general
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggestion
+      description: What should change?
+    validations:
+      required: true
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Benefit
+      description: Who benefits, and how does this make the repo, skill, plugin, or docs clearer, safer, or easier to maintain?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Suggested scope
+      description: If known, list files, sections, or checks likely affected.
+    validations:
+      required: false

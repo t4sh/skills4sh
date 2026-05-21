@@ -10,6 +10,27 @@ If you are unsure whether a change fits, open a draft PR or an issue first.
 
 ---
 
+## Issues and pull requests
+
+Use the structured issue forms so every report names the affected skill, plugin, or general repository area clearly:
+
+- **Bug report** — reproducible broken behavior in a skill, plugin, installer, CI, docs, or repository workflow.
+- **Feature request** — new behavior or capability.
+- **Suggestion or improvement** — refinement, cleanup, wording improvement, or process change that is not a full feature.
+- **Question or clarification** — non-security usage, contribution-process, or project-direction questions.
+
+Security vulnerabilities are not tracked in public issues; follow the private disclosure process in [SECURITY.md](SECURITY.md).
+
+PRs should use the branch/category prefix that best describes the work:
+
+- `feature/` — new capability or behavior.
+- `fix/` — bug fix or correctness/security fix.
+- `docs/` — documentation-only change.
+- `chore/` — maintenance, CI, release, dependency, or repo hygiene.
+- `update/` — content refresh, version/hash sync, or non-behavioral skill/plugin update.
+
+Every PR, including maintainer PRs, must identify the exact affected area: specific skill, specific plugin, installer/CLI, CI/release/security, docs, or repository/general.
+
 ## Repository layout
 
 ```text
@@ -149,7 +170,7 @@ Requirements:
 3. **No private or project-internal identifiers.** No customer names, internal collection/page names, internal hostnames, or org jargon hardcoded in source. Use generic, configurable names. This repo is public.
 4. **No secrets.** No tokens, gist URLs tied to a private account, or credentials committed. User-supplied URLs/keys belong in plugin UI inputs, not source.
 5. **Least-privilege access.** Declare the narrowest host/permission scope the plugin needs (e.g. an explicit `networkAccess.allowedDomains` allowlist rather than allow-all) and justify it in the README.
-6. **License.** State MIT in the README and point at the repository [LICENSE](LICENSE).
+6. **License.** Include a folder-local `LICENSE` file and state `MIT - see [LICENSE](LICENSE) for Details.` in the plugin README.
 
 Plugins are not delivered by `npx skills add`; they are imported directly into their host per the plugin README.
 
@@ -161,13 +182,20 @@ Plugins are not delivered by `npx skills add`; they are imported directly into t
 
 ## Local check suite
 
-Run these before pushing. CI runs the same set.
+Run these before pushing. CI runs the same set. If a check cannot run, record the reason in the PR template; this applies to maintainer PRs too.
 
 ```bash
 npm run check:drift          # cross-file metadata + semver monotonicity
 npm run check:guardskills    # security scan vs. .security/*.yaml expected findings
 node bin/hash-check.mjs      # skills-lock.json hash verification
 npm test                     # installer unit + integration tests
+```
+
+Run the payload/release checks when the PR touches package contents or package-version metadata:
+
+```bash
+npm run check:pack           # npm package payload verification
+npm run check:release        # release metadata and version preflight
 ```
 
 The pre-commit hook runs `bin/hash-check.mjs` automatically once wired:
