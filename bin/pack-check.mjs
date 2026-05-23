@@ -7,6 +7,7 @@
 // after the package is live.
 
 import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -45,6 +46,7 @@ try {
 
   console.log("✓ npm pack includes npm-shrinkwrap.json + scripts stripped from published package.json");
 } finally {
+  restorePackageJsonBackup();
   await rm(tmp, { recursive: true, force: true });
 }
 
@@ -77,4 +79,16 @@ function run(command, args, options) {
     throw new Error(`${command} ${args.join(" ")} failed\n${result.stderr || result.stdout}`);
   }
   return result;
+}
+
+function restorePackageJsonBackup() {
+  if (!existsSync(join(root, "package.json.prepack.bak"))) return;
+  const result = spawnSync(process.execPath, ["bin/clean-package-for-publish.mjs", "postpack"], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  if (result.status !== 0) {
+    console.error(result.stderr || result.stdout);
+  }
 }

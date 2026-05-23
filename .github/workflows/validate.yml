@@ -10,6 +10,8 @@ on:
       - 'README.md'
       - 'SECURITY.md'
       - 'AGENTS.md'
+      - 'CLAUDE.md'
+      - 'GEMINI.md'
       - '.security/**'
       - '.cursor-plugin/**'
       - '.claude-plugin/**'

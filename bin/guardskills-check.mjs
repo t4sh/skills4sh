@@ -31,7 +31,25 @@ for (const skill of skills) {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
+    timeout: 120_000,
   });
+
+  if (result.error?.code === "ETIMEDOUT") {
+    console.error(`✗ ${skill}: guardskills timed out after 120s`);
+    ok = false;
+    continue;
+  }
+
+  if (result.status !== 0 && !result.stdout.trim()) {
+    const stderr = result.stderr.trim();
+    const hint = /ENOTFOUND|EAI_AGAIN|ECONNREFUSED|network request|registry\.npmjs\.org/i.test(stderr)
+      ? "guardskills could not be downloaded from npm; check network access or install/cache the pinned package before running this check."
+      : "guardskills exited without JSON output.";
+    console.error(`✗ ${skill}: ${hint}`);
+    if (stderr) console.error(stderr);
+    ok = false;
+    continue;
+  }
 
   let scan;
   try {

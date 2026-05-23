@@ -104,7 +104,7 @@ npx guardskills@1.2.1 add t4sh/skills4sh --skill figma-to-code --dry-run;
 npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run;
 ```
 
-Skills contain no shell scripts or executable code — only SKILL.md instructions and reference documentation.
+Skills do not auto-execute install or runtime code. Some skills may ship optional helper scripts under `assets/`; treat those as inert files unless a user or agent explicitly runs them.
 
 ## License
 

@@ -109,7 +109,7 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 |---------|----------------|
 | No executable YAML | SKILL.md frontmatter is declarative metadata only |
 | Safe parsing | Skills are parsed by host agents using safe YAML loaders |
-| No dynamic code in config | No install scripts; skills are pure markdown consumed by host agents |
+| No dynamic code in config | No install scripts and no auto-executed runtime code; optional helper scripts under `assets/` are inert unless explicitly run |
 
 ### AST06 — Weak Isolation
 

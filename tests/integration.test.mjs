@@ -404,6 +404,7 @@ test("packed tarball installs a working skills4sh binary", async () => {
     assert.equal(help.status, 0, help.stderr);
     assert.match(help.stdout, /skills4sh .* install agent skills/);
   } finally {
+    restorePackageJsonBackup();
     await rm(dir, { recursive: true, force: true });
   }
 });
@@ -555,4 +556,13 @@ function runSkills4sh(args, env) {
 
 async function tempDir() {
   return mkdtemp(join(tmpdir(), "skills4sh-test-"));
+}
+
+function restorePackageJsonBackup() {
+  if (!existsSync(join(root, "package.json.prepack.bak"))) return;
+  spawnSync(process.execPath, [join(root, "bin", "clean-package-for-publish.mjs"), "postpack"], {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
 }
