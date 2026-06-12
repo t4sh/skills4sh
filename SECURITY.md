@@ -6,12 +6,12 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 
 | Skill | Version | Supported |
 |-------|---------|-----------|
-| agent-memory | 2.7.1 | Yes |
-| code-to-figma | 0.1.1 | Yes |
-| discord-harvest | 1.7.2 | Yes |
-| eleventy-nunjucks | 0.1.2 | Yes |
-| figma-to-code | 0.1.2 | Yes |
-| localhost-screenshots | 3.3.1 | Yes |
+| agent-memory | 2.7.2 | Yes |
+| code-to-figma | 0.1.2 | Yes |
+| discord-harvest | 1.7.3 | Yes |
+| eleventy-nunjucks | 0.1.3 | Yes |
+| figma-to-code | 0.1.3 | Yes |
+| localhost-screenshots | 3.3.2 | Yes |
 
 ## Reporting a Vulnerability
 
@@ -167,7 +167,7 @@ The following findings are expected and documented:
 | Finding | Severity | File(s) | Explanation |
 |---------|----------|---------|-------------|
 | `R005_SECRET_READ` | HIGH/medium | `references/walker-patterns.md` | False positive (acknowledged). The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — sourcing the token from the environment instead of hardcoding it is the secure pattern. No secret file or credential store is read; the script is an adaptable template, not executed by the skill. |
-| `R008_ENV_ACCESS` | LOW | `references/ci-and-gist-setup.md`, `references/walker-patterns.md` | CI/template snippets reference `GIST_TOKEN` / `GIST_ID` via GitHub Actions secrets and `process.env` — the recommended pattern, shown as instructional examples. |
+| `R008_ENV_ACCESS` | LOW | `references/ci-and-gist-setup.md`, `references/walker-patterns.md` | CI/template snippets reference `GIST_TOKEN` / `GIST_ID` via GitHub Actions secrets and `process.env`, while the local pusher may read `gistId` from config — the recommended pattern, shown as instructional examples. |
 | `R009_FILE_STAGE` | LOW | `SKILL.md`, `references/ci-and-gist-setup.md` | Instructional `/tmp/figma-export*.json` staging in the sync/verify and Gist-setup command examples — documentation, not skill-side file staging. |
 
 ### eleventy-nunjucks
@@ -189,8 +189,8 @@ The following findings are expected and documented:
 
 **Resolved in 3.3.0** — the following 3.2.0 findings are no longer flagged:
 
-- `COMMAND_EXECUTION` (HIGH) — `sudo npx playwright install-deps` removed; `node -e "require('playwright')"` replaced with `test -d node_modules/playwright`; stdin `node -e "…"` templates moved to versioned `assets/scripts/*.js`.
-- `PROMPT_INJECTION` (HIGH) — captured page content (a11y tree, DOM snapshot, interactive map) is now wrapped in an `{ boundary: "untrusted-page-content", source, … }` envelope, with an explicit boundary section in `SKILL.md`.
+- `COMMAND_EXECUTION` (HIGH) — `sudo npx playwright install-deps` removed; `node -e "require('playwright')"` checks replaced with an explicit `playwright@1.58.2` install before browser setup; stdin `node -e "…"` templates moved to versioned `assets/scripts/*.js`.
+- `PROMPT_INJECTION` (HIGH) — captured page content (ARIA snapshot, DOM snapshot, interactive map) is now wrapped in an `{ boundary: "untrusted-page-content", source, … }` envelope, with an explicit boundary section in `SKILL.md`.
 - `R009_FILE_STAGE` — the `/tmp/chrome-debug` CDP example was removed; no temp-file staging strings remain.
 
 ## Known Non-Issues
