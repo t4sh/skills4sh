@@ -9,7 +9,7 @@ Use this file when comparing `t4sh/skills4sh` `figma-to-code` against other agen
 | **Benchmark date** | 2026-05-18 |
 | **skills.sh install counts** | Captured 2026-05-18 (rounded; change frequently) |
 | **Last commit column** | Default branch tip via GitHub API (`gh api repos/{owner}/{repo}/commits?per_page=1`) |
-| **This skill version** | `figma-to-code` v0.1.1 in `t4sh/skills4sh` |
+| **This skill version** | `figma-to-code` v0.1.3 in `t4sh/skills4sh` |
 | **skills4sh repo @ snapshot** | [t4sh/skills4sh](https://github.com/t4sh/skills4sh) — last commit 2026-05-18 |
 
 Re-run the snapshot before a major skill revision. Install counts drift weekly; peer repos commit daily.
@@ -108,4 +108,4 @@ Re-check **last commit** and **installs** when revisiting this list.
 | 4 | [figma/mcp-server-guide `code-connect-components`](https://skills.sh/figma/mcp-server-guide/code-connect-components) | 2026-05-15 |
 | 5 | [google-labs-code `react:components`](https://skills.sh/google-labs-code/stitch-skills/react:components) | 2026-03-30 |
 | 6 | [figma-to-code-skill](https://www.npmjs.com/package/figma-to-code-skill) (npm) | 2026-03-12 |
-| 7 | **This repo** `skills/figma-to-code/SKILL.md` | 2026-05-18 (repo); skill v0.1.1 |
+| 7 | **This repo** `skills/figma-to-code/SKILL.md` | 2026-05-18 (repo); skill v0.1.3 |
