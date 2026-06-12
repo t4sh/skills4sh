@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "1.7.2"
+  version: "1.7.3"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,11 +14,12 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 96a89df5c7acc946d0775409b07c17840e2883c1f9dce3a7b8632747f7355505
+    SKILL.md: 9dab3bc21babe0c279360f3cd18ce6b690c39eeffbaf64d51f2915506776734d
     assets/icon.svg: 1a98cde7a434820fea4d55c74d99b2112fb3022d5cd18067ec1eb3d8c411becc
-    references/code-examples.md: ddd10adec270f5a177bd7c51c421b5779706f26c2d05058ec0a0c6629b0b8dd3
+    references/code-examples.md: e2a001f937709a4b3f41f5aabe5ea77f7788be972dd658738320f3652cbebe6b
+    references/design-philosophy.md: 9cac3814de44bb10a4efacc2f208a0082444eeeb1fb92e22b3fe1550f41df0e0
     references/folder-structure.md: d74779f252a17d47f2a7ccfb53b08492c53a85b73fd8883cd5d610ca2e2ce190
-    references/troubleshooting.md: c69e497bdafa61dd0706d4dbffc8276badc22a664fb82c81aaf0ddf0834b76ca
+    references/troubleshooting.md: c7cbc42a579a96593013eb8d9619f8a8c905a3dc193196ac5b343cf4916eb1a3
 
 
 permissions:
