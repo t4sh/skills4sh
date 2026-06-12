@@ -6,6 +6,15 @@
 const fs = require('fs');
 const path = require('path');
 
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function generateComparison(beforeDir, afterDir, outputPath) {
   const breakpoints = fs.readdirSync(beforeDir).filter(f => f.endsWith('.png')).sort();
 
@@ -28,10 +37,12 @@ function generateComparison(beforeDir, afterDir, outputPath) {
 <h1>Visual Comparison</h1>
 ${breakpoints.map(f => {
   const name = f.replace('.png', '');
-  return `<div class="breakpoint-label">${name}</div>
+  const beforeSrc = escapeHtml(path.relative(path.dirname(outputPath), path.join(beforeDir, f)));
+  const afterSrc = escapeHtml(path.relative(path.dirname(outputPath), path.join(afterDir, f)));
+  return `<div class="breakpoint-label">${escapeHtml(name)}</div>
 <div class="pair">
-  <div><h3>Before</h3><img src="${path.relative(path.dirname(outputPath), path.join(beforeDir, f))}"></div>
-  <div><h3>After</h3><img src="${path.relative(path.dirname(outputPath), path.join(afterDir, f))}"></div>
+  <div><h3>Before</h3><img src="${beforeSrc}"></div>
+  <div><h3>After</h3><img src="${afterSrc}"></div>
 </div>`;
 }).join('\n')}
 </body></html>`;
@@ -126,6 +137,15 @@ function generateComparison(beforeDir, afterDir, diffDir, outputPath) {
   const reportPath = path.join(diffDir, 'report.json');
   const report = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, 'utf-8')) : null;
 
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   const html = `<!DOCTYPE html><html><head>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -151,20 +171,23 @@ function generateComparison(beforeDir, afterDir, diffDir, outputPath) {
 </style></head><body>
 <h1>Visual Regression Report</h1>
 ${report ? `<div class="summary">
-  <p><span class="pass">${report.passed} passed</span> · <span class="fail">${report.failed} failed</span> · ${report.totalBreakpoints} breakpoints</p>
-  <p style="font-size:13px;color:#666;margin-top:4px;">Generated ${report.timestamp}</p>
+  <p><span class="pass">${escapeHtml(report.passed)} passed</span> · <span class="fail">${escapeHtml(report.failed)} failed</span> · ${escapeHtml(report.totalBreakpoints)} breakpoints</p>
+  <p style="font-size:13px;color:#666;margin-top:4px;">Generated ${escapeHtml(report.timestamp)}</p>
 </div>` : ''}
 ${breakpoints.map(f => {
   const name = f.replace('.png', '');
   const result = report?.results?.find(r => r.breakpoint === name);
   const stat = result
-    ? `<span class="diff-stat ${result.passed ? 'pass' : 'fail'}">${result.diffPercent}% changed (${result.mismatchedPixels.toLocaleString()} px)</span>`
+    ? `<span class="diff-stat ${result.passed ? 'pass' : 'fail'}">${escapeHtml(result.diffPercent)}% changed (${escapeHtml(result.mismatchedPixels.toLocaleString())} px)</span>`
     : '';
-  return `<div class="breakpoint-label">${name} ${stat}</div>
+  const beforeSrc = escapeHtml(path.relative(path.dirname(outputPath), path.join(beforeDir, f)));
+  const afterSrc = escapeHtml(path.relative(path.dirname(outputPath), path.join(afterDir, f)));
+  const diffSrc = escapeHtml(path.relative(path.dirname(outputPath), path.join(diffDir, 'diff-' + f)));
+  return `<div class="breakpoint-label">${escapeHtml(name)} ${stat}</div>
 <div class="triple">
-  <div><h3>Before</h3><img src="${path.relative(path.dirname(outputPath), path.join(beforeDir, f))}"></div>
-  <div><h3>After</h3><img src="${path.relative(path.dirname(outputPath), path.join(afterDir, f))}"></div>
-  <div><h3>Diff</h3><img src="${path.relative(path.dirname(outputPath), path.join(diffDir, 'diff-' + f))}"></div>
+  <div><h3>Before</h3><img src="${beforeSrc}"></div>
+  <div><h3>After</h3><img src="${afterSrc}"></div>
+  <div><h3>Diff</h3><img src="${diffSrc}"></div>
 </div>`;
 }).join('\n')}
 </body></html>`;
