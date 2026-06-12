@@ -8,7 +8,7 @@ Use this file when comparing `t4sh/skills4sh` `code-to-figma` against other agen
 |-------|--------|
 | **Benchmark date** | 2026-05-20 |
 | **skills.sh data** | Captured 2026-05-19 from skill listing pages (descriptions; install counts drift) |
-| **This skill version** | `code-to-figma` v0.1.0 in `t4sh/skills4sh` |
+| **This skill version** | `code-to-figma` v0.1.2 in `t4sh/skills4sh` |
 | **Paired plugin** | `tokens-sync-to-figma` (Figma-side consumer in this repo) |
 
 Re-run the snapshot before a major skill revision. Peer listings change; verify each source page before trusting it.
@@ -63,5 +63,5 @@ Re-check scope and direction when revisiting this list.
 |---|------|--------|
 | 1 | `sync-figma-token` | [firebenders/sync-figma-token-skill](https://skills.sh/firebenders/sync-figma-token-skill/sync-figma-token) |
 | 2 | `design-tokens` | [julianoczkowski/designer-skills](https://skills.sh/julianoczkowski/designer-skills/design-tokens) |
-| 3 | `figma-to-code` (this repo — the reverse leg) | `skills/figma-to-code/SKILL.md` |
-| 4 | **This repo** `skills/code-to-figma/SKILL.md` | v0.1.0 |
+| 3 | `figma-to-code` (this repo — the reverse leg) | `skills/figma-to-code/SKILL.md` (v0.1.3) |
+| 4 | **This repo** `skills/code-to-figma/SKILL.md` | v0.1.2 |

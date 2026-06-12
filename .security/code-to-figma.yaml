@@ -4,7 +4,7 @@
 
 skill:
   name: code-to-figma
-  version: "0.1.1"
+  version: "0.1.2"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,11 +14,11 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: c64ec74ea899e5ba5e74c55bac242026f2d6bc1d24a03e2a026bc7398dc1e603
-    references/benchmarks.md: fe2f9f9b199a6c5195d70f9ef825e4f534a35387a2280f585fa6d7f85a002872
-    references/ci-and-gist-setup.md: 38a1c06d36c5daebe9536e4ef1b5ac31db48180bcf17d0a42058728d76d7990b
+    SKILL.md: cbbe7a780f101884dc6e7c8c9bf970890dfa61165bbe7e89c72a44fa17b60b4d
+    references/benchmarks.md: 786ed94263e14a3c173e8a753578f4a687f90c88a8bac5c4f2aa64ccb727a690
+    references/ci-and-gist-setup.md: 0d47d097347834516cc4656465885cd62221428410fb9134cb396c29ea059093
     references/figma-export-contract.md: 08e0cc4939a35249077438662e90c00ab2d1513e52c375bfb4636166ee991bb8
-    references/walker-patterns.md: 58f4a64943c499fee78152b0f944192abe586601954b63df8bdb02d39142c194
+    references/walker-patterns.md: 1ec6058a8d325acf7a1ed04278f10cfd90826beec9e8ce55a85ba19cba2d5e0c
 
 
 permissions:
@@ -82,4 +82,4 @@ scanning:
       severity: low
       confidence: low
       file: references/walker-patterns.md
-      reason: "The generic pusher template reads `process.env.GIST_TOKEN` / `GIST_ID` so credentials come from the environment instead of being hardcoded — the secure pattern guardskills encourages."
+      reason: "The generic pusher template reads `process.env.GIST_TOKEN` and resolves the Gist ID from environment or figma-sync.config.json so credentials stay out of source — the secure pattern guardskills encourages."

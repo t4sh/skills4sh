@@ -118,9 +118,9 @@ pnpm build   # or equivalent
 # Run the walker
 node scripts/figma-export/walk-<site>.mjs | jq '.sections | length'
 
-# Push manually
-GIST_TOKEN=<your-pat> GIST_ID=<gist-id> \
-  node scripts/figma-export/walk-<site>.mjs | node scripts/tokens-to-figma/push-to-figma.mjs
+# Push manually. The pusher reads gistId from figma-sync.config.json by default.
+node scripts/figma-export/walk-<site>.mjs \
+  | GIST_TOKEN=<your-pat> node scripts/tokens-to-figma/push-to-figma.mjs
 ```
 
 ---
