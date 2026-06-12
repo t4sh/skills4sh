@@ -321,7 +321,11 @@ grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ \
   | grep -v -E "jsonScript|jsonCompact" && exit 1 || echo "  ok"
 
 echo "→ Checking output for secret-shaped files (must be zero)…"
-find out -name '.env*' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' && exit 1 || echo "  ok"
+if find out \( -name '.env*' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' \) -print -quit | grep -q .; then
+  exit 1
+else
+  echo "  ok"
+fi
 
 echo "→ Checking output for inline credentials…"
 grep -rE 'BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY|AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}' out/ && exit 1 || echo "  ok"

@@ -1,11 +1,11 @@
 ---
 name: code-to-figma
-description: "This skill should be used when the user asks to 'sync code to Figma', 'export design tokens to Figma', 'set up a Figma sync pipeline', 'wire up the tokens-sync-to-figma plugin', 'generate a figma-export.json', 'create a page walker', or 'keep Figma up to date with the codebase'. It is the code → Figma direction of the design-token round-trip and pairs with the tokens-sync-to-figma plugin."
+description: "This skill should be used when the user asks to 'sync code to Figma', 'export design tokens to Figma', 'set up a Figma sync pipeline', 'wire up the tokens-sync-to-figma plugin', 'generate a figma-export.json', 'create a page walker', or 'keep Figma up to date with the codebase'."
 license: MIT
 compatibility: macOS, Linux, or Windows with Node.js and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.1.1"
+  version: "0.1.2"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 
@@ -13,14 +13,7 @@ metadata:
 
 Generate a project-specific Figma export pipeline: a walker that reads compiled HTML and CSS, resolves class → token bindings, and pushes a structured JSON artifact to a GitHub Gist that the **`tokens-sync-to-figma`** Figma plugin consumes.
 
-The pipeline is intentionally one-directional and CI-anchored. Claude does the intelligent work once (assessing the project, generating scripts, wiring CI). After that every push that touches tokens or templates automatically updates the Gist — no agent, no Figma API key, no per-sync friction.
-
-## What I Can Help With
-
-- **Set up a new pipeline** — assess the project, generate walker + token scripts, create the Gist, wire CI.
-- **Sync now** — run the existing walker and push to the Gist without reassessing.
-- **Update the walker** — regenerate scripts after a major redesign or stack change.
-- **Check status** — report Gist age, CI wiring, and whether scripts exist and match the project.
+The pipeline is intentionally one-directional and CI-anchored. During `setup`, assess the project once, generate scripts, and wire CI. After that, every push that touches tokens or templates automatically updates the Gist — no agent, no Figma API key, no per-sync friction.
 
 ## Commands
 
@@ -78,7 +71,7 @@ Commit the `.w3c.json` output to the repo — it is the human-readable diff targ
 
 #### `scripts/tokens-to-figma/push-to-figma.mjs`
 
-Reads the walker output from `stdin` (or a file argument) and PATCHes the Gist. This script is project-agnostic — copy it verbatim from [`references/ci-and-gist-setup.md`](references/ci-and-gist-setup.md).
+Reads the walker output from `stdin` (or a file argument) and PATCHes the Gist. This script is project-agnostic — copy it verbatim from [`references/walker-patterns.md`](references/walker-patterns.md). It reads `GIST_TOKEN` from the environment and resolves the Gist ID from `GIST_ID`, `FIGMA_EXPORT_GIST_ID`, or `figma-sync.config.json`'s `gistId`.
 
 #### `figma-sync.config.json`
 
@@ -158,8 +151,9 @@ See [`references/ci-and-gist-setup.md`](references/ci-and-gist-setup.md) for the
 1. Confirm `figma-sync.config.json` exists and the walker path is valid.
 2. Run: `node <walker> > /tmp/figma-export.json`
 3. Validate: `jq '.sections | length' /tmp/figma-export.json`
-4. Push: `node scripts/tokens-to-figma/push-to-figma.mjs < /tmp/figma-export.json`
-5. Report sections and nodes exported, and the Gist URL.
+4. Confirm `GIST_TOKEN` is exported or prefix the pusher command with it.
+5. Push: `node scripts/tokens-to-figma/push-to-figma.mjs < /tmp/figma-export.json`
+6. Report sections and nodes exported, and the Gist URL.
 
 ---
 
@@ -188,7 +182,14 @@ Report:
 
 This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the Figma-side consumer — this skill produces the artifact it reads.
 
-See [`references/benchmarks.md`](references/benchmarks.md) for peer skills on [skills.sh](https://skills.sh) and positioning notes.
+## Reference Files
+
+| File | Load when |
+|------|-----------|
+| [references/walker-patterns.md](references/walker-patterns.md) | Generating or updating the walker, W3C converter, or generic Gist pusher; adapting `tokenPath()`, section detection, or Next.js static-export constraints |
+| [references/figma-export-contract.md](references/figma-export-contract.md) | Validating walker JSON output shape (`meta`, `sections`, nodes, token references) |
+| [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md) | Wiring `figma-sync.yml`, GitHub secrets, first Gist push, or `tokens-sync-to-figma` plugin setup |
+| [references/benchmarks.md](references/benchmarks.md) | Comparing peer skills on [skills.sh](https://skills.sh) or positioning this pipeline vs alternatives |
 
 ## Operating Principles
 

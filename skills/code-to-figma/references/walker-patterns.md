@@ -314,18 +314,29 @@ Generic — project-agnostic. Reads walker JSON from `stdin` (or `--file <path>`
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
 
+function readConfigGistId() {
+  try {
+    const config = JSON.parse(readFileSync('figma-sync.config.json', 'utf8'));
+    return typeof config.gistId === 'string' && config.gistId.trim()
+      ? config.gistId.trim()
+      : '';
+  } catch {
+    return '';
+  }
+}
+
 const GIST_TOKEN = process.env.GIST_TOKEN;
-const GIST_ID    = process.env.GIST_ID || process.env.FIGMA_EXPORT_GIST_ID;
+const GIST_ID    = process.env.GIST_ID || process.env.FIGMA_EXPORT_GIST_ID || readConfigGistId();
 
 if (!GIST_TOKEN || !GIST_ID) {
-  console.error('GIST_TOKEN and GIST_ID (or FIGMA_EXPORT_GIST_ID) must be set');
+  console.error('GIST_TOKEN and GIST_ID, FIGMA_EXPORT_GIST_ID, or figma-sync.config.json gistId must be set');
   process.exit(1);
 }
 
 const fileArg = process.argv.indexOf('--file');
 const json    = fileArg !== -1
   ? readFileSync(process.argv[fileArg + 1], 'utf8')
-  : readFileSync('/dev/stdin', 'utf8');
+  : readFileSync(0, 'utf8'); // fd 0 — cross-platform stdin (/dev/stdin is Unix-only)
 
 // Validate before pushing
 let parsed;

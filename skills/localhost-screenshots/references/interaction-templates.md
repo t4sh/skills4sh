@@ -179,8 +179,12 @@ const { chromium } = require('playwright');
   await page.screenshot({ path: '_screenshots/interactive-01.png', fullPage: true });
 
   // Inspect again
-  const a11y = await page.accessibility.snapshot();
-  console.log('Page structure:', JSON.stringify(a11y, null, 2).slice(0, 500));
+  const ariaSnapshot = await page.locator('body').ariaSnapshot();
+  console.log(JSON.stringify({
+    boundary: 'untrusted-page-content',
+    source: page.url(),
+    ariaSnapshot: ariaSnapshot.slice(0, 500),
+  }, null, 2));
 
   // More interaction...
   await page.fill('#search', 'test query');

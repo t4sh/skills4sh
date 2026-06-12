@@ -4,7 +4,7 @@
 
 skill:
   name: figma-to-code
-  version: "0.1.2"
+  version: "0.1.3"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,9 +14,10 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 94efd1eb783ad982a79d147177a470dc7c15b2b328814d95e606302841518737
+    SKILL.md: 3a8c949aa96f678dd16328b3b62998e69a4f13169be55796291f4b00e8ae09b1
     assets/icon.svg: 729bf2cf1e6d95abcb8e3d7615ad2c5a234dc8c539685006f0df51b3f81241fe
-    references/benchmarks.md: 661eaa9b678c8058181cb5459160e5f30d7dd670d3cffa8704bcd70944c723d0
+    references/benchmarks.md: 5bd2c9c1eb7206a18313e4a6c2c019a4f468994895e51b39fd4e0fa812c468a9
+    references/design-philosophy.md: 7c786c2605221627a04c61c7e2a8cf7da38d4ae46ace0bc3099bcf33e600e8cd
     references/implementation-patterns.md: ffc6d2fa0c5fc5af0d074c373641fec6b84f259f8636cb9d6fc1c86748040fe9
     references/troubleshooting.md: 77e4496f893e676fdc10ef4f06a16b66c6f5f937e646bec164540c42eef47aad
     references/verification-and-boundaries.md: f0f3b35a95fbce2a13c29896f43290ee577996cf5fa4c0e42bc11e2d11040339

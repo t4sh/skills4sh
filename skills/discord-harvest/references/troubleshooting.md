@@ -1,5 +1,20 @@
 # Troubleshooting & Common Issues — Full Reference
 
+## Defaults
+
+- **Message count:** last 10 messages when the user does not specify scope
+- **Content types:** images, files, and links unless the user narrows the request
+- **DM path:** requires an authenticated Discord web session; bot tokens cannot read DMs
+
+## Edge Cases
+
+- **Rate limits (API):** Discord uses **per-route** limits (429 with `Retry-After`). Batch large fetches (200+), backoff on 429, and do not assume a single global requests-per-second ceiling.
+- **CDN URLs expire:** download promptly after extraction; re-fetch message URLs if downloads 403/404.
+- **Threads:** separate API channels — list active and archived threads after the parent channel; attachments only in threads will not appear in parent messages.
+- **Large files:** up to 25MB (500MB with Nitro); `curl` handles these.
+- **Duplicates:** deduplicate before downloading.
+- **Browser login:** user must be logged into Discord web for the DM path.
+
 ## Common Issues by Source Type
 
 ### DMs (Browser Path)
@@ -11,7 +26,7 @@
 
 ### Server Channels (Bot API Path)
 - **Missing permissions** — bot needs `VIEW_CHANNEL` and `READ_MESSAGE_HISTORY` permissions; NSFW channels need additional permissions
-- **Rate limits** — Discord API allows ~50 requests/second; batch large fetches (200+ messages) with small delays
+- **Rate limits** — per-route 429 responses with `Retry-After`; batch large fetches (200+ messages) with backoff between batches
 - **Thread messages** — threads are separate channels in the API. After fetching the main channel, list active threads (`GET /channels/{id}/threads/active`) and archived threads (`GET /channels/{id}/threads/archived/public`). Fetch each thread's messages using the thread's channel ID. Attachments shared only in threads won't appear in the parent channel.
 - **Ephemeral messages** — some bot responses are ephemeral and won't appear in message history
 - **Deleted messages** — if a message was deleted between listing and downloading, the CDN URL will 404

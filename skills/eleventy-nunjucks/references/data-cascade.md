@@ -243,13 +243,15 @@ permalink: "/apps/{{ app.slug }}/"
 
 ## Debugging the cascade
 
-When a value is wrong or missing, dump the full data context:
+When a value is wrong or missing, dump named context objects:
 
 ```nunjucks
-<pre>{{ . | dump(2) }}</pre>
+<pre>{{ site | dump(2) }}</pre>
+<pre>{{ page | dump(2) }}</pre>
+<pre>{{ eleventy | dump(2) }}</pre>
 ```
 
-`.` refers to the entire data context. The output shows every key that reached this template — frontmatter, computed, global data, directory data, all merged.
+Nunjucks does not provide a `.` whole-context accessor; `{{ . | dump(2) }}` is a parse error. To inspect an arbitrary value, dump it by its actual key. To inspect the full merged Eleventy data object, add a temporary JavaScript data file or computed JS function that receives Eleventy's `data` object, then remove it after debugging.
 
 For specific levels:
 

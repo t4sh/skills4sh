@@ -37,7 +37,12 @@ Comments are stripped at compile time — they have zero runtime cost and aren't
 {% endif %}
 ```
 
-Falsy values: `false`, `null`, `undefined`, `0`, `""`, `[]` (empty array), `{}` (empty object — yes, this is different from Python/JS).
+Nunjucks `if` uses JavaScript-style truthiness. Falsy values include `false`, `null`, `undefined`, `0`, and `""`; empty arrays (`[]`) and empty objects (`{}`) are truthy. To test whether an array or object has contents, check `| length` explicitly or use a `for ... else` block.
+
+```nunjucks
+{% if items | length %}…{% endif %}      {# non-empty array/object #}
+{% if items %}…{% endif %}               {# true for [] and {} #}
+```
 
 ```nunjucks
 {% if "admin" in user.roles %}…{% endif %}    {# membership #}
