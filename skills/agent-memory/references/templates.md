@@ -91,5 +91,5 @@ For feedback/decision types, include **Why:** and **How to apply:** sections.
 | decision   | decisions/     | Why things are the way they are (rationale)     | When changed|
 | context    | context/       | Current state, active work, sprint focus        | Frequently  |
 | convention | conventions/   | Patterns and rules for working on this project  | Occasionally|
-| reference  | reference/     | External resources, architecture, patterns      | Rarely      |
+| reference  | references/    | External resources, architecture, patterns      | Rarely      |
 | session    | sessions/      | Lightweight session logs                        | Each session|

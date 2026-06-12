@@ -1,11 +1,11 @@
 ---
 name: agent-memory
-description: "This skill should be used when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"save session learnings\", \"run memory maintenance\", or mentions cross-interface persistent memory across Claude Code, Cursor, or VS Code. Handles frontmatter-driven memory lifecycle for any project."
+description: "This skill should be used when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"save session learnings\", \"run memory maintenance\", or mentions cross-interface persistent memory across Claude Code, Cursor, or VS Code."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.7.1"
+  version: "2.7.2"
   tags: memory, context, cross-interface, agent, persistence
 ---
 
@@ -21,14 +21,16 @@ npx skills add t4sh/skills4sh --skill agent-memory
 
 ---
 
-## What I Can Help With
+## Capabilities
 
-- **Initializing project memory** — scaffold `.agent-memory/` with proper structure and entry points
-- **Capturing session learnings** — distill decisions, feedback, and context into durable memory files
-- **Cross-interface sync** — keep memory consistent across 4+ different AI interfaces
-- **Memory maintenance** — compact stale entries, resolve conflicts, clean orphaned files
-- **Migration** — upgrade older formats (v1 flat files, CURSOR.md) to v2.1 standard
-- **Auto-building from docs** — scan existing documentation and generate initial memory files
+| Area | Outcome |
+|------|---------|
+| Initialize | Scaffold `.agent-memory/` with structure and entry points |
+| Capture | Distill session decisions, feedback, and context into durable memory files |
+| Sync | Keep memory consistent across Claude Code, Cursor, VS Code, and other file-reading agents |
+| Maintain | Compact stale entries, resolve conflicts, clean orphaned files |
+| Migrate | Upgrade older formats (v1 flat files, `CURSOR.md`) to v2.1 |
+| Build | Scan existing documentation and generate initial memory files |
 
 ## Design Philosophy
 
@@ -49,10 +51,6 @@ Before operating on memory, understand:
 3. **Project Context** — Project type, existing docs, how many people/agents contributing?
 
 ---
-
-## Trigger
-
-Invoke with `/agent-memory` or when the user mentions managing project memory.
 
 ## Commands
 
