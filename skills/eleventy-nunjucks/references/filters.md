@@ -179,9 +179,10 @@ eleventyConfig.addFilter("localeString", (n) =>
 const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 // {{ "2026-05" | formatDate }} → "May 2026"
 // {{ null     | formatDate }} → "Present"
-eleventyConfig.addFilter("formatDate", (dateStr) => {
-  if (!dateStr) return "Present";
-  const [year, month] = dateStr.split("-").map(Number);
+eleventyConfig.addFilter("formatDate", (value) => {
+  if (!value) return "Present";
+  const iso = value instanceof Date ? value.toISOString() : String(value);
+  const [year, month] = iso.split("-").map(Number);
   return `${MONTHS_SHORT[month - 1]} ${year}`;
 });
 ```
@@ -192,12 +193,26 @@ eleventyConfig.addFilter("formatDate", (dateStr) => {
 const MONTHS_FULL = ["January","February","March","April","May","June",
                      "July","August","September","October","November","December"];
 // {{ "2026-05-11" | formatFullDate }} → "May 11, 2026"
-eleventyConfig.addFilter("formatFullDate", (dateStr) => {
-  if (!dateStr) return "";
-  const [year, month, day] = dateStr.split("-").map(Number);
+eleventyConfig.addFilter("formatFullDate", (value) => {
+  if (!value) return "";
+  const iso = value instanceof Date ? value.toISOString() : String(value);
+  const [year, month, day] = iso.split("-").map(Number);
   return `${MONTHS_FULL[month - 1]} ${day}, ${year}`;
 });
 ```
+
+### `sitemapDate` — Date/string → ISO day
+
+```js
+// {{ page.date | sitemapDate }} → "2026-05-11"
+eleventyConfig.addFilter("sitemapDate", (value) => {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().slice(0, 10);
+});
+```
+
+Use this for `page.date` in `sitemap.xml`. Do not pass a format argument to the month/year `formatDate` filter above; it intentionally accepts only one `YYYY-MM` string.
 
 ### `duration` — months between two dates → "X yrs Y mos"
 

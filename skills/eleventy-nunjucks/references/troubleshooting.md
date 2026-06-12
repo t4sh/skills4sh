@@ -265,10 +265,11 @@ const siteData = require("./site")();
 **Diagnosis:**
 
 ```nunjucks
-<pre>{{ . | dump(2) }}</pre>
+<pre>{{ page | dump(2) }}</pre>
+<pre>{{ site | dump(2) }}</pre>
 ```
 
-Look at the merged keys at every level. Two adjacent levels often have similar but not identical keys (`og_image` vs `ogImage`).
+Dump named context objects; Nunjucks has no `.` whole-context accessor. Two adjacent levels often have similar but not identical keys (`og_image` vs `ogImage`).
 
 ### `eleventyComputed` value is `[object Object]`
 

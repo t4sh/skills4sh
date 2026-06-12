@@ -4,7 +4,7 @@
 
 skill:
   name: eleventy-nunjucks
-  version: "0.1.2"
+  version: "0.1.3"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,18 +14,18 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 1148ca21d3a5db3a4a66232dc05b1c225874a26ca20e80dffa814223f8602a32
+    SKILL.md: 055a047454f80e2add31923d8598296a0de68aa7ac30a71f720d464756fa149e
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
     references/build-pipeline.md: f4f362602d5005d66d9be9f660cb0fbcd927196c368df4e55533c91e2568e129
     references/conventions.md: 6566fc3ef859a13f9d39b24faea448add59b08a78bc518faefa71fb20eba5572
-    references/data-cascade.md: c6ddbbe43dedfd0e74f0744e020c3aaf38b817e1c141718b51f408cf8646a767
+    references/data-cascade.md: fa0888c4753cc556a5aa9bbcd85e7324dd486b470c48cd9560c264af8d7d8b4b
     references/eleventy-config-api.md: 4b0339093afe17d190b2f5834f93d07b4291ac87fc3f7261ccb70c2826383a00
-    references/filters.md: f0b533c48dc8d2f472361ddc853434831937163620079b8d725d442d1a36f42f
-    references/nunjucks-syntax.md: c0b2f80418acab15777e29c6c2154edf43830d578a98673b3b9a5e4761efcae2
-    references/production-patterns.md: 77f33d4dc04dc0e22ab76a820b05a81e9789da66dca66641d048866190547d39
+    references/filters.md: 5db88e745e0dd18d906c341e9a284b47aa54e2f3f384a16cb8b6b296d0d1de78
+    references/nunjucks-syntax.md: b3775c896502e854ceb87ac288b01561f1fdfd3d09b28cb3786cfbe3e0521b13
+    references/production-patterns.md: 1fd142449c4af09b27d277badeefaf96903c1f8517c340e8b36e00060105cd64
     references/review-shipping.md: 34ba4e1a1ed2953791d03e942d56ddb804924cbdfe2bfbe0fff938eefc9f8b6f
-    references/security-checklist.md: 0743d16f3cab355b920581cbbe9c826cdd389ff9d9367e48fabeff2b9a05c6e5
-    references/troubleshooting.md: 5ce06e6dd46f9b7863b93ba270d32dcfd1b8c067e1ab3866e94b6d5c5f95e12d
+    references/security-checklist.md: 191e68554f04eaeab79c5973fa54df5e8000acc5ba5231c9961cddf3dc6a193c
+    references/troubleshooting.md: 8e1eedb8af97d2072878dd32066293b0621fff0048b376f9639390ad4a9c8bac
 
 
 permissions:

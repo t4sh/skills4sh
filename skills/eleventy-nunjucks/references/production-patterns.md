@@ -332,7 +332,7 @@ eleventyExcludeFromCollections: true
   {% if not page.data.eleventyExcludeFromCollections and not page.data.sitemap_exclude %}
   <url>
     <loc>{{ site.baseUrl }}{{ page.url | normalize_path }}</loc>
-    <lastmod>{{ page.date | formatDate("yyyy-MM-dd") }}</lastmod>
+    <lastmod>{{ page.date | sitemapDate }}</lastmod>
   </url>
   {% endif %}
 {% endfor %}
