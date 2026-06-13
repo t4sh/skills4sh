@@ -10,7 +10,7 @@
 ```bash
 # Install the compatible Playwright version used by the bundled ARIA snapshot scripts.
 npm install --save-dev playwright@1.58.2
-npx playwright install chromium
+npm exec -- playwright install chromium
 ```
 
 Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` over `npm install` when the lockfile already pins a compatible Playwright version.
@@ -32,15 +32,15 @@ Playwright's `install chromium` step downloads the browser but does **not** inst
 const BASE_URL = 'http://localhost:8080'; // use their port
 ```
 
-**If built output exists (e.g., 11ty's `_site/`):**
+**If built output exists (e.g., 11ty's `_site/`):** run the server in a separate terminal so it is easy to stop on every OS:
 ```bash
-npx serve _site -l 3000 &
+npx serve _site -l 3000 --no-clipboard
 ```
 
-**If need to build and serve:**
+**If need to build and serve:** build first, then start the server in a separate terminal:
 ```bash
 npx @11ty/eleventy          # build
-npx serve _site -l 3000 &   # serve output
+npx serve _site -l 3000 --no-clipboard
 ```
 
 **In sandboxed environments** (Cowork, etc): The VM cannot access host `localhost`. Build inside the VM or serve mounted files. Always test connectivity first.
@@ -158,7 +158,7 @@ const ROUTES = ['/'];
     for (const bp of BREAKPOINTS) {
       const page = await browser.newPage();
       await page.setViewportSize({ width: bp.width, height: bp.height });
-      await page.goto(`${BASE_URL}${route}`, { waitUntil: 'networkidle' });
+      await page.goto(`${BASE_URL}${route}`, { waitUntil: 'load' });
       await page.screenshot({
         path: path.join(routeDir, `${bp.name}-${bp.width}x${bp.height}.png`),
         fullPage: true,
@@ -175,7 +175,7 @@ const ROUTES = ['/'];
 ### Key API Details
 
 - `chromium.launch()` — no arguments needed, uses Playwright's bundled Chromium
-- `waitUntil: 'networkidle'` — waits until no network requests for 500ms
+- `waitUntil: 'load'` — safer default for SPAs with analytics/websockets; add explicit `waitForSelector()` for the content that matters. Use `networkidle` only for known-static pages.
 - `fullPage: true` — captures the entire scrollable page, not just the viewport
 - `page.setViewportSize()` — set before navigating for accurate responsive rendering
 - Create a **new page per breakpoint** — ensures clean rendering without leftover state
@@ -192,32 +192,28 @@ const path = require('path');
 const SESSION_DIR = path.join(process.env.HOME || process.env.USERPROFILE, '.cache', 'localhost-screenshots');
 const STATE_FILE = path.join(SESSION_DIR, 'session-state.json');
 
-async function getOrCreateSession(baseUrl) {
+async function getOrCreateSession() {
   fs.mkdirSync(SESSION_DIR, { recursive: true });
-  const context = await chromium.launchPersistentContext(
-    path.join(SESSION_DIR, 'browser-profile'),
-    { headless: true }
-  );
-  if (fs.existsSync(STATE_FILE)) {
-    const state = JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
-    await context.addCookies(state.cookies || []);
-  }
-  return context;
+  const browser = await chromium.launch();
+  const context = await browser.newContext({
+    ...(fs.existsSync(STATE_FILE) ? { storageState: STATE_FILE } : {}),
+  });
+  return { browser, context };
 }
 
 async function saveSession(context) {
-  const cookies = await context.cookies();
-  const state = { cookies, savedAt: new Date().toISOString() };
-  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+  await context.storageState({ path: STATE_FILE }); // cookies + localStorage/sessionStorage origins
 }
 ```
+
+**Security:** Playwright `storageState` is plaintext JSON containing cookies and origin storage. Keep it outside the repository, add any chosen project-local state path to `.gitignore`, never upload it as a CI artifact, and delete it when the capture task is complete.
 
 | Scenario | Persistent? | Why |
 |----------|-------------|-----|
 | Public pages, no auth | No | Stateless is simpler |
 | Pages behind login | **Yes** | Avoids re-authenticating per breakpoint |
 | Multi-page workflow capture | **Yes** | Preserves navigation state |
-| A/B test with specific cookies | **Yes** | Cookie state must survive across captures |
+| A/B test with specific cookies or localStorage | **Yes** | Full Playwright storage state must survive across captures |
 | Iterative debug-capture loop | **Yes** | Faster turnaround, no browser restart |
 
 ## Waiting for Content
@@ -235,7 +231,7 @@ await page.evaluate(() => {
   );
 });
 
-// Last resort: short delay (avoid page.waitForTimeout — deprecated in newer Playwright)
+// Last resort: short delay (avoid page.waitForTimeout for test/capture readiness — discouraged because it is brittle)
 await new Promise((r) => setTimeout(r, 500));
 ```
 
@@ -261,31 +257,68 @@ const page = await context.newPage();
 
 **Option A: Serve a pre-built output directory**
 ```js
-const { exec } = require('child_process');
-const server = exec('npx serve _site -l 3000 --no-clipboard', { cwd: projectDir });
+const { spawn } = require('child_process');
+const treeKill = require('tree-kill'); // npm install -D tree-kill serve
+
 const BASE_URL = 'http://localhost:3000';
 
-let ready = false;
-for (let i = 0; i < 15; i++) {
-  try {
-    const testPage = await browser.newPage();
-    await testPage.goto(BASE_URL, { timeout: 2000 });
-    await testPage.close();
-    ready = true;
-    break;
-  } catch { await new Promise(r => setTimeout(r, 1000)); }
+function startStaticServer(projectDir) {
+  const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+  const server = spawn(npx, ['serve', '_site', '-l', '3000', '--no-clipboard'], {
+    cwd: projectDir,
+    stdio: 'ignore',
+    detached: process.platform !== 'win32', // POSIX process group for serve + children
+  });
+  server.unref();
+  return server;
 }
-if (!ready) throw new Error('HTTP server failed to start within 15s');
-// ... take screenshots ...
-server.kill();
+
+function stopServer(server) {
+  if (!server?.pid) return Promise.resolve();
+  return new Promise((resolve) => {
+    if (process.platform === 'win32') {
+      treeKill(server.pid, 'SIGTERM', () => resolve());
+      return;
+    }
+    try { process.kill(-server.pid, 'SIGTERM'); } catch {}
+    resolve();
+  });
+}
+
+const server = startStaticServer(projectDir);
+try {
+  let ready = false;
+  for (let i = 0; i < 15; i++) {
+    let testPage;
+    try {
+      testPage = await browser.newPage();
+      await testPage.goto(BASE_URL, { timeout: 2000 });
+      ready = true;
+      break;
+    } catch {
+      await new Promise(r => setTimeout(r, 1000));
+    } finally {
+      if (testPage) await testPage.close().catch(() => {});
+    }
+  }
+  if (!ready) throw new Error('HTTP server failed to start within 15s');
+  // ... take screenshots ...
+} finally {
+  await stopServer(server);
+}
 ```
 
 **Option B: Build and serve**
 ```js
-const { execSync, exec } = require('child_process');
-execSync('npx @11ty/eleventy', { cwd: projectDir, stdio: 'inherit' });
-const server = exec('npx serve _site -l 3000 --no-clipboard', { cwd: projectDir });
-// ... same wait loop as above ...
+const { execFileSync } = require('child_process');
+const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+execFileSync(npx, ['@11ty/eleventy'], { cwd: projectDir, stdio: 'inherit' });
+const server = startStaticServer(projectDir);
+try {
+  // ... same readiness loop and screenshots as Option A ...
+} finally {
+  await stopServer(server);
+}
 ```
 
 ## Pre-Flight Checks
@@ -301,7 +334,7 @@ async function preflight(baseUrl) {
   const issues = [];
 
   try {
-    const response = await page.goto(baseUrl, { waitUntil: 'networkidle', timeout: 10000 });
+    const response = await page.goto(baseUrl, { waitUntil: 'load', timeout: 10000 });
     if (!response || !response.ok()) {
       issues.push(`Server returned ${response?.status()}`);
       return { ok: false, issues };

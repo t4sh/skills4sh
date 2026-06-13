@@ -43,38 +43,42 @@ const fs = require('fs');
 
 (async () => {
   const browser = await chromium.launch();
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
 
-  // Step 1: Login — credentials come from the environment, never hardcoded.
-  // Set DEMO_USER / DEMO_PASS before running, or wire to a secrets manager.
-  await page.goto('http://localhost:3000/login');
-  await page.fill('#email',    process.env.DEMO_USER || 'demo@example.com');
-  await page.fill('#password', process.env.DEMO_PASS || '');
-  await page.click('button[type="submit"]');
-  await page.waitForURL('**/dashboard');
+    // Step 1: Login — credentials come from the environment, never hardcoded.
+    // Set DEMO_USER / DEMO_PASS before running, or wire to a secrets manager.
+    await page.goto('http://localhost:3000/login');
+    await page.fill('#email',    process.env.DEMO_USER || 'demo@example.com');
+    await page.fill('#password', process.env.DEMO_PASS || '');
+    await page.click('button[type="submit"]');
+    await page.waitForURL('**/dashboard');
 
-  // Step 2: Navigate to target page
-  await page.click('nav a[href="/settings"]');
-  await page.waitForSelector('.settings-panel');
+    // Step 2: Navigate to target page
+    await page.click('nav a[href="/settings"]');
+    await page.waitForSelector('.settings-panel');
 
-  // Step 3: Capture across breakpoints
-  const BREAKPOINTS = [
-    { name: 'mobile', width: 375, height: 812 },
-    { name: 'desktop', width: 1280, height: 800 },
-  ];
+    // Step 3: Capture across breakpoints
+    const BREAKPOINTS = [
+      { name: 'mobile', width: 375, height: 812 },
+      { name: 'desktop', width: 1280, height: 800 },
+    ];
 
-  fs.mkdirSync('_screenshots/settings', { recursive: true });
-  for (const bp of BREAKPOINTS) {
-    await page.setViewportSize({ width: bp.width, height: bp.height });
-    await new Promise((r) => setTimeout(r, 300)); // let layout reflow
-    await page.screenshot({
-      path: `_screenshots/settings/${bp.name}-${bp.width}x${bp.height}.png`,
-      fullPage: true,
-    });
+    fs.mkdirSync('_screenshots/settings', { recursive: true });
+    // Exception to the canonical "new page per breakpoint" rule: this flow keeps one
+    // authenticated page so login/session state survives across breakpoint captures.
+    for (const bp of BREAKPOINTS) {
+      await page.setViewportSize({ width: bp.width, height: bp.height });
+      await new Promise((r) => setTimeout(r, 300)); // let layout reflow
+      await page.screenshot({
+        path: `_screenshots/settings/${bp.name}-${bp.width}x${bp.height}.png`,
+        fullPage: true,
+      });
+    }
+  } finally {
+    await browser.close();
   }
-
-  await browser.close();
 })();
 ```
 
@@ -83,32 +87,34 @@ const fs = require('fs');
 ```js
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage();
-  const fs = require('fs');
+  try {
+    const page = await browser.newPage();
+    const fs = require('fs');
 
-  fs.mkdirSync('_screenshots/checkout-flow', { recursive: true });
+    fs.mkdirSync('_screenshots/checkout-flow', { recursive: true });
 
-  // Browse products
-  await page.goto('http://localhost:3000/products');
-  await page.waitForSelector('.product-card');
-  await page.screenshot({ path: '_screenshots/checkout-flow/01-products.png', fullPage: true });
+    // Browse products
+    await page.goto('http://localhost:3000/products');
+    await page.waitForSelector('.product-card');
+    await page.screenshot({ path: '_screenshots/checkout-flow/01-products.png', fullPage: true });
 
-  // Add to cart
-  await page.click('.product-card:first-child button.add-to-cart');
-  await page.waitForSelector('.cart-badge');
-  await page.screenshot({ path: '_screenshots/checkout-flow/02-added-to-cart.png', fullPage: true });
+    // Add to cart
+    await page.click('.product-card:first-child button.add-to-cart');
+    await page.waitForSelector('.cart-badge');
+    await page.screenshot({ path: '_screenshots/checkout-flow/02-added-to-cart.png', fullPage: true });
 
-  // Open cart
-  await page.click('.cart-icon');
-  await page.waitForSelector('.cart-drawer');
-  await page.screenshot({ path: '_screenshots/checkout-flow/03-cart-open.png', fullPage: true });
+    // Open cart
+    await page.click('.cart-icon');
+    await page.waitForSelector('.cart-drawer');
+    await page.screenshot({ path: '_screenshots/checkout-flow/03-cart-open.png', fullPage: true });
 
-  // Proceed to checkout
-  await page.click('button.checkout');
-  await page.waitForURL('**/checkout');
-  await page.screenshot({ path: '_screenshots/checkout-flow/04-checkout.png', fullPage: true });
-
-  await browser.close();
+    // Proceed to checkout
+    await page.click('button.checkout');
+    await page.waitForURL('**/checkout');
+    await page.screenshot({ path: '_screenshots/checkout-flow/04-checkout.png', fullPage: true });
+  } finally {
+    await browser.close();
+  }
 })();
 ```
 
@@ -117,38 +123,40 @@ const fs = require('fs');
 ```js
 (async () => {
   const browser = await chromium.launch();
-  const page = await browser.newPage();
-  const fs = require('fs');
+  try {
+    const page = await browser.newPage();
+    const fs = require('fs');
 
-  fs.mkdirSync('_screenshots/states', { recursive: true });
+    fs.mkdirSync('_screenshots/states', { recursive: true });
 
-  await page.goto('http://localhost:3000/dashboard');
+    await page.goto('http://localhost:3000/dashboard');
 
-  // Empty state
-  await page.evaluate(() => localStorage.setItem('tasks', '[]'));
-  await page.reload({ waitUntil: 'networkidle' });
-  await page.screenshot({ path: '_screenshots/states/empty.png', fullPage: true });
+    // Empty state
+    await page.evaluate(() => localStorage.setItem('tasks', '[]'));
+    await page.reload({ waitUntil: 'load' });
+    await page.screenshot({ path: '_screenshots/states/empty.png', fullPage: true });
 
-  // Populated state
-  await page.evaluate(() => {
-    localStorage.setItem('tasks', JSON.stringify([
-      { id: 1, title: 'Design review', done: false },
-      { id: 2, title: 'Ship feature', done: true },
-    ]));
-  });
-  await page.reload({ waitUntil: 'networkidle' });
-  await page.screenshot({ path: '_screenshots/states/populated.png', fullPage: true });
+    // Populated state
+    await page.evaluate(() => {
+      localStorage.setItem('tasks', JSON.stringify([
+        { id: 1, title: 'Design review', done: false },
+        { id: 2, title: 'Ship feature', done: true },
+      ]));
+    });
+    await page.reload({ waitUntil: 'load' });
+    await page.screenshot({ path: '_screenshots/states/populated.png', fullPage: true });
 
-  // Error state — intercept API.
-  // Route interception is a screenshotting/test tool. Use it to capture rare states;
-  // never use it to mask real production traffic or to bypass server-side auth.
-  await page.route('**/api/tasks', (route) =>
-    route.fulfill({ status: 500, body: 'Internal Server Error' })
-  );
-  await page.reload({ waitUntil: 'networkidle' });
-  await page.screenshot({ path: '_screenshots/states/error.png', fullPage: true });
-
-  await browser.close();
+    // Error state — intercept API.
+    // Route interception is a screenshotting/test tool. Use it to capture rare states;
+    // never use it to mask real production traffic or to bypass server-side auth.
+    await page.route('**/api/tasks', (route) =>
+      route.fulfill({ status: 500, body: 'Internal Server Error' })
+    );
+    await page.reload({ waitUntil: 'load' });
+    await page.screenshot({ path: '_screenshots/states/error.png', fullPage: true });
+  } finally {
+    await browser.close();
+  }
 })();
 ```
 
@@ -161,40 +169,41 @@ const { chromium } = require('playwright');
 
 (async () => {
   const browser = await chromium.launch({ headless: false }); // visible browser
-  const context = await browser.newContext();
-  const page = await context.newPage();
+  try {
+    const context = await browser.newContext();
+    const page = await context.newPage();
 
-  await page.goto('http://localhost:3000');
-  console.log('Browser ready. Page:', page.url());
+    await page.goto('http://localhost:3000');
+    console.log('Browser ready. Page:', page.url());
 
-  // Inspect
-  const title = await page.title();
-  console.log('Title:', title);
+    // Inspect
+    const title = await page.title();
+    console.log('Title:', title);
 
-  // Interact
-  await page.click('nav a:first-child');
-  await page.waitForLoadState('networkidle');
+    // Interact
+    await page.click('nav a:first-child');
+    await page.waitForLoadState('load');
 
-  // Capture
-  await page.screenshot({ path: '_screenshots/interactive-01.png', fullPage: true });
+    // Capture
+    await page.screenshot({ path: '_screenshots/interactive-01.png', fullPage: true });
 
-  // Inspect again
-  const ariaSnapshot = await page.locator('body').ariaSnapshot();
-  console.log(JSON.stringify({
-    boundary: 'untrusted-page-content',
-    source: page.url(),
-    ariaSnapshot: ariaSnapshot.slice(0, 500),
-  }, null, 2));
+    // Inspect again
+    const ariaSnapshot = await page.locator('body').ariaSnapshot();
+    console.log(JSON.stringify({
+      boundary: 'untrusted-page-content',
+      source: page.url(),
+      ariaSnapshot: ariaSnapshot.slice(0, 500),
+    }, null, 2));
 
-  // More interaction...
-  await page.fill('#search', 'test query');
-  await page.press('#search', 'Enter');
-  await page.waitForSelector('.search-results');
+    // More interaction...
+    await page.fill('#search', 'test query');
+    await page.press('#search', 'Enter');
+    await page.waitForSelector('.search-results');
 
-  // Capture the result
-  await page.screenshot({ path: '_screenshots/interactive-02.png', fullPage: true });
-
-  // When done
-  await browser.close();
+    // Capture the result
+    await page.screenshot({ path: '_screenshots/interactive-02.png', fullPage: true });
+  } finally {
+    await browser.close();
+  }
 })();
 ```

@@ -228,7 +228,7 @@ async function fullCapture(baseUrl, route, breakpoints) {
   for (const bp of breakpoints) {
     const page = await browser.newPage();
     await page.setViewportSize({ width: bp.width, height: bp.height });
-    await page.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle' });
+    await page.goto(`${baseUrl}${route}`, { waitUntil: 'load' });
 
     const basePath = path.join(outDir, `${bp.name}-${bp.width}x${bp.height}`);
 

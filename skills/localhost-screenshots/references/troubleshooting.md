@@ -9,7 +9,7 @@
 - LiveReload scripts injecting extra elements into DOM
 
 ### Next.js / React SPAs
-- Page not fully hydrated when screenshot taken — use `waitUntil: 'networkidle'`
+- Page not fully hydrated when screenshot taken — use `waitUntil: 'load'` plus `waitForSelector()` for the app-ready element; reserve `networkidle` for known-static pages
 - Client-side routing means only `/` loads without JS — navigate via Playwright, don't just change URL
 - Loading spinners captured instead of actual content — wait for specific selectors
 - Dark mode / theme flashing — set `prefers-color-scheme` via `page.emulateMedia()`
@@ -35,6 +35,6 @@
 - Do not check for `CHROME_PATH` or `PUPPETEER_EXECUTABLE_PATH` environment variables
 - Do not install Chrome via apt, snap, or any package manager
 - Do not take screenshots at only one viewport size (always capture all breakpoints unless explicitly told otherwise)
-- **Do not open HTML files via `file://` paths** — CSS/JS paths won't resolve without an HTTP server
+- **Do not open HTTP-dependent pages via `file://` paths** — CSS/JS paths, modules, service workers, and fetches often fail without an HTTP server. Self-contained static HTML with inline/relative assets is the only exception.
 - Do not assume the user's host `localhost` is reachable from a sandboxed VM — always verify connectivity first
 - **Do not waste time on Puppeteer workarounds** when Chrome MCP is already connected

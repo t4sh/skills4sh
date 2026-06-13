@@ -6,25 +6,17 @@ compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
   version: "3.3.2"
-  tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility, cdp
+  tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 
 # Localhost Screenshots
-
-## Installation
-
-```bash
-npx skills add t4sh/skills4sh --skill localhost-screenshots
-```
-
----
 
 This skill captures screenshots of locally running websites. It supports two primary approaches depending on the task:
 
 - **Chrome MCP** — for quick debugging, single screenshots, and interactive verification
 - **Playwright** — for systematic multi-breakpoint screenshot sets and visual regression
 
-For niche scenarios (CDP attach, persistent sessions, AI snapshots, CI workflows), see the [Reference Files](#reference-files) section.
+For niche scenarios (persistent sessions, AI snapshots, CI workflows), see the [Reference Files](#reference-files) section.
 
 ## Tool Decision Matrix — Read This First
 
@@ -144,14 +136,14 @@ Use Playwright for automated, repeatable screenshot sets across all breakpoints.
 
 ```bash
 npm install --save-dev playwright@1.58.2
-npx playwright install chromium
+npm exec -- playwright install chromium
 ```
 
 Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` when the project already pins a compatible Playwright version in its lockfile. If Chromium reports missing OS libraries, surface them to the user and **ask them to install** — never run `sudo` from this skill. See [references/playwright-patterns.md](references/playwright-patterns.md) § "When Chromium reports missing OS libraries".
 
 ### Quick workflow
 
-1. Ensure the site is served over HTTP (user’s dev server, or `npx serve _site -l 3000 &`).
+1. Ensure the site is served over HTTP (user’s dev server, or run `npx serve _site -l 3000 --no-clipboard` in a separate terminal).
 2. Verify the server responds before screenshotting (see [playwright-patterns.md](references/playwright-patterns.md) § “Verifying the Server”).
 3. Capture all 8 standard breakpoints (320–1920px) unless the user asks for specific sizes. Check the project’s CSS/Tailwind config for custom breakpoints first.
 4. Save to `_screenshots/` in the project folder.
@@ -178,7 +170,7 @@ Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), th
 ### Key API notes
 
 - `chromium.launch()` — no arguments, uses Playwright’s bundled Chromium
-- `waitUntil: 'networkidle'` — good for static sites. SPAs with analytics/websockets may never go idle — use `load` + `waitForSelector` instead
+- `waitUntil: 'load'` — safe default for SPAs with analytics/websockets; add `waitForSelector()` for the content that matters
 - `fullPage: true` — captures entire scrollable page
 - Create a **new page per breakpoint** — avoids leftover state
 - `page.setViewportSize()` — set before navigating for accurate responsive rendering
@@ -187,7 +179,7 @@ Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), th
 
 ## What NOT to Do
 
-See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT to Do" for the full list. Key items: no Puppeteer, no JSDOM, no system Chrome binaries, no `file://` paths. Use Playwright for full 8-breakpoint sets and visual regression; use Chrome MCP for one or two quick shots unless the user asks for a systematic multi-breakpoint capture or specific sizes only.
+See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT to Do" for the full list. Key items: no Puppeteer, no JSDOM, no system Chrome binaries, and no `file://` for pages that need HTTP semantics. A `file://` capture is acceptable only for self-contained static HTML as described above. Use Playwright for full 8-breakpoint sets and visual regression; use Chrome MCP for one or two quick shots unless the user asks for a systematic multi-breakpoint capture or specific sizes only.
 
 ---
 
@@ -196,16 +188,16 @@ See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT 
 **Built-in (Claude Code):**
 - **dev-browser** — browser automation with persistent page state. Useful for interactive captures and manual navigation before screenshotting
 
-**On skills.sh:**
-- **[screenshot-local](https://skills.sh/antjanus/skillbox/screenshot-local)** — shot-scraper (Playwright-based) for localhost captures with custom viewports, element targeting, and batch YAML configs. Lighter-weight alternative when a full regression pipeline isn't needed
-- **[visual-regression-tester](https://skills.sh/patricio0312rev/skills/visual-regression-tester)** — automated visual regression via Playwright, Chromatic, or Percy with multi-viewport and CI/CD. Complements the pixel-diff reference in this skill
-- **[playwright-responsive-screenshots](https://skills.sh/dawiddutoit/custom-claude/playwright-responsive-screenshots)** — MCP-only responsive captures at 3 breakpoints (mobile/tablet/desktop). Lighter scope; `localhost-screenshots` is a superset: two tracks (Chrome MCP for debug + Playwright for regression), 8 breakpoints with Tailwind/media-query detection, guided Playwright setup, in-page JS debugging, pre-flight checks, persistent sessions, visual-regression pipeline with pixel-diff, and framework-specific troubleshooting
+**Adjacent workflows:**
+- **One-off localhost screenshots** — a lightweight shot-scraper or browser MCP workflow may be enough when only one viewport or element capture is needed.
+- **Hosted visual regression services** — Chromatic, Percy, or a project’s existing Playwright workflow may be preferable when CI review and artifact retention are already configured.
+- **Responsive smoke checks** — a small three-breakpoint script can be enough for quick layout validation; use this skill’s full workflow when the task requires systematic breakpoints, repeatable captures, or pixel-diff reporting.
 
 ---
 
 ## Reference Files
 
-For advanced patterns (CDP attach, persistent sessions, pixel-diff, AI snapshots, CI workflows), read these bundled resources:
+For advanced patterns (persistent sessions, pixel-diff, AI snapshots, CI workflows), read these bundled resources:
 
 | File | Load when |
 |------|-----------|

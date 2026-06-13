@@ -14,16 +14,16 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: a61554e3159b329e54a648ddc4e7200a2477785e1605f106befc15026f55bdbf
+    SKILL.md: c17d2cffdeef8306312b9a6499f8c9a100a3513e66c82d8afc54c7c2cab4f505
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
-    assets/scripts/multi-breakpoint.js: eab0ad3ceb08067d252d22ef45241724dba05e2eb62db77181a2643cd412ce14
-    assets/scripts/quick.js: 08a6b35dcc8b016b5cdd1cb6a71bb7ff9a9a3f2ef445305b6c4ac6d7ee3d61e1
-    assets/scripts/screenshot-a11y.js: fe86528723bdaf918eab7516224a2752e445b3828d7164998da10eb7cec30615
-    references/ai-snapshots.md: 37982b2adc6d91202f4d20dff3b29e363fc9c3b04a4fc3e65f5fa7f95838fcb9
-    references/interaction-templates.md: 3a123833228212f803c11dd6ee1ed9be859531d58a308696ed34cc6d97dafe2e
-    references/playwright-patterns.md: fb65d6227e325553f3a31f7f6545c731b9c4eedc18a895d4d30cad6a3fbdfe1b
-    references/troubleshooting.md: 3837e40adc520cf1f811cb02f00dd13e468efdce6ee195cb72cfff29935ab393
-    references/visual-regression.md: 85b754b9c01a450d920c2fd179c6d7acfc3f397604f86849d9fe9810c8993fa6
+    assets/scripts/multi-breakpoint.js: 3d633697283122d6c191370aba45bcd154e363b80d0d07ab39eba3ace43d3b07
+    assets/scripts/quick.js: 1d7a3fbccb4630acc2d643af8cd19bdc3c2455cc636c6064e571bcc57cc618c5
+    assets/scripts/screenshot-a11y.js: be767c8e0d65ed498b0f273975002496b6e3443c01703ae994c8a5e0657cf629
+    references/ai-snapshots.md: c16b31c99fb65d008e711582aea882a40f8d9a2d8201d2aedd40bfc07ecbf0e8
+    references/interaction-templates.md: 9c38e9674960d66e871ac74e83e93fb9523674f5f9cc2db8eac9443ae6d24fb0
+    references/playwright-patterns.md: 488fdc495ba12bdfc0f4459dbadf0cc2742c38efdd0a4e453d8ac839bf85a0ea
+    references/troubleshooting.md: 691a69dd988b468c11a1d71982bad3149758c66b6772e04fef873d1b018b3ba2
+    references/visual-regression.md: d5573c890c3f1b7dce1b4ad17f2f72d50f7a127cbad3f44e205349e4f3632790
 
 
 permissions:

@@ -2,7 +2,7 @@
 // Screenshot plus ARIA snapshot for AI-agent consumption.
 //
 // Usage:
-//   node assets/scripts/screenshot-a11y.js [URL] [OUT_BASE]
+//   node assets/scripts/screenshot-a11y.js [URL] [OUT_BASE] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
 // Defaults:
 //   URL=http://localhost:3000  OUT_BASE=_screenshots/page
 //
@@ -20,13 +20,16 @@ const path = require('path');
 
 const url = process.argv[2] || 'http://localhost:3000';
 const outBase = process.argv[3] || '_screenshots/page';
+const waitUntil = process.argv[4] || 'load';
+const waitForSelector = process.argv[5] || '';
 
 (async () => {
   fs.mkdirSync(path.dirname(outBase), { recursive: true });
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: 'networkidle' });
+    await page.goto(url, { waitUntil });
+    if (waitForSelector) await page.waitForSelector(waitForSelector, { timeout: 10000 });
     await page.screenshot({ path: `${outBase}.png`, fullPage: true });
 
     const ariaSnapshot = await page.locator('body').ariaSnapshot();
