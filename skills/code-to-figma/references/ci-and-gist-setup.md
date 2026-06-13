@@ -6,11 +6,20 @@ End-to-end guide for wiring the figma-sync pipeline in a new project.
 
 ## 1 — Create the Gist
 
-One-time, run locally:
+One-time, run locally. **Disclosure:** the export can reveal design tokens, page structure, and unreleased UI names. Prefer a **secret gist** unless the user explicitly wants a public one. Secret gists are unlisted, not private access control — anyone with the raw URL can read them. Never include secrets, customer data, or private implementation details in `figma-export.json`.
+
+POSIX shell:
 
 ```bash
-echo '{"meta":{"generated":"placeholder"},"sections":[]}' > /tmp/figma-export-init.json
-gh gist create --public --filename figma-export.json /tmp/figma-export-init.json
+printf '%s\n' '{"meta":{"generated":"placeholder"},"sections":[]}' \
+  | gh gist create --secret --filename figma-export.json -
+# Output: https://gist.github.com/<user>/<gist-id>
+```
+
+PowerShell:
+
+```powershell
+'{"meta":{"generated":"placeholder"},"sections":[]}' | gh gist create --secret --filename figma-export.json -
 # Output: https://gist.github.com/<user>/<gist-id>
 ```
 
@@ -25,9 +34,11 @@ https://gist.githubusercontent.com/<user>/<gist-id>/raw/figma-export.json
 ## 2 — Set repo secrets
 
 ```bash
-gh secret set FIGMA_EXPORT_GIST_ID --body "<gist-id>"        --repo <org>/<repo>
-gh secret set GIST_TOKEN            --body "<PAT-gist-scope>" --repo <org>/<repo>
+gh secret set FIGMA_EXPORT_GIST_ID --body "<gist-id>" --repo <org>/<repo>
+gh secret set GIST_TOKEN --repo <org>/<repo>   # paste the PAT at the secure prompt
 ```
+
+Do not put the PAT on the command line with `--body`; shell history and process logs can retain it. If you need a non-interactive shell, pipe from a secure secret manager into `gh secret set GIST_TOKEN --body-file - --repo <org>/<repo>`.
 
 **`GIST_TOKEN`** must be a personal access token (PAT) with `gist` scope, owned by the same GitHub account that owns the Gist. `GITHUB_TOKEN` (the built-in Actions token) is repo-scoped and **cannot** patch Gists.
 
@@ -62,12 +73,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # Pin third-party actions to audited full commit SHAs in real workflows.
+      - uses: actions/checkout@<actions-checkout-v4-commit-sha>
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@<pnpm-action-setup-v4-commit-sha>
         # reads packageManager from package.json
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@<actions-setup-node-v4-commit-sha>
         with:
           node-version-file: .nvmrc
           cache: pnpm
@@ -83,29 +95,24 @@ jobs:
       - name: Walk HTML → figma-export.json
         # Use `node` directly, NOT `pnpm <script>`.
         # pnpm writes a script header to stdout which corrupts the JSON file.
-        run: node scripts/figma-export/walk-<site>.mjs > /tmp/figma-export.json
+        run: node scripts/figma-export/walk-<site>.mjs > "$RUNNER_TEMP/figma-export.json"
 
       - name: Validate + log summary
         run: |
-          sections=$(jq '.sections | length' /tmp/figma-export.json)
-          nodes=$(jq '[.sections[].nodes | length] | add' /tmp/figma-export.json)
+          jq -e '.sections | type == "array"' "$RUNNER_TEMP/figma-export.json" >/dev/null
+          jq -e 'all(.sections[]; .nodes | type == "array")' "$RUNNER_TEMP/figma-export.json" >/dev/null
+          sections=$(jq '.sections | length' "$RUNNER_TEMP/figma-export.json")
+          nodes=$(jq '[.sections[].nodes | length] | add // 0' "$RUNNER_TEMP/figma-export.json")
           echo "Sections: $sections  Nodes: $nodes"
 
-      - name: Patch Gist
+      - name: Validate and patch Gist
         env:
           GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
           GIST_ID:    ${{ secrets.FIGMA_EXPORT_GIST_ID }}
-        run: |
-          content=$(jq -Rs . /tmp/figma-export.json)
-          curl -s --fail -X PATCH \
-            -H "Authorization: token $GIST_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"files\":{\"figma-export.json\":{\"content\":$content}}}" \
-            "https://api.github.com/gists/$GIST_ID" \
-            | jq -r '"Gist updated: https://gist.github.com/\(.owner.login)/\(.id)"'
+        run: node scripts/tokens-to-figma/push-to-figma.mjs --file "$RUNNER_TEMP/figma-export.json"
 ```
 
-> **Why `node` not `pnpm <script>`**: pnpm's script runner writes a `> package-name@version scriptname` header to stdout before the script runs. When stdout is redirected to a file (`> /tmp/figma-export.json`), that header lands in the file and makes it invalid JSON. Calling `node` directly sidesteps this.
+> **Why `node` not `pnpm <script>`**: pnpm's script runner writes a `> package-name@version scriptname` header to stdout before the script runs. When stdout is redirected to a file (`> "$RUNNER_TEMP/figma-export.json"`), that header lands in the file and makes it invalid JSON. Calling `node` directly sidesteps this.
 
 ---
 
@@ -170,9 +177,9 @@ The plugin reports how old the snapshot is when it opens ("Figma reflects code a
 | Symptom | Cause | Fix |
 |---|---|---|
 | `jq: parse error: Invalid numeric literal at line 2` | pnpm script header in stdout | Use `node script.mjs >` not `pnpm figma:export >` |
-| `GIST_TOKEN: ` (empty in CI log) | Secret not set | `gh secret set GIST_TOKEN ...` |
-| `GIST_PATCH failed: 404` | GIST_ID wrong or Gist deleted | Check `gh api gists/<id>` |
-| `GIST_PATCH failed: 403` | PAT missing `gist` scope | Create new PAT with gist scope |
+| `GIST_TOKEN: ` (empty in CI log) | Secret not set | `gh secret set GIST_TOKEN --repo <org>/<repo>` |
+| `Gist PATCH failed: 404` | GIST_ID wrong or Gist deleted | Check `gh api gists/<id>` |
+| `Gist PATCH failed: 403` | PAT missing `gist` scope | Create new PAT with gist scope |
 | `ENOENT` on the walker's `readFileSync(... index.html)` | Next.js (or other SSR/streamed framework) emitted no static HTML file | Enable `output: 'export'` in `next.config` and rebuild, or point the walker at a fully-static prerendered route — see the Next.js note in `walker-patterns.md`. Do not guess a `.next/server/app/page.html` path. |
 | `ENOENT` on the CSS read | CSS filename is content-hashed (Next.js `.next/static/css/*.css`) | Glob the hashed CSS name instead of hard-coding `tailwind.css`; feed all matched CSS into `parseClassVarMap` |
 | Plugin shows 0 sections | Walker found no section elements | Check section selectors in walker; verify the built HTML exists at the expected path |

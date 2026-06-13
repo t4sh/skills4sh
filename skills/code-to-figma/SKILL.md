@@ -67,7 +67,7 @@ Output contract: `process.stdout.write(JSON.stringify({ meta, sections }, null, 
 
 Reads the project's CSS custom properties and emits a W3C DTCG JSON file (`<project>-tokens.w3c.json`) beside the script. The `tokenPath()` function here must match the one in the walker exactly. Use the reference in [`references/walker-patterns.md`](references/walker-patterns.md).
 
-Commit the `.w3c.json` output to the repo — it is the human-readable diff target for token changes.
+Generate the file during setup with `node scripts/tokens-to-figma/convert-to-w3c.mjs`, inspect the diff, and commit the `.w3c.json` output to the repo — it is the human-readable diff target for token changes.
 
 #### `scripts/tokens-to-figma/push-to-figma.mjs`
 
@@ -95,9 +95,21 @@ Saved at the repo root. Records the frozen config so CI can run headlessly.
 Add to the project's `package.json`:
 
 ```json
+"figma:tokens": "node scripts/tokens-to-figma/convert-to-w3c.mjs",
 "figma:export": "node scripts/figma-export/walk-<site>.mjs",
 "figma:sync":   "node scripts/figma-export/walk-<site>.mjs | node scripts/tokens-to-figma/push-to-figma.mjs"
 ```
+
+#### Generate and commit the token artifact
+
+Run the converter once during setup, before the first sync:
+
+```bash
+node scripts/tokens-to-figma/convert-to-w3c.mjs
+git status --short -- scripts/tokens-to-figma/*.w3c.json
+```
+
+Review the generated `<project>-tokens.w3c.json`, commit it with the scaffolded scripts, and regenerate it whenever token source files change.
 
 #### `.github/workflows/figma-sync.yml`
 
@@ -105,9 +117,20 @@ CI workflow. See the full template in [`references/ci-and-gist-setup.md`](refere
 
 ### 3 — Create the Gist
 
+**Disclosure:** the export can reveal design tokens, page structure, and unreleased UI names. Prefer a **secret gist** unless the user explicitly wants a public one. Secret gists are unlisted, not private access control — anyone with the raw URL can read them. Never include secrets, customer data, or private implementation details in `figma-export.json`.
+
+POSIX shell:
+
 ```bash
-echo '{"meta":{"generated":"placeholder"},"sections":[]}' > /tmp/figma-export-init.json
-gh gist create --public --filename figma-export.json /tmp/figma-export-init.json
+printf '%s\n' '{"meta":{"generated":"placeholder"},"sections":[]}' \
+  | gh gist create --secret --filename figma-export.json -
+# Note the Gist ID from the URL: gist.github.com/<user>/<ID>
+```
+
+PowerShell:
+
+```powershell
+'{"meta":{"generated":"placeholder"},"sections":[]}' | gh gist create --secret --filename figma-export.json -
 # Note the Gist ID from the URL: gist.github.com/<user>/<ID>
 ```
 
@@ -115,10 +138,10 @@ gh gist create --public --filename figma-export.json /tmp/figma-export-init.json
 
 ```bash
 gh secret set FIGMA_EXPORT_GIST_ID --body "<gist-id>" --repo <org>/<repo>
-gh secret set GIST_TOKEN --body "<PAT-with-gist-scope>" --repo <org>/<repo>
+gh secret set GIST_TOKEN --repo <org>/<repo>   # paste the PAT at the secure prompt
 ```
 
-`GIST_TOKEN` must be a personal PAT with `gist` scope (or a fine-grained PAT with Gist read/write). `GITHUB_TOKEN` does not cover Gists.
+`GIST_TOKEN` must be a personal PAT with `gist` scope (or a fine-grained PAT with Gist read/write). `GITHUB_TOKEN` does not cover Gists. Do not put the PAT on the command line with `--body`; shell history and process logs can retain it.
 
 ### 5 — First sync
 
@@ -144,16 +167,37 @@ https://gist.githubusercontent.com/<user>/<gist-id>/raw/figma-export.json
 
 See [`references/ci-and-gist-setup.md`](references/ci-and-gist-setup.md) for the full plugin setup.
 
+### Figma plugin-side contract
+
+This skill produces the artifact; the Figma plugin consumes it. Keep the boundary explicit:
+
+- The plugin manifest must allow only the network domains it needs for the raw Gist URL. During local hardening, `networkAccess.allowedDomains: ["none"]` should fail closed; production setup should allow the narrow GitHub/Gist raw host required by the chosen URL.
+- The plugin should read or update local Figma variables through the official variables API (for example, local variable collection discovery) rather than inventing a parallel token store.
+- The artifact is the source of truth for sync input: `figma-export.json` plus the generated `<project>-tokens.w3c.json`. Do not require a Figma API key in CI; writes happen inside the user-authorized plugin runtime.
+- If the plugin cannot find the configured local variable collection, stop and ask the user to choose/create it in Figma rather than creating ambiguous duplicate collections.
+
 ---
 
 ## `/code-to-figma sync`
 
 1. Confirm `figma-sync.config.json` exists and the walker path is valid.
-2. Run: `node <walker> > /tmp/figma-export.json`
-3. Validate: `jq '.sections | length' /tmp/figma-export.json`
+2. Run: `node <walker> > figma-export.tmp.json`
+3. Validate: `jq '.sections | length' figma-export.tmp.json`
 4. Confirm `GIST_TOKEN` is exported or prefix the pusher command with it.
-5. Push: `node scripts/tokens-to-figma/push-to-figma.mjs < /tmp/figma-export.json`
-6. Report sections and nodes exported, and the Gist URL.
+5. Push: `node scripts/tokens-to-figma/push-to-figma.mjs < figma-export.tmp.json`
+6. Delete `figma-export.tmp.json` when done, then report sections and nodes exported and the Gist URL.
+
+---
+
+## `/code-to-figma update`
+
+Use this when the framework output, token naming convention, section selectors, or CSS build paths changed enough that the existing walker may be stale.
+
+1. Re-run the setup assessment against current compiled HTML/CSS and token files.
+2. Update `walk-<site>.mjs`, `convert-to-w3c.mjs`, `figma-sync.config.json`, and CI paths together so `tokenPath()` and file paths stay aligned.
+3. Regenerate the W3C token artifact: `node scripts/tokens-to-figma/convert-to-w3c.mjs`.
+4. Validate the walker output: `node <walker> > figma-export.tmp.json && jq -e '.sections | type == "array"' figma-export.tmp.json`.
+5. Push through `/code-to-figma sync` or CI after reviewing the script and `.w3c.json` diffs.
 
 ---
 
@@ -177,7 +221,7 @@ Report:
 |---|---|
 | Export code tokens and page structure → Figma | This skill |
 | Import a Figma design → code | **`figma-to-code`** skill |
-| Edit Figma variables or components directly | Figma write MCP skill |
+| Edit Figma variables or components directly | The project's configured Figma write/design workflow (outside this skill) |
 | Sync an existing Gist manually | `/code-to-figma sync` |
 
 This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the Figma-side consumer — this skill produces the artifact it reads.

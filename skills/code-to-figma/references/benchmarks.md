@@ -29,7 +29,6 @@ Keep commands manual and explicit; avoid shell loops or environment variables in
 
 | Attribute | Value |
 |-----------|--------|
-| Install | `npx skills add t4sh/skills4sh --skill code-to-figma` |
 | Differentiator | CI-anchored, zero-credential **code → Figma** pipeline generation; pairs with the `tokens-sync-to-figma` plugin |
 | Direction | One-directional: code → Gist → Figma (the reverse leg is the `figma-to-code` skill) |
 

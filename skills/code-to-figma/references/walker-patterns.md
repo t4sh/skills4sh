@@ -83,16 +83,27 @@ function buildUtilityMap(themeVars) {
 }
 
 // ── Tailwind v4 only: extract @theme var names from compiled CSS ──────────────
+function findMatchingBrace(text, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return text.length;
+}
+
 function extractThemeVars(css) {
   const themeIdx = css.indexOf('@layer theme');
   if (themeIdx === -1) return {};
-  const open  = css.indexOf('{', themeIdx);
+  const open = css.indexOf('{', themeIdx);
+  if (open === -1) return {};
+  const close = findMatchingBrace(css, open);
   const props = {};
-  const re    = /--([a-zA-Z0-9_-]+):/g;
-  re.lastIndex = open;
-  // 8000 = heuristic window over the @theme block. Raise it if the project's
-  // @theme declares more vars than fit in ~8 KB, or scan to the matching `}`.
-  const chunk = css.slice(open, open + 8000);
+  const re = /--([a-zA-Z0-9_-]+):/g;
+  const chunk = css.slice(open, close + 1);
   let m;
   while ((m = re.exec(chunk)) !== null) props[m[1]] = true;
   return props;
@@ -288,10 +299,17 @@ function buildW3c(tokens) {
       cur[parts[i]] ??= {};
       cur = cur[parts[i]];
     }
-    // Infer $type from value
-    const isColor = /^#|^rgb|^hsl|^oklch/.test(value);
-    const isDim   = /^\d+(\.\d+)?(px|rem|em)$/.test(value);
-    const type    = isColor ? 'color' : isDim ? 'dimension' : 'string';
+    // Infer $type from value and token path. Adapt this map to the project's token taxonomy.
+    const isColor = /^(#|rgb|hsl|oklch)/.test(value);
+    const isDim   = /^-?\d+(\.\d+)?(px|rem|em|ch|vw|vh|vmin|vmax|%)$/.test(value);
+    const isTime  = /^-?\d+(\.\d+)?(ms|s)$/.test(value);
+    const isNumber = /^-?\d+(\.\d+)?$/.test(value);
+    const top = parts[0];
+    const type = isColor ? 'color'
+      : isDim ? 'dimension'
+      : isTime ? 'duration'
+      : ['opacity', 'z-index', 'font-weight'].includes(top) || isNumber ? 'number'
+      : 'string';
     cur[parts.at(-1)] = { $value: value, $type: type };
   }
   return tree;
@@ -299,7 +317,7 @@ function buildW3c(tokens) {
 
 const tokens = parseCustomProperties(css);
 const w3c    = buildW3c(tokens);
-const out    = resolve(__dirname, 'project-tokens.w3c.json');  // ← adapt name
+const out    = resolve(__dirname, '<project>-tokens.w3c.json');  // ← adapt project slug
 writeFileSync(out, JSON.stringify(w3c, null, 2) + '\n');
 console.error(`wrote ${tokens.length} tokens → ${out}`);
 ```
@@ -313,10 +331,15 @@ Generic — project-agnostic. Reads walker JSON from `stdin` (or `--file <path>`
 ```js
 #!/usr/bin/env node
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = resolve(__dirname, '../../');
 
 function readConfigGistId() {
   try {
-    const config = JSON.parse(readFileSync('figma-sync.config.json', 'utf8'));
+    const config = JSON.parse(readFileSync(resolve(ROOT, 'figma-sync.config.json'), 'utf8'));
     return typeof config.gistId === 'string' && config.gistId.trim()
       ? config.gistId.trim()
       : '';
@@ -329,11 +352,15 @@ const GIST_TOKEN = process.env.GIST_TOKEN;
 const GIST_ID    = process.env.GIST_ID || process.env.FIGMA_EXPORT_GIST_ID || readConfigGistId();
 
 if (!GIST_TOKEN || !GIST_ID) {
-  console.error('GIST_TOKEN and GIST_ID, FIGMA_EXPORT_GIST_ID, or figma-sync.config.json gistId must be set');
+  console.error('Set GIST_TOKEN and one of GIST_ID, FIGMA_EXPORT_GIST_ID, or figma-sync.config.json gistId');
   process.exit(1);
 }
 
 const fileArg = process.argv.indexOf('--file');
+if (fileArg !== -1 && (!process.argv[fileArg + 1] || process.argv[fileArg + 1].startsWith('--'))) {
+  console.error('Usage: push-to-figma.mjs [--file <figma-export.json>]');
+  process.exit(1);
+}
 const json    = fileArg !== -1
   ? readFileSync(process.argv[fileArg + 1], 'utf8')
   : readFileSync(0, 'utf8'); // fd 0 — cross-platform stdin (/dev/stdin is Unix-only)
@@ -348,6 +375,11 @@ try {
 }
 if (!Array.isArray(parsed.sections)) {
   console.error('Missing sections array — aborting push');
+  process.exit(1);
+}
+const badSection = parsed.sections.find((section) => !Array.isArray(section.nodes));
+if (badSection) {
+  console.error(`Section ${badSection.id || badSection.name || '<unnamed>'} is missing a nodes array — aborting push`);
   process.exit(1);
 }
 
@@ -380,7 +412,7 @@ Use `buildUtilityMap` + `extractThemeVars` from the template. The `@layer theme`
 
 ### Custom CSS only (no Tailwind)
 
-Set `utilityMap = {}` and `themeText = ''`. All binding comes from `parseClassVarMap` against your token CSS. Point it at the file with `--token-name: value` declarations.
+Set `utilityMap = {}` and `themeText = ''`. All binding comes from `parseClassVarMap` against the project token CSS. Point it at the file with `--token-name: value` declarations.
 
 ### Style Dictionary output
 
