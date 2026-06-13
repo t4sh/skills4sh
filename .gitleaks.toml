@@ -4,7 +4,7 @@
 [extend]
 useDefault = true
 
-[allowlist]
+[[allowlists]]
 description = "Allow SHA-256 integrity hashes in AST10 manifests"
 condition = "AND"
 regexTarget = "line"

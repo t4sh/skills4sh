@@ -9,7 +9,7 @@
 # Bypass for emergencies: git commit --no-verify
 
 if command -v gitleaks >/dev/null 2>&1; then
-  if ! gitleaks protect --staged --redact; then
+  if ! gitleaks protect --staged --redact --config .gitleaks.toml; then
     echo ""
     echo "  ↳ Fix:    remove the secret from the commit, then rotate it if it was real"
     echo "  ↳ Bypass: git commit --no-verify     (emergencies only)"
