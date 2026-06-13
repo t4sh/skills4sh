@@ -1,5 +1,5 @@
 {
-  "_": "Expected branch-protection configuration for refs/heads/main. Snapshot maintained as part of AST09 governance — see SECURITY.md.  Drift is checked daily by .github/workflows/branch-protection-drift.yml. To intentionally change protection settings: update this file in the same PR that changes them on github.com (or update first, then sync settings on GitHub).",
+  "_": "Expected branch-protection configuration for refs/heads/main. Snapshot maintained as part of AST09 governance — see SECURITY.md. Drift is checked daily by .github/workflows/branch-protection-drift.yml. The required validate (22) and validate (24) contexts include npm run check:skill-standard, making the objective Skill Authoring Standard gate mandatory for PRs. To intentionally change protection settings: update this file in the same PR that changes them on github.com (or update first, then sync settings on GitHub).",
   "required_status_checks": {
     "strict": true,
     "contexts": [

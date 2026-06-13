@@ -37,12 +37,25 @@
 - [ ] Security hardening
 - [ ] Maintenance / release / dependency update
 
+## Skill authoring audit
+
+Required for any PR touching `skills/`, `.security/`, `skills-lock.json`, or skill authoring rules/tooling. CI validates that this section is filled for those PRs.
+
+- [ ] Standard-derived checklist was completed before patching.
+- [ ] Evidence table was prepared before edits.
+- [ ] Mechanical grep/checks were run for every objective rule touched.
+
+| Standard-derived check | Evidence gathered before edits | Mechanical command or grep | Result | Patch/decision |
+|---|---|---|---|---|
+| <!-- e.g. frontmatter contract --> | <!-- file:line, command output, or source --> | <!-- command run --> | <!-- pass/fail/count --> | <!-- no patch / patched file --> |
+
 ## Required local checks
 
 Run the full local suite before requesting review. If a check is not applicable or cannot run, explain why in the Notes column.
 
 | Check | Required for | Status / notes |
 |---|---|---|
+| `npm run check:skill-standard` | All PRs touching `skills/`, skill docs, or skill authoring rules | |
 | `npm run check:drift` | All PRs | |
 | `npm run check:guardskills` | All PRs touching skills or `.security/`; recommended for all PRs | |
 | `node bin/hash-check.mjs` | All PRs touching `skills/` or `skills-lock.json`; recommended for all PRs | |

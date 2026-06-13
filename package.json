@@ -10,13 +10,15 @@
     "test": "node --test tests/*.test.mjs",
     "check:drift": "node bin/drift-check.mjs",
     "check:guardskills": "node bin/guardskills-check.mjs",
+    "check:skill-standard": "node bin/skill-standard-check.mjs",
+    "check:pr-skill-audit": "node bin/pr-skill-audit-check.mjs",
     "check:pack": "node bin/pack-check.mjs",
     "check:release": "node bin/release-check.mjs",
     "setup:hooks": "bash bin/setup-hooks.sh",
     "prepack": "node bin/clean-package-for-publish.mjs prepack",
     "postpack": "node bin/clean-package-for-publish.mjs postpack",
     "postpublish": "node bin/clean-package-for-publish.mjs postpublish",
-    "prepublishOnly": "npm run check:release && bash .github/scripts/check-bin-tag-parity.sh && npm run check:drift && npm run check:pack"
+    "prepublishOnly": "npm run check:release && bash .github/scripts/check-bin-tag-parity.sh && npm run check:skill-standard && npm run check:drift && npm run check:pack"
   },
   "files": [
     "bin/install.mjs",

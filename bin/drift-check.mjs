@@ -103,6 +103,15 @@ export async function runDriftChecks(rootDir) {
     for (const linkErr of await validateSkillLinks(root, skill, actualRel)) {
       errors.push(linkErr);
     }
+
+    // Orphan-reference detection: the reverse of the link check above. Every
+    // file under references/ must be linked from SKILL.md, per the authoring
+    // standard's progressive-disclosure gate — a reference no one can reach
+    // from the entry point is dead weight that never loads. assets/ are
+    // exempt (only reference files must be linked).
+    for (const orphanErr of findOrphanReferences(skill, actualRel, skillMd)) {
+      errors.push(orphanErr);
+    }
   }
 
   const lockSkills = Object.keys(lock.skills ?? {}).sort();
@@ -227,6 +236,45 @@ async function validateSkillLinks(root, skill, skillFilesRel) {
       if (!validRel.has(resolved)) {
         errors.push(`${skill}: ${mdRel} contains broken markdown link to ${target} (resolves to ${resolved}, not in skill files)`);
       }
+    }
+  }
+  return errors;
+}
+
+// Returns the set of skill-relative paths that SKILL.md links to via markdown
+// links. SKILL.md lives at the skill root, so a normalized link target is
+// already skill-relative. Mirrors validateSkillLinks's extraction: code fences
+// excluded, external/in-page/scheme links ignored, anchors and queries stripped.
+function skillMdLinkTargets(skillMdContent) {
+  const targets = new Set();
+  const stripped = stripCodeFences(skillMdContent);
+  const linkRe = /!?\[[^\]]*\]\(([^)\s]+)(?:\s+"[^"]*")?\)/g;
+  let match;
+  while ((match = linkRe.exec(stripped)) !== null) {
+    const target = match[1];
+    if (/^[a-z][a-z0-9+.-]*:/i.test(target)) continue; // external scheme / mailto
+    if (target.startsWith("#")) continue; // in-page anchor
+    if (target.startsWith("//")) continue; // protocol-relative
+    const pathOnly = target.replace(/[#?].*$/, "");
+    if (!pathOnly) continue;
+    targets.add(posix.normalize(pathOnly));
+  }
+  return targets;
+}
+
+// Flags any file under references/ that SKILL.md does not link to. Returns an
+// array of error strings — empty when every reference is reachable from the
+// entry point. Pairs with validateSkillLinks (which checks the other direction:
+// that links resolve to real files).
+function findOrphanReferences(skill, skillFilesRel, skillMdContent) {
+  const referenceFiles = skillFilesRel.filter((p) => p.startsWith("references/"));
+  if (referenceFiles.length === 0) return [];
+
+  const linked = skillMdLinkTargets(skillMdContent);
+  const errors = [];
+  for (const ref of referenceFiles) {
+    if (!linked.has(ref)) {
+      errors.push(`${skill}: ${ref} exists but is not linked from SKILL.md (orphan reference file)`);
     }
   }
   return errors;

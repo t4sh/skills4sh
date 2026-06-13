@@ -185,6 +185,8 @@ Plugins are not delivered by `npx skills add`; they are imported directly into t
 Run these before pushing. CI runs the same set. If a check cannot run, record the reason in the PR template; this applies to maintainer PRs too.
 
 ```bash
+npm run check:skill-standard # objective Skill Authoring Standard gate
+npm run check:pr-skill-audit # PR-body evidence packet check for skill/standard changes
 npm run check:drift          # cross-file metadata + semver monotonicity
 npm run check:guardskills    # security scan vs. .security/*.yaml expected findings
 node bin/hash-check.mjs      # skills-lock.json hash verification
@@ -239,7 +241,7 @@ Never declare a real security issue as `acknowledged: true`. If the underlying i
 
 ## Pull request expectations
 
-1. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) — the OWASP AST10 checklist is the bar for skill changes.
+1. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) — the Skill authoring audit section and OWASP AST10 checklist are the bar for skill changes.
 2. Required CI checks (configured in [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md)) — all must pass:
    - `validate` (Node 22 + 24)
    - `guardskills` (each of the 5 skills × Node 22 + 24)

@@ -688,3 +688,69 @@ execution_context:
     }
   });
 });
+
+describe("drift-check — orphan reference detection (item 6, reverse direction)", () => {
+  test("a reference file not linked from SKILL.md is flagged as orphan", async () => {
+    const dir = setupTmp();
+    try {
+      // SKILL.md links the asset but NOT references/foo.md. buildFixture
+      // recomputes the manifest/hashes from this override, so foo.md stays a
+      // valid inventory entry and the orphan error is the only failure.
+      await buildFixture(dir, {
+        "skills/demo/SKILL.md": `---
+name: demo
+description: "A demo skill for tests"
+license: MIT
+compatibility: any
+metadata:
+  author: test
+  version: "1.0.0"
+  tags: demo, test
+---
+
+# Demo
+
+This entry point links no references, only an [icon](assets/icon.svg).
+`,
+      });
+      const { errors } = await runDriftChecks(dir);
+      assert.ok(
+        errors.some((e) => e.includes("references/foo.md exists but is not linked from SKILL.md (orphan reference file)")),
+        `expected orphan-reference error, got:\n${errors.join("\n")}`,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a reference linked only via an anchored link is not an orphan", async () => {
+    const dir = setupTmp();
+    try {
+      await buildFixture(dir, {
+        "skills/demo/SKILL.md": `---
+name: demo
+description: "A demo skill for tests"
+license: MIT
+compatibility: any
+metadata:
+  author: test
+  version: "1.0.0"
+  tags: demo, test
+---
+
+# Demo
+
+See [foo](references/foo.md#a-section) and [icon](assets/icon.svg).
+`,
+      });
+      const { errors } = await runDriftChecks(dir);
+      const orphanErrors = errors.filter((e) => e.includes("orphan reference file"));
+      assert.deepEqual(
+        orphanErrors, [],
+        `anchored link should count as linked:\n${orphanErrors.join("\n")}`,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

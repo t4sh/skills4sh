@@ -107,6 +107,21 @@ jobs:
             exit 1
           fi
 
+      - name: Verify skill authoring standard
+        run: npm run check:skill-standard
+
+      - name: Collect PR changed files
+        if: github.event_name == 'pull_request'
+        run: |
+          git diff --name-only HEAD^1...HEAD > /tmp/pr-changed-files.txt
+
+      - name: Verify PR skill audit packet
+        if: github.event_name == 'pull_request'
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_CHANGED_FILES_PATH: /tmp/pr-changed-files.txt
+        run: npm run check:pr-skill-audit
+
       - name: Verify content hashes (AST01/AST02)
         run: node bin/hash-check.mjs
 
