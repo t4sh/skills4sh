@@ -11,11 +11,20 @@ Strip path traversal and shell-unsafe characters:
 ```bash
 sanitize_filename() {
   local name="$1"
+  name="${name//\\//}"                 # normalize Windows path separators
   name=$(basename -- "$name")           # strip any path components (../../)
   name="${name//[^a-zA-Z0-9._-]/_}"     # allow only safe characters
-  name="${name#.}"                       # strip leading dots (hidden files)
+  while [[ "$name" == .* ]]; do name="${name#.}"; done  # strip all leading dots (hidden files)
+  while [[ "$name" == *. ]]; do name="${name%.}"; done  # Windows forbids trailing dots
   name="${name:0:200}"                   # truncate to 200 chars max
   [ -z "$name" ] || [ "$name" = "." ] && name="unnamed"
+
+  local stem="${name%%.*}"
+  local lower
+  lower=$(printf '%s' "$stem" | tr '[:upper:]' '[:lower:]')
+  if [[ "$lower" =~ ^(con|prn|aux|nul|com[1-9]|lpt[1-9])$ ]]; then
+    name="_${name}"                       # avoid Windows reserved device names
+  fi
   echo "$name"
 }
 ```
@@ -141,18 +150,39 @@ validate_url "{url}" && curl --proto '=https' --fail -o "{harvest_folder}/images
     const msg = {
       images: [],
       attachmentUrls: [],
+      attachments: [],
+      embeds: [],
       links: []
     };
 
     attachments.forEach(att => {
       const src = att.src || att.href;
       if (src && src.startsWith('http')) {
-        if (src.match(/\.(png|jpg|jpeg|gif|webp)/i)) {
+        const filename = att.getAttribute('download')
+          || att.getAttribute('aria-label')
+          || att.alt
+          || src.split('/').pop().split('?')[0]
+          || 'attachment';
+        const item = { url: src, filename, title: att.title || att.alt || '' };
+        msg.attachments.push(item);
+        if (src.match(/\.(png|jpg|jpeg|gif|webp)(\?|$)/i)) {
           msg.images.push(src);
         } else {
           msg.attachmentUrls.push(src);
         }
       }
+    });
+
+    el.querySelectorAll('[class*="embed"] a[href], article a[href]').forEach(a => {
+      const href = a.href;
+      if (!href || !href.startsWith('http')) return;
+      const img = a.querySelector('img');
+      msg.embeds.push({
+        url: href,
+        title: a.textContent?.trim().slice(0, 200) || a.getAttribute('aria-label') || '',
+        imageUrl: img?.src || '',
+        thumbnailUrl: img?.src || ''
+      });
     });
 
     links.forEach(a => {

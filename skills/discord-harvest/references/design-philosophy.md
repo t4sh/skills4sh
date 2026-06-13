@@ -13,4 +13,4 @@ discord-harvest is **stateless, extract-only, and lean by design**.
 
 ## Tradeoffs
 
-This leanness is intentional. Heavier alternatives (DiscordChatExporter + SQLite pipelines, MCP server approaches with persistent memory) exist — see Related Skills in `SKILL.md`. discord-harvest trades that infrastructure for portability, simplicity, and a smaller attack surface: not storing message content means not needing to secure it.
+This leanness is intentional. Heavier alternatives exist, such as DiscordChatExporter plus SQLite pipelines or MCP server approaches with persistent memory. discord-harvest trades that infrastructure for portability, simplicity, and a smaller attack surface: not storing message content means not needing to secure it.

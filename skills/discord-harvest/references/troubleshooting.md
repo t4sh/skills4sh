@@ -11,7 +11,7 @@
 - **Rate limits (API):** Discord uses **per-route** limits (429 with `Retry-After`). Batch large fetches (200+), backoff on 429, and do not assume a single global requests-per-second ceiling.
 - **CDN URLs expire:** download promptly after extraction; re-fetch message URLs if downloads 403/404.
 - **Threads:** separate API channels — list active and archived threads after the parent channel; attachments only in threads will not appear in parent messages.
-- **Large files:** up to 25MB (500MB with Nitro); `curl` handles these.
+- **Large files:** Discord attachment limits vary by account, server plan, and policy changes; do not hard-code a size assumption. `curl` handles large downloads but they may take time.
 - **Duplicates:** deduplicate before downloading.
 - **Browser login:** user must be logged into Discord web for the DM path.
 
@@ -27,13 +27,13 @@
 ### Server Channels (Bot API Path)
 - **Missing permissions** — bot needs `VIEW_CHANNEL` and `READ_MESSAGE_HISTORY` permissions; NSFW channels need additional permissions
 - **Rate limits** — per-route 429 responses with `Retry-After`; batch large fetches (200+ messages) with backoff between batches
-- **Thread messages** — threads are separate channels in the API. After fetching the main channel, list active threads (`GET /channels/{id}/threads/active`) and archived threads (`GET /channels/{id}/threads/archived/public`). Fetch each thread's messages using the thread's channel ID. Attachments shared only in threads won't appear in the parent channel.
+- **Thread messages** — threads are separate channels in the API. After fetching the main channel, list active guild threads (`GET /guilds/{guild.id}/threads/active`) and filter results to the target parent channel, then list archived channel threads (`GET /channels/{id}/threads/archived/public`). Fetch each thread's messages using the thread's channel ID. Attachments shared only in threads won't appear in the parent channel.
 - **Ephemeral messages** — some bot responses are ephemeral and won't appear in message history
 - **Deleted messages** — if a message was deleted between listing and downloading, the CDN URL will 404
 
 ### CDN & Downloads
 - **Expiring URLs** — Discord CDN attachment URLs contain authentication tokens that expire; download promptly after extraction
-- **Large files** — Discord attachments can be up to 25MB (500MB with Nitro); `curl` handles these but may take time
+- **Large files** — Discord attachment limits vary by account, server plan, and policy changes; do not hard-code a size assumption. `curl` handles large downloads but they may take time
 - **Duplicate content** — same image/link shared in multiple messages; deduplicate before downloading
 - **OG:image availability** — not all links have OpenGraph images; some sites block unfamiliar user agents
 

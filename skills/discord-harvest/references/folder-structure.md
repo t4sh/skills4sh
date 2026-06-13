@@ -10,8 +10,8 @@
 Sanitize names: lowercase, replace spaces/special chars with hyphens, strip trailing hyphens.
 
 **Examples:**
-- DM with "John Smith" → `~/Projects/GenAI/discord-dm-john-smith/`
-- Server "My Lab", channel "resources" → `~/Projects/GenAI/discord-my-lab-resources/`
+- DM with "John Smith" → `/absolute/path/to/discord-dm-john-smith/`
+- Server "My Lab", channel "resources" → `/absolute/path/to/discord-my-lab-resources/`
 
 ## Folder Structure
 
@@ -103,22 +103,14 @@ If the folder already exists from a previous run:
 
 ## Summary Report Format
 
-```datatable
-{
-  "title": "Discord Harvest Summary",
-  "columns": [
-    { "key": "type", "label": "Type", "type": "text" },
-    { "key": "count", "label": "Count", "type": "number" },
-    { "key": "examples", "label": "Examples", "type": "text" }
-  ],
-  "rows": [
-    { "type": "Images", "count": 5, "examples": "photo.png, screenshot.jpg, ..." },
-    { "type": "Files", "count": 2, "examples": "document.pdf, notes.md" },
-    { "type": "Links", "count": 3, "examples": "example.com, github.com/..." },
-    { "type": "OG:images", "count": 2, "examples": "(link preview thumbnails)" }
-  ]
-}
-```
+Use a portable markdown table in the final report (not an app-specific rich block):
+
+| Type | Count | Examples |
+|---|---:|---|
+| Images | 5 | `photo.png`, `screenshot.jpg`, … |
+| Files | 2 | `document.pdf`, `notes.md` |
+| Links | 3 | `example.com`, `github.com/...` |
+| OG:images | 2 | Link preview thumbnails |
 
 Also mention:
 - **Full output path** — make this prominent so the user can navigate there easily
@@ -129,4 +121,4 @@ Also mention:
 - **Flagged content** — if `flag_suspicious()` matched any filenames or embed titles, list them with their flag type. This is informational, not blocking — the user should know what they're archiving
 
 **Always end with the folder path as the last line**, e.g.:
-> Saved to: `~/Projects/GenAI/discord-dm-john-smith/`
+> Saved to: `/absolute/path/to/discord-dm-john-smith/`
