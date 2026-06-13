@@ -6,12 +6,12 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 
 | Skill | Version | Supported |
 |-------|---------|-----------|
-| agent-memory | 2.7.2 | Yes |
-| code-to-figma | 0.1.2 | Yes |
-| discord-harvest | 1.7.3 | Yes |
-| eleventy-nunjucks | 0.1.3 | Yes |
-| figma-to-code | 0.1.3 | Yes |
-| localhost-screenshots | 3.3.2 | Yes |
+| agent-memory | 2.7.3 | Yes |
+| code-to-figma | 0.1.3 | Yes |
+| discord-harvest | 1.7.4 | Yes |
+| eleventy-nunjucks | 0.1.4 | Yes |
+| figma-to-code | 0.1.4 | Yes |
+| localhost-screenshots | 3.3.3 | Yes |
 
 ## Reporting a Vulnerability
 

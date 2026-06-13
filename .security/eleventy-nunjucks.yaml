@@ -4,7 +4,7 @@
 
 skill:
   name: eleventy-nunjucks
-  version: "0.1.3"
+  version: "0.1.4"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,7 +14,7 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 659e041e65038b55b71d4b97d3ee925fd8c8149a36a22ff9104c9ddb0ce578a1
+    SKILL.md: b1314d3b7bd23a07221efc36b38bca91908fb2886d0371ef7a8c4791b8fbbbf0
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
     references/build-pipeline.md: b6393bee8a6f569f9ab2f9f64a2d58c2330a847c93d31677f17f88963845fc5c
     references/conventions.md: 09818c158d2345d3b4a70ede1fa330695a0b5e889b0ce7d6263dae6d476dab63

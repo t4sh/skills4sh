@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.7.2"
+  version: "2.7.3"
   tags: memory, context, cross-interface, agent, persistence
 ---
 

@@ -8,6 +8,16 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.11] — 2026-06-13
+
+### Added
+- Added a mandatory PR skill-audit packet for skill and skill-standard changes, requiring evidence-first review, standard-derived checklist attestation, and mechanical checks for objective rules.
+
+### Changed
+- Refined all bundled skills from the full review pass without changing their runtime dependencies: agent-memory 2.7.3, code-to-figma 0.1.3, discord-harvest 1.7.4, eleventy-nunjucks 0.1.4, figma-to-code 0.1.4, and localhost-screenshots 3.3.3.
+- Updated package and plugin metadata to 0.4.11.
+
+
 ### Added
 - GitHub issue forms for bug reports, feature requests, suggestions, and questions, each requiring the affected skill, plugin, or general repository area.
 - Folder-local MIT `LICENSE` files for every skill and plugin so individually installed bundles carry their license text.

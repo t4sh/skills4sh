@@ -4,7 +4,7 @@
 
 skill:
   name: code-to-figma
-  version: "0.1.2"
+  version: "0.1.3"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,8 +14,8 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 1e1c804ad88536ffd925908b448437c2f95c3d55298783a91e732660c8ee21a3
-    references/benchmarks.md: ca8a2e0249368676a619e3d8b13748574f2ab3c2a9571a97c5324066ae22ae70
+    SKILL.md: 27be609c174e4775b7c86c9edb7d17550a36d06548db06a185534b9bcded7d20
+    references/benchmarks.md: 4bbf828e6ba2db5b2248fe557d7efda92d7da14a84dc0e72beb01e2b6d7bf9fe
     references/ci-and-gist-setup.md: 9b261ea0f3209a4f27c5a428daa8740d5442789526921ca5012256b061356342
     references/figma-export-contract.md: 08e0cc4939a35249077438662e90c00ab2d1513e52c375bfb4636166ee991bb8
     references/walker-patterns.md: d33bb512ad666bef23f449f1cf8501ccd3b467ce144c4f4e14fd4008473b230b
