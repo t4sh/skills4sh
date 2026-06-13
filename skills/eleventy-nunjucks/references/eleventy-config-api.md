@@ -13,7 +13,7 @@ Use this file when wiring or auditing `.eleventy.js` / `eleventy.config.js`, mig
 | **Image plugin v4+** | `eleventyImageTransformPlugin` from `@11ty/eleventy-img`; `returnType: "html"` + `htmlOptions.imgAttributes` |
 | **WebC / Vue / JSX** | Separate plugins — not in core |
 | **Preferred config filename** | `eleventy.config.js` (or `.mjs` / `.cjs`); `.eleventy.js` still resolved |
-| **Node minimum** | `>=18` (v2 allowed `>=14`) |
+| **Node minimum** | Eleventy v3 supports Node `>=18`; this skill assumes `>=18.20` (or Node 20 LTS) when using JSON import attributes. |
 
 Upgrade path: rename config as needed → remove Browsersync assumptions → fix sync-only filter assumptions where async is required → update plugin imports.
 
@@ -35,7 +35,16 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "src/assets/images": "assets/images" });
 
   eleventyConfig.addFilter("md", (s) => md.render(s || ""));
-  eleventyConfig.addFilter("dump", (obj) => JSON.stringify(obj, null, 2));
+  eleventyConfig.addFilter("dump", (obj) => {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) return "[Circular]";
+        seen.add(value);
+      }
+      return value;
+    }, 2);
+  });
   eleventyConfig.addFilter("slice", (arr, a, b) => (Array.isArray(arr) ? arr.slice(a, b) : arr));
   eleventyConfig.addFilter("limit", (arr, n) => (Array.isArray(arr) ? arr.slice(0, n) : arr));
   eleventyConfig.addFilter("where", (arr, k, v) =>

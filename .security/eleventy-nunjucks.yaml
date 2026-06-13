@@ -14,18 +14,18 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 055a047454f80e2add31923d8598296a0de68aa7ac30a71f720d464756fa149e
+    SKILL.md: 659e041e65038b55b71d4b97d3ee925fd8c8149a36a22ff9104c9ddb0ce578a1
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
-    references/build-pipeline.md: f4f362602d5005d66d9be9f660cb0fbcd927196c368df4e55533c91e2568e129
-    references/conventions.md: 6566fc3ef859a13f9d39b24faea448add59b08a78bc518faefa71fb20eba5572
-    references/data-cascade.md: fa0888c4753cc556a5aa9bbcd85e7324dd486b470c48cd9560c264af8d7d8b4b
-    references/eleventy-config-api.md: 4b0339093afe17d190b2f5834f93d07b4291ac87fc3f7261ccb70c2826383a00
-    references/filters.md: 5db88e745e0dd18d906c341e9a284b47aa54e2f3f384a16cb8b6b296d0d1de78
-    references/nunjucks-syntax.md: b3775c896502e854ceb87ac288b01561f1fdfd3d09b28cb3786cfbe3e0521b13
-    references/production-patterns.md: 1fd142449c4af09b27d277badeefaf96903c1f8517c340e8b36e00060105cd64
-    references/review-shipping.md: 34ba4e1a1ed2953791d03e942d56ddb804924cbdfe2bfbe0fff938eefc9f8b6f
-    references/security-checklist.md: 191e68554f04eaeab79c5973fa54df5e8000acc5ba5231c9961cddf3dc6a193c
-    references/troubleshooting.md: 8e1eedb8af97d2072878dd32066293b0621fff0048b376f9639390ad4a9c8bac
+    references/build-pipeline.md: b6393bee8a6f569f9ab2f9f64a2d58c2330a847c93d31677f17f88963845fc5c
+    references/conventions.md: 09818c158d2345d3b4a70ede1fa330695a0b5e889b0ce7d6263dae6d476dab63
+    references/data-cascade.md: fd2329d6ed001f6e5bf439b7ac191e78b4d2d0a67ce70e1bd03e7d6da62b02c9
+    references/eleventy-config-api.md: 875493cf133708e1594c9b709a055240eb694daa7e2952741e213e9191870b53
+    references/filters.md: 05543f78674653d7c0139ae0913fc2c0538d43a983a4246f8ad6aae335ba5b4a
+    references/nunjucks-syntax.md: eb45425aa6076d67d239b9a8e01e2aa0f7d23c99b128c2df653d25ea9dbcb2fc
+    references/production-patterns.md: 7204ee5a8b9b04e12dbd340bbeecb343d296f25e5d431751ffd434a4eb71be83
+    references/review-shipping.md: 6a96404e6715ad387dc72df37e909c62736b311faee9bc87a4d084337717523f
+    references/security-checklist.md: dfc5637fa269804cb3750bd58b8c644d5e9c75c67d6818128fe30909b66de86d
+    references/troubleshooting.md: 191b9b24a8692c1a7108b03de6a2e1d02b2d0b52b18fbeeb301e1ca9ee407dd0
 
 
 permissions:
@@ -77,6 +77,11 @@ scanning:
       acknowledged: true
       file: references/build-pipeline.md
       reason: "False positive — security-hardening and audit examples mention grep patterns for secrets."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: references/build-pipeline.md
+      reason: "CI workflow template writes build metadata to GITHUB_OUTPUT and passes it through environment variables for reproducible builds."
     - id: R005_SECRET_READ
       severity: high
       confidence: medium

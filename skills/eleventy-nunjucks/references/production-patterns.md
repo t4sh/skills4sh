@@ -38,7 +38,7 @@ The `runMode == "build"` gate is required — `eleventy --serve` injects live-re
 ### nginx HTTP header
 
 ```nginx
-# erpai.studio.conf (or your project's vhost)
+# example.com.conf (or your project's vhost)
 add_header Content-Security-Policy "frame-ancestors 'none'" always;
 add_header X-Frame-Options "DENY" always;
 add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
@@ -73,8 +73,8 @@ Once opted in, the soft-nav lifecycle becomes a contract — ship the whole thin
 
 ```js
 // theme-boot.js (head, blocking, before paint)
-document.documentElement.addEventListener("erpai:page-loaded",       reinit);
-document.documentElement.addEventListener("erpai:before-page-unload", cleanup);
+document.documentElement.addEventListener("site:page-loaded",       reinit);
+document.documentElement.addEventListener("site:before-page-unload", cleanup);
 
 function reinit() {
   // Re-bind all JS modules. Called on initial load AND every soft-nav.
@@ -92,8 +92,8 @@ function cleanup() {
 
 | Event | Fires when | Modules must |
 |---|---|---|
-| `erpai:page-loaded` | After initial page load AND after every soft-nav | Attach listeners, init observers |
-| `erpai:before-page-unload` | Just before a soft-nav swaps the DOM | Remove listeners, disconnect observers |
+| `site:page-loaded` | After initial page load AND after every soft-nav | Attach listeners, init observers |
+| `site:before-page-unload` | Just before a soft-nav swaps the DOM | Remove listeners, disconnect observers |
 
 ### Scroll contract
 
@@ -143,7 +143,7 @@ The pattern: default light, opt-in dark, decay back to light after 6 hours of no
   <script>
     // Inline; must run before <body> renders to avoid FOUC.
     (function () {
-      const STAMP_KEY = "erpai-theme-dark-at";
+      const STAMP_KEY = "site-theme-dark-at";
       const TTL_HOURS = 6;
       const stamp = localStorage.getItem(STAMP_KEY);
       if (stamp) {
@@ -165,13 +165,16 @@ The pattern: default light, opt-in dark, decay back to light after 6 hours of no
 
 ```js
 // theme-toggle.js
-const STAMP_KEY = "erpai-theme-dark-at";
+const STAMP_KEY = "site-theme-dark-at";
+const toggle = document.querySelector('[data-theme-toggle]');
 
-document.querySelector('[data-theme-toggle]').addEventListener("click", () => {
-  const isDark = document.documentElement.classList.toggle("dark");
-  if (isDark) localStorage.setItem(STAMP_KEY, String(Date.now()));
-  else        localStorage.removeItem(STAMP_KEY);
-});
+if (toggle) {
+  toggle.addEventListener("click", () => {
+    const isDark = document.documentElement.classList.toggle("dark");
+    if (isDark) localStorage.setItem(STAMP_KEY, String(Date.now()));
+    else        localStorage.removeItem(STAMP_KEY);
+  });
+}
 ```
 
 ### Tailwind v4 — dark selector
@@ -234,7 +237,7 @@ eleventyConfig.on("eleventy.after", async ({ runMode, directories }) => {
 
 ## OG image generation
 
-Pattern from web-lab: every page gets a 1200×630 PNG with its title baked in.
+Pattern from a production site: every page gets a 1200×630 PNG with its title baked in.
 
 ### Workflow
 
@@ -266,8 +269,8 @@ module.exports = {
   jsonLd: {
     "@context": "https://schema.org",
     "@graph": [
-      { "@type": "Organization", "name": "ERP•AI", "url": "https://erpai.studio" },
-      { "@type": "WebSite",      "name": "ERP•AI", "url": "https://erpai.studio" },
+      { "@type": "Organization", "name": "Example Site", "url": "https://example.com" },
+      { "@type": "WebSite",      "name": "Example Site", "url": "https://example.com" },
     ],
   },
 };
@@ -402,8 +405,8 @@ eleventyConfig.addGlobalData("build", () => ({
 
 ```nunjucks
 {# base.njk #}
-<meta name="erpai-build-sha"      content="{{ build.sha }}" />
-<meta name="erpai-build-built-at" content="{{ build.builtAt }}" />
+<meta name="site-build-sha"      content="{{ build.sha }}" />
+<meta name="site-build-built-at" content="{{ build.builtAt }}" />
 ```
 
 Client-side `version-banner.js` polls a `/version.json` (or reads the meta on load) and prompts users to refresh when SHA changes.

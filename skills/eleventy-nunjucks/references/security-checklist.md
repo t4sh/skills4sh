@@ -277,9 +277,9 @@ If the site has any forms (contact, signup, search):
 
 ## 11. Tooling integration
 
-- [ ] **`guardskills` scan rates SAFE or WARNING-with-justification.**
+- [ ] **Skill guard scan rates SAFE or WARNING-with-justification.**
   ```bash
-  npx guardskills add . --skill <your-skill> --dry-run
+  npm run check:guardskills   # in this repository; otherwise run the project's configured guard scanner
   ```
 
 - [ ] **Snyk / `npm audit` shows no high or critical CVEs.**

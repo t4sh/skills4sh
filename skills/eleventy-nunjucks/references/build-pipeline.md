@@ -239,7 +239,7 @@ Use case: an offline-capable app, an iframe-embeddable widget, a Figma plugin.
 "build:all":        "pnpm run build && pnpm run build:inline"
 ```
 
-Copy `apps/web-lab/scripts/inline-build.mjs` from the ERP•AI lab-sites repo — it handles asset URL rewriting, JSON-LD preservation, SPA routing, and minification.
+Create a project-local `scripts/inline-build.mjs` for this step. It should handle the responsibilities your site needs — typically asset URL rewriting, JSON-LD preservation, SPA routing fallbacks, and minification — rather than depending on a private project script.
 
 ## CI integration
 
@@ -260,10 +260,13 @@ jobs:
         with: { node-version: "22", cache: "pnpm" }
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify          # lint + format:check + any project-specific checks
+      - name: Build metadata
+        id: build-metadata
+        run: echo "iso=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
       - run: pnpm build
         env:
           COMMIT_SHA: ${{ github.sha }}
-          BUILT_AT:   ${{ steps.timestamp.outputs.iso }}
+          BUILT_AT:   ${{ steps.build-metadata.outputs.iso }}
       - name: Check for stray output
         run: |
           test -f out/index.html || (echo "missing index.html"; exit 1)
@@ -293,8 +296,8 @@ If the project lives in a `turbo`-managed monorepo, declare the tasks:
 Then from the monorepo root:
 
 ```bash
-turbo run build --filter=web-lab
-turbo run verify --filter=web-lab
+turbo run build --filter=<your-package>
+turbo run verify --filter=<your-package>
 ```
 
 Turborepo caches `out/` by input hash. A rebuild that touches nothing under `src/` returns instantly from cache.

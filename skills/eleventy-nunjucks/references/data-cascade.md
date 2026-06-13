@@ -29,8 +29,8 @@ Every page gets a `canonicalUrl` of the form `https://site.example/<path>`. The 
 ```js
 // src/_data/site.js
 module.exports = {
-  baseUrl: process.env.SITE_BASE_URL || "https://erpai.studio",
-  name:    "ERP•AI",
+  baseUrl: process.env.SITE_BASE_URL || "https://example.com",
+  name:    "Example Site",
 };
 ```
 

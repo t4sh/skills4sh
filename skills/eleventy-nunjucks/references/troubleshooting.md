@@ -82,8 +82,8 @@ grep -rE "async.*=>" src/_data/ .eleventy.js
 cat package.json | grep packageManager
 # pnpm — use pnpm; npm — use npm; bun — use bun
 
-# Reinstall with the right manager
-rm -rf node_modules
+# If the package manager is correct but node_modules is stale or partial, reinstall with it
+node -e "require('fs').rmSync('node_modules', { recursive: true, force: true })"
 pnpm install --frozen-lockfile      # or npm ci / bun install --frozen-lockfile
 ```
 
@@ -148,7 +148,7 @@ return {
 
 ### `Cannot read property 'X' of undefined` in template
 
-**Cause:** Chained property access on a missing value. Nunjucks silently returns empty string for `{{ a.b.c }}` when `a` is undefined — but `{{ a.b.c }}` when `a` exists and `b` is undefined throws.
+**Cause:** Plain Nunjucks output is silent for missing chained values: `{{ a.b.c }}` renders empty whether `a` is missing or `a` exists and `b` is missing. This error usually comes from JavaScript you call from the template — a filter, shortcode, global function, macro helper, or test that dereferences a missing value without guarding it.
 
 **Diagnosis:**
 
@@ -160,14 +160,14 @@ return {
 **Fix:**
 
 ```nunjucks
-{# Use the default filter #}
+{# For display fallback, use the default filter #}
 {{ a.b.c | default("fallback") }}
 
-{# Or check existence first #}
-{% if a and a.b %}{{ a.b.c }}{% endif %}
+{# Before passing values into JS filters/shortcodes, guard explicitly #}
+{% if a and a.b %}{{ a.b.c | myFilter }}{% endif %}
 
-{# Or use safe navigation via if expression #}
-{{ (a.b.c if a and a.b else "") }}
+{# Or pass a known-safe value with an if expression #}
+{{ (a.b.c if a and a.b else "") | myFilter }}
 ```
 
 ### `Unexpected end of file` while parsing
@@ -434,22 +434,22 @@ location / {
 ```js
 function init() { /* attach listeners */ }
 function destroy() { /* detach listeners */ }
-document.addEventListener("erpai:page-loaded", init);
-document.addEventListener("erpai:before-page-unload", destroy);
+document.addEventListener("site:page-loaded", init);
+document.addEventListener("site:before-page-unload", destroy);
 ```
 
 ### `version-banner.js` fires constantly
 
 **Cause:** Polling `/version.json` from inline JS via `fetch` is hitting CORS preflight in CSP'd contexts.
 
-**Fix:** Use a `<meta name="erpai-build-sha">` tag and read on each navigation, rather than fetching JSON:
+**Fix:** Use a `<meta name="site-build-sha">` tag and read on each navigation, rather than fetching JSON:
 
 ```nunjucks
-<meta name="erpai-build-sha" content="{{ build.sha }}" />
+<meta name="site-build-sha" content="{{ build.sha }}" />
 ```
 
 ```js
-const currentSha = document.querySelector('meta[name="erpai-build-sha"]').content;
+const currentSha = document.querySelector('meta[name="site-build-sha"]').content;
 // Compare on each navigation event
 ```
 

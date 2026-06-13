@@ -2,7 +2,7 @@
 name: eleventy-nunjucks
 description: "This skill should be used when the user asks to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", \"set up Build Awesome\", or \"audit my static site\"; when working on any 11ty, Eleventy, Build Awesome, or Nunjucks static site; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `src/_includes/`, or `src/_data/`; or when debugging Eleventy builds, permalinks, layout chains, filters, shortcodes, autoescape behavior, or static-site security."
 license: MIT
-compatibility: macOS, Linux, or Windows with Node >=18 (20 LTS recommended)
+compatibility: macOS, Linux, or Windows with Node >=18.20 (20 LTS recommended)
 metadata:
   author: t4sh
   version: "0.1.3"
@@ -13,17 +13,7 @@ metadata:
 
 Operational defaults for **Eleventy v3** and **Nunjucks** static sites — directory layout, configuration surface, filter inventory, autoescape rules, stability and security checks. Load this skill when authoring templates, editing build config, or reviewing static output before merge or deploy.
 
-> **Naming note (May 2026):** Eleventy was announced to be rebranded as **"Build Awesome"** on 2026-03-03; the rebrand was **paused** on 2026-03-17 after community pushback. Code identifiers are unchanged — npm package `@11ty/eleventy`, CLI `eleventy`, config `.eleventy.js` / `eleventy.config.js`, docs at [11ty.dev](https://www.11ty.dev). This skill uses "Eleventy" as the canonical name throughout. Treat "Build Awesome" mentions in source material as synonymous.
-
-## Installation
-
-```bash
-npx skills add t4sh/skills4sh --skill eleventy-nunjucks
-```
-
-Manual install: copy `skills/eleventy-nunjucks/` (this folder) into the agent skills path per project conventions.
-
----
+> **Naming note (June 2026):** Eleventy is also branded as **Build Awesome** — see the official [“Eleventy is now Build Awesome”](https://www.11ty.dev/blog/build-awesome/) announcement. Code identifiers remain compatible: npm package `@11ty/eleventy`, CLI `eleventy`, config `.eleventy.js` / `eleventy.config.js`, and docs at [11ty.dev](https://www.11ty.dev). This skill uses “Eleventy” for existing code and ecosystem terms; treat “Build Awesome” mentions in source material as synonymous.
 
 ## When this skill applies
 
@@ -49,7 +39,7 @@ Conventions and APIs here target **Eleventy v3 + Nunjucks 3** (May 2026). For up
 | Topic | Common default |
 |---|---|
 | Eleventy | v3 — ESM-first configs, async-friendly, `@11ty/eleventy-dev-server` (not Browsersync) |
-| Node | `>=18`; `>=20` LTS typical |
+| Node | `>=18.20`; `>=20` LTS typical. JSON import-attribute examples require a runtime that supports `with { type: "json" }`. |
 | Config name | `eleventy.config.js` preferred; `.eleventy.js` still valid |
 | Engines | `.njk`, `.md`, `.html` — markdown runs **through** Nunjucks when `markdownTemplateEngine` is `njk` |
 | Output dir | `out/` (not Eleventy's `_site/` default) |

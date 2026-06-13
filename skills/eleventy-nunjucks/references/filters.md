@@ -24,9 +24,18 @@ module.exports = function (eleventyConfig) {
   //    Use when a string field (frontmatter, JSON data) contains markdown.
   eleventyConfig.addFilter("md", (content) => md.render(content || ""));
 
-  // 2. dump — JSON.stringify for debugging in a <pre>.
+  // 2. dump — cycle-safe JSON for debugging in a <pre>.
   //    NEVER use inside <script>. Use jsonScript / jsonCompact for that.
-  eleventyConfig.addFilter("dump", (obj) => JSON.stringify(obj, null, 2));
+  eleventyConfig.addFilter("dump", (obj) => {
+    const seen = new WeakSet();
+    return JSON.stringify(obj, (key, value) => {
+      if (typeof value === "object" && value !== null) {
+        if (seen.has(value)) return "[Circular]";
+        seen.add(value);
+      }
+      return value;
+    }, 2);
+  });
 
   // 3. slice — JS-style array slicing. Overrides Nunjucks' built-in.
   //    Returns input unchanged if not an array (so chains don't break).
@@ -259,7 +268,7 @@ Generic `findBy` is preferable; per-collection wrappers add maintenance burden f
 
 Before adding a filter, walk this list:
 
-- [ ] **Does it exist already?** Grep the project's `.eleventy.js` and the Nunjucks built-ins. Existing filter conventions: `md`, `dump`, `slice`, `limit`, `where`, `sort_by`, `json`, `keys`, `values`, `safe`, `escape`, `length`, `join`, `default`, `groupby`, `dictsort`, `batch`.
+- [ ] **Does it exist already?** Grep the project's `.eleventy.js` and the Nunjucks built-ins. Existing filter conventions: `md`, `dump`, `slice`, `limit`, `where`, `sort_by`, `json`, `keys`, `values`, `safe`, `escape`, `length`, `join`, `default`, `groupby`, `dictsort`, `batch`. Nunjucks `groupby` returns an object (`{ key: [items] }`), so iterate it with `{% for k, items in x | groupby("key") %}` rather than documenting custom pair arrays.
 - [ ] **Null-safe input.** Return the input unchanged if it's the wrong type; don't throw.
 - [ ] **No side effects.** Filters render during build, including on retries — no fetches, no writes, no random.
 - [ ] **Deterministic.** Same input → same output. `Math.random()` breaks incremental builds and visual diffs.
@@ -300,9 +309,12 @@ eleventyConfig.addFilter("uppercase", (s) => s.toUpperCase());
 eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`);
 // © {% year %}             → © 2026
 
-// Paired shortcode — wraps content
-eleventyConfig.addPairedShortcode("callout", (content, type = "info") =>
-  `<aside class="callout callout-${type}">${content}</aside>`,
-);
+// Paired shortcode — wraps content.
+// Nunjucks keyword args arrive as an object, so normalize positional and keyword forms.
+eleventyConfig.addPairedShortcode("callout", (content, options = "info") => {
+  const type = typeof options === "string" ? options : options?.type || "info";
+  return `<aside class="callout callout-${type}">${content}</aside>`;
+});
+// {% callout "warn" %}Heads up{% endcallout %}
 // {% callout type="warn" %}Heads up{% endcallout %}
 ```

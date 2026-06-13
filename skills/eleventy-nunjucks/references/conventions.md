@@ -19,7 +19,7 @@ my-site/
 ├── README.md
 ├── AGENTS.md                     # optional — agent-facing instructions
 ├── styles/
-│   └── tailwind.input.css        # @tailwind directives + @theme blocks (Tailwind v4)
+│   └── tailwind.input.css        # @import "tailwindcss" + @theme blocks (Tailwind v4)
 ├── src/
 │   ├── _data/                    # JSON + computed JS data
 │   │   ├── site.json             # baseUrl, name, description
@@ -144,17 +144,17 @@ Minimum `package.json` scripts for a Tailwind v4 + 11ty project:
 ```json
 {
   "scripts": {
-    "dev":           "pnpm run build:tailwind && concurrently --kill-others-on-fail --names tw,11ty --prefix-colors blue,green 'pnpm run dev:tailwind' 'pnpm run dev:eleventy --port=3000'",
+    "dev":           "pnpm run build:tailwind && concurrently --kill-others-on-fail --names tw,11ty --prefix-colors blue,green \"pnpm run dev:tailwind\" \"pnpm run dev:eleventy\"",
     "dev:tailwind":  "tailwindcss -i styles/tailwind.input.css -o src/assets/css/tailwind.css --watch",
-    "dev:eleventy":  "eleventy --serve",
+    "dev:eleventy":  "eleventy --serve --port=3000",
     "build":         "pnpm run build:tailwind && eleventy",
     "build:tailwind":"tailwindcss -i styles/tailwind.input.css -o src/assets/css/tailwind.css --minify",
-    "clean":         "rm -rf out src/assets/css/tailwind.css",
+    "clean":         "node -e \"const fs=require('fs'); fs.rmSync('out',{recursive:true,force:true}); fs.rmSync('src/assets/css/tailwind.css',{force:true});\"",
     "lint":          "pnpm run lint:js && pnpm run lint:css",
     "lint:js":       "eslint src/assets/js/",
-    "lint:css":      "stylelint 'src/assets/css/**/*.css'",
-    "format":        "prettier --write 'src/**/*.{css,js,json,njk}'",
-    "format:check":  "prettier --check 'src/**/*.{css,js,json,njk}'",
+    "lint:css":      "stylelint \"src/assets/css/**/*.css\"",
+    "format":        "prettier --write \"src/**/*.{css,js,json,njk}\"",
+    "format:check":  "prettier --check \"src/**/*.{css,js,json,njk}\"",
     "verify":        "pnpm run lint && pnpm run format:check"
   }
 }

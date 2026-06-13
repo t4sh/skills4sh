@@ -15,7 +15,7 @@ Deep dive on Nunjucks tags, control flow, macros, scoping, and async behavior. R
 {{ user.name | upper | trim }}       {# Chained filters #}
 ```
 
-**Undefined access is silent by default.** `{{ a.b.c }}` on a missing `a` renders an empty string. Set `throwOnUndefined: true` in the environment to surface bugs (NOTE: 11ty doesn't expose this directly — use a custom error filter or rely on test pages).
+**Undefined access is silent by default.** `{{ a.b.c }}` on a missing chain renders an empty string. To surface bugs intentionally, configure the Nunjucks environment through Eleventy with `eleventyConfig.setNunjucksEnvironmentOptions({ throwOnUndefined: true })`; leave it off when templates rely on silent fallback behavior.
 
 ## Comments
 
@@ -221,7 +221,7 @@ Default: tags emit no whitespace, but newlines around them are preserved → HTM
 
 ### Global trim — environment options
 
-Eleventy doesn't expose these in `setNunjucksEnvironmentOptions` directly; to enable, configure via `eleventyConfig.setNunjucksEnvironmentOptions({ trimBlocks: true, lstripBlocks: true })`:
+Eleventy exposes these through `setNunjucksEnvironmentOptions`; enable them with `eleventyConfig.setNunjucksEnvironmentOptions({ trimBlocks: true, lstripBlocks: true })`:
 
 | Option | Effect |
 |---|---|
@@ -289,7 +289,7 @@ Prefer per-value `| safe` over `{% autoescape false %}` blocks — narrower blas
 | `first` / `last` | Array endpoints | `{{ items \| first }}` |
 | `sum` | Numeric sum | `{{ prices \| sum }}` |
 | `random` | Random element | `{{ quotes \| random }}` |
-| `groupby("key")` | Group objects → `[key, items]` pairs | `{{ posts \| groupby("category") }}` |
+| `groupby("key")` | Group objects → object keyed by group value | `{% for k, items in posts \| groupby("category") %}` |
 | `dictsort` | Sorted object as `[k,v]` pairs | `{{ config \| dictsort }}` |
 | `batch(n)` | Chunk into n-sized groups | `{{ items \| batch(3) }}` |
 | `default(val, true)` | Fallback for undefined; pass `true` for falsy | `{{ name \| default("Anon", true) }}` |
@@ -297,7 +297,7 @@ Prefer per-value `| safe` over `{% autoescape false %}` blocks — narrower blas
 | `abs` / `round(n)` | Number math | `{{ -3.7 \| abs \| round(1) }}` |
 | `urlencode` | URI-encode | `{{ search \| urlencode }}` |
 | `wordcount` | Token count | `{{ body \| wordcount }}` |
-| `dump` / `dump(2)` | `JSON.stringify`, optional indent | `<pre>{{ obj \| dump(2) }}</pre>` |
+| `dump` / `dump(2)` | Debug JSON; make the project filter cycle-safe | `<pre>{{ obj \| dump(2) }}</pre>` |
 
 ## Async filter authoring
 
@@ -307,11 +307,18 @@ env.addFilter("titleFor", function (url, titles, callback) {
   callback(null, titles?.[url] ?? url);
 }, true);  // ← marks this as async
 
-// Eleventy — prefer addAsyncFilter or addFilter with async fn (v3 handles both)
+// Eleventy generic async filter — works across engines that support async filters
 eleventyConfig.addAsyncFilter("titleFor", async (url, titles = {}) => {
   return titles[url] ?? url;
 });
+
+// Eleventy Nunjucks-only async filter — callback style follows Nunjucks semantics
+eleventyConfig.addNunjucksAsyncFilter("titleFor", (url, titles = {}, callback) => {
+  callback(null, titles[url] ?? url);
+});
 ```
+
+Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFilter` only when the filter is intentionally Nunjucks-specific or needs Nunjucks callback-style behavior.
 
 **Constraints:**
 - Templates using async filters must be rendered through async render paths
@@ -325,12 +332,13 @@ eleventyConfig.addAsyncFilter("titleFor", async (url, titles = {}) => {
 |---|---|---|
 | `do` tag | Not built-in (add via extension) | Built-in |
 | Macro context | Doesn't auto-inherit | Inherits parent scope |
-| `groupby` return | Array of `[key, items]` pairs | Dict-like (with `grouper` attribute) |
+| `groupby` return | Object shaped like `{ key: [items] }`; iterate `{% for k, items in x \| groupby("key") %}` | Group objects expose `grouper` / `list`-style attributes |
 | `truncate` default | `length=255, killwords=false, end="..."` | Same defaults |
 | Whitespace control | `{%- -%}`, `trimBlocks`, `lstripBlocks` | Same |
 | Async iteration | `asyncEach` / `asyncAll` (needed for async filters) | Not needed (sync engine) |
+| Empty collection truthiness | Empty arrays/objects are truthy in JavaScript semantics; check `.length` or use a helper when emptiness matters | Empty sequences/mappings are falsy |
 
-Most Jinja2 templates port to Nunjucks unchanged. The two areas that bite: macro context inheritance and `groupby` shape.
+Most Jinja2 templates port to Nunjucks unchanged. The two areas that bite: macro context inheritance and `groupby` shape. In Nunjucks, do not destructure `groupby` as an array of `[key, items]` pairs; iterate it as an object.
 
 ## Browser usage
 

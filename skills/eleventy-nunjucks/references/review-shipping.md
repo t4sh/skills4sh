@@ -167,10 +167,10 @@ Plain markdown. Shortcodes work with `markdownTemplateEngine: "njk"`.
 ### JSON-LD from `_data`
 
 ```js
-// src/_data/seoPricing.js
-import pricing from "./pricing.json" with { type: "json" };
+// src/_data/seoPricing.js — CommonJS data file
+const pricing = require("./pricing.json");
 
-export default {
+module.exports = {
   jsonLd: {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -184,6 +184,8 @@ export default {
   },
 };
 ```
+
+For ESM projects (`type: "module"` or `.mjs` data files), use `import pricing from "./pricing.json" with { type: "json" }` and `export default` only on Node runtimes that support JSON import attributes (Node 18.20+ / 20.10+). Otherwise keep the CommonJS example above or use `createRequire`.
 
 ```nunjucks
 <script type="application/ld+json">
