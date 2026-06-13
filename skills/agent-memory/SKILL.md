@@ -1,6 +1,6 @@
 ---
 name: agent-memory
-description: "This skill should be used when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"save session learnings\", \"run memory maintenance\", or mentions cross-interface persistent memory across Claude Code, Cursor, or VS Code."
+description: "This skill should be used when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"migrate memory\", \"build memory from docs\", \"save session learnings\", \"sync memory\", \"run memory maintenance\", \"check memory status\", or mentions cross-interface persistent memory across Claude Code, Cursor, VS Code, or Craft Agent."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
@@ -11,15 +11,8 @@ metadata:
 
 # Agent Memory Skill
 
-Manage cross-interface persistent memory for AI-assisted projects. Maintain a coherent, up-to-date knowledge base that any AI agent — Claude App, Claude Code CLI, VSCode, Craft Agent, or any file-reading tool — can read and build upon across sessions.
+Manage cross-interface persistent memory for AI-assisted projects. Maintain a coherent, up-to-date knowledge base that any AI agent — Claude Code, Cursor, VS Code, Craft Agent, or any file-reading tool — can read and build upon across sessions.
 
-## Installation
-
-```bash
-npx skills add t4sh/skills4sh --skill agent-memory
-```
-
----
 
 ## Capabilities
 
@@ -32,13 +25,14 @@ npx skills add t4sh/skills4sh --skill agent-memory
 | Migrate | Upgrade older formats (v1 flat files, `CURSOR.md`) to v2.1 |
 | Build | Scan existing documentation and generate initial memory files |
 
-## Design Philosophy
+## Design Principles
 
-1. **Files that can be opened, read, and edited.** Memory is YAML-frontmatter markdown in a folder — viewable in VSCode, Obsidian, Sublime, or `cat`. Structured frontmatter (`type`, `status`, `expires`, `tags`) makes files machine-queryable without an LLM; the markdown body makes them human-readable. The user can browse `decisions/`, fix a stale entry, or add a convention by hand. The agent writes memory; it doesn't gatekeep it.
-
-2. **Cross-interface portability.** `AGENTS.md` is the single entry point, readable by any tool. No runtime, no platform SDK, no MCP server. Memory written by Claude Code is immediately available in Cursor, VSCode Copilot, Craft Agent, or anything that reads files. If it requires a specific client to read, it doesn't belong in `.agent-memory/`.
-
-3. **Lifecycle management.** Typed directories with staleness rules: `context/` expires at 30 days, `sessions/` at 60, archived at 90. The `maintain` command compacts overlapping entries, promotes session patterns to `conventions/` or `decisions/`, and reconciles the index. Memory that only grows eventually becomes noise.
+| Principle | Practice |
+|---|---|
+| Open files | Store memory as YAML-frontmatter markdown that can be read and edited with any editor or file-reading agent. |
+| Shared entry point | Keep `AGENTS.md` as the canonical instructions file; keep client-specific files thin pointers. |
+| Managed lifecycle | Use typed directories, `expires` metadata, `maintain`, and `sync` so memory stays current instead of accumulating noise. |
+| No secrets | Store project knowledge and decisions, never credentials, private keys, tokens, or sensitive personal data. |
 
 ---
 
@@ -56,7 +50,7 @@ Before operating on memory, understand:
 
 | Keyword      | Operation  | Description |
 |--------------|------------|-------------|
-| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, AGENTS.md, CLAUDE.md, .claude/, .cursor/rules/ |
+| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, AGENTS.md, CLAUDE.md, `.cursor/rules/` |
 | **migrate**  | Migrate    | Detect and migrate older structures (CURSOR.md, flat files, INDEX.yaml) to v2.1 |
 | **build**    | Build      | Scan project and auto-generate initial memory files from existing docs |
 | **save**     | Save       | Capture learnings from the current session into memory |
@@ -86,7 +80,6 @@ Scaffold the `.agent-memory/` system from scratch.
 project/
 ├── AGENTS.md                 # Canonical shared instructions (all tools read it)
 ├── CLAUDE.md                 # Thin pointer → "read AGENTS.md" + Claude-specific notes
-├── .claude/settings.json     # Claude Code native: permissions, hooks
 ├── .cursor/rules/index.mdc   # Cursor native: "Always" rule → references AGENTS.md
 └── .agent-memory/            # Cross-interface persistent memory
 ```
@@ -166,7 +159,7 @@ Full maintenance: compact, trim stale, fix index, clean old session logs.
    - **Archived entries:** `status: archived` with `updated` >90 days ago → suggest deletion.
    - **`supersedes` chain:** If file A has `supersedes: B`, and B still exists with `status: active`, flag B for archival.
 3. **Compaction:** Identify content overlap, suggest merges, promote session log patterns to `conventions/` or `decisions/`.
-4. **Session cleanup:** `type: session` with `updated` >60 days → extract valuable info elsewhere if needed, then delete.
+4. **Session cleanup:** `type: session` with `updated` >60 days → extract valuable info elsewhere if needed, list deletion candidates, and ask for confirmation before deleting.
 5. **Report** with health summary (see [references/templates.md](references/templates.md) for format).
 
 ---
@@ -202,31 +195,22 @@ For frontmatter schema, memory types, and templates, see [references/templates.m
 
 ---
 
-## Tools Referenced
+## Assessment Checklist
 
-**Built-in:** `index.yaml` (registry), `AGENTS.md` (shared instructions)
+Use these prompts to choose the operation, then proceed without collecting unnecessary information:
 
-**AI Interfaces:** Claude App, Claude Code CLI, VSCode (Claude extension), Cursor, Craft Agent
-
----
-
-## Task-Specific Questions
-
-1. Is this a new project or does `.agent-memory/` already exist?
-2. Are you working across multiple AI interfaces?
-3. Do you have existing documentation to bootstrap from?
-4. Is this a solo project or shared with a team?
-5. When was the last time memory maintenance was run?
+1. Does `.agent-memory/` already exist, and what structure/version does it use?
+2. Which operation fits the request: `init`, `build`, `save`, `sync`, `maintain`, or `status`?
+3. Which agent entry points exist already (`AGENTS.md`, `CLAUDE.md`, Cursor rules), and do they point to the shared source of truth?
+4. Which project docs can seed memory without copying them verbatim?
+5. Is the memory local/private, or intended to be shared through git?
 
 ---
 
-## Related Skills
+## Adjacent Patterns
 
-**Built-in (Claude Code):**
-- **revise-claude-md** — updates CLAUDE.md with session learnings (the "thin pointer" agent-memory depends on)
-- **session-save** — captures files and responses from current chat to disk (one-shot export, not structured memory)
-
-**On skills.sh:**
-- **[memory-management](https://skills.sh/anthropics/knowledge-work-plugins/memory-management)** — Anthropic's two-tier system (CLAUDE.md hot cache + `memory/` directory). Same architectural pattern; use agent-memory when you need cross-interface portability beyond Claude Code
-- **[session-handoff](https://skills.sh/softaworks/agent-toolkit/session-handoff)** — creates handoff documents for session transfers with git history and project metadata. Complements agent-memory's `sync` operation for end-of-session workflows
-- **[agent-memory-mcp](https://skills.sh/sickn33/antigravity-awesome-skills/agent-memory-mcp)** — MCP server approach with searchable persistent memory and web dashboard. Alternative architecture (server-based vs file-based)
+| Pattern | When it is enough | When agent-memory is the better fit |
+|---|---|---|
+| Single client instruction file (`CLAUDE.md`, Cursor rule, etc.) | One tool and a small project | Multiple tools need a shared, indexed memory base |
+| Session handoff note | One-time transfer between chats | Durable decisions, conventions, and project context need lifecycle management |
+| Memory MCP/server | Searchable centralized service is already approved | Plain files, git review, and zero runtime dependencies are preferred |

@@ -63,7 +63,7 @@ Sessions cleaned:      X
 
 ```yaml
 ---
-id: {type}/{topic}                # matches directory/filename (no .md)
+id: {directory}/{topic}           # matches directory/filename (no .md), e.g. decisions/api-auth for type: decision
 type: user | feedback | project | decision | context | convention | reference | session
 title: Human-readable title
 description: >-

@@ -1,6 +1,6 @@
 # Display Conventions — Full Reference
 
-When showing memory files or project documents to the user, **always render them inline in the chat** rather than opening external editors. This applies to all interfaces (Claude App, Claude Code CLI, VSCode, Craft Agent).
+When showing memory files or project documents to the user, **always render them inline in the chat** rather than opening external editors. This applies to all interfaces (Claude Code, Cursor, VS Code, Craft Agent).
 
 ## Universal (works everywhere)
 

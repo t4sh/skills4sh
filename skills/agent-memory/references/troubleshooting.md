@@ -7,13 +7,13 @@
 - Session logs dominate the index — promote recurring patterns to `conventions/` or `decisions/`
 - Context memories go stale within days — always set `expires` dates
 
-### Multi-Agent Projects (Claude App + CLI + VSCode)
+### Multi-Agent Projects (Claude Code + Cursor + VS Code + Craft Agent)
 - Index gets out of sync when multiple interfaces create files — run `sync` at session end
 - Duplicate memories from different interfaces covering same topic — `maintain` detects and suggests merges
 - Source attribution missing — always set the `source` field so you know which agent wrote what
 
 ### Team / Shared Repository Projects
-- Memory files committed to git create merge conflicts — keep `.agent-memory/` in `.gitignore` or use a shared branch strategy
+- Memory files committed to git can create merge conflicts — commit shared/team memory intentionally, use a shared branch strategy for collaborative memory, and reserve `.gitignore` for private/local-only memory
 - Different team members save contradictory decisions — use `supersedes` field to track which decision is current
 - Onboarding context missing — run `build` to auto-generate from existing docs before new team members start
 
@@ -36,5 +36,5 @@
 
 ### Memory Not Being Read by Other Interfaces
 - Verify `AGENTS.md` exists at project root and references `.agent-memory/`
-- Check that `.claude/settings.json` includes read permissions for the memory directory
+- If the project uses Claude Code settings, optionally check that `.claude/settings.json` allows reads from the memory directory; the portable entry point is still root `AGENTS.md`
 - Ensure `.cursor/rules/index.mdc` references `AGENTS.md`
