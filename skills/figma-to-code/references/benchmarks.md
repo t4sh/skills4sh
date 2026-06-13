@@ -8,8 +8,8 @@ Use this file when comparing `t4sh/skills4sh` `figma-to-code` against other agen
 |-------|--------|
 | **Benchmark date** | 2026-05-18 |
 | **skills.sh install counts** | Captured 2026-05-18 (rounded; change frequently) |
-| **Last commit column** | Default branch tip via GitHub API (`gh api repos/{owner}/{repo}/commits?per_page=1`) |
-| **This skill version** | `figma-to-code` v0.1.3 in `t4sh/skills4sh` |
+| **Last commit column** | Default branch tip via GitHub API (`gh api 'repos/{owner}/{repo}/commits?per_page=1'`) |
+| **This skill version @ snapshot** | `figma-to-code` v0.1.2 in `t4sh/skills4sh` |
 | **skills4sh repo @ snapshot** | [t4sh/skills4sh](https://github.com/t4sh/skills4sh) — last commit 2026-05-18 |
 
 Re-run the snapshot before a major skill revision. Install counts drift weekly; peer repos commit daily.
@@ -19,7 +19,7 @@ Re-run the snapshot before a major skill revision. Install counts drift weekly; 
 Before a major revision, refresh the snapshot manually:
 
 1. Record the current UTC date with `date -u +%Y-%m-%d`.
-2. For each GitHub repository in the tables, run `gh api repos/OWNER/REPO/commits?per_page=1 --jq '.[0].commit.committer.date'`.
+2. For each GitHub repository in the tables, run `gh api 'repos/OWNER/REPO/commits?per_page=1' --jq '.[0].commit.committer.date'`.
 3. For npm-only peers, run `npm view PACKAGE_NAME time.modified --json`.
 4. Update the **Benchmark date** row and table **Last commit** column.
 
@@ -31,7 +31,6 @@ Keep commands manual and explicit; avoid shell loops or environment variables in
 
 | Attribute | Value |
 |-----------|--------|
-| Install | `npx skills add t4sh/skills4sh --skill figma-to-code` |
 | Registry | [skills.sh/t4sh/skills4sh/figma-to-code](https://skills.sh/t4sh/skills4sh/figma-to-code) |
 | Differentiator | Repo-first unified commands: **implement**, **tokens**, **rules**, **code-connect** in one skill |
 | Last commit @ snapshot | 2026-05-18 (`t4sh/skills4sh`; skill files may be ahead on branch) |
@@ -76,7 +75,7 @@ Official docs (not a git skill file): [Figma MCP — Implement Design](https://d
 
 | Source | Last updated @ snapshot | Notes |
 |--------|-------------------------|--------|
-| Cursor Figma plugin skills | *bundled* | `figma-use`, `figma-code-connect`, `figma-generate-design` — version follows Cursor plugin release, not a single public skill repo |
+| Cursor Figma plugin skills | *bundled* | `figma-use`, `figma-code-connect`, `figma-generate-design` — availability/version follows the installed Cursor/Figma integration; verify in the local MCP tool list rather than assuming a descriptor path |
 | [shadcndesign Agent Skills](https://www.shadcndesign.com/agent-skills) | *commercial site* | Figma → shadcn/ui + `globals.css` variables; no public git pin |
 | [edenspiekermann/Skills](https://github.com/edenspiekermann/Skills) `apply-design-system` | 2026-03-24 | Reconnect frames to published DS |
 | Community listings (Cult of Claude, ClaudSkills, etc.) | *verify on review* | Quality varies; record repo + commit when added to a future tier |
@@ -108,4 +107,4 @@ Re-check **last commit** and **installs** when revisiting this list.
 | 4 | [figma/mcp-server-guide `code-connect-components`](https://skills.sh/figma/mcp-server-guide/code-connect-components) | 2026-05-15 |
 | 5 | [google-labs-code `react:components`](https://skills.sh/google-labs-code/stitch-skills/react:components) | 2026-03-30 |
 | 6 | [figma-to-code-skill](https://www.npmjs.com/package/figma-to-code-skill) (npm) | 2026-03-12 |
-| 7 | **This repo** `skills/figma-to-code/SKILL.md` | 2026-05-18 (repo); skill v0.1.3 |
+| 7 | **This repo** `skills/figma-to-code/SKILL.md` | 2026-05-18 (repo); skill v0.1.2 at snapshot |

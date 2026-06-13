@@ -22,11 +22,9 @@ Repo-first Figma MCP workflow — inspect the codebase before generated markup, 
 | Rules | Generate or update agent rules (`AGENTS.md`, `CLAUDE.md`, Cursor rules) for Figma workflows |
 | Code Connect | Link published Figma library components to code implementations (Organization or Enterprise plan) |
 
-Route from the user's Figma URL, desktop selection, or stated intent to the command table below before calling Figma MCP.
-
 ## Commands
 
-Route the user's request to one command before using Figma MCP. Keep implementation, token, rules, and Code Connect workflows inside this skill.
+Choose one command before using Figma MCP. Keep implementation, token extraction, rule authoring, and Code Connect work inside their respective command boundaries.
 
 | Command | Use when | Outcome |
 |---|---|---|
@@ -58,13 +56,13 @@ See [references/benchmarks.md](references/benchmarks.md) for peer skills on [ski
 
 1. **Identify the target design.** Resolve URL, desktop selection, or branch/prototype targets per [references/implementation-patterns.md](references/implementation-patterns.md#desktop-mcp-vs-remote-mcp). Extract `node-id` when present. If no node ID is present and the active server is desktop MCP, use the current Figma Desktop selection; for remote MCP, ask for a specific node/frame URL or confirm file-level access is intended.
 2. **Inspect the target project.** Read package metadata, component directories, styling setup, routing conventions, and any local design-system docs before choosing MCP framework/language parameters. Project code wins over generated Figma code.
-3. **Discover Figma MCP tools.** Use the configured Figma MCP server and read tool schemas from the host's MCP descriptor files (for example `mcps/<server>/tools/*.json` in Cursor) before calling tools. Common server names include `user-Figma Desktop` (desktop) and `plugin-figma-figma` (remote). Do not assume every server exposes the same tools or accepts the same parameter names.
+3. **Discover Figma MCP tools.** Use the configured Figma MCP server and inspect the host's current MCP tool list and schemas before calling tools. Common server names include `user-Figma Desktop` (desktop) and `plugin-figma-figma` (remote). Do not assume every server exposes the same tools or accepts the same parameter names.
 4. **Fetch design context.** Call the design-context tool with `clientLanguages` and `clientFrameworks` matched to the inspected repository. If the repo is not React/Next/Tailwind, request the actual stack instead of using the common React/Tailwind default.
 5. **Capture a screenshot.** Request a screenshot early enough to preserve visual layout before implementation. Do not implement from generated code alone when a screenshot tool is available.
 6. **Narrow large responses.** If design context is too large, truncated, or missing important child layers, call metadata for the parent node, identify the relevant children, then fetch context for smaller child nodes.
 7. **Download required assets.** Use asset URLs returned by the MCP server when available, including `localhost` asset sources. Do not create placeholders or add icon packages when the Figma payload already provides the asset.
 8. **Implement in the existing style.** Reuse local components, tokens, icons, typography, spacing scales, image utilities, and data-loading patterns. Avoid introducing a new UI library or global styling approach unless the user requested it.
-9. **Correct against Figma.** For each implemented unit (component, region, or section), cross-reference spacing, color, typography, radius, and layout against the Figma context and screenshot. Fix discrepancies before moving on. For multi-region pages, run a final assembly correction pass. See [Correction loop](#correction-loop) and [references/implementation-patterns.md](references/implementation-patterns.md).
+9. **Correct against Figma.** For each implemented unit (component, region, or section), cross-reference spacing, color, typography, radius, and layout against the Figma context and screenshot. Fix discrepancies before moving on. For multi-region pages, run a final assembly correction pass. See [Correction Loop](#correction-loop) and [references/implementation-patterns.md](references/implementation-patterns.md).
 10. **Verify the result.** Run the relevant type, lint, test, build, and browser/visual checks for the touched surface. For visual work, compare against the Figma screenshot at desktop and mobile breakpoints when applicable.
 
 ## Figma MCP Tool Use
@@ -84,11 +82,13 @@ Use the available Figma MCP server rather than scraping the web page or manually
 
 Treat MCP output as a draft translation. Generated markup and class names often need adaptation for the repository's architecture, accessibility model, and existing components.
 
-Use the active server schema as the source of truth. Remote-only write tools such as creating files, uploading assets to Figma, generating diagrams, or editing Figma objects are outside the default `/figma-to-code implement` workflow.
+Use the active server schema as the source of truth. Official Figma Plugin and REST APIs define primitives such as nodes, variables, local variable collections, and file data, but MCP servers wrap those primitives with server-specific tool names and payload shapes. Inspect the connected MCP schema before every workflow and treat official API docs as the conceptual baseline, not a promise that a given MCP exposes the same method names.
+
+Remote-only write tools such as creating files, uploading assets to Figma, generating diagrams, or editing Figma objects are outside the default `/figma-to-code implement` workflow.
 
 Minimize redundant MCP calls. Prefer one analysis batch for the root frame or selection, then targeted context per implementation unit. Tool-name examples, call-budget tables, decomposition rules, and iteration limits live in [references/implementation-patterns.md](references/implementation-patterns.md#mcp-call-budget).
 
-## Correction loop
+## Correction Loop
 
 Do not mark implement work complete after a single pass. Treat Figma context and the screenshot as the acceptance spec.
 
