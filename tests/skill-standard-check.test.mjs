@@ -11,7 +11,7 @@ import { runSkillStandardChecks } from "../bin/skill-standard-check.mjs";
 
 const VALID_SKILL = `---
 name: demo
-description: "This skill should be used when the user asks to \"demo a workflow\" or mentions demo fixtures."
+description: "Demo workflow support. Use when the user asks to \"demo a workflow\" or mentions demo fixtures."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
@@ -80,12 +80,27 @@ describe("skill-standard-check — frontmatter contract", () => {
     }
   });
 
-  test("description must use the repository third-person trigger form", async () => {
+  test("description accepts capability-plus-trigger and trigger-first forms", async () => {
     const dir = setupTmp();
     try {
-      await buildFixture(dir, VALID_SKILL.replace("This skill should be used when", "Use when"));
+      await buildFixture(dir, VALID_SKILL);
+      let result = await runSkillStandardChecks(dir);
+      assert.deepEqual(result.errors, [], result.errors.join("\n"));
+
+      await buildFixture(dir, VALID_SKILL.replace("Demo workflow support. Use when", "Use when"));
+      result = await runSkillStandardChecks(dir);
+      assert.deepEqual(result.errors, [], result.errors.join("\n"));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("description rejects loose summaries without trigger/use conditions", async () => {
+    const dir = setupTmp();
+    try {
+      await buildFixture(dir, VALID_SKILL.replace("Demo workflow support. Use when the user asks to \"demo a workflow\" or mentions demo fixtures.", "Demo workflow support for sample repositories."));
       const { errors } = await runSkillStandardChecks(dir);
-      assert.ok(errors.some((e) => e.includes("description must use third-person trigger form")), errors.join("\n"));
+      assert.ok(errors.some((e) => e.includes("description must include concrete trigger/use conditions")), errors.join("\n"));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

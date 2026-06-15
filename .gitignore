@@ -3,6 +3,8 @@
 !*.env.example
 node_modules/
 __MACOSX/
+__pycache__/
+*.pyc
 package-lock.json
 
 # skills CLI installation artifacts

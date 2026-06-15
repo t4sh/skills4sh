@@ -39,23 +39,77 @@ function tokenPath(name) {
 }
 
 // ── Parse compiled CSS for .class { property: var(--name) } rules ────────────
-// Framework-agnostic — copy verbatim. Works for any project.
-function parseClassVarMap(css) {
-  const map      = {};
-  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
-  const ruleRe   = /(?:^|[{}])\s*\.([a-zA-Z][a-zA-Z0-9_-]*)\s*\{([^{}]+)\}/gm;
-  const varRe    = /([a-z][a-zA-Z-]*):\s*var\(--([a-zA-Z0-9_-]+)\)/g;
-  let m;
-  while ((m = ruleRe.exec(stripped)) !== null) {
-    const props = {};
-    let vm;
-    varRe.lastIndex = 0;
-    while ((vm = varRe.exec(m[2])) !== null) props[vm[1]] = vm[2];
-    if (Object.keys(props).length > 0) {
-      if (!map[m[1]]) map[m[1]] = {};
-      Object.assign(map[m[1]], props);
+// Brace-aware compiled-CSS helper. Fixture-test against the target CSS before reuse.
+function findMatchingBrace(text, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}') {
+      depth--;
+      if (depth === 0) return i;
     }
   }
+  return text.length;
+}
+
+function splitSelectorList(selector) {
+  return selector.split(',').map((part) => part.trim()).filter(Boolean);
+}
+
+function classNamesFromSelector(selector) {
+  return [...selector.matchAll(/\.([a-zA-Z_-][a-zA-Z0-9_-]*)/g)].map((m) => m[1]);
+}
+
+function declarationVarMap(block) {
+  const props = {};
+  const varRe = /([a-z][a-zA-Z-]*):\s*var\(--([a-zA-Z0-9_-]+)(?:\s*,[^)]*)?\)/g;
+  let vm;
+  while ((vm = varRe.exec(block)) !== null) props[vm[1]] = vm[2];
+  return props;
+}
+
+function forEachCssRule(css, visitor, parentConditional = false) {
+  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  let cursor = 0;
+  while (cursor < stripped.length) {
+    const open = stripped.indexOf('{', cursor);
+    if (open === -1) break;
+    const rawSelector = stripped.slice(cursor, open).trim();
+    const selector = rawSelector.slice(rawSelector.lastIndexOf(';') + 1).trim();
+    const close = findMatchingBrace(stripped, open);
+    const body = stripped.slice(open + 1, close);
+    cursor = close + 1;
+
+    if (!selector) continue;
+    if (selector.startsWith('@')) {
+      const conditional = parentConditional || /^@(media|supports|container)\b/i.test(selector);
+      forEachCssRule(body, visitor, conditional);
+      continue;
+    }
+    visitor(selector, body, { conditional: parentConditional });
+  }
+}
+
+function mergeClassProps(map, className, props, { conditional }) {
+  map[className] ??= {};
+  for (const [prop, varName] of Object.entries(props)) {
+    // Conditional rules such as @media/@supports should not clobber base bindings.
+    if (conditional && map[className][prop] !== undefined) continue;
+    map[className][prop] = varName;
+  }
+}
+
+function parseClassVarMap(css) {
+  const map = {};
+  forEachCssRule(css, (selector, body, context) => {
+    const props = declarationVarMap(body);
+    if (Object.keys(props).length === 0) return;
+    for (const part of splitSelectorList(selector)) {
+      for (const className of classNamesFromSelector(part)) {
+        mergeClassProps(map, className, props, context);
+      }
+    }
+  });
   return map;
 }
 
@@ -82,30 +136,36 @@ function buildUtilityMap(themeVars) {
   return map;
 }
 
-// ── Tailwind v4 only: extract @theme var names from compiled CSS ──────────────
-function findMatchingBrace(text, openIdx) {
-  let depth = 0;
-  for (let i = openIdx; i < text.length; i++) {
-    if (text[i] === '{') depth++;
-    else if (text[i] === '}') {
-      depth--;
-      if (depth === 0) return i;
-    }
-  }
-  return text.length;
+// ── Tailwind v4: extract theme var names from @layer theme or :root/:host ─────
+function addCustomProperties(props, block) {
+  const re = /--([a-zA-Z0-9_-]+):/g;
+  let m;
+  while ((m = re.exec(block)) !== null) props[m[1]] = true;
 }
 
 function extractThemeVars(css) {
-  const themeIdx = css.indexOf('@layer theme');
-  if (themeIdx === -1) return {};
-  const open = css.indexOf('{', themeIdx);
-  if (open === -1) return {};
-  const close = findMatchingBrace(css, open);
   const props = {};
-  const re = /--([a-zA-Z0-9_-]+):/g;
-  const chunk = css.slice(open, close + 1);
-  let m;
-  while ((m = re.exec(chunk)) !== null) props[m[1]] = true;
+  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  let searchFrom = 0;
+  while (true) {
+    const themeIdx = stripped.indexOf('@layer theme', searchFrom);
+    if (themeIdx === -1) break;
+    const open = stripped.indexOf('{', themeIdx);
+    if (open === -1) break;
+    const close = findMatchingBrace(stripped, open);
+    addCustomProperties(props, stripped.slice(open + 1, close));
+    searchFrom = close + 1;
+  }
+  if (Object.keys(props).length > 0) return props;
+
+  // Fallback for builds that emit plain custom properties without @layer theme.
+  forEachCssRule(stripped, (selector, body) => {
+    const isThemeRoot = splitSelectorList(selector).some((part) =>
+      /^:(root|host)\b/.test(part) || /^:where\(\s*:(root|host)\s*\)/.test(part)
+    );
+    if (isThemeRoot) addCustomProperties(props, body);
+  });
   return props;
 }
 
@@ -269,9 +329,13 @@ const css = readFileSync(resolve(__dirname, '../../apps/site/out/assets/css/tail
 
 // ── MUST match tokenPath() in the walker exactly ──────────────────────────────
 function tokenPath(name) {
-  if (/^beige-/.test(name))    return `palette/beige/${name.replace('beige-', '')}`;
-  if (/^text-/.test(name))     return `typography/scale/${name.replace('text-', '')}`;
-  // ... same full mapping as walker
+  if (/^beige-/.test(name))        return `palette/beige/${name.replace('beige-', '')}`;
+  if (/^ink-/.test(name))          return `palette/ink/${name.replace('ink-', '')}`;
+  if (/^space-/.test(name))        return `spacing/${name.replace('space-', '')}`;
+  if (/^text-/.test(name))         return `typography/scale/${name.replace('text-', '')}`;
+  if (/^tracking-/.test(name))     return `typography/tracking/${name.replace('tracking-', '')}`;
+  if (/^font-/.test(name))         return `typography/family/${name.replace('font-', '')}`;
+  if (/^fs-/.test(name))           return `typography/scale/${name.replace('fs-', '')}`;
   return `semantic/${name}`;
 }
 
@@ -295,9 +359,22 @@ function buildW3c(tokens) {
   for (const { path, name, value } of tokens) {
     const parts = path.split('/');
     let cur = tree;
+    let conflict = false;
     for (let i = 0; i < parts.length - 1; i++) {
-      cur[parts[i]] ??= {};
-      cur = cur[parts[i]];
+      const segment = parts[i];
+      if (cur[segment]?.$value !== undefined) {
+        console.warn(`SKIP token path conflict: ${path} extends existing leaf ${parts.slice(0, i + 1).join('/')}`);
+        conflict = true;
+        break;
+      }
+      cur[segment] ??= {};
+      cur = cur[segment];
+    }
+    if (conflict) continue;
+    const leaf = parts.at(-1);
+    if (cur[leaf] && cur[leaf].$value === undefined) {
+      console.warn(`SKIP token path conflict: ${path} would overwrite namespace ${parts.join('/')}`);
+      continue;
     }
     // Infer $type from value and token path. Adapt this map to the project's token taxonomy.
     const isColor = /^(#|rgb|hsl|oklch)/.test(value);
@@ -310,7 +387,7 @@ function buildW3c(tokens) {
       : isTime ? 'duration'
       : ['opacity', 'z-index', 'font-weight'].includes(top) || isNumber ? 'number'
       : 'string';
-    cur[parts.at(-1)] = { $value: value, $type: type };
+    cur[leaf] = { $value: value, $type: type };
   }
   return tree;
 }
@@ -330,7 +407,7 @@ Generic — project-agnostic. Reads walker JSON from `stdin` (or `--file <path>`
 
 ```js
 #!/usr/bin/env node
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -348,6 +425,12 @@ function readConfigGistId() {
   }
 }
 
+function gistUpdatedUrl(data, fallbackGistId) {
+  return data.html_url || (data.owner?.login
+    ? `https://gist.github.com/${data.owner.login}/${data.id}`
+    : `https://gist.github.com/${data.id || fallbackGistId}`);
+}
+
 const GIST_TOKEN = process.env.GIST_TOKEN;
 const GIST_ID    = process.env.GIST_ID || process.env.FIGMA_EXPORT_GIST_ID || readConfigGistId();
 
@@ -361,9 +444,17 @@ if (fileArg !== -1 && (!process.argv[fileArg + 1] || process.argv[fileArg + 1].s
   console.error('Usage: push-to-figma.mjs [--file <figma-export.json>]');
   process.exit(1);
 }
-const json    = fileArg !== -1
-  ? readFileSync(process.argv[fileArg + 1], 'utf8')
-  : readFileSync(0, 'utf8'); // fd 0 — cross-platform stdin (/dev/stdin is Unix-only)
+let json;
+if (fileArg !== -1) {
+  const inputPath = process.argv[fileArg + 1];
+  if (!existsSync(inputPath)) {
+    console.error(`Input file not found: ${inputPath}`);
+    process.exit(1);
+  }
+  json = readFileSync(inputPath, 'utf8');
+} else {
+  json = readFileSync(0, 'utf8'); // fd 0 — cross-platform stdin (/dev/stdin is Unix-only)
+}
 
 // Validate before pushing
 let parsed;
@@ -398,7 +489,7 @@ if (!res.ok) {
 }
 
 const data = await res.json();
-console.log(`Gist updated: https://gist.github.com/${data.owner.login}/${data.id}`);
+console.log(`Gist updated: ${gistUpdatedUrl(data, GIST_ID)}`);
 console.error(`  sections: ${parsed.sections.length}  nodes: ${parsed.sections.reduce((n, s) => n + s.nodes.length, 0)}`);
 ```
 
@@ -408,7 +499,7 @@ console.error(`  sections: ${parsed.sections.length}  nodes: ${parsed.sections.r
 
 ### Tailwind v4
 
-Use `buildUtilityMap` + `extractThemeVars` from the template. The `@layer theme` block in the compiled CSS contains all custom property names. Color utilities are double-aliased (`--color-background: var(--background)`) — use `resolveColorAlias` to unwrap.
+Use `buildUtilityMap` + `extractThemeVars` from the template. Prefer the `@layer theme` block when present; the helper falls back to plain `:root`/`:host` custom properties for builds that do not preserve the layer wrapper. Color utilities may be double-aliased (`--color-background: var(--background)`) — use `resolveColorAlias` to unwrap.
 
 ### Custom CSS only (no Tailwind)
 

@@ -17,7 +17,9 @@ sanitize_filename() {
   while [[ "$name" == .* ]]; do name="${name#.}"; done  # strip all leading dots (hidden files)
   while [[ "$name" == *. ]]; do name="${name%.}"; done  # Windows forbids trailing dots
   name="${name:0:200}"                   # truncate to 200 chars max
-  [ -z "$name" ] || [ "$name" = "." ] && name="unnamed"
+  if [ -z "$name" ] || [ "$name" = "." ]; then
+    name="unnamed"
+  fi
 
   local stem="${name%%.*}"
   local lower
@@ -41,8 +43,9 @@ validate_url() {
     echo "SKIP: non-HTTPS URL blocked: $url" >&2
     return 1
   fi
-  # Block private/internal IP ranges including IPv6 (SSRF protection)
-  if [[ "$url" =~ https://(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|\[::1\]|\[fe80:|\[fc00:|\[fd00:|0\.0\.0\.0|169\.254\.) ]]; then
+  # Block bracketed IP-literal hosts plus private/internal IPv4 ranges (SSRF protection).
+  local host="${url#https://}"
+  if [[ "$host" == \[* ]] || [[ "$url" =~ https://(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|0\.0\.0\.0|169\.254\.) ]]; then
     echo "SKIP: private/local URL blocked: $url" >&2
     return 1
   fi
@@ -90,7 +93,8 @@ flag_suspicious() {
     echo "injection:role-hijack"; return 0
   fi
   # System markup
-  if [[ "$lower" =~ (\<system\>|\[inst\]|\<\<sys\>\>) ]]; then
+  local system_markup_re='(<system>|\[inst\]|<<sys>>)'
+  if [[ "$lower" =~ $system_markup_re ]]; then
     echo "injection:system-markup"; return 0
   fi
   # Jailbreak

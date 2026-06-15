@@ -1,0 +1,51 @@
+# OWASP Agentic Skills Top 10 (AST10) Manifest
+# Canonical security manifest for skill-architect skill
+# https://owasp.org/www-project-agentic-skills-top-10/
+
+skill:
+  name: skill-architect
+  version: "0.1.0"
+  license: MIT
+  author: t4sh
+  repository: https://github.com/t4sh/skills4sh
+  path: skills/skill-architect
+
+integrity:
+  hash_algorithm: sha256
+  files:
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
+    SKILL.md: d54786e0be97561daf4060d3c4ff2b4d09e1636c2e7e2906909dea8d54778ff5
+    assets/scripts/fix_skill.py: 5adff2572b4267073691b4ea1044d7bc68f117076f147e6c946b032d16ee7fd4
+    assets/scripts/inspect_skill.py: 31ad963e07b2d2d8f17554be3fdb1dc22337cefe3e7147155bc2a3712ce8e5dd
+    assets/scripts/scaffold_skill.py: 819a5906d9b64306cbfad9458b3de01cfb3312e323f1535d67bc622ba5ea6050
+    assets/scripts/validate_skill.py: 4bc4da8459850e9717d3c5a9ff2580e32674965e5f21f0fcf0749480bf569743
+    references/comparative-study.md: 819b8b45a0ea887215b762e286fe80241ee4b3523392bdd57800bf10c4937c91
+    references/eval-methodology.md: 4dee24164d1f063907169cc58750bf89ddbb5a5eb5807666134ae4b9fb7be590
+    references/house-rubric.md: 279915a12fe727d3d4325d4e3ce254dc48d6b408bfd26edf25052ca675b30430
+    references/naming-and-packaging.md: 8d570f2bd0afc4f115e4bcf8a3f79da9660925a31c7aa865e694d9f5dd5348d0
+    references/vendor-adapters.md: 02a967618d2c8d0b0c06baed6e6c64d545de81dc662800d3bc812d33892ff9aa
+permissions:
+  alwaysAllow: []
+  rationale: "No always-allowed permissions; all helper scripts are inert assets and require explicit user or agent execution"
+
+execution_context:
+  sandbox: host-agent
+  network: none
+  filesystem: read-write
+  shell: none
+  risk_tier: low
+
+dependencies:
+  - name: python
+    type: runtime
+    optional: true
+    version: ">=3.10"
+    reason: "Only needed when explicitly running optional helper scripts under assets/scripts"
+
+scanning:
+  guardskills: SAFE
+  guardskills_risk_score: 100
+  guardskills_note: "guardskills@1.2.1 scan-local reports SAFE with no findings."
+  snyk: pass
+  codeql: pass
+  expected_findings: []

@@ -51,7 +51,7 @@ Memory Health Report
 ───────────────────────
 Total memories:        X
 By type:               user(X) feedback(X) project(X) decision(X) context(X) convention(X) reference(X) session(X)
-Stale (30+ days):      X
+Stale/needs review:    X
 Expired:               X
 Archived:              X
 Index fixes:           X

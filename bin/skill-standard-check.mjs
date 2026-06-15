@@ -55,8 +55,8 @@ export async function runSkillStandardChecks(rootDir) {
       errors.push(`${skill}: SKILL.md frontmatter license must be MIT`);
     }
     const description = fm.topFields.get("description") ?? "";
-    if (description && !description.startsWith("This skill should be used when")) {
-      errors.push(`${skill}: SKILL.md description must use third-person trigger form: "This skill should be used when ..."`);
+    if (description && !hasTriggerClause(description)) {
+      errors.push(`${skill}: SKILL.md description must include concrete trigger/use conditions (preferred: "Capability summary. Use when ..."; allowed: "Use when ...")`);
     }
 
     for (const field of fm.metadataFields.keys()) {
@@ -168,6 +168,16 @@ function stripQuotes(value) {
     return trimmed.slice(1, -1).replace(/\\"/g, '"').replace(/\\'/g, "'");
   }
   return trimmed;
+}
+
+function hasTriggerClause(description) {
+  return /(^|\.\s+)use when\b/i.test(description)
+    || /\bshould be used when\b/i.test(description)
+    || /\bused when\b/i.test(description)
+    || /\bwhen the user\b/i.test(description)
+    || /\bwhen working\b/i.test(description)
+    || /\bwhen paths? include\b/i.test(description)
+    || /\bor mentions\b/i.test(description);
 }
 
 function nonEmpty(value) {

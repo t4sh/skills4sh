@@ -1,11 +1,11 @@
 ---
 name: figma-to-code
-description: "This skill should be used when the user asks to \"implement this Figma design\", \"turn this Figma into code\", \"build from a Figma link\", \"match this Figma mockup\", \"extract Figma design tokens\", \"create Figma design system rules\", \"set up Figma guidelines\", \"code connect this component\", \"map this Figma component to code\", \"use Figma MCP\", or \"use the Figma Desktop MCP\"."
+description: "Repo-first Figma-to-code workflow for implementation, design tokens, design-system rules, and Code Connect. Use when the user asks to \"implement this Figma design\", \"turn this Figma into code\", \"build from a Figma link\", \"match this Figma mockup\", \"extract Figma design tokens\", \"create Figma design system rules\", \"set up Figma guidelines\", \"code connect this component\", \"map this Figma component to code\", \"use Figma MCP\", or \"use the Figma Desktop MCP\"."
 license: MIT
 compatibility: macOS, Linux, or Windows with a configured Figma MCP server
 metadata:
   author: t4sh
-  version: "0.1.4"
+  version: "0.1.5"
   tags: figma, figma-mcp, figma-desktop-mcp, design-to-code, figma-to-react, figma-to-nextjs, implement-design, figma-implementation, design-system-rules, figma-design-system-rules, code-connect, figma-code-connect, design-tokens, token-extraction, react, nextjs, typescript, tailwind, frontend
 ---
 
@@ -62,7 +62,7 @@ See [references/benchmarks.md](references/benchmarks.md) for peer skills on [ski
 6. **Narrow large responses.** If design context is too large, truncated, or missing important child layers, call metadata for the parent node, identify the relevant children, then fetch context for smaller child nodes.
 7. **Download required assets.** Use asset URLs returned by the MCP server when available, including `localhost` asset sources. Do not create placeholders or add icon packages when the Figma payload already provides the asset.
 8. **Implement in the existing style.** Reuse local components, tokens, icons, typography, spacing scales, image utilities, and data-loading patterns. Avoid introducing a new UI library or global styling approach unless the user requested it.
-9. **Correct against Figma.** For each implemented unit (component, region, or section), cross-reference spacing, color, typography, radius, and layout against the Figma context and screenshot. Fix discrepancies before moving on. For multi-region pages, run a final assembly correction pass. See [Correction Loop](#correction-loop) and [references/implementation-patterns.md](references/implementation-patterns.md).
+9. **Correct against Figma.** For each implemented unit (component, region, or section), cross-reference spacing, color, typography, radius, and layout against the Figma context and screenshot. Fix discrepancies before moving on. For multi-region pages, run a final assembly correction pass. See [Correction Requirement](#correction-requirement) and [references/implementation-patterns.md](references/implementation-patterns.md).
 10. **Verify the result.** Run the relevant type, lint, test, build, and browser/visual checks for the touched surface. For visual work, compare against the Figma screenshot at desktop and mobile breakpoints when applicable.
 
 ## Figma MCP Tool Use
@@ -88,18 +88,9 @@ Remote-only write tools such as creating files, uploading assets to Figma, gener
 
 Minimize redundant MCP calls. Prefer one analysis batch for the root frame or selection, then targeted context per implementation unit. Tool-name examples, call-budget tables, decomposition rules, and iteration limits live in [references/implementation-patterns.md](references/implementation-patterns.md#mcp-call-budget).
 
-## Correction Loop
+## Correction Requirement
 
-Do not mark implement work complete after a single pass. Treat Figma context and the screenshot as the acceptance spec.
-
-1. **Decompose** when the target is a page or large frame: metadata → regions/components (atoms → compounds → sections).
-2. **Implement one unit** using project primitives and tokens.
-3. **Correct the unit:** list concrete mismatches (for example `padding-left 16px in code, 24px in Figma`) against context/screenshot; fix; re-check. Stop after **two correction passes** per unit unless the user asks for more.
-4. **Assemble** regions into the page or route.
-5. **Correct the assembly:** section spacing, backgrounds, alignment, responsive behavior vs the full-frame screenshot.
-6. **Verify** with the Verification Checklist; use `localhost-screenshots` or the host browser when a local preview exists.
-
-Skip decomposition for a single small component. Do not claim pixel parity without a screenshot or rendered preview when one was available.
+Do not mark `/figma-to-code implement` complete after a single pass. Treat Figma context and the screenshot as the acceptance spec, run per-unit and assembly correction when the target is larger than a small component, and document skipped correction or remaining visual risk. Full correction steps live in [references/implementation-patterns.md](references/implementation-patterns.md#correction-loop).
 
 ## Command Workflows
 

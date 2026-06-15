@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Run pinned guardskills local scans and verify findings match manifests.
 
+import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
@@ -25,9 +26,11 @@ const skills = requested.length > 0
 
 let ok = true;
 
+const guardskills = guardskillsCommand(root);
+
 for (const skill of skills) {
   const expected = await expectedFindings(skill);
-  const result = spawnSync("npx", [`guardskills@${GUARDSKILLS_VERSION}`, "scan-local", `skills/${skill}`, "--json"], {
+  const result = spawnSync(guardskills.command, [...guardskills.args, "scan-local", `skills/${skill}`, "--json"], {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
@@ -43,7 +46,7 @@ for (const skill of skills) {
   if (result.status !== 0 && !result.stdout.trim()) {
     const stderr = result.stderr.trim();
     const hint = /ENOTFOUND|EAI_AGAIN|ECONNREFUSED|network request|registry\.npmjs\.org/i.test(stderr)
-      ? "guardskills could not be downloaded from npm; check network access or install/cache the pinned package before running this check."
+      ? "guardskills could not be resolved; set GUARDSKILLS_BIN, install/cache the pinned package locally, or allow npx to download guardskills from npm before running this check."
       : "guardskills exited without JSON output.";
     console.error(`✗ ${skill}: ${hint}`);
     if (stderr) console.error(stderr);
@@ -103,6 +106,17 @@ for (const skill of skills) {
 }
 
 if (!ok) process.exit(1);
+
+function guardskillsCommand(rootDir) {
+  if (process.env.GUARDSKILLS_BIN) {
+    return { command: process.env.GUARDSKILLS_BIN, args: [] };
+  }
+  const localBin = join(rootDir, "node_modules", ".bin", process.platform === "win32" ? "guardskills.cmd" : "guardskills");
+  if (existsSync(localBin)) {
+    return { command: localBin, args: [] };
+  }
+  return { command: "npx", args: ["--yes", `guardskills@${GUARDSKILLS_VERSION}`] };
+}
 
 function sameFinding(a, b) {
   return a.id === b.id && a.file === b.file;

@@ -1,11 +1,11 @@
 ---
 name: localhost-screenshots
-description: "This skill should be used when the user asks to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or any request involving programmatic screenshots of a local dev server or localhost site across viewport breakpoints."
+description: "Localhost screenshot capture and visual-regression workflow for responsive pages and local dev servers. Use when the user asks to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or any request involving programmatic screenshots of a local dev server or localhost site across viewport breakpoints."
 license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "3.3.3"
+  version: "3.3.4"
   tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 
@@ -45,7 +45,7 @@ Two rules:
 
 ## Chrome MCP — Quick Screenshots & Debugging
 
-**Use a Chrome-connected MCP** for one or two screenshots or interactive debugging. It drives the user’s real browser, which can already reach their localhost dev server. No Playwright install required.
+**Use a Chrome-connected MCP** for one or two screenshots or interactive debugging. It drives the user's real browser, which can already reach their localhost dev server. No Playwright install required.
 
 ### MCP tool names (map to the host's server)
 
@@ -129,7 +129,7 @@ Use Playwright for automated, repeatable screenshot sets across all breakpoints.
 
 ### Golden Rules
 
-1. **Always use Playwright’s bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
+1. **Always use Playwright's bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
 2. **Prefer HTTP; `file://` only for self-contained static HTML.** Serve over HTTP whenever a dev server, build output, or `npx serve` is available. `file://` is acceptable *only* when the page has no `fetch`/XHR to sibling files, no `<script type="module">`, no service workers, and no absolute `/asset` paths — otherwise those will break silently. When in doubt, serve over HTTP.
 
 ### Setup (run once per session)
@@ -143,12 +143,12 @@ Do not use `@latest` or an unversioned install. Install the explicit compatible 
 
 ### Quick workflow
 
-1. Ensure the site is served over HTTP (user’s dev server, or run `npx serve _site -l 3000 --no-clipboard` in a separate terminal).
-2. Verify the server responds before screenshotting (see [playwright-patterns.md](references/playwright-patterns.md) § “Verifying the Server”).
-3. Capture all 8 standard breakpoints (320–1920px) unless the user asks for specific sizes. Check the project’s CSS/Tailwind config for custom breakpoints first.
+1. Ensure the site is served over HTTP (user's dev server, or run `npx serve _site -l 3000 --no-clipboard` in a separate terminal).
+2. Verify the server responds before screenshotting (see [playwright-patterns.md](references/playwright-patterns.md) § "Verifying the Server").
+3. Capture all 8 standard breakpoints (320–1920px) unless the user asks for specific sizes. Check the project's CSS/Tailwind config for custom breakpoints first.
 4. Save to `_screenshots/` in the project folder.
 
-For the **canonical screenshot script**, **standard breakpoints array**, **serving patterns**, **server verification**, **waiting for dynamic content**, **element screenshots**, **persistent sessions**, and **when the dev server isn’t running** — see [references/playwright-patterns.md](references/playwright-patterns.md).
+For the **canonical screenshot script**, **standard breakpoints array**, **serving patterns**, **server verification**, **waiting for dynamic content**, **element screenshots**, **persistent sessions**, and **when the dev server isn't running** — see [references/playwright-patterns.md](references/playwright-patterns.md).
 
 ### Output structure
 
@@ -169,7 +169,7 @@ Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), th
 
 ### Key API notes
 
-- `chromium.launch()` — no arguments, uses Playwright’s bundled Chromium
+- `chromium.launch()` — no arguments, uses Playwright's bundled Chromium
 - `waitUntil: 'load'` — safe default for SPAs with analytics/websockets; add `waitForSelector()` for the content that matters
 - `fullPage: true` — captures entire scrollable page
 - Create a **new page per breakpoint** — avoids leftover state
@@ -190,8 +190,8 @@ See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT 
 
 **Adjacent workflows:**
 - **One-off localhost screenshots** — a lightweight shot-scraper or browser MCP workflow may be enough when only one viewport or element capture is needed.
-- **Hosted visual regression services** — Chromatic, Percy, or a project’s existing Playwright workflow may be preferable when CI review and artifact retention are already configured.
-- **Responsive smoke checks** — a small three-breakpoint script can be enough for quick layout validation; use this skill’s full workflow when the task requires systematic breakpoints, repeatable captures, or pixel-diff reporting.
+- **Hosted visual regression services** — Chromatic, Percy, or a project's existing Playwright workflow may be preferable when CI review and artifact retention are already configured.
+- **Responsive smoke checks** — a small three-breakpoint script can be enough for quick layout validation; use this skill's full workflow when the task requires systematic breakpoints, repeatable captures, or pixel-diff reporting.
 
 ---
 

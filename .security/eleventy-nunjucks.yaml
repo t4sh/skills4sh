@@ -4,7 +4,7 @@
 
 skill:
   name: eleventy-nunjucks
-  version: "0.1.4"
+  version: "0.1.5"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,7 +14,7 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: b1314d3b7bd23a07221efc36b38bca91908fb2886d0371ef7a8c4791b8fbbbf0
+    SKILL.md: b3719b6f0e449e946afa5ad21145b4904c42c361ab8f7f3a510b9e27b37d8dcd
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
     references/build-pipeline.md: b6393bee8a6f569f9ab2f9f64a2d58c2330a847c93d31677f17f88963845fc5c
     references/conventions.md: 09818c158d2345d3b4a70ede1fa330695a0b5e889b0ce7d6263dae6d476dab63
@@ -26,8 +26,6 @@ integrity:
     references/review-shipping.md: 6a96404e6715ad387dc72df37e909c62736b311faee9bc87a4d084337717523f
     references/security-checklist.md: dfc5637fa269804cb3750bd58b8c644d5e9c75c67d6818128fe30909b66de86d
     references/troubleshooting.md: 191b9b24a8692c1a7108b03de6a2e1d02b2d0b52b18fbeeb301e1ca9ee407dd0
-
-
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

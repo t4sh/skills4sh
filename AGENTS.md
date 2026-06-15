@@ -2,6 +2,12 @@
 
 This is a mono-repo of agent skills. Each skill lives in `skills/<skill-name>/` with a `SKILL.md` file.
 
+## First Steps
+
+1. Read this file.
+2. Read `.agent-memory/index.yaml` to discover project memory when `.agent-memory/` exists.
+3. Load relevant memory files for the task before changing skill content, release metadata, gates, or repo conventions.
+
 ## When asked to install a skill
 
 1. **Ask the user** where to install:
@@ -25,12 +31,13 @@ for that tag triggers npm Trusted Publishing and checks out exactly that tag.
 ## Skill authoring standard
 
 When creating, reviewing, or improving skills in this repository, use
-[`docs/SKILL_AUTHORING_STANDARD.md`](docs/SKILL_AUTHORING_STANDARD.md) as the canonical rubric.
+[`docs/SKILL_AUTHORING_STANDARD.md`](docs/SKILL_AUTHORING_STANDARD.md) as the canonical rubric and [`skills/skill-architect/`](skills/skill-architect/) as the in-house planning/review skill.
 
 In summary:
-- `Skill Development` is the primary structural standard.
-- `writing-skills` contributes validation discipline.
-- Codex system `skill-creator` is compatibility guidance, not the repo's primary rubric.
+- `skill-architect` is the operational planning/review skill for this repo's skill work.
+- `Skill Development` supplies structural patterns that `skill-architect` bridges into the local rubric.
+- `writing-skills` contributes validation discipline through `skill-architect` and the local standard.
+- Anthropic/OpenAI `skill-creator` patterns inform evals and compatibility; they are inputs, not the repo's primary rubric.
 
 ## Available skills
 
@@ -42,3 +49,4 @@ In summary:
 | eleventy-nunjucks | `skills/eleventy-nunjucks/` |
 | figma-to-code | `skills/figma-to-code/` |
 | localhost-screenshots | `skills/localhost-screenshots/` |
+| skill-architect | `skills/skill-architect/` |

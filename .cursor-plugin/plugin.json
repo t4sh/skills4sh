@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "author": {
     "name": "t4sh"
   },
@@ -37,6 +37,11 @@
       "name": "localhost-screenshots",
       "path": "skills/localhost-screenshots",
       "description": "Localhost screenshot capture and visual regression testing"
+    },
+    {
+      "name": "skill-architect",
+      "path": "skills/skill-architect",
+      "description": "Portable skill authoring/review rubric bridging Skill Development, writing-skills, Anthropic/OpenAI skill-creator patterns, vendor adapters, and eval planning"
     }
   ]
 }

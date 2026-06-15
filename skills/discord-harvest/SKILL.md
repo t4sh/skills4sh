@@ -1,11 +1,11 @@
 ---
 name: discord-harvest
-description: "This skill should be used when the user asks to \"extract Discord images\", \"download Discord attachments\", \"harvest a Discord channel\", \"archive a DM\", or mentions scraping content from a Discord conversation."
+description: "Discord content extraction and archival workflow for images, attachments, links, and conversation files. Use when the user asks to \"extract Discord images\", \"download Discord attachments\", \"harvest a Discord channel\", \"archive a DM\", or mentions scraping or preserving content from a Discord conversation."
 license: MIT
 compatibility: macOS, Linux, or Windows with browser or Discord bot token
 metadata:
   author: t4sh
-  version: "1.7.4"
+  version: "1.7.5"
   tags: discord, harvest, scrape, images, attachments, download
 ---
 

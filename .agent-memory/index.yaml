@@ -1,0 +1,30 @@
+# .agent-memory index — maintained by agents
+# Every memory file should have an entry here.
+
+- id: project/overview
+  type: project
+  title: "skills4sh project overview"
+  status: active
+
+- id: decisions/skill-architect-central-rubric
+  type: decision
+  title: "Use skill-architect as the evolving portable skill authoring rubric"
+  status: active
+
+- id: context/active-skill-architect-release
+  type: context
+  title: "Active release plan: skill-architect as central repo rubric"
+  status: active
+
+- id: sessions/20260613-skill-architect-release-planning
+  type: session
+  title: "Skill architect release planning"
+  status: active
+- id: references/skills-sh-description-patterns
+  type: reference
+  title: "skills.sh description pattern research"
+  status: active
+- id: conventions/skill-description-standard
+  type: convention
+  title: "Skill description format standard"
+  status: active

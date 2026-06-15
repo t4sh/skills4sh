@@ -48,7 +48,7 @@ Create a PAT at [github.com/settings/tokens](https://github.com/settings/tokens)
 
 ## 3 — CI workflow template
 
-The template below assumes **pnpm + Turborepo + static export**. Adapt the setup/build steps to the detected stack: swap `pnpm/action-setup` + `pnpm install` for the project's package manager (npm `actions/setup-node` cache `npm` + `npm ci`; yarn/bun equivalents), and replace the `pnpm turbo run build` line with the project's real build (`next build` with `output: 'export'`, `npm run build`, `eleventy`, etc.). Only the `node scripts/figma-export/walk-*.mjs` and Gist-patch steps are stack-agnostic.
+The template below assumes **pnpm + Turborepo + static export**. Adapt the setup/build steps to the detected stack: swap `pnpm/action-setup` + `pnpm install` for the project's package manager (npm `actions/setup-node` cache `npm` + `npm ci`; yarn/bun equivalents), and replace the `pnpm turbo run build` line with the project's real build (`next build` with `output: 'export'`, `npm run build`, `eleventy`, etc.). Replace the script paths with the exact files generated during setup if the project used different names. Only the walker, W3C converter, and Gist-patch responsibilities are stack-agnostic.
 
 ```yaml
 name: Figma sync
@@ -91,6 +91,11 @@ jobs:
         run: pnpm turbo run build --filter="<site>..."   # ← adapt build command
         env:
           COMMIT_SHA: ${{ github.sha }}
+
+      - name: Generate W3C token artifact
+        run: |
+          node scripts/tokens-to-figma/convert-to-w3c.mjs
+          git diff --exit-code -- scripts/tokens-to-figma/*.w3c.json
 
       - name: Walk HTML → figma-export.json
         # Use `node` directly, NOT `pnpm <script>`.
@@ -149,7 +154,7 @@ The plugin remembers the URL after the first paste.
 
 In v1 the plugin requires a pre-existing Figma variable collection named **`Design Tokens`** with a **`Light`** mode. Variable names must match the `*Token` paths in `figma-export.json` exactly.
 
-Generate the collection from the same token source (e.g. import the `.w3c.json` via a Variables importer) so both sides share one naming scheme. This prerequisite is eliminated in plugin v1.1 when the Gist carries a `tokens` section.
+Generate the collection from the same token source (e.g. import the `.w3c.json` via a Variables importer) so both sides share one naming scheme. This prerequisite will be eliminated in plugin v1.1 (planned), when the Gist carries a `tokens` section.
 
 ---
 
