@@ -1,6 +1,6 @@
 ---
 name: agent-memory
-description: "This skill should be used when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"migrate memory\", \"build memory from docs\", \"save session learnings\", \"sync memory\", \"run memory maintenance\", \"check memory status\", or mentions cross-interface persistent memory across Claude Code, Cursor, VS Code, or Craft Agent."
+description: "Cross-interface persistent memory for project context, decisions, conventions, and session handoffs. Use when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"migrate memory\", \"build memory from docs\", \"save session learnings\", \"sync memory\", \"run memory maintenance\", \"check memory status\", or mentions persistent memory across Claude Code, Cursor, VS Code, Craft Agent, or other file-reading agents."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
@@ -22,7 +22,7 @@ Manage cross-interface persistent memory for AI-assisted projects. Maintain a co
 | Capture | Distill session decisions, feedback, and context into durable memory files |
 | Sync | Keep memory consistent across Claude Code, Cursor, VS Code, and other file-reading agents |
 | Maintain | Compact stale entries, resolve conflicts, clean orphaned files |
-| Migrate | Upgrade older formats (v1 flat files, `CURSOR.md`) to v2.1 |
+| Migrate | Upgrade older formats (v1 flat files, `CURSOR.md`) to memory format v2.1 |
 | Build | Scan existing documentation and generate initial memory files |
 
 ## Design Principles
@@ -50,8 +50,8 @@ Before operating on memory, understand:
 
 | Keyword      | Operation  | Description |
 |--------------|------------|-------------|
-| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, AGENTS.md, CLAUDE.md, `.cursor/rules/` |
-| **migrate**  | Migrate    | Detect and migrate older structures (CURSOR.md, flat files, INDEX.yaml) to v2.1 |
+| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, AGENTS.md, CLAUDE.md, `.cursor/rules/index.mdc` |
+| **migrate**  | Migrate    | Detect and migrate older structures (CURSOR.md, flat files, INDEX.yaml) to memory format v2.1 |
 | **build**    | Build      | Scan project and auto-generate initial memory files from existing docs |
 | **save**     | Save       | Capture learnings from the current session into memory |
 | **maintain** | Maintain   | Compact, trim stale, fix index, clean old session logs |
@@ -62,11 +62,12 @@ If no keyword is given, ask:
 
 > **What would you like to do with agent memory?**
 > 1. **Init** — Set up `.agent-memory/` for this project (first time)
-> 2. **Build** — Scan project and generate initial memories
-> 3. **Save** — Capture current session learnings
-> 4. **Sync** — Pull in external changes + save this session (recommended end-of-session)
-> 5. **Maintain** — Compact, trim stale, fix index
-> 6. **Status** — Show memory health report
+> 2. **Migrate** — Upgrade older memory structures to memory format v2.1
+> 3. **Build** — Scan project and generate initial memories
+> 4. **Save** — Capture current session learnings
+> 5. **Sync** — Pull in external changes + save this session (recommended end-of-session)
+> 6. **Maintain** — Compact, trim stale, fix index
+> 7. **Status** — Show memory health report
 
 ---
 
@@ -74,7 +75,7 @@ If no keyword is given, ask:
 
 Scaffold the `.agent-memory/` system from scratch.
 
-### v2.1 Standard — Entry Points
+### Memory format v2.1 — Entry Points
 
 ```
 project/
@@ -97,7 +98,7 @@ project/
 
 ## Operation: Migrate
 
-Detect and migrate older structures to v2.1.
+Detect and migrate older structures to memory format v2.1.
 
 | Old Structure | New Structure | Action |
 |---|---|---|
@@ -200,7 +201,7 @@ For frontmatter schema, memory types, and templates, see [references/templates.m
 Use these prompts to choose the operation, then proceed without collecting unnecessary information:
 
 1. Does `.agent-memory/` already exist, and what structure/version does it use?
-2. Which operation fits the request: `init`, `build`, `save`, `sync`, `maintain`, or `status`?
+2. Which operation fits the request: `init`, `migrate`, `build`, `save`, `sync`, `maintain`, or `status`?
 3. Which agent entry points exist already (`AGENTS.md`, `CLAUDE.md`, Cursor rules), and do they point to the shared source of truth?
 4. Which project docs can seed memory without copying them verbatim?
 5. Is the memory local/private, or intended to be shared through git?

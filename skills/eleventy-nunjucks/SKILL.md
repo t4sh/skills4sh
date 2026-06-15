@@ -1,6 +1,6 @@
 ---
 name: eleventy-nunjucks
-description: "This skill should be used when the user asks to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", \"set up Build Awesome\", or \"audit my static site\"; when working on any 11ty, Eleventy, Build Awesome, or Nunjucks static site; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `src/_includes/`, or `src/_data/`; or when debugging Eleventy builds, permalinks, layout chains, filters, shortcodes, autoescape behavior, or static-site security."
+description: "Eleventy v3 and Nunjucks operating guide for static-site authoring, templates, build pipelines, and security review. Use when the user asks to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", \"set up Build Awesome\", or \"audit my static site\"; when working on 11ty, Eleventy, Build Awesome, or Nunjucks sites; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `src/_includes/`, or `src/_data/`; or when debugging Eleventy builds, permalinks, layout chains, filters, shortcodes, autoescape behavior, or static-site security."
 license: MIT
 compatibility: macOS, Linux, or Windows with Node >=18.20 (20 LTS recommended)
 metadata:
@@ -63,7 +63,7 @@ Conventions and APIs here target **Eleventy v3 + Nunjucks 3** (May 2026). For up
 
 **Passthrough copy:** prefer explicit `{ "src/path": "dest/path" }` maps — never copy `src/**/*` blindly.
 
-**CSP `<meta>`:** emit only on `runMode == "build"` so `--serve` live reload is not blocked. Deliver `frame-ancestors` via HTTP headers, not `<meta>`.
+**CSP `<meta>`:** emit only when `eleventy.env.runMode == "build"` so `--serve` live reload is not blocked. Deliver `frame-ancestors` via HTTP headers, not `<meta>`.
 
 **Macros and scope:** `{% import %}` does not inherit page scope by default. If macros read `page.*` / `site.*`, use `with context` or pass arguments explicitly (see `references/nunjucks-syntax.md`).
 
