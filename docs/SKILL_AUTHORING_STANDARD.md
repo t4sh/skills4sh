@@ -1,6 +1,6 @@
 # Skill Authoring Standard
 
-This repository uses **Skill Development** as the canonical structural standard for skills, with selected quality checks from **writing-skills** and compatibility awareness from Codex's system **skill-creator**.
+This repository uses the portable [`skill-architect`](../skills/skill-architect/) skill as the operational reference for planning, authoring, reviewing, and evolving skills. `skill-architect` bridges the overlapping strengths of [**Skill Development**](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) for structure, [**writing-skills**](https://www.skills.sh/obra/superpowers/writing-skills) for quality and validation discipline, Anthropic [**skill-creator**](https://www.skills.sh/anthropics/skills/skill-creator) for eval methodology, and OpenAI [**skill-creator**](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) for compatibility awareness.
 
 The goal is consistency across `skills/<name>/` folders while keeping skills useful in Claude Code, Cursor, Codex, and other file-reading agents.
 
@@ -8,12 +8,13 @@ The goal is consistency across `skills/<name>/` folders while keeping skills use
 
 | Standard | Role in this repo | Apply how |
 |---|---|---|
-| **This repo's distribution contract** — `license` / `compatibility` / `metadata` frontmatter, `.security/<name>.yaml`, `skills-lock.json`, drift / guardskills / hash CI, semver monotonicity, cross-agent compatibility | **Binding and CI-enforced; supersedes the three external rubrics on any conflict** | Mandatory for every skill — see **Frontmatter** and **Review & Audit Discipline** |
-| Skill Development | Primary structural standard | Use for repository layout, third-person trigger descriptions, progressive disclosure, and plugin/package publishing expectations |
-| writing-skills | Quality and validation discipline | Use for trigger clarity, pressure/forward testing when practical, no narrative bloat, and concrete examples. See **Review & Audit Discipline** for how findings must be evidenced |
-| system skill-creator | Codex compatibility guidance | Use for progressive disclosure, concise body guidance, and optional Codex UI metadata patterns when a future distribution target requires them |
+| **This repo's distribution contract** — `license` / `compatibility` / `metadata` frontmatter, `.security/<name>.yaml`, `skills-lock.json`, drift / guardskills / hash CI, semver monotonicity, cross-agent compatibility | **Binding and CI-enforced; supersedes external rubrics on any conflict** | Mandatory for every skill — see **Frontmatter** and **Review & Audit Discipline** |
+| [`skill-architect`](../skills/skill-architect/) | **Operational planning/review skill for this repo**; bridges the external authoring rubrics into one portable workflow | Use first for skill planning, creation, audit, fix, refactor, comparison, distillation, reconciliation, and teaching |
+| [Skill Development](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) | Structural input covered by `skill-architect` | Use for repository layout, retrieval-focused descriptions, progressive disclosure, and plugin/package publishing expectations |
+| [writing-skills](https://www.skills.sh/obra/superpowers/writing-skills) | Quality/validation input covered by `skill-architect` | Use for trigger clarity, pressure/forward testing when practical, no narrative bloat, and concrete examples. See **Review & Audit Discipline** for how findings must be evidenced |
+| Anthropic / OpenAI `skill-creator` | Eval and compatibility inputs covered by `skill-architect` | Use for baseline/forward-test discipline, Codex/OpenAI compatibility, concise body guidance, and optional vendor adapter metadata |
 
-The three external rubrics shape content and structure; this repo's distribution contract governs packaging, security, and release, and is the layer enforced in CI. If standards disagree, follow this repository document first, then `CONTRIBUTING.md`, then the external skill guidance.
+The external rubrics shape content and structure through `skill-architect`; this repo's distribution contract governs packaging, security, and release, and is the layer enforced in CI. If standards disagree, follow this repository document first, then `skill-architect`, then `CONTRIBUTING.md`, then the external skill guidance.
 
 ## Required Layout
 
@@ -28,6 +29,18 @@ skills/<skill-name>/
 
 Do not add auxiliary files such as per-skill README, changelog, or install docs unless a future repository rule explicitly allows them. Put durable user-facing docs in the root README or references where they are loaded only when needed.
 
+## New Skill Intake
+
+Before drafting a new skill, gather the minimum requirements that determine structure:
+
+1. **Task/domain** — what repeated task or decision surface the skill covers.
+2. **Trigger phrases and contexts** — exact user requests, file types, tool names, or error messages that should load the skill.
+3. **Workflow shape** — whether the skill is a quick command reference, a multi-step operating procedure, or a router across several subcommands.
+4. **Deterministic helpers** — whether validation, formatting, export, comparison, or fixture generation should be a bundled script instead of repeatedly generated prose/code.
+5. **Reference split** — which details are essential in `SKILL.md` and which belong in `references/` or bundled resources allowed by this repository.
+
+For edits to an existing skill, do the same intake only for the changed surface; do not churn unrelated sections.
+
 ## Frontmatter
 
 Allowed `SKILL.md` frontmatter fields:
@@ -35,7 +48,7 @@ Allowed `SKILL.md` frontmatter fields:
 ```yaml
 ---
 name: <directory-name>
-description: "This skill should be used when ..."
+description: "Capability summary. Use when ..."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
@@ -48,8 +61,11 @@ metadata:
 Rules:
 
 - `name` must match the directory.
-- `description` is the retrieval surface. Use third person and include concrete user phrases, file types, tools, error text, or situations that should trigger the skill.
-- The description may include a short usefulness clause after trigger phrases, but must not become a full workflow summary.
+- `description` is the retrieval surface. It must contain **a concise capability clause plus concrete trigger/use conditions**.
+- Preferred format: `Capability summary. Use when <specific triggers, file paths, tools, error text, or situations apply>.`
+- Allowed short format: `Use when <specific triggers, file paths, tools, error text, or situations apply>.`
+- The legacy strict format `This skill should be used when ...` remains valid, but is no longer the only accepted form.
+- Avoid loose summaries with no trigger/use conditions; they are harder for agents to retrieve reliably.
 - `metadata.version` is the skill version. Bump it for updates after the skill has landed on `main`; new-skill review commits before first merge may keep the same initial version.
 - `tags` should include search synonyms, tool names, and domain terms.
 
@@ -123,7 +139,7 @@ The PR body is CI-checked for this packet on pull requests that touch `skills/`,
 
 Run before opening a PR; CI re-runs the same checks.
 
-1. `npm run check:skill-standard` — allowed frontmatter fields only, required repo metadata present, third-person trigger description, no per-skill install docs/commands, no auxiliary README/changelog/install docs, and `SKILL.md` body below the hard 3,500-word threshold.
+1. `npm run check:skill-standard` — allowed frontmatter fields only, required repo metadata present, retrieval-focused description, no per-skill install docs/commands, no auxiliary README/changelog/install docs, and `SKILL.md` body below the hard 3,500-word threshold.
 2. Every `references/` file is linked from `SKILL.md`, and every link resolves within the skill folder (`npm run check:drift`).
 3. Regenerate `.security/<name>.yaml` file hashes.
 4. Regenerate or verify `skills-lock.json`.
@@ -135,9 +151,10 @@ Run before opening a PR; CI re-runs the same checks.
 
 ### Judgment gate (cite + fixture, cannot be automated)
 
-For anything the mechanical gate cannot decide — trigger quality, body altitude, narrative bloat, whether embedded code is correct:
+For anything the mechanical gate cannot decide — trigger quality, body altitude, narrative bloat, whether embedded code is correct, or whether time-sensitive claims are appropriate:
 
 - **Cite it.** Quote the `file:line`, and for a factual or tool claim link the primary source.
+- **Date and source time-sensitive claims.** Avoid time-sensitive claims unless they are necessary. When they are necessary, use an absolute date, cite the source, and make the maintenance expectation clear.
 - **Fixture-test it.** For complex or behavior-shaping skills, run a forward test: a fresh agent or new session uses the skill on a realistic prompt with the expected answer withheld. Use the result to tighten triggers, routing, and failure handling. Execute embedded scripts and snippets in a sandbox rather than vouching for them by reading.
 - **Review it.** Treat the finding like a code-review comment: specific, evidence-backed, and actionable.
 
@@ -145,7 +162,7 @@ For anything the mechanical gate cannot decide — trigger quality, body altitud
 
 New skills should follow this standard by default. Existing skills do not need churn-only rewrites, but substantial edits should move them toward:
 
-- Third-person trigger-rich descriptions
+- Retrieval-focused descriptions with capability plus concrete trigger/use conditions
 - Leaner `SKILL.md` entrypoints
 - Detailed content in `references/`
 - Working examples or scripts only when they materially improve reuse
