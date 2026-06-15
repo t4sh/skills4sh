@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "author": {
     "name": "t4sh"
   },
@@ -16,7 +16,7 @@
     {
       "name": "code-to-figma",
       "path": "skills/code-to-figma",
-      "description": "Generate a CI-anchored code \u2192 Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes"
+      "description": "Generate a CI-anchored code → Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes"
     },
     {
       "name": "discord-harvest",

@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.3.3"
+  version: "3.3.4"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,7 +14,7 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: f8c2e8b3dd8883f86a1e425705bfc90508e57b9ab0b2d61edca02c0fc47718eb
+    SKILL.md: 9fb9c75c007b67b012cba10178e95ff5b4017ac40948ef71bafd94c860c8be94
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
     assets/scripts/multi-breakpoint.js: 3d633697283122d6c191370aba45bcd154e363b80d0d07ab39eba3ace43d3b07
     assets/scripts/package.json: 8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a

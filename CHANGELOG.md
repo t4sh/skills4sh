@@ -8,6 +8,19 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.12] — 2026-06-16
+
+### Added
+- Added `skill-architect` 0.1.0 as the portable skill authoring, review, refactoring, distillation, reconciliation, and vendor-adapter rubric.
+
+### Changed
+- Updated repository authoring guidance so `skill-architect` is the operational reference over bridged external skill-authoring rubrics.
+- Bumped package and plugin metadata to 0.4.12.
+- Bumped bundled skill versions for the changed skills: agent-memory 2.7.4, code-to-figma 0.1.4, discord-harvest 1.7.5, eleventy-nunjucks 0.1.5, figma-to-code 0.1.5, and localhost-screenshots 3.3.4.
+
+### Fixed
+- Hardened `bin/drift-check.mjs` Markdown anchor validation, helper hashing, guard resolution, and shipped skill snippets with regression coverage.
+
 ## [0.4.11] — 2026-06-13
 
 ### Added

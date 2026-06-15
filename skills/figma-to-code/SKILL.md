@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with a configured Figma MCP server
 metadata:
   author: t4sh
-  version: "0.1.4"
+  version: "0.1.5"
   tags: figma, figma-mcp, figma-desktop-mcp, design-to-code, figma-to-react, figma-to-nextjs, implement-design, figma-implementation, design-system-rules, figma-design-system-rules, code-connect, figma-code-connect, design-tokens, token-extraction, react, nextjs, typescript, tailwind, frontend
 ---
 
