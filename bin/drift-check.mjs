@@ -283,9 +283,42 @@ function markdownHeadingAnchors(content) {
   return anchors;
 }
 
+function stripMarkdownInlineHtml(heading) {
+  let output = "";
+  let index = 0;
+
+  while (index < heading.length) {
+    if (heading[index] !== "<") {
+      output += heading[index];
+      index += 1;
+      continue;
+    }
+
+    const tagStart = index + 1;
+    const tagNameMatch = heading.slice(tagStart).match(/^\/?[A-Za-z][A-Za-z0-9:-]*/u);
+    if (!tagNameMatch) {
+      output += heading[index];
+      index += 1;
+      continue;
+    }
+
+    const closeIndex = heading.indexOf(">", tagStart);
+    if (closeIndex !== -1) {
+      index = closeIndex + 1;
+      continue;
+    }
+
+    // Malformed/incomplete inline HTML such as "<script Heading" should not
+    // leave the raw tag prefix in the generated slug, but any following heading
+    // words still participate in anchor matching.
+    index = tagStart + tagNameMatch[0].length;
+  }
+
+  return output;
+}
+
 function githubMarkdownSlug(heading) {
-  return heading
-    .replace(/<[^>]*>/g, "")
+  return stripMarkdownInlineHtml(heading)
     .replace(/`([^`]*)`/g, "$1")
     .trim()
     .toLowerCase()

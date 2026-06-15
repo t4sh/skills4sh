@@ -525,6 +525,41 @@ ${errors.join("\n")}`,
     }
   });
 
+  test("inline HTML tag prefixes are stripped from heading anchors", async () => {
+    const dir = setupTmp();
+    try {
+      await buildFixture(dir, {
+        "skills/demo/SKILL.md": `---
+name: demo
+description: "A demo"
+license: MIT
+metadata:
+  author: t
+  version: "1.0.0"
+---
+
+# Demo
+
+See [styled](#styled-heading), [malformed](#safe-heading), and [refs](references/foo.md).
+
+## <span>Styled Heading</span>
+
+## <script Safe Heading
+`,
+      });
+
+      const { errors } = await runDriftChecks(dir);
+      assert.equal(
+        errors.some((e) => e.includes("broken markdown anchor")),
+        false,
+        `inline HTML in headings should not break anchor validation:
+${errors.join("\n")}`,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("missing same-file anchor is flagged", async () => {
     const dir = setupTmp();
     try {
