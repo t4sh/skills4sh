@@ -175,11 +175,13 @@ describe("drift-check — clean baseline", () => {
     }
   });
 
-  test("ignored macOS metadata files do not create manifest drift", async () => {
+  test("ignored local metadata and Python cache files do not create manifest drift", async () => {
     const dir = setupTmp();
     try {
       await buildFixture(dir);
       await writeFile(join(dir, "skills/demo/.DS_Store"), "local metadata");
+      await mkdir(join(dir, "skills/demo/assets/scripts/__pycache__"), { recursive: true });
+      await writeFile(join(dir, "skills/demo/assets/scripts/__pycache__/helper.cpython-314.pyc"), "bytecode");
       const { errors } = await runDriftChecks(dir);
       assert.deepEqual(errors, [], `expected no errors, got:\n${errors.join("\n")}`);
     } finally {
@@ -480,10 +482,11 @@ execution_context:
     }
   });
 
-  test("anchor in link target is stripped before validation", async () => {
+  test("same-file and cross-file valid anchors pass", async () => {
     const dir = setupTmp();
     try {
-      const skillMd = `---
+      await buildFixture(dir, {
+        "skills/demo/SKILL.md": `---
 name: demo
 description: "A demo"
 license: MIT
@@ -494,54 +497,94 @@ metadata:
 
 # Demo
 
-See [foo section](references/foo.md#some-anchor).
-`;
-      await buildFixture(dir);
-      await writeFile(join(dir, "skills/demo/SKILL.md"), skillMd);
-      const newHash = sha256(skillMd);
-      const fooHash = sha256("# foo reference\n\nSee [back to SKILL](../SKILL.md).\n");
-      const iconHash = sha256("<svg/>\n");
-      const sorted = [
-        ["SKILL.md", skillMd],
-        ["assets/icon.svg", "<svg/>\n"],
-        ["references/foo.md", "# foo reference\n\nSee [back to SKILL](../SKILL.md).\n"],
-      ].sort(([a], [b]) => a.localeCompare(b));
-      const fHash = createHash("sha256");
-      for (const [r, c] of sorted) { fHash.update(r); fHash.update(c); }
-      const folderHash = fHash.digest("hex");
-      await writeFile(join(dir, ".security/demo.yaml"), `skill:
-  name: demo
-  version: "1.0.0"
-  license: MIT
-  author: t
-  repository: https://x
-  path: skills/demo
-integrity:
-  hash_algorithm: sha256
-  files:
-    SKILL.md: ${newHash}
-    references/foo.md: ${fooHash}
-    assets/icon.svg: ${iconHash}
-permissions:
-  alwaysAllow: []
-  rationale: "x"
-execution_context:
-  sandbox: host
-  network: none
-  filesystem: read-write
-  shell: none
-  risk_tier: low
-`);
-      await writeFile(join(dir, "skills-lock.json"), JSON.stringify({
-        version: 1,
-        skills: { demo: { source: "x", sourceType: "github", version: "1.0.0", computedHash: folderHash } },
-      }, null, 2));
+See [local](#local-section), [duplicate](#local-section-1), [punctuation](#trust-boundary--read-before-running), and [foo section](references/foo.md#some-anchor).
+
+## Local Section
+
+## Local Section
+
+## Trust Boundary — Read Before Running
+`,
+        "skills/demo/references/foo.md": `# Foo Reference
+
+## Some Anchor
+
+See [back to SKILL](../SKILL.md#demo).
+`,
+      });
 
       const { errors } = await runDriftChecks(dir);
       assert.equal(
-        errors.some((e) => e.includes("markdown link")),
+        errors.some((e) => e.includes("broken markdown anchor")),
         false,
-        `anchored link should not error:\n${errors.join("\n")}`,
+        `valid anchors should not error:
+${errors.join("\n")}`,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("missing same-file anchor is flagged", async () => {
+    const dir = setupTmp();
+    try {
+      await buildFixture(dir, {
+        "skills/demo/SKILL.md": `---
+name: demo
+description: "A demo"
+license: MIT
+metadata:
+  author: t
+  version: "1.0.0"
+---
+
+# Demo
+
+See [stale self link](#old-heading) and [refs](references/foo.md).
+`,
+      });
+
+      const { errors } = await runDriftChecks(dir);
+      assert.equal(
+        errors.some((e) => e.includes("broken markdown anchor #old-heading")),
+        true,
+        `expected missing same-file anchor error, got:
+${errors.join("\n")}`,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("missing cross-file anchor is flagged", async () => {
+    const dir = setupTmp();
+    try {
+      await buildFixture(dir, {
+        "skills/demo/SKILL.md": `---
+name: demo
+description: "A demo"
+license: MIT
+metadata:
+  author: t
+  version: "1.0.0"
+---
+
+# Demo
+
+See [missing foo anchor](references/foo.md#old-heading).
+`,
+        "skills/demo/references/foo.md": `# Foo Reference
+
+## New Heading
+`,
+      });
+
+      const { errors } = await runDriftChecks(dir);
+      assert.equal(
+        errors.some((e) => e.includes("broken markdown anchor references/foo.md#old-heading")),
+        true,
+        `expected missing cross-file anchor error, got:
+${errors.join("\n")}`,
       );
     } finally {
       rmSync(dir, { recursive: true, force: true });

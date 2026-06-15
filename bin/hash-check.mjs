@@ -81,10 +81,10 @@ async function computeHash(dir) {
 async function walk(base, cur, out) {
   for (const e of await readdir(cur, { withFileTypes: true })) {
     if (e.isDirectory()) {
-      if (e.name === ".git" || e.name === "node_modules") continue;
+      if (e.name === ".git" || e.name === "node_modules" || e.name === "__pycache__") continue;
       await walk(base, join(cur, e.name), out);
     } else if (e.isFile()) {
-      if (e.name === ".DS_Store") continue;
+      if (e.name === ".DS_Store" || e.name.endsWith(".pyc")) continue;
       out.push({
         rel: relative(base, join(cur, e.name)).split("\\").join("/"),
         content: await readFile(join(cur, e.name)),

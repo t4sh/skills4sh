@@ -97,9 +97,10 @@ export async function runDriftChecks(rootDir) {
 
     // Markdown-link validation: every relative-path link in a *.md file under
     // the skill must resolve to a file that exists in the skill directory.
-    // External URLs, mailto:, in-page anchors, and links to non-md asset files
-    // (icon.svg, .js scripts in assets/) are all checked uniformly — anything
-    // referenced must be present in skills/<skill>/.
+    // Markdown heading anchors are validated too, including same-file `#anchor`
+    // links and cross-file `file.md#anchor` links. External URLs, mailto:, and
+    // links to non-md asset files (icon.svg, .js scripts in assets/) are all
+    // checked uniformly — anything referenced must be present in skills/<skill>/.
     for (const linkErr of await validateSkillLinks(root, skill, actualRel)) {
       errors.push(linkErr);
     }
@@ -152,10 +153,10 @@ async function walk(dir, out) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name);
     if (entry.isDirectory()) {
-      if (entry.name === ".git" || entry.name === "node_modules") continue;
+      if (entry.name === ".git" || entry.name === "node_modules" || entry.name === "__pycache__") continue;
       await walk(path, out);
     } else if (entry.isFile()) {
-      if (entry.name === ".DS_Store") continue;
+      if (entry.name === ".DS_Store" || entry.name.endsWith(".pyc")) continue;
       out.push(path);
     }
   }
@@ -189,12 +190,12 @@ function readPreviousSkillVersion(root, skill) {
 // Matches:
 //   [text](path/in/skill)                      ← validated
 //   ![alt](assets/icon.svg)                    ← validated
-//   [name](references/foo.md#anchor)           ← validated (anchor stripped)
+//   [name](references/foo.md#anchor)           ← file and anchor validated
+//   [name](#anchor)                            ← same-file anchor validated
 //
 // Skipped:
 //   [text](https://example.com)                ← external URL
 //   [text](mailto:foo@bar)                     ← mailto
-//   [text](#section-anchor)                    ← in-page anchor only
 //   `[text](path)` inside ``` code fences ``   ← code blocks excluded
 async function validateSkillLinks(root, skill, skillFilesRel) {
   const errors = [];
@@ -211,21 +212,15 @@ async function validateSkillLinks(root, skill, skillFilesRel) {
     let match;
     while ((match = linkRe.exec(stripped)) !== null) {
       const target = match[1];
-      // Skip external schemes, in-page anchors, and javascript: / mailto: etc.
+      // Skip external schemes and javascript: / mailto: etc.
       if (/^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
-      if (target.startsWith("#")) continue;
       if (target.startsWith("//")) continue;
 
-      // Strip anchor and query from the relative path.
-      const pathOnly = target.replace(/[#?].*$/, "");
-      if (!pathOnly) continue;
-
-      // Resolve against the containing file's directory, then make relative
-      // to the skill root for comparison against the file inventory.
+      const { pathOnly, anchor } = splitMarkdownTarget(target);
       const mdDir = dirname(mdRel);
-      const resolved = posix.normalize(
-        mdDir === "." ? pathOnly : posix.join(mdDir, pathOnly),
-      );
+      const resolved = pathOnly
+        ? posix.normalize(mdDir === "." ? pathOnly : posix.join(mdDir, pathOnly))
+        : mdRel;
 
       // Reject any escape attempts that go above the skill root.
       if (resolved.startsWith("..") || resolved.startsWith("/")) {
@@ -235,10 +230,67 @@ async function validateSkillLinks(root, skill, skillFilesRel) {
 
       if (!validRel.has(resolved)) {
         errors.push(`${skill}: ${mdRel} contains broken markdown link to ${target} (resolves to ${resolved}, not in skill files)`);
+        continue;
+      }
+
+      if (anchor && resolved.endsWith(".md")) {
+        const targetContent = resolved === mdRel
+          ? content
+          : await readFile(join(skillRoot, resolved), "utf8");
+        const anchors = markdownHeadingAnchors(targetContent);
+        const normalizedAnchor = normalizeMarkdownAnchor(anchor);
+        if (!anchors.has(normalizedAnchor)) {
+          errors.push(`${skill}: ${mdRel} contains broken markdown anchor ${target} (anchor #${normalizedAnchor} not found in ${resolved})`);
+        }
       }
     }
   }
   return errors;
+}
+
+function splitMarkdownTarget(target) {
+  const hashIdx = target.indexOf("#");
+  const queryIdx = target.indexOf("?");
+  const pathEnd = [hashIdx, queryIdx]
+    .filter((idx) => idx !== -1)
+    .sort((a, b) => a - b)[0];
+  const pathOnly = pathEnd === undefined ? target : target.slice(0, pathEnd);
+  const anchor = hashIdx === -1 ? "" : target.slice(hashIdx + 1).replace(/\?.*$/, "");
+  return { pathOnly, anchor };
+}
+
+function normalizeMarkdownAnchor(anchor) {
+  try {
+    return decodeURIComponent(anchor);
+  } catch {
+    return anchor;
+  }
+}
+
+function markdownHeadingAnchors(content) {
+  const anchors = new Set();
+  const seen = new Map();
+  const stripped = stripCodeFences(content);
+  const headingRe = /^(#{1,6})\s+(.+?)\s*#*\s*$/gm;
+  let match;
+  while ((match = headingRe.exec(stripped)) !== null) {
+    const base = githubMarkdownSlug(match[2]);
+    if (!base) continue;
+    const count = seen.get(base) ?? 0;
+    seen.set(base, count + 1);
+    anchors.add(count === 0 ? base : `${base}-${count}`);
+  }
+  return anchors;
+}
+
+function githubMarkdownSlug(heading) {
+  return heading
+    .replace(/<[^>]*>/g, "")
+    .replace(/`([^`]*)`/g, "$1")
+    .trim()
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s_-]/gu, "")
+    .replace(/\s/g, "-");
 }
 
 // Returns the set of skill-relative paths that SKILL.md links to via markdown
