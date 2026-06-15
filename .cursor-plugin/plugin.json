@@ -16,7 +16,7 @@
     {
       "name": "code-to-figma",
       "path": "skills/code-to-figma",
-      "description": "Generate a CI-anchored code → Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes"
+      "description": "Generate a CI-anchored code \u2192 Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes"
     },
     {
       "name": "discord-harvest",
@@ -37,6 +37,11 @@
       "name": "localhost-screenshots",
       "path": "skills/localhost-screenshots",
       "description": "Localhost screenshot capture and visual regression testing"
+    },
+    {
+      "name": "skill-architect",
+      "path": "skills/skill-architect",
+      "description": "Portable skill authoring/review rubric bridging Skill Development, writing-skills, Anthropic/OpenAI skill-creator patterns, vendor adapters, and eval planning"
     }
   ]
 }

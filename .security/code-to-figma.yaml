@@ -14,9 +14,9 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 27be609c174e4775b7c86c9edb7d17550a36d06548db06a185534b9bcded7d20
+    SKILL.md: 926b0dde6b89fc710446d2fea94d024d91a931ee2d975386bb0509bba2c6dd8d
     references/benchmarks.md: 4bbf828e6ba2db5b2248fe557d7efda92d7da14a84dc0e72beb01e2b6d7bf9fe
-    references/ci-and-gist-setup.md: 9b261ea0f3209a4f27c5a428daa8740d5442789526921ca5012256b061356342
+    references/ci-and-gist-setup.md: 3ef04f995e75f7463ce09cb97c1757de45c520514c1b03c56f0d507ea248adcb
     references/figma-export-contract.md: 08e0cc4939a35249077438662e90c00ab2d1513e52c375bfb4636166ee991bb8
     references/setup-scaffold.md: 101eddee76656c4ed0ff461a640b52b0639dbb31d9d346ccf35baf3d7e1436b3
     references/walker-patterns.md: e6e70b38827d105f245ce3b30535bd697be019de900a8c0c870ae6361a3cf5b9
