@@ -4,8 +4,8 @@
     "agent-memory": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.7.4",
-      "computedHash": "820597a0d8269f491f28ee9326e4d3cbb2e394fa4f5d1f9872bab3adf5989158"
+      "version": "2.7.5",
+      "computedHash": "b0ae2f718e777498d24dfbe9698ddcaab6cddeb81d328228861261cdf283c516"
     },
     "code-to-figma": {
       "source": "t4sh/skills4sh",
@@ -16,14 +16,14 @@
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.7.5",
-      "computedHash": "61ec9013443f367ba3e234b35e52f8c6d2809be27e643b70561a8bb3494a5700"
+      "version": "1.7.6",
+      "computedHash": "83d7b3e4e0017db5a04604cd3e6ee09f393052f5d084980eb5c5e53c61995ac4"
     },
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.5",
-      "computedHash": "aa178434d4a21b161ee4c51855cd483590281fb029d73aad207a9c5e4882b43f"
+      "version": "0.1.6",
+      "computedHash": "e44975cb2055f0e6c9a82a43c5c3dc2e0a829a53153c8c771113c90d242e1ad7"
     },
     "figma-to-code": {
       "source": "t4sh/skills4sh",
@@ -34,14 +34,14 @@
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "3.3.4",
-      "computedHash": "3243e007114645083574f75974cce32f3cc666db9500c680a785f4a06110e831"
+      "version": "3.3.5",
+      "computedHash": "76b8ff3f387ef64438f770e582fbff6df6acb04e5aa14ba853f71d0df514770a"
     },
     "skill-architect": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.0",
-      "computedHash": "516bb6822eba5a1f5ea33c224580b2cc6c3711ee953d914a20e1e1f02ff95ad0"
+      "version": "0.1.1",
+      "computedHash": "60b1d1da6526af5ea45bc187d14edacef0d2794fd204a46119722ea35bbb1443"
     }
   }
 }

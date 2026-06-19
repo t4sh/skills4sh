@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10
 metadata:
   author: t4sh
-  version: "0.1.0"
+  version: "0.1.1"
   tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, claude, codex, openai, anthropic, antigravity, azure
 ---
 

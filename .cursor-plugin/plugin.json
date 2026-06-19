@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "author": {
     "name": "t4sh"
   },

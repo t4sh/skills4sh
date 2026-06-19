@@ -4,7 +4,7 @@
 
 skill:
   name: skill-architect
-  version: "0.1.0"
+  version: "0.1.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,7 +14,7 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: f3594857a99e7d33fa93123efe83824e9238dcddb57bae2b1676da1230cd7e5c
+    SKILL.md: 1622eac41fc4e5bf3a7a23fc8560093f3e18683200d4494ff68a56748f5a6b2d
     assets/scripts/fix_skill.py: 861d8502653e4e5bf3b20140bdcbbb8553b780819892bea80c3bc5261fa031f5
     assets/scripts/inspect_skill.py: 120628233ba714e95e6deed1cf9f2b81321995fbf01046bff3f70ae33ea57b03
     assets/scripts/scaffold_skill.py: 6552a22213bf07f6ebe5f801b1e162a142afd3d8fad976c0d663fbc7ac763459

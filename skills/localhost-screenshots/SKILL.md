@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "3.3.4"
+  version: "3.3.5"
   tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 

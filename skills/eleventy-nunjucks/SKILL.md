@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Node >=18.20 (20 LTS recommended)
 metadata:
   author: t4sh
-  version: "0.1.5"
+  version: "0.1.6"
   tags: 11ty, eleventy, eleventy-v3, nunjucks, static-site, ssg, jamstack, tailwind, markdown-it, autoescape, xss-prevention, csp, design-tokens
 ---
 

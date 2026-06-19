@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with browser or Discord bot token
 metadata:
   author: t4sh
-  version: "1.7.5"
+  version: "1.7.6"
   tags: discord, harvest, scrape, images, attachments, download
 ---
 
