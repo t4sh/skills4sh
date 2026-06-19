@@ -42,19 +42,9 @@ done
 grep -rnE "{%[- ]*extends\b|{%[- ]*block\b" src/ && echo "FAIL: use layout: frontmatter and content slot with safe filter"
 ```
 
-### `| safe` and `| dump` review
+### `| safe`, `| dump | safe`, and inline-`<script>` escaping
 
-```bash
-grep -rnE "\|\s*safe\b" src/
-grep -rnE "\| *dump *\| *safe" src/
-```
-
-### Inline `<script>` without JSON escape filters
-
-```bash
-grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ \
-  | grep -v "jsonScript\|jsonCompact"
-```
+These XSS/escaping greps are maintained canonically in [`security-checklist.md`](security-checklist.md) §1 (Output escaping) — run that section here rather than duplicating the patterns. It covers `| safe` review, the forbidden `dump | safe`, and raw `{{ var }}` inside `<script>` without `jsonScript`/`jsonCompact`.
 
 ### `import` / `from` without `with context` when macros touch `page` / `site`
 

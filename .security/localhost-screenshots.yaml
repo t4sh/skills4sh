@@ -14,15 +14,15 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 9fb9c75c007b67b012cba10178e95ff5b4017ac40948ef71bafd94c860c8be94
+    SKILL.md: db5f6f53a92981c338edc7aa7ef56b5a4bb91d6071a4385bf61e8bef6d933547
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
-    assets/scripts/multi-breakpoint.js: 3d633697283122d6c191370aba45bcd154e363b80d0d07ab39eba3ace43d3b07
+    assets/scripts/multi-breakpoint.js: 8535be36d6c799160c0630b3a0b56bdc53d2390c7fffd9819c8efb23386e58da
     assets/scripts/package.json: 8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a
-    assets/scripts/quick.js: 1d7a3fbccb4630acc2d643af8cd19bdc3c2455cc636c6064e571bcc57cc618c5
-    assets/scripts/screenshot-a11y.js: be767c8e0d65ed498b0f273975002496b6e3443c01703ae994c8a5e0657cf629
+    assets/scripts/quick.js: c43e3ae400f1c92dd6998342dca2e1eba276fdefb1fe0f27e409da6cd9d2be0e
+    assets/scripts/screenshot-a11y.js: 152fe92815559aeebb4be1cf0bf369f8ea038851cd4d54622a7f29272d752cc2
     references/ai-snapshots.md: c16b31c99fb65d008e711582aea882a40f8d9a2d8201d2aedd40bfc07ecbf0e8
     references/interaction-templates.md: 9c38e9674960d66e871ac74e83e93fb9523674f5f9cc2db8eac9443ae6d24fb0
-    references/playwright-patterns.md: 488fdc495ba12bdfc0f4459dbadf0cc2742c38efdd0a4e453d8ac839bf85a0ea
+    references/playwright-patterns.md: 94c3e95922ac616378a8b0e7dbbbf1cfcc13befa506d1e14a4ab8e77f8483204
     references/troubleshooting.md: 691a69dd988b468c11a1d71982bad3149758c66b6772e04fef873d1b018b3ba2
     references/visual-regression.md: d5573c890c3f1b7dce1b4ad17f2f72d50f7a127cbad3f44e205349e4f3632790
 permissions:

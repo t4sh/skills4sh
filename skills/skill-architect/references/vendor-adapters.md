@@ -14,6 +14,17 @@ Keep this split:
 
 Never let one vendor's metadata overwrite the portable skill contract.
 
+## Coverage policy
+
+Adapter coverage is a local packaging policy, not an automatic portable-skill defect.
+
+Use this order:
+
+1. Read local repo conventions to determine whether adapter files are required, recommended, or intentionally selective.
+2. If adapters are required, report missing or stale adapter metadata as a packaging gap and verify it against local drift/hash checks.
+3. If no rule exists, report partial adapter coverage as a policy decision and recommend either consistent adapter coverage or a documented selective-coverage rationale.
+4. Validate that adapter metadata does not rewrite, dilute, or contradict the portable `SKILL.md` contract.
+
 ## Claude / Claude Code
 
 Borrow from [Anthropic `Skill Development`](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development):
