@@ -3,14 +3,38 @@ id: context/active-skill-architect-release
 type: context
 title: "Active release plan: skill-architect as central repo rubric"
 description: >-
-  Multi-day release work is planned to refine skill-architect, align repo rubric/gates around it, and compare gaps against well-known skills.sh authoring/editing skills.
+  Completed release work that refined skill-architect, aligned repo rubric/gates
+  around it, and shipped the follow-up review/version-bump fixes in v0.4.13.
 tags: [release-planning, skill-architect, gates, drift, guardskills, skills-sh]
 source: craft-agent
 created: 2026-06-13
-updated: 2026-06-13
-status: active
+updated: 2026-06-19
+status: archived
 expires: 2026-07-13
 ---
+
+## Completed during 2026-06-19 release follow-through
+
+- PR #26, `fix(skill-architect): tighten review gates`, merged to `main`.
+- `skill-architect` now enforces deterministic low-false-positive description
+  specificity in its helper validator and repo standard gate.
+- Review guidance now distinguishes prompt-only eval catalogs from run evidence,
+  treats vendor-adapter gaps as local-policy defects, and keeps weak-description
+  judgment separate from mechanical checks unless the rule is portable.
+- `localhost-screenshots` helper scripts now reject non-localhost URLs before
+  loading Playwright, matching the skill's localhost-only network boundary.
+- Changed skill versions and package/plugin metadata were bumped in the same PR,
+  following the prior release-bump pattern from PR #23.
+- Signed tag `v0.4.13` was created after merge, GitHub release was published, and
+  npm Trusted Publishing completed successfully.
+
+## Final release state
+
+- Release: `v0.4.13`
+- Merged commit: `1e3c7d2b61a92232dba29b4b4d07b1078aed3388`
+- npm package: `skills4sh@0.4.13`
+- Local cleanup: `main` was realigned to `origin/main`; stale local review
+  branch was deleted; the user deleted the superseded remote `tash/*` branch.
 
 ## Completed during 2026-06-13 polish pass
 

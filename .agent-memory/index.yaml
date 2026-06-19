@@ -14,7 +14,7 @@
 - id: context/active-skill-architect-release
   type: context
   title: "Active release plan: skill-architect as central repo rubric"
-  status: active
+  status: archived
 
 - id: context/skill-architect-description-length-todo
   type: context
@@ -29,7 +29,7 @@
 - id: context/skill-review-version-bump-next
   type: context
   title: "TODO: bump changed skill versions before review PR"
-  status: active
+  status: archived
 
 - id: sessions/20260613-skill-architect-release-planning
   type: session
@@ -38,6 +38,10 @@
 - id: sessions/20260619-skill-review-fix-sync
   type: session
   title: "Skill review fixes and memory sync"
+  status: active
+- id: sessions/20260619-pr26-release-cleanup
+  type: session
+  title: "PR #26 release and cleanup"
   status: active
 - id: references/skills-sh-description-patterns
   type: reference
