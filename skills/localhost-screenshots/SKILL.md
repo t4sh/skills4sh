@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "3.3.4"
+  version: "3.3.5"
   tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 
@@ -72,7 +72,19 @@ The user's dev server must be running (e.g., `npx @11ty/eleventy --serve --port=
 3. Take a viewport screenshot.
 4. Optionally resize, then screenshot again.
 
-### Example: Claude Chrome MCP
+### Example: capability sequence (host-neutral)
+
+Bind each capability to the host server's actual tool names from the table above. This is the canonical sequence; the host-specific blocks below are concrete bindings of it.
+
+```
+ensure_tab({ createIfEmpty: true })          # Tab
+navigate({ url: "http://localhost:3000/dashboard/" })  # Navigate
+screenshot()                                 # Screenshot (desktop)
+resize({ width: 375, height: 812 })          # Resize to mobile
+screenshot()                                 # Screenshot (mobile)
+```
+
+### Example: Claude Chrome MCP (one binding)
 
 ```
 mcp__Claude_in_Chrome__tabs_context_mcp({ createIfEmpty: true })
@@ -82,9 +94,17 @@ mcp__Claude_in_Chrome__resize_window({ width: 375, height: 812 })
 mcp__Claude_in_Chrome__computer({ action: "screenshot" })
 ```
 
-### Example: Cursor IDE browser
+### Example: Cursor IDE browser (one binding)
 
-Navigate with `browser_navigate`, then `browser_take_screenshot`. Use `browser_snapshot` before interactions; follow **cursor-ide-browser** server instructions for lock/unlock if required.
+```
+browser_tabs({ createIfEmpty: true })        # or the server's tab tool
+browser_navigate({ url: "http://localhost:3000/dashboard/" })
+browser_take_screenshot()                     # desktop
+# resize via the server's resize tool or devtools, then:
+browser_take_screenshot()                     # mobile
+```
+
+Use `browser_snapshot` before structural interactions; follow **cursor-ide-browser** server instructions for lock/unlock if required. Tool names follow the server's docs — confirm against the host's actual tool list.
 
 ### Debugging patterns (run JS in page)
 

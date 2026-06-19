@@ -66,6 +66,7 @@ Rules:
 - Allowed short format: `Use when <specific triggers, file paths, tools, error text, or situations apply>.`
 - The legacy strict format `This skill should be used when ...` remains valid, but is no longer the only accepted form.
 - Avoid loose summaries with no trigger/use conditions; they are harder for agents to retrieve reliably.
+- Avoid generic trigger-only descriptions such as `Use when creating skills.` The mechanical gate now requires concrete retrieval detail: a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger.
 - `metadata.version` is the skill version. Bump it for updates after the skill has landed on `main`; new-skill review commits before first merge may keep the same initial version.
 - `tags` should include search synonyms, tool names, and domain terms.
 

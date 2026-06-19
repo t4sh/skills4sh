@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.7.4"
+  version: "2.7.5"
   tags: memory, context, cross-interface, agent, persistence
 ---
 
@@ -50,7 +50,7 @@ Before operating on memory, understand:
 
 | Keyword      | Operation  | Description |
 |--------------|------------|-------------|
-| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, AGENTS.md, CLAUDE.md, `.cursor/rules/index.mdc` |
+| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, AGENTS.md, CLAUDE.md, plus per-agent pointer files for the agents in use (e.g. `.cursor/rules/index.mdc`) |
 | **migrate**  | Migrate    | Detect and migrate older structures (CURSOR.md, flat files, INDEX.yaml) to memory format v2.1 |
 | **build**    | Build      | Scan project and auto-generate initial memory files from existing docs |
 | **save**     | Save       | Capture learnings from the current session into memory |
@@ -81,16 +81,16 @@ Scaffold the `.agent-memory/` system from scratch.
 project/
 ├── AGENTS.md                 # Canonical shared instructions (all tools read it)
 ├── CLAUDE.md                 # Thin pointer → "read AGENTS.md" + Claude-specific notes
-├── .cursor/rules/index.mdc   # Cursor native: "Always" rule → references AGENTS.md
+├── .cursor/rules/index.mdc   # Cursor native: "Always" rule → references AGENTS.md (only when Cursor is in use)
 └── .agent-memory/            # Cross-interface persistent memory
 ```
 
-**Key:** `AGENTS.md` is the single source of truth. `CLAUDE.md` is thin. Never put shared instructions inside `.claude/` or `.cursor/`.
+**Key:** `AGENTS.md` is the single source of truth. `CLAUDE.md` is thin. Never put shared instructions inside `.claude/` or `.cursor/`. Create only the per-agent pointer files for agents the project actually uses; `.cursor/rules/index.mdc` is Cursor-specific and should be skipped when Cursor is not in use.
 
 ### Steps
 
 1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `references/`, `sessions/` under `.agent-memory/`.
-2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), `AGENTS.md` (canonical shared instructions), `CLAUDE.md` (thin pointer to AGENTS.md), `.cursor/rules/index.mdc` (Cursor “Always” rule that points agents at `AGENTS.md` — same file Migrate creates from `CURSOR.md`).
+2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), `AGENTS.md` (canonical shared instructions), `CLAUDE.md` (thin pointer to AGENTS.md). Add per-agent pointer files only for agents the project uses — e.g. `.cursor/rules/index.mdc` (Cursor “Always” rule that points agents at `AGENTS.md` — same file Migrate creates from `CURSOR.md`) when a `.cursor/` directory exists or Cursor is otherwise in use. Skip it for non-Cursor projects.
 3. **Fill in TODOs** in AGENTS.md with project's actual structure and rules.
 4. **Update `index.yaml`** and **report** what was created.
 

@@ -2,10 +2,10 @@
 name: skill-architect
 description: "Architect portable, high-quality agent skills and skill repositories across agent ecosystems. Use when the user asks to \"create a skill\", \"author a skill\", \"improve a skill\", \"review a skill\", \"design a multi-agent skill repo\", \"compare skill rubrics\", \"make a skill portable across agents\", or uses modes like \"skill-architect: plan\", \"skill-architect: create\", \"skill-architect: audit\", \"skill-architect: fix\", \"skill-architect: refactor\", \"skill-architect: compare\", \"skill-architect: distill\", \"skill-architect: reconcile\", or \"skill-architect: teach\"; or mentions skill-creator, Skill Development, OpenAI/Codex skill metadata, Anthropic skills, skills.sh, trigger descriptions, progressive disclosure, skill evals, or vendor adapters such as Claude, Codex, Antigravity, or Azure."
 license: MIT
-compatibility: macOS, Linux, or Windows with Python >=3.10 for optional helper scripts
+compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10
 metadata:
   author: t4sh
-  version: "0.1.0"
+  version: "0.1.1"
   tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, claude, codex, openai, anthropic, antigravity, azure
 ---
 
@@ -124,6 +124,8 @@ For behavior-shaping skills, add at least one forward test or prompt scenario. F
 
 Use a bounded executable-surface triage before invoking a full code-review lens. Check whether the artifact has: fixture coverage for shipped scripts/snippets, fail-closed error handling, shell/runtime portability, pinned or cached external tools, path and quoting safety, network/credential boundaries, parser edge-case tests, and CI visibility. Report these as skill-architecture risks with evidence and a verification path; route algorithmic correctness, exploitability analysis, performance tuning, or large refactors to a dedicated code-review skill instead of expanding this skill's scope.
 
+For eval and adapter claims, calibrate the finding to local policy and evidence quality: prompt-only eval catalogs are useful retrieval vectors but incomplete evidence for high-risk behavior claims, and missing vendor adapters are packaging defects only when the local repo requires them. Weak descriptions are deterministic failures only when the rule is portable and low-false-positive; in `skills4sh`, generic trigger-only wording such as `Use when creating skills.` fails mechanically.
+
 For test vectors, harness setup, enumeration consistency, and severity calibration, use [Eval methodology](references/eval-methodology.md) and [Portable rubric](references/house-rubric.md) rather than expanding `SKILL.md`.
 
 ### 5. Make handoffs executable
@@ -168,7 +170,7 @@ Skill work splits across three layers — keep them separate and route each chec
 
 | Layer | Owns | Examples |
 |---|---|---|
-| Portable validator (`validate_skill.py`) | Minimal deterministic checks that hold inside one skill folder, no repo metadata or network | frontmatter present + `name`/directory match + kebab-case, body within the hard size cap, `references/*.md` linked from `SKILL.md`, in-skill relative Markdown link targets, and same/cross-file Markdown heading anchors |
+| Portable validator (`validate_skill.py`) | Minimal deterministic checks that hold inside one skill folder, no repo metadata or network | frontmatter present + `name`/directory match + kebab-case, description has concrete trigger detail, body within the hard size cap, `references/*.md` linked from `SKILL.md`, in-skill relative Markdown link targets, and same/cross-file Markdown heading anchors |
 | Portable fixer (`fix_skill.py`) | Safe mechanical edits that require no taste or domain judgment; dry-run unless `--write` is explicit | frontmatter `name` normalization and insertion of missing `references/*.md` links in `SKILL.md` |
 | Local binding gate (project CI) | Deterministic checks that depend on repo conventions; **binding and a superset** | file hashes, `skills-lock.json`, security manifests, doc-sync, semver — in `skills4sh`: `check:drift`, `check:guardskills`, `hash-check`, `npm test` |
 | This skill's rubric (judgment) | What no script can decide | trigger *quality*, executable-surface triage, embedded-code *correctness* (review + fixture run), body altitude beyond the cap, vendor-isolation, narrative bloat |

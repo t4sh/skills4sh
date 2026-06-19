@@ -8,7 +8,6 @@
 //
 // Treats the target page as untrusted: captured pixels only, no text returned.
 
-const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
@@ -18,13 +17,44 @@ const out = process.argv[4] || '_screenshots/quick.png';
 const waitUntil = process.argv[5] || 'load';
 const waitForSelector = process.argv[6] || '';
 
+function validateLocalUrl(value) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    console.error(`Invalid URL: ${value}`);
+    process.exit(1);
+  }
+  const host = parsed.hostname.toLowerCase();
+  const isLocal = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+    && (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost'));
+  if (!isLocal) {
+    console.error('Refusing non-localhost URL. Use http(s)://localhost, 127.0.0.1, [::1], or *.localhost.');
+    process.exit(1);
+  }
+}
+
 if (!Number.isInteger(w) || !Number.isInteger(h) || w < 200 || h < 200 || w > 3840 || h > 2160) {
   console.error('Invalid viewport. Expected WIDTHxHEIGHT within 200–3840 by 200–2160.');
   process.exit(1);
 }
+validateLocalUrl(url);
+
+function loadChromium() {
+  try {
+    return require('playwright').chromium;
+  } catch (err) {
+    if (err && err.code === 'MODULE_NOT_FOUND') {
+      console.error('Missing dependency: playwright. Run npm install in assets/scripts before using this helper.');
+      process.exit(1);
+    }
+    throw err;
+  }
+}
 
 (async () => {
   fs.mkdirSync(path.dirname(out), { recursive: true });
+  const chromium = loadChromium();
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();

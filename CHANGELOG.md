@@ -8,6 +8,16 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.13] — 2026-06-19
+
+### Changed
+- Tightened skill-authoring gates for trigger description specificity and skill-architect review calibration.
+- Refreshed skill metadata and bumped changed bundled skills: agent-memory 2.7.5, discord-harvest 1.7.6, eleventy-nunjucks 0.1.6, localhost-screenshots 3.3.5, and skill-architect 0.1.1.
+- Bumped package and plugin metadata to 0.4.13.
+
+### Fixed
+- Hardened localhost screenshot helpers to reject non-localhost URLs before loading Playwright.
+
 ## [0.4.12] — 2026-06-16
 
 ### Added

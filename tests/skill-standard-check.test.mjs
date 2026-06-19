@@ -90,6 +90,10 @@ describe("skill-standard-check — frontmatter contract", () => {
       await buildFixture(dir, VALID_SKILL.replace("Demo workflow support. Use when", "Use when"));
       result = await runSkillStandardChecks(dir);
       assert.deepEqual(result.errors, [], result.errors.join("\n"));
+
+      await buildFixture(dir, VALID_SKILL.replace("Demo workflow support. Use when the user asks to \"demo a workflow\" or mentions demo fixtures.", "Use when paths include `demo.config.js`."));
+      result = await runSkillStandardChecks(dir);
+      assert.deepEqual(result.errors, [], result.errors.join("\n"));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
@@ -101,6 +105,17 @@ describe("skill-standard-check — frontmatter contract", () => {
       await buildFixture(dir, VALID_SKILL.replace("Demo workflow support. Use when the user asks to \"demo a workflow\" or mentions demo fixtures.", "Demo workflow support for sample repositories."));
       const { errors } = await runSkillStandardChecks(dir);
       assert.ok(errors.some((e) => e.includes("description must include concrete trigger/use conditions")), errors.join("\n"));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("description rejects generic trigger-only wording", async () => {
+    const dir = setupTmp();
+    try {
+      await buildFixture(dir, VALID_SKILL.replace("Demo workflow support. Use when the user asks to \"demo a workflow\" or mentions demo fixtures.", "Use when creating skills."));
+      const { errors } = await runSkillStandardChecks(dir);
+      assert.ok(errors.some((e) => e.includes("description trigger/use conditions are too generic")), errors.join("\n"));
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

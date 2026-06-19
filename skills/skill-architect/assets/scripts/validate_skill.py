@@ -19,6 +19,21 @@ DUPLICATE_SECTION_WORDS = 75
 REQUIRED_TOP = {"name", "description"}
 
 
+def unquote_scalar(value: str) -> str:
+    """Remove one layer of matching surrounding quotes and unescape the body.
+
+    Quotes are handled as a single matched pair so an already-escaped value such
+    as ``\\"create X\\"`` is not mangled into doubled backslashes.
+    """
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        inner = value[1:-1]
+        if value[0] == '"':
+            return inner.replace('\\"', '"').replace("\\\\", "\\")
+        return inner.replace("''", "'")
+    return value
+
+
 def parse_frontmatter(text: str) -> tuple[dict[str, str], int] | tuple[None, int]:
     match = re.match(r"^---\n([\s\S]*?)\n---\n?", text)
     if not match:
@@ -31,13 +46,13 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], int] | tuple[None, int
         top = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", raw)
         if top:
             key, value = top.groups()
-            fields[key] = value.strip().strip('"\'')
+            fields[key] = unquote_scalar(value)
             in_metadata = key == "metadata"
             continue
         nested = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
         if nested and in_metadata:
             key, value = nested.groups()
-            fields[f"metadata.{key}"] = value.strip().strip('"\'')
+            fields[f"metadata.{key}"] = unquote_scalar(value)
     return fields, match.end()
 
 
@@ -98,6 +113,18 @@ def has_trigger_clause(description: str) -> bool:
     )
 
 
+def has_concrete_trigger_detail(description: str) -> bool:
+    """Return true when a trigger clause includes concrete retrieval cues."""
+    separators = len(re.findall(r",|;|\bor\b", description, re.I))
+    return bool(
+        re.search(r'"[^"\n]{3,}"', description)
+        or re.search(r"`[^`\n]+`", description)
+        or re.search(r"\b[\w.-]+\.(?:md|mdx|js|mjs|cjs|ts|tsx|jsx|py|json|ya?ml|toml|njk|html|css)\b", description, re.I)
+        or re.search(r"\bwhen paths? include\b|\bor mentions\b|\bwhen debugging\b|\bwhen working on\b", description, re.I)
+        or (separators >= 2 and len(re.findall(r"\b\S+\b", description)) >= 12)
+    )
+
+
 def iter_sections(markdown: str) -> list[tuple[str, str]]:
     """Return top-level markdown sections as (heading, body) pairs."""
     lines = markdown.splitlines()
@@ -121,7 +148,17 @@ def iter_sections(markdown: str) -> list[tuple[str, str]]:
 
 
 def word_count(text: str) -> int:
+    """Count words after stripping code fences (used for duplicate-section hints)."""
     return len(re.findall(r"\b\S+\b", strip_code_fences(text)))
+
+
+def body_word_count(text: str) -> int:
+    """Count body words exactly as the repo CI body-size gate does (raw body).
+
+    The CI checker counts the trimmed body without stripping code fences, so the
+    portable cap check must match it to avoid disagreeing on the same threshold.
+    """
+    return len(re.findall(r"\b\S+\b", text.strip()))
 
 
 def is_ignored_artifact(path: Path) -> bool:
@@ -173,8 +210,10 @@ def validate(skill_dir: Path) -> list[str]:
     description = frontmatter.get("description", "")
     if description and not has_trigger_clause(description):
         errors.append("description should include concrete trigger/use conditions, e.g. 'Capability. Use when ...' or 'Use when ...'")
+    elif description and not has_concrete_trigger_detail(description):
+        errors.append("description trigger/use conditions are too generic; include a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger")
 
-    body_words = word_count(text[body_start:])
+    body_words = body_word_count(text[body_start:])
     if body_words > MAX_BODY_WORDS:
         errors.append(f"body has {body_words} words; maximum is {MAX_BODY_WORDS}")
 

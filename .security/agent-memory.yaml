@@ -4,7 +4,7 @@
 
 skill:
   name: agent-memory
-  version: "2.7.4"
+  version: "2.7.5"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,7 +14,7 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 2568d3eb83a6342ae80acc63531c5970ba9fa3fce907bc57ef1f649385bd2f0c
+    SKILL.md: 0dfdcac7d1f60fb7864ee2cd07083504dbde048b7c67e4e852e3abc7af56072f
     assets/icon.svg: 79f4b8ad729980ed8165476de9c531adbfa4540260b7dc8cd7ddc326ad5ada1a
     references/display-conventions.md: 1d65f3f2cf5253509f3c5b861df2839caee94fae5dd80b9ae5b3d6eea58c68b9
     references/templates.md: 859ab81a5a3dff074984192acbbc4bccdaccc18a03acae5bd44ec34d385967d2

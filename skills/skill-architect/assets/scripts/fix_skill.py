@@ -95,7 +95,6 @@ def fix_skill(skill_dir: Path) -> tuple[str, list[Edit]]:
     edits: list[Edit] = []
 
     frontmatter, fm_start, fm_end = parse_frontmatter_block(text)
-    body_start = fm_end + len("\n---\n") if frontmatter is not None else 0
     if frontmatter is not None:
         lines = frontmatter.splitlines()
         name_line_idx = next((i for i, line in enumerate(lines) if re.match(r"^name:\s*", line)), None)
@@ -106,8 +105,6 @@ def fix_skill(skill_dir: Path) -> tuple[str, list[Edit]]:
             next_text = text[:fm_start] + next_frontmatter + text[fm_end:]
             edits.append(Edit("add missing frontmatter name", text, next_text))
             text = next_text
-            frontmatter, fm_start, fm_end = parse_frontmatter_block(text)
-            body_start = fm_end + len("\n---\n")
         else:
             current = lines[name_line_idx].split(":", 1)[1].strip().strip('"\'')
             normalized = slugify(current) or expected_name
@@ -118,8 +115,6 @@ def fix_skill(skill_dir: Path) -> tuple[str, list[Edit]]:
                 next_frontmatter = "\n".join(lines)
                 text = text[:fm_start] + next_frontmatter + text[fm_end:]
                 edits.append(Edit(f"normalize frontmatter name {current!r} -> {replacement!r}", old_text, text))
-                frontmatter, fm_start, fm_end = parse_frontmatter_block(text)
-                body_start = fm_end + len("\n---\n")
 
     files = {
         str(path.relative_to(skill_dir)).replace("\\", "/")
