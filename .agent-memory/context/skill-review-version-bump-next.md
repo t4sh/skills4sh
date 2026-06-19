@@ -3,54 +3,62 @@ id: context/skill-review-version-bump-next
 type: context
 title: "TODO: bump changed skill versions before review PR"
 description: >-
-  Follow-up from the 2026-06-19 skill review/fix pass: changed existing skill
-  content has refreshed hashes, but individual skill metadata versions still
-  match main and need an explicit release/version decision before PR.
+  Completed in PR #26 / release v0.4.13: changed existing skill content now has
+  patch-level skill version bumps, refreshed hashes, and synced release metadata.
 tags: [todo, versions, release, skill-review, hashes]
 source: codex
 created: 2026-06-19
 updated: 2026-06-19
-status: active
+status: archived
 expires: 2026-07-19
 ---
 
-## TODO
+## Completed
 
-Bump the individual `metadata.version` values for changed existing skills, then refresh all synced metadata and rerun the repo gates.
+PR #26 folded in the version-bump pass before merge and release. The package
+released as `skills4sh@0.4.13` after the PR merged to `main`.
 
-## Current state
+Changed bundled skill versions were bumped to:
 
-As of 2026-06-19, these changed skill surfaces still have versions unchanged from `origin/main`:
-
-- `agent-memory` — `2.7.4`
-- `discord-harvest` — `1.7.5`
-- `eleventy-nunjucks` — `0.1.5`
-- `localhost-screenshots` — `3.3.4`
-- `skill-architect` — `0.1.0`
+- `agent-memory` — `2.7.5`
+- `discord-harvest` — `1.7.6`
+- `eleventy-nunjucks` — `0.1.6`
+- `localhost-screenshots` — `3.3.5`
+- `skill-architect` — `0.1.1`
 
 Unchanged skills `code-to-figma` and `figma-to-code` do not need version bumps from this review pass.
 
-## Recommended next step
-
-Decide patch-level bumps for each changed existing skill, update:
+Synced surfaces:
 
 - `skills/<name>/SKILL.md`
 - `.security/<name>.yaml`
 - `skills-lock.json`
-- any README/AGENTS/SECURITY/plugin surfaces if drift-check reports version mismatches
+- `README.md`
+- `SECURITY.md`
+- `CHANGELOG.md`
+- `package.json`
+- `npm-shrinkwrap.json`
+- `.claude-plugin/marketplace.json`
+- `.cursor-plugin/plugin.json`
 
-Then run:
+## Verification
 
 ```bash
 npm run check:skill-standard
 npm run check:drift
 node bin/hash-check.mjs
+npm run check:pr-skill-audit
 npm_config_cache=/private/tmp/skills4sh-npm-cache npm run check:pack
 npm_config_cache=/private/tmp/skills4sh-npm-cache npm run check:guardskills
 npm_config_cache=/private/tmp/skills4sh-npm-cache npm test
+bash .github/scripts/check-bin-tag-parity.sh
 ```
 
-## Notes
+GitHub PR checks passed before merge, including `validate (22)`, `validate (24)`,
+and `bin/ matches tag for current package.json version`.
 
-- The 2026-06-19 validation pass already refreshed content hashes and passed all listed gates before version bumps.
-- The next pass should keep this as version/metadata work unless another substantive review finding appears.
+## Release outcome
+
+`v0.4.13` was tagged after PR #26 merged. The GitHub release triggered npm
+Trusted Publishing, and npm registry metadata verified `gitHead` as the merged
+`main` commit `1e3c7d2b61a92232dba29b4b4d07b1078aed3388`.

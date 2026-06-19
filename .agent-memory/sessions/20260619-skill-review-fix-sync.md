@@ -5,7 +5,8 @@ title: "Skill review fixes and memory sync"
 description: >-
   Reviewed all skills with skill-architect and code-review lenses, fixed
   straightforward helper-script issues, refreshed hashes, validated gates, and
-  identified the next version-bump TODO.
+  carried the review through PR #26, release v0.4.13, publish verification, and
+  local branch cleanup.
 tags: [session, skill-review, skill-architect, code-review, validation, versions]
 source: codex
 created: 2026-06-19
@@ -34,5 +35,8 @@ The final validation pass on 2026-06-19 passed:
 
 ## Open Threads
 
-- Next TODO: bump changed skill versions before opening or finishing a review PR. See `context/skill-review-version-bump-next`.
-- Existing broader `skill-architect` follow-ups remain active: description-specificity gates, eval evidence quality, adapter coverage policy, and deterministic-vs-judgment boundaries.
+- Completed later in the same 2026-06-19 session: PR #26 merged, changed skill
+  versions were bumped, release `v0.4.13` was tagged after merge, npm Trusted
+  Publishing passed, and npm metadata/signature/provenance were verified.
+- The earlier version-bump TODO is archived in `context/skill-review-version-bump-next`.
+- The broader active release plan is archived in `context/active-skill-architect-release`.
