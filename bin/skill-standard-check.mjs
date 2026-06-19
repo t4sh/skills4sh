@@ -57,6 +57,8 @@ export async function runSkillStandardChecks(rootDir) {
     const description = fm.topFields.get("description") ?? "";
     if (description && !hasTriggerClause(description)) {
       errors.push(`${skill}: SKILL.md description must include concrete trigger/use conditions (preferred: "Capability summary. Use when ..."; allowed: "Use when ...")`);
+    } else if (description && !hasConcreteTriggerDetail(description)) {
+      errors.push(`${skill}: SKILL.md description trigger/use conditions are too generic; include a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger`);
     }
 
     for (const field of fm.metadataFields.keys()) {
@@ -178,6 +180,15 @@ function hasTriggerClause(description) {
     || /\bwhen working\b/i.test(description)
     || /\bwhen paths? include\b/i.test(description)
     || /\bor mentions\b/i.test(description);
+}
+
+function hasConcreteTriggerDetail(description) {
+  const separators = (description.match(/,|;|\bor\b/gi) ?? []).length;
+  return /"[^"\n]{3,}"/.test(description)
+    || /`[^`\n]+`/.test(description)
+    || /\b[\w.-]+\.(?:md|mdx|js|mjs|cjs|ts|tsx|jsx|py|json|ya?ml|toml|njk|html|css)\b/i.test(description)
+    || /\bwhen paths? include\b|\bor mentions\b|\bwhen debugging\b|\bwhen working on\b/i.test(description)
+    || (separators >= 2 && countWords(description) >= 12);
 }
 
 function nonEmpty(value) {

@@ -43,7 +43,7 @@ test('skill-architect scaffold, inspect, and validate helpers work against a fix
   const skillDir = join(root, 'fixture-skill');
   const skillText = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
   assert.match(skillText, /^name: fixture-skill$/m);
-  assert.match(skillText, /Use when the user asks to "review fixture workflows"/);
+  assert.match(skillText, /Use when the user asks to \\"review fixture workflows\\"/);
 
   mkdirSync(join(skillDir, 'assets', 'scripts', '__pycache__'), { recursive: true });
   writeFileSync(join(skillDir, 'assets', 'scripts', '__pycache__', 'helper.cpython-314.pyc'), 'bytecode');
@@ -52,6 +52,7 @@ test('skill-architect scaffold, inspect, and validate helpers work against a fix
   const summary = JSON.parse(inspect.stdout);
   assert.equal(summary.name, 'fixture-skill');
   assert.equal(summary.version, '0.1.0');
+  assert.match(summary.description, /Use when the user asks to "review fixture workflows"/);
   assert.ok(summary.body_words > 50);
   assert.deepEqual(summary.references, []);
   assert.ok(!summary.files.some((file) => file.includes('__pycache__') || file.endsWith('.pyc')));
@@ -78,6 +79,16 @@ test('skill-architect validate helper fails closed on broken portable skill stru
   const result = runPythonFail([`${scripts}/validate_skill.py`, skillDir]);
   assert.match(result.stdout, /frontmatter name 'wrong-name' does not match directory 'bad-skill'/);
   assert.match(result.stdout, /description should include concrete trigger\/use conditions/);
+});
+
+test('skill-architect validate helper rejects generic trigger-only descriptions', () => {
+  const root = mkdtempSync(join(tmpdir(), 'skill-architect-generic-description-'));
+  const skillDir = join(root, 'weak-skill');
+  mkdirSync(skillDir, { recursive: true });
+  writeFileSync(join(skillDir, 'SKILL.md'), `---\nname: weak-skill\ndescription: "Use when creating skills."\n---\n\n# Weak Skill\n`);
+
+  const result = runPythonFail([`${scripts}/validate_skill.py`, skillDir]);
+  assert.match(result.stdout, /description trigger\/use conditions are too generic/);
 });
 
 test('skill-architect fix helper dry-runs and applies only mechanical fixes', () => {

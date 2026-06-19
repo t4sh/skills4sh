@@ -10,7 +10,6 @@
 //
 // BREAKPOINTS is a comma-separated list of `name:WIDTHxHEIGHT` entries.
 
-const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
@@ -36,14 +35,52 @@ function parseBreakpoints(spec) {
   });
 }
 
+function validateLocalUrl(value) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    console.error(`Invalid URL: ${value}`);
+    process.exit(1);
+  }
+  const host = parsed.hostname.toLowerCase();
+  const isLocal = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+    && (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost'));
+  if (!isLocal) {
+    console.error('Refusing non-localhost URL. Use http(s)://localhost, 127.0.0.1, [::1], or *.localhost.');
+    process.exit(1);
+  }
+}
+
 const url = process.argv[2] || 'http://localhost:3000';
 const outDir = process.argv[3] || '_screenshots/home';
-const breakpoints = parseBreakpoints(process.argv[4] || DEFAULT_BREAKPOINTS);
+let breakpoints;
+try {
+  breakpoints = parseBreakpoints(process.argv[4] || DEFAULT_BREAKPOINTS);
+} catch (err) {
+  console.error(`Invalid breakpoints: ${err.message}`);
+  console.error('Format: name:WIDTHxHEIGHT,name:WIDTHxHEIGHT (e.g. mobile:375x812,desktop:1280x800)');
+  process.exit(1);
+}
 const waitUntil = process.argv[5] || 'load';
 const waitForSelector = process.argv[6] || '';
+validateLocalUrl(url);
+
+function loadChromium() {
+  try {
+    return require('playwright').chromium;
+  } catch (err) {
+    if (err && err.code === 'MODULE_NOT_FOUND') {
+      console.error('Missing dependency: playwright. Run npm install in assets/scripts before using this helper.');
+      process.exit(1);
+    }
+    throw err;
+  }
+}
 
 (async () => {
   fs.mkdirSync(outDir, { recursive: true });
+  const chromium = loadChromium();
   const browser = await chromium.launch();
   try {
     for (const bp of breakpoints) {

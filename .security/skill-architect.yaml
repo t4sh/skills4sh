@@ -14,16 +14,16 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: d54786e0be97561daf4060d3c4ff2b4d09e1636c2e7e2906909dea8d54778ff5
-    assets/scripts/fix_skill.py: 5adff2572b4267073691b4ea1044d7bc68f117076f147e6c946b032d16ee7fd4
-    assets/scripts/inspect_skill.py: 31ad963e07b2d2d8f17554be3fdb1dc22337cefe3e7147155bc2a3712ce8e5dd
-    assets/scripts/scaffold_skill.py: 819a5906d9b64306cbfad9458b3de01cfb3312e323f1535d67bc622ba5ea6050
-    assets/scripts/validate_skill.py: 4bc4da8459850e9717d3c5a9ff2580e32674965e5f21f0fcf0749480bf569743
+    SKILL.md: f3594857a99e7d33fa93123efe83824e9238dcddb57bae2b1676da1230cd7e5c
+    assets/scripts/fix_skill.py: 861d8502653e4e5bf3b20140bdcbbb8553b780819892bea80c3bc5261fa031f5
+    assets/scripts/inspect_skill.py: 120628233ba714e95e6deed1cf9f2b81321995fbf01046bff3f70ae33ea57b03
+    assets/scripts/scaffold_skill.py: 6552a22213bf07f6ebe5f801b1e162a142afd3d8fad976c0d663fbc7ac763459
+    assets/scripts/validate_skill.py: d29411c02e89bde5c81adf1c1305460e39c2952e6514721bc72a1ef20ed93db4
     references/comparative-study.md: 819b8b45a0ea887215b762e286fe80241ee4b3523392bdd57800bf10c4937c91
-    references/eval-methodology.md: 4dee24164d1f063907169cc58750bf89ddbb5a5eb5807666134ae4b9fb7be590
-    references/house-rubric.md: 279915a12fe727d3d4325d4e3ce254dc48d6b408bfd26edf25052ca675b30430
+    references/eval-methodology.md: 1a48a5183a1cf21d2c686118540ebe2a1a1a904cb4058ec14bdce38fcf81483d
+    references/house-rubric.md: 5951078e1e65323751bfb7739974536dff7a961720e010dd1d469211ea1703eb
     references/naming-and-packaging.md: 8d570f2bd0afc4f115e4bcf8a3f79da9660925a31c7aa865e694d9f5dd5348d0
-    references/vendor-adapters.md: 02a967618d2c8d0b0c06baed6e6c64d545de81dc662800d3bc812d33892ff9aa
+    references/vendor-adapters.md: 7896021ea477db7f62edeaec521337262b8d41a6149fac5c595e4d345f5da5de
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all helper scripts are inert assets and require explicit user or agent execution"

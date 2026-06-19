@@ -244,11 +244,11 @@ await element.screenshot({ path: 'content-only.png' });
 
 ## Self-Signed HTTPS
 
-**Localhost only.** `ignoreHTTPSErrors` disables certificate validation for the context. Use it **only** when the target is a local dev server with a self-signed cert (`https://localhost`, `https://127.0.0.1`, or `https://*.local`). Never enable it against external hostnames — that defeats the protection certificates provide and would let any MITM serve poisoned content to the screenshot run.
+**Localhost only.** `ignoreHTTPSErrors` disables certificate validation for the context. Use it **only** when the target is a local dev server with a self-signed cert (`https://localhost`, `https://127.0.0.1`, `https://[::1]`, or `https://*.localhost`). Never enable it against external hostnames — that defeats the protection certificates provide and would let any MITM serve poisoned content to the screenshot run.
 
 ```js
 // Guarded: only flip ignoreHTTPSErrors for explicit localhost targets.
-const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|[^/]+\.local)(:|\/|$)/.test(BASE_URL);
+const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|[^/]+\.localhost)(:|\/|$)/.test(BASE_URL);
 const context = await browser.newContext({ ignoreHTTPSErrors: isLocal });
 const page = await context.newPage();
 ```
@@ -412,11 +412,13 @@ The skill ships three runnable scripts under `assets/scripts/`. Prefer these ove
 
 | Script | Purpose |
 |--------|---------|
-| `assets/scripts/quick.js` | Single-viewport screenshot of one URL |
-| `assets/scripts/multi-breakpoint.js` | Mobile/tablet/desktop screenshot set for one URL |
+| `assets/scripts/quick.js` | Single-viewport screenshot of one localhost URL |
+| `assets/scripts/multi-breakpoint.js` | Mobile/tablet/desktop screenshot set for one localhost URL |
 | `assets/scripts/screenshot-a11y.js` | Screenshot + ARIA snapshot JSON (wrapped in `untrusted-page-content` envelope) |
 
 ### Invocation
+
+The bundled scripts fail closed on non-localhost URLs before loading Playwright. Accepted hosts are `localhost`, `127.0.0.1`, `[::1]`, and `*.localhost`.
 
 ```bash
 # Quick — defaults to http://localhost:3000 at 1280x800

@@ -54,6 +54,19 @@ For any behavior-shaping or review/routing skill, maintain a compact catalog of 
 
 Use enough vectors to cover each changed behavior. Do not build a giant suite for metadata-only edits; record why static validation is sufficient.
 
+## Prompt catalogs vs run evidence
+
+Prompt-vector catalogs are useful, but they are not the same as executed eval evidence. Audit them by claim and risk:
+
+| Evidence shape | Counts as | Missing before high-confidence claims |
+|---|---|---|
+| Prompt plus expected output only | Retrieval or fixture intent | Observed run status, transcript summary, or pass/fail result |
+| Prompt plus baseline failure | Evidence of a real behavior gap | With-skill result and grading criteria |
+| Prompt plus with-skill transcript/result | Forward-test evidence | Baseline comparison when claiming improvement over no skill |
+| Baseline and with-skill runs plus rubric/blind grading | Strong behavior evidence | Maintenance cadence and last-run date |
+
+For high-risk behavior-shaping, ops, safety, discipline, and review skills, flag prompt-only evals as incomplete evidence. Recommend optional fields or sidecar reports such as `baseline_failure`, `pressure`, `with_skill_result`, `status`, `last_run`, and observed transcript summaries. Keep lightweight prompt vectors acceptable for low-risk metadata or retrieval checks when the limitation is explicit.
+
 ## Harness setup notes
 
 A lightweight harness is acceptable when it is reproducible and source-cited:

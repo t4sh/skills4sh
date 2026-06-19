@@ -23,7 +23,7 @@ integrity:
     references/filters.md: 05543f78674653d7c0139ae0913fc2c0538d43a983a4246f8ad6aae335ba5b4a
     references/nunjucks-syntax.md: eb45425aa6076d67d239b9a8e01e2aa0f7d23c99b128c2df653d25ea9dbcb2fc
     references/production-patterns.md: 7204ee5a8b9b04e12dbd340bbeecb343d296f25e5d431751ffd434a4eb71be83
-    references/review-shipping.md: 6a96404e6715ad387dc72df37e909c62736b311faee9bc87a4d084337717523f
+    references/review-shipping.md: 8f64d10645ebd3526d781fd5b2b346919ee92cc72b9357dd61646c711c96fcfe
     references/security-checklist.md: dfc5637fa269804cb3750bd58b8c644d5e9c75c67d6818128fe30909b66de86d
     references/troubleshooting.md: 191b9b24a8692c1a7108b03de6a2e1d02b2d0b52b18fbeeb301e1ca9ee407dd0
 permissions:

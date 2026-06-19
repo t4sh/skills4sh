@@ -43,14 +43,20 @@ validate_url() {
     echo "SKIP: non-HTTPS URL blocked: $url" >&2
     return 1
   fi
-  # Block bracketed IP-literal hosts plus private/internal IPv4 ranges (SSRF protection).
+  # Extract the host only: strip scheme, then path, then userinfo and port.
+  # Checking the host (not the whole URL) avoids false matches in the path/query
+  # and closes userinfo tricks like https://cdn.discordapp.com@127.0.0.1/.
   local host="${url#https://}"
-  if [[ "$host" == \[* ]] || [[ "$url" =~ https://(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|0\.0\.0\.0|169\.254\.) ]]; then
+  host="${host%%/*}"   # drop path/query/fragment
+  host="${host##*@}"   # drop any user:pass@ prefix
+  host="${host%%:*}"   # drop :port; any bracketed IPv6 literal collapses to "[", still caught by the \[* check below
+  # Block bracketed IP-literal hosts plus private/internal IPv4 ranges (SSRF protection).
+  if [[ "$host" == \[* ]] || [[ "$host" =~ ^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|0\.0\.0\.0|169\.254\.) ]]; then
     echo "SKIP: private/local URL blocked: $url" >&2
     return 1
   fi
-  # Strict allowlist — only exact Discord CDN domains (no wildcard subdomains)
-  if [[ "$url" =~ ^https://(cdn\.discordapp\.com|media\.discordapp\.net|images-ext-[0-9]+\.discordapp\.net)/ ]]; then
+  # Strict allowlist — only exact Discord CDN hosts (no wildcard subdomains)
+  if [[ "$host" =~ ^(cdn\.discordapp\.com|media\.discordapp\.net|images-ext-[0-9]+\.discordapp\.net)$ ]]; then
     return 0
   fi
   echo "SKIP: untrusted URL domain: $url" >&2

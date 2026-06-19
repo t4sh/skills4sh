@@ -16,9 +16,28 @@
   title: "Active release plan: skill-architect as central repo rubric"
   status: active
 
+- id: context/skill-architect-description-length-todo
+  type: context
+  title: "TODO: evaluate description-too-short checks for skill-architect"
+  status: archived
+
+- id: context/skill-architect-effectiveness-followups
+  type: context
+  title: "TODO: improve skill-architect audit effectiveness"
+  status: archived
+
+- id: context/skill-review-version-bump-next
+  type: context
+  title: "TODO: bump changed skill versions before review PR"
+  status: active
+
 - id: sessions/20260613-skill-architect-release-planning
   type: session
   title: "Skill architect release planning"
+  status: active
+- id: sessions/20260619-skill-review-fix-sync
+  type: session
+  title: "Skill review fixes and memory sync"
   status: active
 - id: references/skills-sh-description-patterns
   type: reference

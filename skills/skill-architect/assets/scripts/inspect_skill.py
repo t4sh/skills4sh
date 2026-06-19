@@ -9,6 +9,22 @@ import re
 from pathlib import Path
 
 
+def unquote_scalar(value: str) -> str:
+    """Remove one layer of matching surrounding quotes and unescape the body.
+
+    Uses ``.strip()`` only for surrounding whitespace; quotes are handled as a
+    single matched pair so an already-escaped value such as ``\\"create X\\"`` is
+    not mangled into doubled backslashes.
+    """
+    value = value.strip()
+    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
+        inner = value[1:-1]
+        if value[0] == '"':
+            return inner.replace('\\"', '"').replace("\\\\", "\\")
+        return inner.replace("''", "'")
+    return value
+
+
 def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
     match = re.match(r"^---\n([\s\S]*?)\n---\n?", text)
     if not match:
@@ -21,13 +37,13 @@ def parse_frontmatter(text: str) -> tuple[dict[str, str], str]:
         top = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", raw)
         if top:
             key, value = top.groups()
-            fields[key] = value.strip().strip('"\'')
+            fields[key] = unquote_scalar(value)
             in_metadata = key == "metadata"
             continue
         nested = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
         if nested and in_metadata:
             key, value = nested.groups()
-            fields[f"metadata.{key}"] = value.strip().strip('"\'')
+            fields[f"metadata.{key}"] = unquote_scalar(value)
     return fields, text[match.end() :]
 
 

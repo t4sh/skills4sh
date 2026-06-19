@@ -85,6 +85,7 @@ description: "This skill should be used when the user asks to \"create X\", \"fi
 Avoid:
 
 - loose summaries with no trigger/use clause: "Helps with skills"
+- generic trigger-only descriptions with no retrieval detail: "Use when creating skills"
 - second-person descriptions: "Use this when you..."
 - workflow summaries that omit retrieval cues
 - vendor-only trigger names unless the skill is truly vendor-specific
@@ -204,6 +205,12 @@ When a skill ships executable material, first run this bounded triage before ask
 | External dependency | Are remote tools, registries, APIs, credentials, and network calls pinned, cached, mocked, or clearly isolated? |
 | Input/path handling | Are file paths, quoting, links, anchors, and parser edge cases covered by deterministic checks? |
 | CI visibility | Does the local project run the relevant check in CI, or is the limitation called out? |
+
+Eval claims and adapter coverage need calibrated handling:
+
+- Treat prompt-vector catalogs as retrieval/fixture evidence unless they also include observed run status, baseline failure, with-skill result, or transcript summary. For high-risk behavior-shaping, ops, safety, discipline, and review skills, prompt-only evals are incomplete evidence, not a universal CI failure.
+- Treat missing or partial vendor adapters as a repository-policy question. If local docs require adapters, report missing metadata as a packaging gap; if no rule exists, report it as a policy decision and recommend either consistent adapters or an explicit selective-coverage rationale.
+- Keep weak-description checks deterministic only when the rule is portable and low-false-positive. In `skills4sh`, generic trigger-only descriptions fail mechanically; richer trigger quality remains a review judgment.
 
 Stop at triage. If the finding requires algorithm redesign, exploit analysis, performance profiling, concurrency review, or broad refactoring, hand it to a dedicated code-review lens and keep `skill-architect` focused on skill quality, evidence, and verification path.
 
