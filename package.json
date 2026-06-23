@@ -34,7 +34,7 @@
     "node": ">=22"
   },
   "optionalDependencies": {
-    "undici": "6.25.0"
+    "undici": "6.27.0"
   },
   "license": "MIT",
   "repository": {
