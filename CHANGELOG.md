@@ -8,6 +8,13 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.4.14] — 2026-06-30
+
+### Changed
+- Bumped package and plugin metadata to 0.4.14 after the audited skill-fix pass.
+- Bumped bundled skill versions for the changed skills: agent-memory 2.7.6, code-to-figma 0.1.5, discord-harvest 1.7.7, eleventy-nunjucks 0.1.7, figma-to-code 0.1.6, localhost-screenshots 3.3.6, and skill-architect 0.1.2.
+- Updated npm shrinkwrap/package metadata after the undici 6.27.0 dependency refresh.
+
 ## [0.4.13] — 2026-06-19
 
 ### Changed

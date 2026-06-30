@@ -1,16 +1,13 @@
 {
   "name": "skills4sh",
-  "version": "0.4.13",
+  "version": "0.4.14",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "skills4sh",
-      "version": "0.4.13",
+      "version": "0.4.14",
       "license": "MIT",
-      "dependencies": {
-        "undici": "6.27.0"
-      },
       "bin": {
         "skills4sh": "bin/install.mjs"
       },
