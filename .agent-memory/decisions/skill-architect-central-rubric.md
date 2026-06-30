@@ -7,7 +7,7 @@ description: >-
 tags: [skill-architect, skill-authoring, rubric, anthropic, openai, multi-agent]
 source: craft-agent
 created: 2026-06-13
-updated: 2026-06-13
+updated: 2026-06-30
 status: active
 ---
 
@@ -29,5 +29,6 @@ The synthesis model is: **portable rubric first, quality harness second, vendor 
 
 - Treat `docs/SKILL_AUTHORING_STANDARD.md` as the binding local project contract for `skills4sh`, while `skill-architect` remains a portable standard for planning, authoring, reviewing, and evolving skills in any CWD/project/repository context.
 - Continue refining `skill-architect` with comparative lessons from famous `skills.sh` skill creation/development/maintenance/authoring/editing skills.
+- As of 2026-06-30, `skill-architect` 0.1.2 adds predictability, pruning, invocation-fit, completion-criteria, and executable-surface triage checks. Apply these before patching skill content.
 - Do not let a vendor-specific rubric replace the local project contract verbatim.
 - Avoid upstream slug collisions such as `skill-creator` by using explicit local or restored names.

@@ -43,6 +43,10 @@
   type: session
   title: "PR #26 release and cleanup"
   status: active
+- id: sessions/20260630-skill-audit-release-install-sync
+  type: session
+  title: "Audited skill fixes, release v0.4.14, and install verification"
+  status: active
 - id: references/skills-sh-description-patterns
   type: reference
   title: "skills.sh description pattern research"
