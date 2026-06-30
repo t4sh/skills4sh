@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.7.5"
+  version: "2.7.6"
   tags: memory, context, cross-interface, agent, persistence
 ---
 
@@ -75,6 +75,8 @@ If no keyword is given, ask:
 
 Scaffold the `.agent-memory/` system from scratch.
 
+**Overwrite guard:** Before creating or changing `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/index.mdc`, `.agent-memory/index.yaml`, or `.agent-memory/README.md`, inspect any existing file and preserve its content. If a target file already exists and is not a thin compatible pointer, stage the proposed replacement and ask before overwriting. Report every file kept, created, or changed.
+
 ### Memory format v2.1 — Entry Points
 
 ```
@@ -108,7 +110,9 @@ Detect and migrate older structures to memory format v2.1.
 | `summary:` frontmatter | `description:` frontmatter | Field renamed |
 | `CLAUDE.md` with full instructions (no AGENTS.md) | `AGENTS.md` + thin `CLAUDE.md` | Promoted |
 
-**Steps:** Scan for each old structure listed above → perform the migration → update `CLAUDE.md` to thin pointer → reconcile `index.yaml` with filesystem → report what changed.
+**Steps:** Scan for each old structure listed above → preserve existing content → perform only confirmed migrations → update `CLAUDE.md` to a thin pointer only after moving shared instructions into `AGENTS.md` → reconcile `index.yaml` with filesystem → report what changed.
+
+**Migration guard:** Renames, moves, and pointer rewrites are destructive. Before renaming `CURSOR.md`, `INDEX.yaml`, or replacing instruction files, show the planned source and destination paths and ask for confirmation unless the file is empty or already an exact generated pointer. Keep a backup or `.migrated` file whenever content is moved.
 
 ---
 
@@ -117,7 +121,7 @@ Detect and migrate older structures to memory format v2.1.
 Scan project and auto-generate initial memory files from existing docs.
 
 1. **Scan** for docs: `*.md`, `package.json`, `pyproject.toml`, `Cargo.toml`, `CLAUDE.md`, `AGENTS.md`, `*.yaml` configs, `.env.example`
-2. **Distill** each source: overview → `project/overview.md`, architecture → `project/architecture.md`, decisions → `decisions/{topic}.md`, conventions → `conventions/{topic}.md`, user identity → `user/identity.md`
+2. **Distill** each source: overview → `project/overview.md`, architecture → `project/architecture.md`, decisions → `decisions/{topic}.md`, conventions → `conventions/{topic}.md`, user preferences/collaboration style → `user/preferences.md` only when explicitly confirmed by the user
 3. **Rules:** Summarize don't copy. One topic per file. Reference source docs. Use standard frontmatter.
 4. **Migrate** old formats if found (flat files, old frontmatter fields)
 5. **Update `index.yaml`** — add entries for each new file, reconcile with filesystem

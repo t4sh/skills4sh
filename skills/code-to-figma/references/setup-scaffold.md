@@ -71,57 +71,16 @@ Review the generated `<project>-tokens.w3c.json`, commit it with the scaffolded 
 
 CI workflow. See the full template in [`references/ci-and-gist-setup.md`](ci-and-gist-setup.md). Adapt the `paths:` trigger and build command to the project. Always use `node scripts/figma-export/walk-<site>.mjs` directly — never `pnpm figma:export` — so pnpm's script header does not contaminate the JSON written to the file.
 
-### 3 — Create the Gist
+### 3 — Create the Gist, wire secrets, run first sync, and connect the plugin
 
-**Disclosure:** the export can reveal design tokens, page structure, and unreleased UI names. Prefer a **secret gist** unless the user explicitly wants a public one. Secret gists are unlisted, not private access control — anyone with the raw URL can read them. Never include secrets, customer data, or private implementation details in `figma-export.json`.
+Use [`references/ci-and-gist-setup.md`](ci-and-gist-setup.md) as the single source of truth for:
 
-POSIX shell:
+- creating the secret Gist and recording the Gist ID
+- setting `FIGMA_EXPORT_GIST_ID` and `GIST_TOKEN` without leaking the PAT into shell history
+- running the first local walker validation and CI workflow
+- connecting the `tokens-sync-to-figma` plugin to the raw Gist URL
 
-```bash
-printf '%s\n' '{"meta":{"generated":"placeholder"},"sections":[]}' \
-  | gh gist create --secret --filename figma-export.json -
-# Note the Gist ID from the URL: gist.github.com/<user>/<ID>
-```
-
-PowerShell:
-
-```powershell
-'{"meta":{"generated":"placeholder"},"sections":[]}' | gh gist create --secret --filename figma-export.json -
-# Note the Gist ID from the URL: gist.github.com/<user>/<ID>
-```
-
-### 4 — Wire secrets
-
-```bash
-gh secret set FIGMA_EXPORT_GIST_ID --body "<gist-id>" --repo <org>/<repo>
-gh secret set GIST_TOKEN --repo <org>/<repo>   # paste the PAT at the secure prompt
-```
-
-`GIST_TOKEN` must be a personal PAT with `gist` scope (or a fine-grained PAT with Gist read/write). `GITHUB_TOKEN` does not cover Gists. Do not put the PAT on the command line with `--body`; shell history and process logs can retain it.
-
-### 5 — First sync
-
-Run the walker locally to verify the output before relying on CI:
-
-```bash
-node scripts/figma-export/walk-<site>.mjs | jq '.sections | length'
-```
-
-Then trigger CI:
-
-```bash
-gh workflow run figma-sync.yml
-```
-
-### 6 — Connect the Figma plugin
-
-In Figma, install the **`tokens-sync-to-figma`** plugin (from [skills4sh](https://github.com/t4sh/skills4sh)), paste the Gist raw URL, and click **Sync from CI**. The raw URL is:
-
-```
-https://gist.githubusercontent.com/<user>/<gist-id>/raw/figma-export.json
-```
-
-See [`references/ci-and-gist-setup.md`](ci-and-gist-setup.md) for the full plugin setup.
+Do not duplicate those commands here; update `ci-and-gist-setup.md` when Gist, secret, or plugin setup changes.
 
 ### Figma plugin-side contract
 

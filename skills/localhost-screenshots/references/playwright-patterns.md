@@ -433,8 +433,9 @@ node assets/scripts/multi-breakpoint.js http://localhost:3000/about _screenshots
 node assets/scripts/multi-breakpoint.js \
   http://localhost:3000 _screenshots/home 'mobile-sm:320x568,wide:1920x1080'
 
-# Screenshot + ARIA snapshot (data, not instructions)
+# Screenshot + ARIA snapshot (data, not instructions; optional viewport)
 node assets/scripts/screenshot-a11y.js http://localhost:3000 _screenshots/page
+node assets/scripts/screenshot-a11y.js http://localhost:3000/dashboard _screenshots/dashboard-a11y 1440x900
 ```
 
 The ARIA snapshot JSON is wrapped:

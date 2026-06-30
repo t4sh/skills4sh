@@ -2,10 +2,10 @@
 name: code-to-figma
 description: "CI-anchored code-to-Figma token export pipeline for keeping Figma aligned with the codebase. Use when the user asks to \"sync code to Figma\", \"export design tokens to Figma\", \"set up a Figma sync pipeline\", \"wire up the tokens-sync-to-figma plugin\", \"generate a figma-export.json\", \"create a page walker\", or \"keep Figma up to date with the codebase\"."
 license: MIT
-compatibility: macOS, Linux, or Windows with Node.js and the GitHub CLI (`gh`)
+compatibility: macOS, Linux, or Windows with Node.js, Git, `jq`, and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.1.4"
+  version: "0.1.5"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 
@@ -48,7 +48,7 @@ Ask one focused question if two genuinely different walker shapes are possible (
 
 ### 2 — Generate and verify the scaffold
 
-Create or update the project-specific walker, W3C token converter, generic Gist pusher, `figma-sync.config.json`, package scripts, GitHub Actions workflow, Gist, secrets, first sync, and Figma plugin connection. Load [references/setup-scaffold.md](references/setup-scaffold.md) for the exact file specifications, command templates, plugin-side contract, and security notes.
+Create or update the project-specific walker, W3C token converter, generic Gist pusher, `figma-sync.config.json`, package scripts, GitHub Actions workflow, Gist, secrets, first sync, and Figma plugin connection. Load [references/setup-scaffold.md](references/setup-scaffold.md) for the file specifications and [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md) for the canonical Gist, secret, CI, and plugin setup commands.
 
 Required local checks before relying on CI:
 

@@ -1,11 +1,11 @@
 ---
 name: skill-architect
-description: "Architect portable, high-quality agent skills and skill repositories across agent ecosystems. Use when the user asks to \"create a skill\", \"author a skill\", \"improve a skill\", \"review a skill\", \"design a multi-agent skill repo\", \"compare skill rubrics\", \"make a skill portable across agents\", or uses modes like \"skill-architect: plan\", \"skill-architect: create\", \"skill-architect: audit\", \"skill-architect: fix\", \"skill-architect: refactor\", \"skill-architect: compare\", \"skill-architect: distill\", \"skill-architect: reconcile\", or \"skill-architect: teach\"; or mentions skill-creator, Skill Development, OpenAI/Codex skill metadata, Anthropic skills, skills.sh, trigger descriptions, progressive disclosure, skill evals, or vendor adapters such as Claude, Codex, Antigravity, or Azure."
+description: "Architect and audit portable agent skills for retrieval, predictability, progressive disclosure, evals, and repository gates. Use when the user asks to \"create a skill\", \"author a skill\", \"improve a skill\", \"review a skill\", \"refactor a skill\", \"compare skill rubrics\", \"distill a skill from sessions\", \"reconcile skill plans\", or \"teach skill authoring\"; when paths include `skills/<name>/SKILL.md`, `references/*.md`, helper scripts, evals, lockfiles, security manifests, or vendor adapters; or when mentions include skill-creator, Skill Development, skills.sh, trigger descriptions, completion criteria, leading words, or model/user invocation."
 license: MIT
 compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10
 metadata:
   author: t4sh
-  version: "0.1.1"
+  version: "0.1.2"
   tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, claude, codex, openai, anthropic, antigravity, azure
 ---
 
@@ -33,10 +33,11 @@ Use this order:
 
 1. **Classify the request** — choose `plan`, `create`, `audit`, `fix`, `refactor`, `compare`, `distill`, `reconcile`, or `teach` before deciding files or checks.
 2. **Read the local standard** — find the CWD/project/repository authoring standard, agent instructions, check commands, and target skill before editing.
-3. **Select the lens** — structure, quality/evals, vendor compatibility, or distribution governance.
-4. **Plan the artifact** — decide the portable core, references, optional assets/scripts, vendor metadata, and validation path.
-5. **Patch narrowly** — avoid churn-only rewrites; improve only the requested surface and directly related standard violations.
-6. **Verify mechanically** — run repo checks or the closest local equivalent before handing back.
+3. **Select the lens** — structure, quality/evals, vendor compatibility, distribution governance, or predictability.
+4. **Run the predictability pass** — check invocation fit, branch uniqueness, information hierarchy, completion criteria, leading words, duplication, sediment, sprawl, no-op lines, and premature-completion risk before proposing edits.
+5. **Plan the artifact** — decide the portable core, references, optional assets/scripts, vendor metadata, and validation path.
+6. **Patch narrowly** — avoid churn-only rewrites; improve only the requested surface and directly related standard violations.
+7. **Verify mechanically** — run repo checks or the closest local equivalent before handing back.
 
 ## Command modes
 
@@ -115,10 +116,26 @@ Prepare a compact audit packet before making non-trivial edits:
 | Check | Evidence | Decision |
 |---|---|---|
 | Trigger description is concrete | `SKILL.md` frontmatter line | keep / patch |
+| Invocation fit is justified | description, expected caller, context/cognitive load tradeoff | keep model-invoked / make user-invoked / add router |
+| Branches are unique | description, command table, mode rules | keep / collapse synonym-only trigger branches |
+| Information hierarchy is clean | section inventory | keep in `SKILL.md` / move to reference / split sequence |
+| Completion criteria are checkable | every ordered step or command workflow | keep / sharpen / add done criteria |
+| Leading words carry repeated concepts | repeated behavior terms and trigger language | keep prose / collapse to leading word |
+| Pruning pass finds no sediment | duplicated, stale, no-op, or sprawling lines | keep / delete / disclose |
 | `SKILL.md` is lean enough | word count | keep / split |
 | References are linked | link check | keep / patch |
 | Vendor assumptions are isolated | relevant section/file | keep / patch |
 | Mechanical gates are available | repository scripts, CI, evals, or fixtures | run / note skipped |
+
+Run a **predictability and pruning pass** before judging style or patching content:
+
+1. **Invocation fit:** decide whether the skill should be model-invoked or user-invoked. Pay context load only when autonomous agent reach or cross-skill reach is necessary; recommend a router skill when many user-invoked skills create cognitive load.
+2. **Description branches:** keep one trigger per real branch, remove synonym-only trigger duplication, and front-load strong leading words that also appear in prompts, docs, or code.
+3. **Information hierarchy:** classify each major block as step, in-skill reference, or disclosed reference. Inline what every branch needs; move branch-only detail behind a context pointer.
+4. **Completion criteria:** every ordered step should end with a checkable done condition. Sharpen vague criteria before splitting a sequence.
+5. **Premature-completion risk:** if visible post-completion steps pull attention forward and the current criterion cannot be sharpened further, recommend a real context-boundary split.
+6. **Leading words:** replace repeated explanatory prose with a compact pretrained concept only when it improves predictable execution or invocation.
+7. **Pruning:** apply sentence-level relevance and no-op tests; remove duplication, sediment, and sprawl instead of polishing dead prose.
 
 For behavior-shaping skills, add at least one forward test or prompt scenario. For any shipped CI, shell, or code — helper scripts, snippets, or workflow examples — review it for functional correctness and execute it against a fixture rather than vouching for it by reading. Reading alone routinely misses logic defects (wrong regex, broken cascade handling, crash-after-success) that a fixture run surfaces immediately; security-scanning and shape-checking do not cover correctness. An audit is incomplete until each embedded-code finding or pass includes a fixture command plus observed output, or an explicit skipped-risk note.
 
@@ -182,7 +199,7 @@ The litmus test: **if a script can decide it, automate it; if it needs reasoning
 | File | Load when |
 |---|---|
 | [references/comparative-study.md](references/comparative-study.md) | Comparing Anthropic, OpenAI, Matt Pocock, Obra, Azure, Antigravity, or other skill-development/authoring/creator patterns |
-| [references/house-rubric.md](references/house-rubric.md) | Creating or reviewing a portable rubric; checking enumeration consistency, executable-surface triage, and severity calibration |
+| [references/house-rubric.md](references/house-rubric.md) | Creating or reviewing a portable rubric; checking predictability, invocation fit, completion criteria, pruning, enumeration consistency, executable-surface triage, and severity calibration |
 | [references/vendor-adapters.md](references/vendor-adapters.md) | Separating portable core instructions from Claude, OpenAI/Codex, Craft, Cursor, Antigravity, Azure, or future agent metadata |
 | [references/eval-methodology.md](references/eval-methodology.md) | Testing triggers, building test-vector catalogs, setting up lightweight harnesses, comparing baseline behavior, or planning pressure tests |
 | [references/naming-and-packaging.md](references/naming-and-packaging.md) | Avoiding slug collisions, deciding names, updating lockfiles/security manifests, and packaging repo updates |

@@ -4,7 +4,7 @@
 
 skill:
   name: skill-architect
-  version: "0.1.1"
+  version: "0.1.2"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,14 +14,14 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 1622eac41fc4e5bf3a7a23fc8560093f3e18683200d4494ff68a56748f5a6b2d
+    SKILL.md: 8c7b24d2dcac802371b86319c7d30cd4c016948b706d92c7aa2d32331a58ccc6
     assets/scripts/fix_skill.py: 861d8502653e4e5bf3b20140bdcbbb8553b780819892bea80c3bc5261fa031f5
     assets/scripts/inspect_skill.py: 120628233ba714e95e6deed1cf9f2b81321995fbf01046bff3f70ae33ea57b03
     assets/scripts/scaffold_skill.py: 6552a22213bf07f6ebe5f801b1e162a142afd3d8fad976c0d663fbc7ac763459
     assets/scripts/validate_skill.py: d29411c02e89bde5c81adf1c1305460e39c2952e6514721bc72a1ef20ed93db4
     references/comparative-study.md: 819b8b45a0ea887215b762e286fe80241ee4b3523392bdd57800bf10c4937c91
     references/eval-methodology.md: 1a48a5183a1cf21d2c686118540ebe2a1a1a904cb4058ec14bdce38fcf81483d
-    references/house-rubric.md: 5951078e1e65323751bfb7739974536dff7a961720e010dd1d469211ea1703eb
+    references/house-rubric.md: 1a5bf246846d7ac220fdfd5f65dd85a374d9d79187e67ea9656fbda911e2a90e
     references/naming-and-packaging.md: 8d570f2bd0afc4f115e4bcf8a3f79da9660925a31c7aa865e694d9f5dd5348d0
     references/vendor-adapters.md: 7896021ea477db7f62edeaec521337262b8d41a6149fac5c595e4d345f5da5de
 permissions:

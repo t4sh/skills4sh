@@ -1,11 +1,11 @@
 ---
 name: figma-to-code
-description: "Repo-first Figma-to-code workflow for implementation, design tokens, design-system rules, and Code Connect. Use when the user asks to \"implement this Figma design\", \"turn this Figma into code\", \"build from a Figma link\", \"match this Figma mockup\", \"extract Figma design tokens\", \"create Figma design system rules\", \"set up Figma guidelines\", \"code connect this component\", \"map this Figma component to code\", \"use Figma MCP\", or \"use the Figma Desktop MCP\"."
+description: "Repo-first Figma-to-code workflow for implementation, design tokens, design-system rules, and Code Connect. Use when the user asks to \"implement this Figma design\", \"turn this Figma into code\", \"build from a Figma link\", \"match this Figma mockup\", \"extract Figma design tokens\", \"create Figma design system rules\", \"set up Figma guidelines\", \"code connect this component\", or \"map this Figma component to code\"; or when a Figma URL/selection must become repository code, code tokens, agent rules, or Code Connect mappings."
 license: MIT
 compatibility: macOS, Linux, or Windows with a configured Figma MCP server
 metadata:
   author: t4sh
-  version: "0.1.5"
+  version: "0.1.6"
   tags: figma, figma-mcp, figma-desktop-mcp, design-to-code, figma-to-react, figma-to-nextjs, implement-design, figma-implementation, design-system-rules, figma-design-system-rules, code-connect, figma-code-connect, design-tokens, token-extraction, react, nextjs, typescript, tailwind, frontend
 ---
 

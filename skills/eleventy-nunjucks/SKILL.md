@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Node >=18.20 (20 LTS recommended)
 metadata:
   author: t4sh
-  version: "0.1.6"
+  version: "0.1.7"
   tags: 11ty, eleventy, eleventy-v3, nunjucks, static-site, ssg, jamstack, tailwind, markdown-it, autoescape, xss-prevention, csp, design-tokens
 ---
 
@@ -13,7 +13,7 @@ metadata:
 
 Operational defaults for **Eleventy v3** and **Nunjucks** static sites — directory layout, configuration surface, filter inventory, autoescape rules, stability and security checks. Load this skill when authoring templates, editing build config, or reviewing static output before merge or deploy.
 
-> **Naming note (June 2026):** Eleventy is also branded as **Build Awesome** — see the official [“Eleventy is now Build Awesome”](https://www.11ty.dev/blog/build-awesome/) announcement. Code identifiers remain compatible: npm package `@11ty/eleventy`, CLI `eleventy`, config `.eleventy.js` / `eleventy.config.js`, and docs at [11ty.dev](https://www.11ty.dev). This skill uses “Eleventy” for existing code and ecosystem terms; treat “Build Awesome” mentions in source material as synonymous.
+> **Naming note (June 2026):** Eleventy is also branded as **Build Awesome** — see the official [“Eleventy is now Build Awesome”](https://www.11ty.dev/blog/build-awesome/) announcement. Code identifiers remain compatible: npm package `@11ty/eleventy`, CLI `eleventy`, config `.eleventy.js` / `eleventy.config.js`, and docs at [11ty.dev](https://www.11ty.dev). This skill uses “Eleventy” for existing code and ecosystem terms; treat “Build Awesome” mentions in source material as synonymous. Re-check current docs before changing version-sensitive guidance.
 
 ## When this skill applies
 
@@ -30,7 +30,17 @@ Trigger on any of:
 1. **Open the project's Eleventy config** (`.eleventy.js` or `eleventy.config.js`) and `package.json` scripts. This skill encodes common defaults; the checked-in config always wins.
 2. **Open the reference file** that matches the task (table below). Avoid loading every reference unless the change is large.
 
-Conventions and APIs here target **Eleventy v3 + Nunjucks 3** (May 2026). For upstream API drift, prefer current docs (e.g. context7 `/11ty/11ty-website`, `/mozilla/nunjucks`).
+Conventions and APIs here target **Eleventy v3 + Nunjucks 3** (May 2026). For upstream API drift, prefer current docs (e.g. context7 `/11ty/11ty-website`, `/mozilla/nunjucks`). Treat dated claims as maintenance markers, not permanent facts.
+
+### Completion gate
+
+Before calling work complete, verify the project-specific result rather than only applying this skill's defaults:
+
+1. The relevant Eleventy build, dev-server smoke check, or project test command passes.
+2. Layout chains use Eleventy `layout:` frontmatter and parent layouts render `{{ content | safe }}` intentionally.
+3. Every new or changed `| safe`, `{% autoescape false %}`, inline JSON/script data path, and markdown `html` setting has been reviewed against the trust boundary.
+4. The task-specific reference checklist was applied when relevant (`review-shipping.md` for PR review, `security-checklist.md` for deploy/security, etc.).
+5. Rendered output or generated HTML was inspected for the touched page, layout, filter, shortcode, or data cascade.
 
 ---
 
