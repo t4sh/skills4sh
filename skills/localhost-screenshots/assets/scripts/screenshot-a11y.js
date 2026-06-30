@@ -2,9 +2,9 @@
 // Screenshot plus ARIA snapshot for AI-agent consumption.
 //
 // Usage:
-//   node assets/scripts/screenshot-a11y.js [URL] [OUT_BASE] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
+//   node assets/scripts/screenshot-a11y.js [URL] [OUT_BASE] [WIDTHxHEIGHT] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
 // Defaults:
-//   URL=http://localhost:3000  OUT_BASE=_screenshots/page
+//   URL=http://localhost:3000  OUT_BASE=_screenshots/page  VIEWPORT=1280x800
 //
 // Writes:
 //   <OUT_BASE>.png         visual screenshot
@@ -19,8 +19,9 @@ const path = require('path');
 
 const url = process.argv[2] || 'http://localhost:3000';
 const outBase = process.argv[3] || '_screenshots/page';
-const waitUntil = process.argv[4] || 'load';
-const waitForSelector = process.argv[5] || '';
+const [w, h] = (process.argv[4] || '1280x800').split('x').map(Number);
+const waitUntil = process.argv[5] || 'load';
+const waitForSelector = process.argv[6] || '';
 
 function validateLocalUrl(value) {
   let parsed;
@@ -39,6 +40,10 @@ function validateLocalUrl(value) {
   }
 }
 
+if (!Number.isInteger(w) || !Number.isInteger(h) || w < 200 || h < 200 || w > 3840 || h > 2160) {
+  console.error('Invalid viewport. Expected WIDTHxHEIGHT within 200–3840 by 200–2160.');
+  process.exit(1);
+}
 validateLocalUrl(url);
 
 function loadChromium() {
@@ -46,7 +51,7 @@ function loadChromium() {
     return require('playwright').chromium;
   } catch (err) {
     if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Run npm install in assets/scripts before using this helper.');
+      console.error('Missing dependency: playwright. Run npm install --save-dev playwright@1.58.2 in the project root before using this helper.');
       process.exit(1);
     }
     throw err;
@@ -59,6 +64,7 @@ function loadChromium() {
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
+    await page.setViewportSize({ width: w, height: h });
     await page.goto(url, { waitUntil });
     if (waitForSelector) await page.waitForSelector(waitForSelector, { timeout: 10000 });
     await page.screenshot({ path: `${outBase}.png`, fullPage: true });

@@ -16,6 +16,7 @@ In `skills4sh`, examples of this rubric in practice can be inspected across the 
 | Quality | Pass condition |
 |---|---|
 | Retrieval clarity | Description contains a concise capability clause plus concrete trigger/use conditions: phrases, contexts, tools, paths, file types, or named situations. |
+| Predictability | The skill steers the agent toward the same process each run: invocation fit is intentional, branches are distinct, steps have checkable completion criteria, and pruning removes no-op or stale guidance. |
 | Portable core | The main workflow can be followed by a generic file-reading agent without vendor-only assumptions. |
 | Progressive disclosure | `SKILL.md` contains the operating path; long comparisons, matrices, and edge cases live in linked references. |
 | Local compliance | Frontmatter, license, version, lockfiles, security manifests, README/plugin metadata, hashes, and runtime conventions match the current project or repository's expectations when present. |
@@ -57,12 +58,13 @@ Long comparisons, matrices, troubleshooting, and extended examples belong in `re
 
 ## Frontmatter rubric
 
-A strong description has two required parts: a concise capability clause and concrete trigger/use conditions. It does four jobs:
+A strong description has two required parts: a concise capability clause and concrete trigger/use conditions. It does five jobs:
 
 1. Names exact user phrases.
 2. Names file paths, tools, APIs, or error messages.
 3. States contexts where the skill should load even if the phrase differs.
-4. Avoids becoming a workflow summary.
+4. Front-loads leading words that the user, docs, or codebase already use.
+5. Avoids becoming a workflow summary.
 
 Preferred pattern:
 
@@ -86,6 +88,7 @@ Avoid:
 
 - loose summaries with no trigger/use clause: "Helps with skills"
 - generic trigger-only descriptions with no retrieval detail: "Use when creating skills"
+- synonym-only trigger branches that repeat one meaning several ways
 - second-person descriptions: "Use this when you..."
 - workflow summaries that omit retrieval cues
 - vendor-only trigger names unless the skill is truly vendor-specific
@@ -117,6 +120,8 @@ Avoid:
 4. Which reference file should be read for each deeper path?
 5. What must not be done?
 6. What verifies completion?
+
+Every ordered step or command workflow should end with a checkable completion criterion. When the criterion is fuzzy, sharpen it before splitting the sequence; split only when visible later steps create premature-completion risk that the criterion cannot absorb.
 
 Use imperative, objective language. Prefer routing tables over long prose.
 
@@ -150,6 +155,24 @@ Add helper assets only when they meet all conditions:
 - The helper is inert unless explicitly run.
 - The helper passes the available local security and validation checks.
 
+## Predictability and pruning checks
+
+Use these checks during `audit` and `refactor`, especially when a skill is long, branchy, or inconsistent across runs.
+
+| Check | What to inspect | Pass condition |
+|---|---|---|
+| Invocation fit | Description/frontmatter, expected caller, and whether another skill must reach it | Model invocation is used only when autonomous agent reach or cross-skill reach is worth the context load; user-invoked skills stay human-routed unless a router skill is needed. |
+| Branch uniqueness | Description triggers, command tables, and mode rules | Each branch represents a genuinely distinct task path; synonyms that rename one branch are collapsed. |
+| Information hierarchy | Every major `SKILL.md` section and linked reference | Steps needed by every run stay in `SKILL.md`; branch-only or detailed reference moves behind a clear context pointer; related rules are co-located. |
+| Completion criteria | Ordered steps, command workflows, and handoff plans | Each step has a checkable done condition; exhaustive criteria are used where thin legwork would miss important cases. |
+| Premature completion | Long step sequences and vague done conditions | Sharpen fuzzy completion criteria first; only recommend splitting when later visible steps still pull the agent forward. |
+| Leading words | Repeated concepts in descriptions, body, and repo docs | A compact pretrained term replaces repeated explanatory prose when it improves invocation or execution predictability. |
+| Single source of truth | Repeated setup, command, security, or routing guidance | One authoritative location owns each behavior; other mentions point to it. |
+| Relevance and sediment | Old dates, session history, obsolete branches, stale examples | Lines still affect current skill behavior; stale layers are removed or archived. |
+| No-op test | Each sentence in isolation | The sentence changes behavior versus default agent behavior; otherwise delete it instead of polishing it. |
+| Sprawl | Body word count and amount of in-file reference | The entrypoint remains lean; long matrices, troubleshooting, comparisons, and examples live in references. |
+
+Report these as review findings with the same evidence bar as code findings: source-cited, actionable, scoped, testable where practical, and context-aware.
 
 ## Handoff plan rubric
 

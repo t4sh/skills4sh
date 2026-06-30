@@ -6,13 +6,13 @@ Agent skills for Claude Code, Cursor, and VS Code (Copilot).
 
 | Skill | Description | Version |
 |-------|-------------|---------|
-| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.7.5 |
-| [code-to-figma](skills/code-to-figma/) | Generate a CI-anchored code → Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes | 0.1.4 |
-| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.6 |
-| [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.6 |
-| [figma-to-code](skills/figma-to-code/) | Repo-first Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect | 0.1.5 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.3.5 |
-| [skill-architect](skills/skill-architect/) | Portable skill authoring/review rubric that bridges Skill Development, writing-skills, Anthropic/OpenAI skill-creator patterns, vendor adapters, and eval planning | 0.1.1 |
+| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.7.6 |
+| [code-to-figma](skills/code-to-figma/) | Generate a CI-anchored code → Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes | 0.1.5 |
+| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.7 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.7 |
+| [figma-to-code](skills/figma-to-code/) | Repo-first Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect | 0.1.6 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.3.6 |
+| [skill-architect](skills/skill-architect/) | Portable skill authoring/review rubric that bridges Skill Development, writing-skills, Anthropic/OpenAI skill-creator patterns, vendor adapters, and eval planning | 0.1.2 |
 
 > **Stability note.** `code-to-figma`, `eleventy-nunjucks`, `figma-to-code`, and `skill-architect` are pre-1.0 (v0.x) — their trigger phrasing and prompt content may change in incompatible ways between minor releases. The other three skills (agent-memory, discord-harvest, localhost-screenshots) follow semver: breaking changes only on major bumps.
 

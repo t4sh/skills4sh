@@ -71,7 +71,7 @@ function loadChromium() {
     return require('playwright').chromium;
   } catch (err) {
     if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Run npm install in assets/scripts before using this helper.');
+      console.error('Missing dependency: playwright. Run npm install --save-dev playwright@1.58.2 in the project root before using this helper.');
       process.exit(1);
     }
     throw err;

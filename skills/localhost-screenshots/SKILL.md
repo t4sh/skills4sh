@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "3.3.5"
+  version: "3.3.6"
   tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 
@@ -223,7 +223,7 @@ For advanced patterns (persistent sessions, pixel-diff, AI snapshots, CI workflo
 |------|-----------|
 | [assets/scripts/quick.js](assets/scripts/quick.js) | One viewport capture via Playwright without writing a custom script |
 | [assets/scripts/multi-breakpoint.js](assets/scripts/multi-breakpoint.js) | Custom breakpoint list or a smaller scripted set before adopting the full 8-breakpoint pipeline |
-| [assets/scripts/screenshot-a11y.js](assets/scripts/screenshot-a11y.js) | Screenshot plus ARIA snapshot with `untrusted-page-content` JSON envelope for agent consumption |
+| [assets/scripts/screenshot-a11y.js](assets/scripts/screenshot-a11y.js) | Screenshot plus ARIA snapshot with optional `WIDTHxHEIGHT` viewport and `untrusted-page-content` JSON envelope for agent consumption |
 | [references/playwright-patterns.md](references/playwright-patterns.md) | Pre-flight checks, serving patterns, persistent sessions, breakpoint detection, canonical 8-breakpoint script templates |
 | [references/visual-regression.md](references/visual-regression.md) | Pixel-diff scoring, comparison HTML generation, GitHub Actions CI/CD workflow |
 | [references/interaction-templates.md](references/interaction-templates.md) | Auth flows, e-commerce flows, state variations, interactive mode, core interaction primitives |

@@ -202,7 +202,7 @@ validate_url "{url}" && curl --proto '=https' --fail -o "{harvest_folder}/images
       }
     });
 
-    if (msg.images.length || msg.attachmentUrls.length || msg.links.length) {
+    if (msg.images.length || msg.attachmentUrls.length || msg.links.length || msg.embeds.length) {
       messages.push(msg);
     }
   });
