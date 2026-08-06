@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10
 metadata:
   author: t4sh
-  version: "0.1.2"
+  version: "0.1.3"
   tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, claude, codex, openai, anthropic, antigravity, azure
 ---
 
@@ -19,15 +19,16 @@ Several high-signal upstream skills overlap while emphasizing different strength
 
 | Source | Strength to preserve | Boundary to avoid |
 |---|---|---|
+| [Agent Skills **open specification**](https://agentskills.io/specification) | Canonical portable folder/frontmatter contract, progressive-disclosure directories, compatibility metadata, and validation baseline | Experimental fields such as `allowed-tools` are runtime-dependent and do not override a repository's accepted schema |
 | [Anthropic **Skill Development**](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) | Strong structure, trigger descriptions, progressive disclosure, validation checklist | Claude Code plugin-specific assumptions are not portable as-is |
 | [Anthropic **skill-creator**](https://www.skills.sh/anthropics/skills/skill-creator) | Skill evals, baseline-vs-with-skill testing, trigger optimization, blind comparison, benchmark loops | Too heavy and Claude-specific to be the whole portable rubric |
 | [OpenAI **skill-creator**](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) | Codex/OpenAI compatibility, concise scaffold guidance, `agents/openai.yaml` metadata | Too OpenAI-specific to be the central standard |
 
-Treat this skill as a portable synthesis: it directs, plans, and reviews skill work at the architecture level, then routes into source-specific, project-specific, or repository-specific details only when needed. Concrete examples of this rubric in practice can be inspected across the `skills4sh` skills.
+Treat the Agent Skills specification as the portable syntax baseline, then use this skill as a quality and governance synthesis: it directs, plans, and reviews skill work at the architecture level, then routes into source-specific, project-specific, or repository-specific details only when needed. Concrete examples of this rubric in practice can be inspected across the `skills4sh` skills.
 
 ## Operating mode
 
-Start with the current working context, not an upstream rubric. Check the CWD, project files, installed skill location, or repository convention first. External rubrics inform content quality, but local rules win on packaging, frontmatter, manifests, lockfiles, CI, and release gates when those rules exist.
+Start with the current working context, not an upstream rubric. Check the CWD, project files, installed skill location, or repository convention first. Use the Agent Skills specification for portable baseline syntax; external rubrics inform content quality, while local rules win on accepted frontmatter fields, manifests, lockfiles, CI, and release gates. Do not add experimental `allowed-tools` unless the target runtime and repository schema both accept and enforce it.
 
 Use this order:
 

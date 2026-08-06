@@ -23,21 +23,48 @@ const [w, h] = (process.argv[4] || '1280x800').split('x').map(Number);
 const waitUntil = process.argv[5] || 'load';
 const waitForSelector = process.argv[6] || '';
 
-function validateLocalUrl(value) {
-  let parsed;
+function isLocalUrl(value) {
   try {
-    parsed = new URL(value);
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase();
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost'));
+  } catch {
+    return false;
+  }
+}
+
+function validateLocalUrl(value) {
+  try {
+    new URL(value);
   } catch {
     console.error(`Invalid URL: ${value}`);
     process.exit(1);
   }
-  const host = parsed.hostname.toLowerCase();
-  const isLocal = (parsed.protocol === 'http:' || parsed.protocol === 'https:')
-    && (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost'));
-  if (!isLocal) {
+  if (!isLocalUrl(value)) {
     console.error('Refusing non-localhost URL. Use http(s)://localhost, 127.0.0.1, [::1], or *.localhost.');
     process.exit(1);
   }
+}
+
+async function gotoLocal(page, value, options) {
+  let blockedUrl = '';
+  await page.route('**/*', async (route) => {
+    const request = route.request();
+    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && !isLocalUrl(request.url())) {
+      blockedUrl = request.url();
+      await route.abort('blockedbyclient');
+      return;
+    }
+    await route.continue();
+  });
+  try {
+    await page.goto(value, options);
+  } catch (err) {
+    if (blockedUrl) throw new Error(`Refusing non-localhost main-frame redirect: ${blockedUrl}`);
+    throw err;
+  }
+  if (!isLocalUrl(page.url())) throw new Error(`Refusing non-localhost final URL: ${page.url()}`);
 }
 
 if (!Number.isInteger(w) || !Number.isInteger(h) || w < 200 || h < 200 || w > 3840 || h > 2160) {
@@ -51,7 +78,7 @@ function loadChromium() {
     return require('playwright').chromium;
   } catch (err) {
     if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Run npm install --save-dev playwright@1.58.2 in the project root before using this helper.');
+      console.error('Missing dependency: playwright. Run npm install --save-dev playwright@1.62.0 in the project root before using this helper.');
       process.exit(1);
     }
     throw err;
@@ -65,7 +92,7 @@ function loadChromium() {
   try {
     const page = await browser.newPage();
     await page.setViewportSize({ width: w, height: h });
-    await page.goto(url, { waitUntil });
+    await gotoLocal(page, url, { waitUntil });
     if (waitForSelector) await page.waitForSelector(waitForSelector, { timeout: 10000 });
     await page.screenshot({ path: `${outBase}.png`, fullPage: true });
 

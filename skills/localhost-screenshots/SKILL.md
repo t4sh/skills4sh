@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "3.3.6"
+  version: "3.3.7"
   tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 
@@ -15,6 +15,8 @@ This skill captures screenshots of locally running websites. It supports two pri
 
 - **Chrome MCP** — for quick debugging, single screenshots, and interactive verification
 - **Playwright** — for systematic multi-breakpoint screenshot sets and visual regression
+
+Playwright 1.62 also ships first-party CLI and MCP entry points. Use them when the host/project already exposes that workflow; keep the bundled scripts for explicit, reviewable localhost-only captures and deterministic CI. Do not install a second browser-control stack merely because the new entry points exist.
 
 For niche scenarios (persistent sessions, AI snapshots, CI workflows), see the [Reference Files](#reference-files) section.
 
@@ -151,15 +153,16 @@ Use Playwright for automated, repeatable screenshot sets across all breakpoints.
 
 1. **Always use Playwright's bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
 2. **Prefer HTTP; `file://` only for self-contained static HTML.** Serve over HTTP whenever a dev server, build output, or `npx serve` is available. `file://` is acceptable *only* when the page has no `fetch`/XHR to sibling files, no `<script type="module">`, no service workers, and no absolute `/asset` paths — otherwise those will break silently. When in doubt, serve over HTTP.
+3. **Keep main-frame navigation local.** Validate the requested URL and every main-frame redirect/final URL. The bundled helpers abort navigation when a localhost target redirects to an external hostname; external subresources may still load as part of the local page.
 
 ### Setup (run once per session)
 
 ```bash
-npm install --save-dev playwright@1.58.2
+npm install --save-dev playwright@1.62.0
 npm exec -- playwright install chromium
 ```
 
-Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` when the project already pins a compatible Playwright version in its lockfile. If Chromium reports missing OS libraries, surface them to the user and **ask them to install** — never run `sudo` from this skill. See [references/playwright-patterns.md](references/playwright-patterns.md) § "When Chromium reports missing OS libraries".
+Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` when the project already pins a compatible Playwright version in its lockfile. Playwright 1.62 no longer supports Debian 11; use a supported OS image rather than forcing browser dependencies onto an unsupported runner. If Chromium reports missing OS libraries, surface them to the user and **ask them to install** — never run `sudo` from this skill. See [references/playwright-patterns.md](references/playwright-patterns.md) § "When Chromium reports missing OS libraries".
 
 ### Quick workflow
 

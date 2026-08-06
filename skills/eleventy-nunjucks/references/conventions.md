@@ -1,14 +1,24 @@
 # Conventions reference
 
-Deep dive on directory layout, config file shape, and implicit defaults the main `SKILL.md` summary omits. Read when bootstrapping a new 11ty + Nunjucks project, porting a site, or judging whether a deviation from lineage convention is justified.
+Deep dive on Eleventy defaults and an opinionated production profile for directory layout, config shape, and scripts. Read when bootstrapping a new 11ty + Nunjucks project, porting a site, or judging whether the project should adopt the profile.
+
+## Eleventy defaults versus this profile
+
+| Surface | Eleventy default | Optional production profile below |
+|---|---|---|
+| Input | Project root (`.`) | `src/pages/` or flat `src/` |
+| Includes / data | `_includes` / `_data` under input | Same names, adjusted relative to the selected input |
+| Output | `_site/` | `out/` when deploy tooling is already built around it |
+| Markdown / HTML preprocessor | Liquid | Nunjucks when the project selects `njk` |
+| CSS pipeline | None prescribed | Optional Tailwind v4 workflow |
 
 ## Project layout — full anatomy
 
-A complete project typically looks like this:
+A project using this production profile typically looks like this:
 
 ```
 my-site/
-├── .eleventy.js                  # OR eleventy.config.js (v3 preferred name)
+├── .eleventy.js                  # OR another supported config name; keep only the intended first match
 ├── .editorconfig                 # 2-space indent, LF, UTF-8
 ├── .gitignore                    # out/, out-*/, node_modules/, .DS_Store, src/assets/css/tailwind.css
 ├── .prettierrc                   # plugins: ["prettier-plugin-jinja-template"]
@@ -80,17 +90,17 @@ return {
 
 No `../` because `input` is the same level as `_includes/` and `_data/`. Use for small sites (<10 pages).
 
-## Universal config patterns
+## Opinionated production-profile patterns
 
-Every project in the lineage applies these. Establish them in any new project too.
+Apply these only when they match the checked-in project and its deployment contract.
 
-### 1. Output directory is `out/`, not `_site/`
+### 1. Use `out/` when the deployment profile expects it
 
 ```js
 return { dir: { /* … */ output: "out" } };
 ```
 
-Why: deploys assume `out/`. nginx roots, CI pipelines, and `.gitignore` entries are all calibrated to `out/`. Sticking with the Eleventy default `_site/` introduces friction at deploy time.
+Why: some deployments already calibrate nginx roots, CI pipelines, and ignore rules to `out/`. Keep Eleventy’s `_site/` default when no deployment contract requires a change.
 
 ### 2. Three-way template formats
 
@@ -139,7 +149,7 @@ Set the port in **one place** — either here or in the `package.json` script (`
 
 ## Scripts shape
 
-Minimum `package.json` scripts for a Tailwind v4 + 11ty project:
+Example `package.json` scripts for the optional Tailwind v4 + 11ty profile:
 
 ```json
 {
@@ -222,7 +232,7 @@ Patterns to expect (and accept) varying between projects:
 | Aspect | Common range | Pick to match the project |
 |---|---|---|
 | Package manager | `pnpm@10.x`, `npm`, `bun` | Match the existing `packageManager` field; don't switch unasked |
-| Node engine | `>=18`, `>=20`, `>=22`, `>=24` | Match the deploy environment; 20 LTS is the baseline |
+| Node engine | v3 package floor `>=18`; supported deployments `>=22` or `>=24` | Use a supported LTS; Node 24 is preferred and Node 22 remains supported. Never recommend EOL Node 18 or 20 for new deployments. |
 | Dev port | `3000`, `3001`, `8080` | Pick something unique per project so multiple dev servers can coexist |
 | Markdown `html` | `false` (safer) / `true` (more flexible) | `false` if any input is user-contributed; `true` if 100% authored content |
 | Output flatten | `out/` only / `out/` + `out-standalone/` + `out-spa/` | Add flatten variants only when offline / portable deployment is required |

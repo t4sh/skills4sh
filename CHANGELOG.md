@@ -8,6 +8,27 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-08-06
+
+### Changed
+- Refreshed every bundled skill against current official ecosystem guidance and synchronized package/plugin metadata at 0.5.0.
+- **`discord-harvest` 1.7.7 → 2.0.0:** removed logged-in Discord Web browser/DOM scraping and self-bot-adjacent acquisition. Live automation is now bot-API-only; account/DM workflows use a user-provided Discord Data Package or manually exported local files. This is the package's breaking behavior change.
+- **`code-to-figma` 0.1.5 → 0.2.0:** replaced value-guessing W3C output with a fail-closed DTCG Format 2025.10 converter using explicit token taxonomy and structured color, dimension, duration, number, font-family, string, and alias values. Removed unimplemented plugin-version promises and added fixture coverage for conformance and conflicts.
+- **`eleventy-nunjucks` 0.1.7 → 0.1.8:** refreshed Eleventy v3 and Nunjucks guidance and added a version-gated Build Awesome v4 prerelease migration track.
+- **`figma-to-code` 0.1.6 → 0.1.7:** made Remote MCP the default, added current motion/library/design-system/asset/Make capability routing, and clarified Code Connect plan plus Dev/Full-seat requirements.
+- **`agent-memory` 2.7.6 → 2.7.7:** added Codex provenance, exact Claude `@AGENTS.md` import guidance, and explicit coexistence with vendor-native machine-local auto-memory.
+- **`localhost-screenshots` 3.3.6 → 3.3.7:** updated the tested Playwright pin to 1.62.0, documented its CLI/MCP and platform changes, and made all bundled helpers block external main-frame redirects with executable fixtures.
+- **`skill-architect` 0.1.2 → 0.1.3:** adopted the Agent Skills open specification as the portable syntax baseline and documented the local/runtime boundary for experimental `allowed-tools` metadata.
+
+### Security
+- Removed authenticated Discord browser scraping from the distributed skill and added a regression test that forbids its former DOM/browser acquisition patterns.
+- Added navigation-chain enforcement to localhost screenshot helpers so a local route cannot silently redirect the main frame to an external host before capture.
+
+### Tests
+- Added Discord acquisition-policy regression coverage.
+- Added DTCG structured-value, ambiguity, unsupported-unit, and path-conflict fixtures.
+- Added executable external-redirect fixtures for each shipped localhost screenshot helper.
+
 ## [0.4.14] — 2026-06-30
 
 ### Changed
@@ -333,7 +354,15 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.4.7...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/t4sh/skills4sh/compare/v0.4.14...v0.5.0
+[0.4.14]: https://github.com/t4sh/skills4sh/compare/v0.4.13...v0.4.14
+[0.4.13]: https://github.com/t4sh/skills4sh/compare/v0.4.12...v0.4.13
+[0.4.12]: https://github.com/t4sh/skills4sh/compare/v0.4.11...v0.4.12
+[0.4.11]: https://github.com/t4sh/skills4sh/compare/v0.4.10...v0.4.11
+[0.4.10]: https://github.com/t4sh/skills4sh/compare/v0.4.9...v0.4.10
+[0.4.9]: https://github.com/t4sh/skills4sh/compare/v0.4.8...v0.4.9
+[0.4.8]: https://github.com/t4sh/skills4sh/compare/v0.4.7...v0.4.8
 [0.4.7]: https://github.com/t4sh/skills4sh/compare/v0.4.6...v0.4.7
 [0.4.6]: https://github.com/t4sh/skills4sh/compare/v0.4.5...v0.4.6
 [0.4.5]: https://github.com/t4sh/skills4sh/compare/v0.4.4...v0.4.5

@@ -38,9 +38,9 @@ The Gist artifact consumed by the `tokens-sync-to-figma` Figma plugin.
 }
 ```
 
-## v1.1 shape — `{ meta, tokens, sections[] }` (future)
+## Optional future shape — `{ meta, tokens, sections[] }`
 
-Adds a `tokens` key containing a W3C DTCG token tree. The plugin v1.1 will create or update the Figma variable collection from this before building frames — eliminating the manual prerequisite. The `code-to-figma` skill will populate this from the `convert-to-w3c.mjs` output.
+An extended artifact may add a `tokens` key containing the conforming DTCG 2025.10 tree from `convert-to-dtcg.mjs`. The bundled plugin does not currently consume that key or create Figma variables from it. Keep the existing plugin contract authoritative until token import is implemented, fixture-tested, and versioned; reject or clearly ignore unknown `tokens` input instead of implying synchronization occurred.
 
 ## Token field → Figma variable type
 

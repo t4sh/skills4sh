@@ -6,7 +6,7 @@ Use this file for PR template checks, grep-based regression sweeps, stability wa
 
 | Avoid | Why | Prefer |
 |---|---|---|
-| `{% extends %}` + `{% block %}` for site shell | Bypasses Eleventy data cascade and per-page frontmatter | `layout:` frontmatter; child body via `content` with the safe filter in the layout |
+| `{% extends %}` for a shell that needs layout frontmatter/cascade/chaining | Extended-parent frontmatter is not processed | Eleventy `layout:` frontmatter; child body via `content` with the safe filter |
 | `dump` chained to `safe` inside `<script>` | JSON-escaped, not JS-safe — `</script>` breakout | `jsonScript` / `jsonCompact` (`filters.md`) |
 | Global `autoescape: false` | Broad XSS surface | Default on; per-value safe filter with justification |
 | safe filter on CMS / form / external HTML | Direct XSS | Sanitize (e.g. DOMPurify) upstream |
@@ -36,11 +36,13 @@ for kw in if for block macro autoescape raw; do
 done
 ```
 
-### Forbidden `extends` / `block` in `src/`
+### Review Nunjucks inheritance in `src/`
 
 ```bash
-grep -rnE "{%[- ]*extends\b|{%[- ]*block\b" src/ && echo "FAIL: use layout: frontmatter and content slot with safe filter"
+grep -rnE "{%[- ]*extends\b|{%[- ]*block\b" src/
 ```
+
+Each result needs a semantic decision: keep it when ordinary Nunjucks inheritance is intended; migrate it to Eleventy `layout:` when the parent must contribute frontmatter, cascade data, or a chained layout.
 
 ### `| safe`, `| dump | safe`, and inline-`<script>` escaping
 
@@ -91,7 +93,7 @@ grep -nE "markdownIt\(\{[^}]*html:\s*true" .eleventy.js eleventy.config.* 2>/dev
 
 - [ ] Pages have `title` and `description` where the layout expects them
 - [ ] `permalink` set if the project uses flat `.html` URLs
-- [ ] No `{% extends %}` / `{% block %}` for layout chains
+- [ ] Site-shell inheritance uses Eleventy `layout:` when layout frontmatter, cascade behavior, or chaining is required
 - [ ] Layout slots use `{{ content | safe }}` where HTML output is intended
 - [ ] Each `| safe` justified
 - [ ] No `| dump | safe` in committed sources
@@ -115,7 +117,7 @@ grep -nE "markdownIt\(\{[^}]*html:\s*true" .eleventy.js eleventy.config.* 2>/dev
 
 - [ ] `addWatchTarget` covers asset dirs that must rebuild
 - [ ] Live reload verified on representative edits
-- [ ] CSP meta not emitted when `runMode == "serve"` (see `production-patterns.md`)
+- [ ] Development CSP permits the actual live-reload script/WebSocket path, or the production-only meta policy is omitted during `serve`
 
 ### CI
 

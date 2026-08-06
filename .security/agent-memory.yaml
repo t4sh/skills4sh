@@ -4,7 +4,7 @@
 
 skill:
   name: agent-memory
-  version: "2.7.6"
+  version: "2.7.7"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,11 +14,11 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: fc1fc9b7d3abe1afe69bddc07a83204225c5a4d678bfed3270fcf6c041e4513c
+    SKILL.md: afeeecfe5ddd8930b7aa350ccb58104ca5c8798f71db8b65ecf1b6870f4a508c
     assets/icon.svg: 79f4b8ad729980ed8165476de9c531adbfa4540260b7dc8cd7ddc326ad5ada1a
     references/display-conventions.md: 1d65f3f2cf5253509f3c5b861df2839caee94fae5dd80b9ae5b3d6eea58c68b9
-    references/templates.md: 859ab81a5a3dff074984192acbbc4bccdaccc18a03acae5bd44ec34d385967d2
-    references/troubleshooting.md: c20175a4a789aaa4491d5943477031af11d21edff18586d6cf44e9327a72bcc2
+    references/templates.md: 98ea6a0847a432a67390b53064f07c1d724062b163bc7e5ab774b11ef9b854ec
+    references/troubleshooting.md: 1d4bb5b7911087938de8e84746f7353c97cc141b6e74666203061b6acfb92236
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

@@ -22,8 +22,8 @@ const ROOT      = resolve(__dirname, '../../');
 const OUT_DIR   = resolve(ROOT, 'apps/site/out');       // ← adapt
 const ASSETS    = resolve(OUT_DIR, 'assets/css');           // ← adapt if different
 
-// ── CSS var name → W3C DTCG slash path ───────────────────────────────────────
-// MUST match tokenPath() in convert-to-w3c.mjs exactly.
+// ── CSS var name → DTCG slash path ───────────────────────────────────────────
+// MUST match tokenPath() in convert-to-dtcg.mjs exactly.
 // Derive from the project's CSS custom property naming convention.
 // Every prefix the project uses must be listed. Use `semantic/${name}` as catch-all.
 function tokenPath(name) {
@@ -313,9 +313,9 @@ pnpm add -D node-html-parser   # or npm/yarn/bun equivalent
 
 ---
 
-## `scripts/tokens-to-figma/convert-to-w3c.mjs`
+## `scripts/tokens-to-figma/convert-to-dtcg.mjs`
 
-Reads CSS custom properties and emits W3C DTCG JSON. The `tokenPath()` here must be identical to the one in the walker.
+Reads CSS custom properties and emits a DTCG Format 2025.10 token tree. The `tokenPath()` here must be identical to the one in the walker. DTCG types come from an explicit project taxonomy, never from guessing the CSS value; unsupported or ambiguous values fail closed instead of producing mislabeled tokens.
 
 ```js
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -339,6 +339,60 @@ function tokenPath(name) {
   return `semantic/${name}`;
 }
 
+// ── Explicit project taxonomy — extend before running against another repo ───
+const SEMANTIC_TYPES = {
+  background: 'color',
+  foreground: 'color',
+};
+
+function tokenType(name) {
+  if (/^(beige|ink)-/.test(name)) return 'color';
+  if (/^(space|text|tracking|fs)-/.test(name)) return 'dimension';
+  if (/^font-/.test(name)) return 'fontFamily';
+  const type = SEMANTIC_TYPES[name];
+  if (!type) throw new Error(`No explicit DTCG type mapping for --${name}`);
+  return type;
+}
+
+function hexColor(raw, name) {
+  const hex = raw.slice(1);
+  const expanded = hex.length === 3 || hex.length === 4
+    ? [...hex].map((char) => char + char).join('')
+    : hex;
+  if (!/^[0-9a-f]{6}([0-9a-f]{2})?$/i.test(expanded)) {
+    throw new Error(`Unsupported color for --${name}: ${raw}; normalize to #rgb, #rgba, #rrggbb, or #rrggbbaa`);
+  }
+  const channels = expanded.match(/.{2}/g).map((part) => Number.parseInt(part, 16) / 255);
+  const value = { colorSpace: 'srgb', components: channels.slice(0, 3) };
+  if (channels[3] !== undefined) value.alpha = channels[3];
+  return value;
+}
+
+function fontFamily(raw) {
+  const families = raw.split(',').map((value) => value.trim().replace(/^(['"])(.*)\1$/, '$2'));
+  return families.length === 1 ? families[0] : families;
+}
+
+function dtcgValue(type, raw, name) {
+  const alias = raw.match(/^var\(--([a-zA-Z0-9_-]+)\)$/);
+  if (alias) return `{${tokenPath(alias[1]).replaceAll('/', '.')}}`;
+
+  if (type === 'color' && raw.startsWith('#')) return hexColor(raw, name);
+  if (type === 'dimension') {
+    const match = raw.match(/^(-?(?:\d+|\d*\.\d+))(px|rem)$/);
+    if (match) return { value: Number(match[1]), unit: match[2] };
+  }
+  if (type === 'duration') {
+    const match = raw.match(/^(-?(?:\d+|\d*\.\d+))(ms|s)$/);
+    if (match) return { value: Number(match[1]), unit: match[2] };
+  }
+  if (type === 'number' && /^-?(?:\d+|\d*\.\d+)$/.test(raw)) return Number(raw);
+  if (type === 'fontFamily') return fontFamily(raw);
+  if (type === 'string') return raw;
+
+  throw new Error(`Unsupported ${type} value for --${name}: ${raw}`);
+}
+
 // ── Extract --name: value pairs from CSS ──────────────────────────────────────
 function parseCustomProperties(css) {
   const tokens = [];
@@ -348,54 +402,39 @@ function parseCustomProperties(css) {
     const name  = m[1];
     const value = m[2].trim();
     if (name.startsWith('tw-') || name.startsWith('_')) continue; // skip internals
-    tokens.push({ name, value, path: tokenPath(name) });
+    const type = tokenType(name);
+    tokens.push({ name, path: tokenPath(name), type, value: dtcgValue(type, value, name) });
   }
   return tokens;
 }
 
-// ── Build W3C DTCG tree ───────────────────────────────────────────────────────
-function buildW3c(tokens) {
+// ── Build DTCG 2025.10 tree ───────────────────────────────────────────────────
+function buildDtcg(tokens) {
   const tree = {};
-  for (const { path, name, value } of tokens) {
+  for (const { path, type, value } of tokens) {
     const parts = path.split('/');
     let cur = tree;
-    let conflict = false;
     for (let i = 0; i < parts.length - 1; i++) {
       const segment = parts[i];
       if (cur[segment]?.$value !== undefined) {
-        console.warn(`SKIP token path conflict: ${path} extends existing leaf ${parts.slice(0, i + 1).join('/')}`);
-        conflict = true;
-        break;
+        throw new Error(`Token path conflict: ${path} extends existing leaf ${parts.slice(0, i + 1).join('/')}`);
       }
       cur[segment] ??= {};
       cur = cur[segment];
     }
-    if (conflict) continue;
     const leaf = parts.at(-1);
     if (cur[leaf] && cur[leaf].$value === undefined) {
-      console.warn(`SKIP token path conflict: ${path} would overwrite namespace ${parts.join('/')}`);
-      continue;
+      throw new Error(`Token path conflict: ${path} would overwrite namespace ${parts.join('/')}`);
     }
-    // Infer $type from value and token path. Adapt this map to the project's token taxonomy.
-    const isColor = /^(#|rgb|hsl|oklch)/.test(value);
-    const isDim   = /^-?\d+(\.\d+)?(px|rem|em|ch|vw|vh|vmin|vmax|%)$/.test(value);
-    const isTime  = /^-?\d+(\.\d+)?(ms|s)$/.test(value);
-    const isNumber = /^-?\d+(\.\d+)?$/.test(value);
-    const top = parts[0];
-    const type = isColor ? 'color'
-      : isDim ? 'dimension'
-      : isTime ? 'duration'
-      : ['opacity', 'z-index', 'font-weight'].includes(top) || isNumber ? 'number'
-      : 'string';
     cur[leaf] = { $value: value, $type: type };
   }
   return tree;
 }
 
 const tokens = parseCustomProperties(css);
-const w3c    = buildW3c(tokens);
+const dtcg   = buildDtcg(tokens);
 const out    = resolve(__dirname, '<project>-tokens.w3c.json');  // ← adapt project slug
-writeFileSync(out, JSON.stringify(w3c, null, 2) + '\n');
+writeFileSync(out, JSON.stringify(dtcg, null, 2) + '\n');
 console.error(`wrote ${tokens.length} tokens → ${out}`);
 ```
 

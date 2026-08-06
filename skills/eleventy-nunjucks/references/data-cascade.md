@@ -1,20 +1,22 @@
 # Data cascade reference
 
-Worked examples of Eleventy's 7-level merge ladder. Read when a variable is missing or wrong in templates, or when designing new global vs per-route data.
+Worked examples of Eleventy's seven-source cascade. Read when a variable is missing or wrong in templates, or when designing new global versus per-route data.
 
 ## The ladder, again
 
-**Higher overrides lower** — every level is merged into the data that reaches the template.
+**Highest priority wins.** This is Eleventy’s official highest-to-lowest order.
 
 | # | Source | Path | Scope |
 |---|---|---|---|
-| 1 | Eleventy defaults | (internal) | `layout`, `tags` |
-| 2 | Global data files | `src/_data/*.{json,js,cjs}` | All templates |
-| 3 | Config global data | `eleventyConfig.addGlobalData(key, fn)` | All templates |
-| 4 | Directory data files | `src/pages/<dir>/<dir>.json` or `<dir>.11tydata.js` | All templates in `<dir>` |
-| 5 | Template data file | `src/pages/post-1.11tydata.js` | One template |
-| 6 | Template frontmatter | The `---` block in the template | One template |
-| 7 | `eleventyComputed` | Object in frontmatter or data | One template, runs **last** |
+| 1 | `eleventyComputed` | Object in frontmatter or data | Final computed values for one template |
+| 2 | Template frontmatter | The `---` block in the leaf template | One template |
+| 3 | Template data file | `src/pages/post-1.11tydata.js` | One template |
+| 4 | Directory data files | `<dir>/<dir>.json` or `<dir>.11tydata.js`, then ascending parents | Templates below each directory |
+| 5 | Layout frontmatter | Frontmatter in an Eleventy `layout:` file | Templates using the layout |
+| 6 | Config global data | `eleventyConfig.addGlobalData(key, fn)` | All templates |
+| 7 | Global data files | `src/_data/*.{json,js,cjs}` | All templates |
+
+Eleventy-supplied data such as `page`, `collections`, `eleventy`, and `pkg` is available to templates, but is not an additional priority row in this seven-source list.
 
 ## Worked example 1 — building a per-page `canonicalUrl`
 
@@ -24,7 +26,7 @@ Every page gets a `canonicalUrl` of the form `https://site.example/<path>`. The 
 
 ### Implementation
 
-**Level 2 — global data file:**
+**Global data file — lowest user-data priority:**
 
 ```js
 // src/_data/site.js
@@ -34,7 +36,7 @@ module.exports = {
 };
 ```
 
-**Level 7 — eleventyComputed in frontmatter:**
+**Computed data — highest priority:**
 
 ```yaml
 # src/pages/pricing.njk
@@ -55,23 +57,23 @@ eleventyComputed:
 <link rel="canonical" href="{{ canonicalUrl }}" />
 ```
 
-The template-level pattern is cleaner; `eleventyComputed` is the escape hatch when the value needs to be in the cascade itself (e.g. consumed by another data file or plugin).
+The template-level pattern is cleaner; use `eleventyComputed` when the final value must depend on the fully merged cascade and be present in the render data.
 
 ## Worked example 2 — overriding global data per page
 
 ### Goal
 
-`_data/site.json` declares the default OG image. A specific page wants to override it.
+`_data/ogImage.json` declares the default OG image. A specific page wants to override it.
 
 ### Cascade trace
 
 ```js
-// _data/site.json — Level 2
-{ "ogImage": "/assets/images/og/default.png" }
+// _data/ogImage.json — global data file
+"/assets/images/og/default.png"
 ```
 
 ```yaml
-# src/pages/launch.njk — Level 6 (frontmatter)
+# src/pages/launch.njk — template frontmatter
 ---
 ogImage: "/assets/images/og/launch-hero.png"
 ---
@@ -85,10 +87,10 @@ In the template:
 
 | Page | Resolved `ogImage` |
 |---|---|
-| `/launch.html` | `/assets/images/og/launch-hero.png` (Level 6 wins) |
-| All other pages | `/assets/images/og/default.png` (Level 2) |
+| `/launch.html` | `/assets/images/og/launch-hero.png` (template frontmatter wins) |
+| All other pages | `/assets/images/og/default.png` (global data) |
 
-**Gotcha:** the override only works because `site.json` and the frontmatter use the same key name `ogImage`. If the JSON key were `site.ogImage` and the template read `site.ogImage`, the frontmatter wouldn't override it — it would set a separate `ogImage` variable at the top level.
+**Gotcha:** the override works because `_data/ogImage.json` creates the top-level `ogImage` key. A value nested under `site.ogImage` would need a matching nested override rather than a separate top-level frontmatter key.
 
 ## Computed `_data/*.js` patterns
 
@@ -143,7 +145,7 @@ module.exports = () => require("./repos.cached.json");
 
 ## Directory data files
 
-`src/pages/blog/blog.json` — Level 4, applies to every file in `src/pages/blog/`:
+`src/pages/blog/blog.json` — directory data, applies to every file in `src/pages/blog/`:
 
 ```json
 {
@@ -172,7 +174,7 @@ module.exports = {
 Use `eleventyComputed` when a value needs to:
 
 - Depend on the fully merged cascade (other frontmatter values, global data, page.url, etc.)
-- Be available **as data** to other consumers (plugins, downstream computed fields)
+- Be present in the final template render data rather than exist only as a local `{% set %}` value
 - Recompute when an upstream value changes (vs. a template `{% set %}` which is render-time only)
 
 ```yaml
@@ -192,6 +194,7 @@ In the template these are available like any other data: `{{ pageTitle }}`, `{{ 
 - The value is only used inside one template → use `{% set %}`
 - The value is global → use `_data/*.js`
 - The value is just a static string → use frontmatter directly
+- The value configures `layout`, `pagination`, `tags`, or another special Eleventy property → computed data runs too late for those configuration keys
 
 ## Pagination
 
@@ -256,7 +259,7 @@ Nunjucks does not provide a `.` whole-context accessor; `{{ . | dump(2) }}` is a
 For specific levels:
 
 ```nunjucks
-<pre>{{ site | dump(2) }}</pre>         {# Level 2-3 source #}
+<pre>{{ site | dump(2) }}</pre>         {# Usually a global data file or config-global source #}
 <pre>{{ page | dump(2) }}</pre>         {# Eleventy-supplied: url, fileSlug, date, inputPath #}
 <pre>{{ eleventy | dump(2) }}</pre>     {# env: { runMode, source, … } #}
 ```
@@ -269,4 +272,4 @@ For specific levels:
 | `_data/*.js` value is the function definition, not the value | `module.exports = function() {…}` — Eleventy calls it; calling `require()` on it from another `_data/*.js` returns the function itself, not the result | Import the JSON file instead, or call the function explicitly |
 | `eleventyComputed` value is `[object Object]` | Returning an object from a string-typed Nunjucks expression | Use a JS function: `eleventyComputed: { x: (data) => ({…}) }` |
 | Directory data not applying | File named `<dir>-data.json` instead of `<dir>.json` (or `_dir.json`) | Match the dir basename exactly: `blog/blog.json` |
-| `layout:` frontmatter not honored | Set in `_data/*.js` (Level 2) and a directory data file (Level 4) overrides it | Trace via `{{ layout | dump }}` |
+| `layout:` frontmatter not honored | A higher-priority template or directory data source overrides layout frontmatter/global data | Trace each source in the official priority order |

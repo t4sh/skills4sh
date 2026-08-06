@@ -4,16 +4,19 @@
 
 1. **Always use Playwright's bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
 2. **Prefer HTTP; `file://` only for self-contained static HTML.** `file://` *does* resolve same-directory relative paths, so it's fine for single-file demos, inline-styled mockups, or design artifacts with only relative asset references. It breaks on: `fetch`/XHR to sibling files (CORS), `<script type="module">`, service workers, and absolute `/asset` paths (which resolve to filesystem root, not project root). If the page uses any of those, serve over HTTP. Pre-flight's zero-stylesheet warning usually signals this.
+3. **Validate the navigation chain, not only the input.** Local dev routes can issue external redirects. Guard main-frame navigation and reject a non-local redirect or final URL before capture; allow ordinary external images/scripts requested by the local page unless the task requires a stricter network policy.
 
 ## Setup (run once per session)
 
 ```bash
 # Install the compatible Playwright version used by the bundled ARIA snapshot scripts.
-npm install --save-dev playwright@1.58.2
+npm install --save-dev playwright@1.62.0
 npm exec -- playwright install chromium
 ```
 
 Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` over `npm install` when the lockfile already pins a compatible Playwright version.
+
+Playwright 1.62 includes first-party `npx playwright cli` and `npx playwright mcp` entry points. Prefer an already-configured host integration when it satisfies the capture request; use the bundled scripts when the task needs explicit localhost-only URL guards, checked-in behavior, or deterministic CI. Playwright 1.62 no longer supports Debian 11, so update the runner image rather than attempting to force-install unsupported browser libraries.
 
 ### When Chromium reports missing OS libraries
 

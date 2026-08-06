@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Node.js, Git, `jq`, and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.1.5"
+  version: "0.2.0"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 
@@ -48,12 +48,12 @@ Ask one focused question if two genuinely different walker shapes are possible (
 
 ### 2 — Generate and verify the scaffold
 
-Create or update the project-specific walker, W3C token converter, generic Gist pusher, `figma-sync.config.json`, package scripts, GitHub Actions workflow, Gist, secrets, first sync, and Figma plugin connection. Load [references/setup-scaffold.md](references/setup-scaffold.md) for the file specifications and [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md) for the canonical Gist, secret, CI, and plugin setup commands.
+Create or update the project-specific walker, DTCG 2025.10 token converter, generic Gist pusher, `figma-sync.config.json`, package scripts, GitHub Actions workflow, Gist, secrets, first sync, and Figma plugin connection. Load [references/setup-scaffold.md](references/setup-scaffold.md) for the file specifications and [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md) for the canonical Gist, secret, CI, and plugin setup commands.
 
 Required local checks before relying on CI:
 
 ```bash
-node scripts/tokens-to-figma/convert-to-w3c.mjs
+node scripts/tokens-to-figma/convert-to-dtcg.mjs
 git status --short -- scripts/tokens-to-figma/*.w3c.json
 node scripts/figma-export/walk-<site>.mjs | jq '.sections | length'
 ```
@@ -78,8 +78,8 @@ Keep the core boundary visible: CI produces `figma-export.json` and `<project>-t
 Use this when the framework output, token naming convention, section selectors, or CSS build paths changed enough that the existing walker may be stale.
 
 1. Re-run the setup assessment against current compiled HTML/CSS and token files.
-2. Update `walk-<site>.mjs`, `convert-to-w3c.mjs`, `figma-sync.config.json`, and CI paths together so `tokenPath()` and file paths stay aligned.
-3. Regenerate the W3C token artifact: `node scripts/tokens-to-figma/convert-to-w3c.mjs`.
+2. Update `walk-<site>.mjs`, `convert-to-dtcg.mjs`, `figma-sync.config.json`, and CI paths together so `tokenPath()`, explicit token types, and file paths stay aligned.
+3. Regenerate the DTCG token artifact: `node scripts/tokens-to-figma/convert-to-dtcg.mjs`.
 4. Validate the walker output: `node <walker> > figma-export.tmp.json && jq -e '.sections | type == "array"' figma-export.tmp.json`.
 5. Push through `/code-to-figma sync` or CI after reviewing the script and `.w3c.json` diffs.
 
@@ -114,7 +114,7 @@ This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the
 
 | File | Load when |
 |------|-----------|
-| [references/walker-patterns.md](references/walker-patterns.md) | Generating or updating the walker, W3C converter, or generic Gist pusher; adapting `tokenPath()`, section detection, or Next.js static-export constraints |
+| [references/walker-patterns.md](references/walker-patterns.md) | Generating or updating the walker, DTCG converter, or generic Gist pusher; adapting `tokenPath()`, explicit token taxonomy, section detection, or Next.js static-export constraints |
 | [references/setup-scaffold.md](references/setup-scaffold.md) | Generating setup files, package scripts, Gist commands, GitHub secrets, first sync, or plugin-side contract details |
 | [references/figma-export-contract.md](references/figma-export-contract.md) | Validating walker JSON output shape (`meta`, `sections`, nodes, token references) |
 | [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md) | Wiring `figma-sync.yml`, GitHub secrets, first Gist push, or `tokens-sync-to-figma` plugin setup |
@@ -123,7 +123,7 @@ This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the
 ## Operating Principles
 
 - **Read the compiled output, not the source.** Token bindings only become resolvable in built HTML+CSS. Source templates may use variables that haven't been substituted yet.
-- **`tokenPath()` is the contract.** Both the walker and the W3C converter must use the same function. If they diverge, Figma variable names won't match the sections' token references.
+- **`tokenPath()` and explicit `$type` mappings are the contract.** The walker and DTCG converter must use the same path function, and every exported token must have an intentional DTCG type. Never infer `$type` from the raw CSS value; fail on unknown taxonomy or non-conforming values.
 - **Walker is project-specific; pusher is generic.** The walker understands the project's HTML shape; the pusher only knows the Gist API. Keep them separate.
-- **Commit the W3C JSON.** The `.w3c.json` file is the human-readable diff surface for token changes. It belongs in the repo, not in `.gitignore`.
+- **Commit the DTCG JSON.** The `.w3c.json` file is the human-readable diff surface for token changes. It belongs in the repo, not in `.gitignore`.
 - **`node` not `pnpm` in CI.** pnpm writes a script header to stdout when running a lifecycle script, which corrupts a `> file.json` redirect. Always invoke the walker with `node` directly in CI steps.

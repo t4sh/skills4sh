@@ -6,13 +6,13 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 
 | Skill | Version | Supported |
 |-------|---------|-----------|
-| agent-memory | 2.7.6 | Yes |
-| code-to-figma | 0.1.5 | Yes |
-| discord-harvest | 1.7.7 | Yes |
-| eleventy-nunjucks | 0.1.7 | Yes |
-| figma-to-code | 0.1.6 | Yes |
-| localhost-screenshots | 3.3.6 | Yes |
-| skill-architect | 0.1.2 | Yes |
+| agent-memory | 2.7.7 | Yes |
+| code-to-figma | 0.2.0 | Yes |
+| discord-harvest | 2.0.0 | Yes |
+| eleventy-nunjucks | 0.1.8 | Yes |
+| figma-to-code | 0.1.7 | Yes |
+| localhost-screenshots | 3.3.7 | Yes |
+| skill-architect | 0.1.3 | Yes |
 
 ## Reporting a Vulnerability
 
@@ -61,7 +61,7 @@ This section maps each OWASP Agentic Skills Top 10 risk to the controls implemen
 |---------|----------------|
 | Immutable lock file (skills) | `skills-lock.json` pins all files to exact SHA-256 hashes |
 | Immutable lock file (npm) | `npm-shrinkwrap.json` pins full transitive dependency tree with integrity hashes and is included in the published npm tarball |
-| Exact dependency versions | `package.json` uses exact versions (e.g. `undici: 6.25.0`), no caret/tilde ranges |
+| Exact dependency versions | `package.json` uses exact versions (e.g. `undici: 6.27.0`), no caret/tilde ranges |
 | Single source of truth | All skills authored in this repo — no external registry pulls |
 | Pre-publish guard | `.github/scripts/check-bin-tag-parity.sh` plus `bin/pack-check.mjs` (wired via `prepublishOnly`, `validate.yml`, `release.yml`, and `npm-publish.yml`) refuse publish when `bin/` has changed since the tag for the current `package.json` version or the tarball omits `npm-shrinkwrap.json` |
 | CI hash verification | Automated drift detection on every push and PR (`validate.yml` runs `bin/hash-check.mjs`) |
@@ -192,7 +192,7 @@ The following findings are expected and documented:
 
 **Resolved in 3.3.0** — the following 3.2.0 findings are no longer flagged:
 
-- `COMMAND_EXECUTION` (HIGH) — `sudo npx playwright install-deps` removed; `node -e "require('playwright')"` checks replaced with an explicit `playwright@1.58.2` install before browser setup; stdin `node -e "…"` templates moved to versioned `assets/scripts/*.js`.
+- `COMMAND_EXECUTION` (HIGH) — `sudo npx playwright install-deps` removed; `node -e "require('playwright')"` checks replaced with an explicit `playwright@1.62.0` install before browser setup; stdin `node -e "…"` templates moved to versioned `assets/scripts/*.js`.
 - `PROMPT_INJECTION` (HIGH) — captured page content (ARIA snapshot, DOM snapshot, interactive map) is now wrapped in an `{ boundary: "untrusted-page-content", source, … }` envelope, with an explicit boundary section in `SKILL.md`.
 - `R009_FILE_STAGE` — the `/tmp/chrome-debug` CDP example was removed; no temp-file staging strings remain.
 

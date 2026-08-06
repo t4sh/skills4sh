@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
-  "version": "0.4.14",
-  "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot).",
+  "version": "0.5.0",
+  "description": "Portable agent skills for Codex, Claude Code, Cursor, VS Code, and compatible runtimes.",
   "type": "module",
   "bin": {
     "skills4sh": "bin/install.mjs"

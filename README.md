@@ -1,18 +1,18 @@
 # skills4sh
 
-Agent skills for Claude Code, Cursor, and VS Code (Copilot).
+Portable agent skills for Codex, Claude Code, Cursor, VS Code, and compatible runtimes.
 
 ## Skills
 
 | Skill | Description | Version |
 |-------|-------------|---------|
-| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory system for any project | 2.7.6 |
-| [code-to-figma](skills/code-to-figma/) | Generate a CI-anchored code → Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes | 0.1.5 |
-| [discord-harvest](skills/discord-harvest/) | Extract and download images, links, and files from Discord conversations | 1.7.7 |
-| [eleventy-nunjucks](skills/eleventy-nunjucks/) | 11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists | 0.1.7 |
-| [figma-to-code](skills/figma-to-code/) | Repo-first Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect | 0.1.6 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Localhost screenshot capture and visual regression testing | 3.3.6 |
-| [skill-architect](skills/skill-architect/) | Portable skill authoring/review rubric that bridges Skill Development, writing-skills, Anthropic/OpenAI skill-creator patterns, vendor adapters, and eval planning | 0.1.2 |
+| [agent-memory](skills/agent-memory/) | Cross-interface persistent memory with explicit native-memory coexistence and Codex/Claude entry-point guidance | 2.7.7 |
+| [code-to-figma](skills/code-to-figma/) | Generate a CI-anchored code → Figma pipeline with a conforming DTCG 2025.10 token artifact and Gist export | 0.2.0 |
+| [discord-harvest](skills/discord-harvest/) | Archive Discord assets through authorized bot access, a user-provided Data Package, or manual local exports | 2.0.0 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Stable Eleventy v3 + Nunjucks guidance with a version-gated Build Awesome v4 prerelease migration track | 0.1.8 |
+| [figma-to-code](skills/figma-to-code/) | Remote-first, repo-aware Figma MCP workflow for UI implementation, motion, assets, tokens, rules, and Code Connect | 0.1.7 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Playwright 1.62 localhost capture with redirect-safe helpers and visual regression guidance | 3.3.7 |
+| [skill-architect](skills/skill-architect/) | Agent Skills open-spec baseline plus portable authoring/review, vendor-adapter, and eval-planning guidance | 0.1.3 |
 
 > **Stability note.** `code-to-figma`, `eleventy-nunjucks`, `figma-to-code`, and `skill-architect` are pre-1.0 (v0.x) — their trigger phrasing and prompt content may change in incompatible ways between minor releases. The other three skills (agent-memory, discord-harvest, localhost-screenshots) follow semver: breaking changes only on major bumps.
 

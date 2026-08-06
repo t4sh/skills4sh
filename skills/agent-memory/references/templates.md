@@ -69,7 +69,7 @@ title: Human-readable title
 description: >-
   One-line summary — decides relevance without opening the file.
 tags: [tag1, tag2]
-source: claude-app | claude-code | vscode | craft-agent | other
+source: codex | claude-app | claude-code | vscode | craft-agent | other
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 status: active | archived
@@ -80,6 +80,20 @@ supersedes: {id}                 # optional — ID of memory this replaces
 Markdown body.
 For feedback/decision types, include **Why:** and **How to apply:** sections.
 ```
+
+## Entry-Point Templates
+
+Minimal Claude bridge when `AGENTS.md` is the shared source:
+
+```markdown
+@AGENTS.md
+
+<!-- Claude-only notes may follow. Keep shared rules in AGENTS.md. -->
+```
+
+Do not replace this with prose such as “read AGENTS.md”; Claude Code's documented `@path` import is the machine-readable bridge. Preserve an existing `CLAUDE.md` and stage a proposed merge when it contains more than the import and client-specific notes.
+
+Vendor-native auto-memory remains separate. For example, Claude Code may maintain machine-local project memory under `~/.claude/projects/<project>/memory/`; `.agent-memory/` does not own, migrate, or synchronize that directory.
 
 ## Memory Types
 
