@@ -12,6 +12,7 @@ const REQUIRED_TOP_FIELDS = ["name", "description", "license", "compatibility", 
 const ALLOWED_METADATA_FIELDS = new Set(["author", "version", "tags"]);
 const REQUIRED_METADATA_FIELDS = ["author", "version", "tags"];
 const MAX_SKILL_BODY_WORDS = 3500;
+const NPX_SKILLS_ADD_RE = /\bnpx\s+skills(?:@[^\s]+)?\s+add\b/;
 
 export async function runSkillStandardChecks(rootDir) {
   const root = rootDir;
@@ -84,7 +85,7 @@ export async function runSkillStandardChecks(rootDir) {
     if (/^##\s+Installation\s*$/im.test(body)) {
       errors.push(`${skill}: SKILL.md must not contain an install-this-skill section (## Installation)`);
     }
-    if (/\bnpx\s+skills\s+add\b/.test(skillMd)) {
+    if (NPX_SKILLS_ADD_RE.test(skillMd)) {
       errors.push(`${skill}: SKILL.md must not embed 'npx skills add' install commands`);
     }
 
@@ -97,7 +98,7 @@ export async function runSkillStandardChecks(rootDir) {
       }
       if (rel.endsWith(".md")) {
         const content = abs === skillMdPath ? skillMd : await readFile(abs, "utf8");
-        if (/\bnpx\s+skills\s+add\b/.test(content)) {
+        if (NPX_SKILLS_ADD_RE.test(content)) {
           errors.push(`${skill}: ${rel} must not embed 'npx skills add' install commands`);
         }
       }

@@ -172,7 +172,7 @@ Requirements:
 5. **Least-privilege access.** Declare the narrowest host/permission scope the plugin needs (e.g. an explicit `networkAccess.allowedDomains` allowlist rather than allow-all) and justify it in the README.
 6. **License.** Include a folder-local `LICENSE` file and state `MIT - see [LICENSE](LICENSE) for Details.` in the plugin README.
 
-Plugins are not delivered by `npx skills add`; they are imported directly into their host per the plugin README.
+Plugins are not delivered by `npx skills@latest add`; they are imported directly into their host per the plugin README.
 
 ### Changing scripts (`bin/`)
 
