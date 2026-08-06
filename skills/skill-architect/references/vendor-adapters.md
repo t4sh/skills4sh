@@ -8,11 +8,12 @@ Keep this split:
 
 | Layer | Owner | Example |
 |---|---|---|
-| Portable skill | `SKILL.md` and references | workflow, triggers, checks |
+| Portable syntax | [Agent Skills specification](https://agentskills.io/specification) | `SKILL.md`, core frontmatter, optional `scripts/`, `references/`, and `assets/` |
+| Portable skill | `SKILL.md` and references | workflow, triggers, checks, quality rubric |
 | Repository contract | local repo docs and CI | frontmatter, security manifests, hashes, lockfiles |
 | Vendor adapter | vendor-specific metadata or notes | `agents/openai.yaml`, Claude plugin metadata, Antigravity conventions |
 
-Never let one vendor's metadata overwrite the portable skill contract.
+Never let one vendor's metadata overwrite the portable skill contract. Experimental portable fields such as `allowed-tools` still require explicit support from the target runtime and local repository schema.
 
 ## Coverage policy
 

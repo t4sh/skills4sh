@@ -8,11 +8,11 @@ Patterns for production-ready 11ty sites: CSP, View Transitions, theme system, a
 
 | Directive | Delivery |
 |---|---|
-| `default-src`, `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `form-action`, `object-src`, `base-uri`, `upgrade-insecure-requests`, `worker-src` | `<meta http-equiv="Content-Security-Policy">` in `<head>` |
+| `default-src`, `script-src`, `style-src`, `img-src`, `font-src`, `connect-src`, `form-action`, `object-src`, `base-uri`, `upgrade-insecure-requests`, `worker-src` | Prefer an HTTP response header; a `<meta http-equiv="Content-Security-Policy">` is a static-host fallback with a more limited policy surface |
 | `frame-ancestors` | **HTTP header only** (silently ignored from `<meta>` per CSP3) |
 | `report-uri`, `report-to` | **HTTP header only** |
 
-### Meta tag — gated on build mode
+### Optional meta fallback — gated or adapted for development
 
 ```nunjucks
 {% if eleventy.env.runMode == "build" %}
@@ -33,7 +33,7 @@ Patterns for production-ready 11ty sites: CSP, View Transitions, theme system, a
 {% endif %}
 ```
 
-The `runMode == "build"` gate is required — `eleventy --serve` injects live-reload scripts that violate any reasonable `script-src 'self'`. Without the gate, dev mode shows console errors on every page.
+This example omits the meta policy during `--serve` so Eleventy live reload is not constrained by the production policy. A project may instead supply an explicit development CSP that permits its actual injected script and WebSocket endpoints. Verify the browser console and live reload; do not assume the build-only gate is universally required.
 
 ### nginx HTTP header
 
@@ -52,7 +52,7 @@ The `always` flag is important — without it, nginx skips the header on error r
 ### Verify after deploy
 
 ```bash
-$ curl -sI https://example.com/ | grep -iE 'content-security-policy|x-frame-options|strict-transport-security|x-content-type|referrer-policy|permissions-policy'
+$ curl --fail --silent --show-error --head https://example.com/ | grep -iE 'content-security-policy|x-frame-options|strict-transport-security|x-content-type|referrer-policy|permissions-policy'
 ```
 
 ### Inline scripts / styles — when required

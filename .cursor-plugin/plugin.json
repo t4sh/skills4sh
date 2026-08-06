@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
-  "description": "Agent skills for Claude Code, Cursor, and VS Code (Copilot)",
-  "version": "0.4.14",
+  "description": "Portable agent skills for Codex, Claude Code, Cursor, VS Code, and compatible runtimes",
+  "version": "0.5.0",
   "author": {
     "name": "t4sh"
   },
@@ -16,12 +16,12 @@
     {
       "name": "code-to-figma",
       "path": "skills/code-to-figma",
-      "description": "Generate a CI-anchored code → Figma token export pipeline (walker + Gist) that the tokens-sync-to-figma plugin consumes"
+      "description": "Generate a CI-anchored code → Figma pipeline with a conforming DTCG 2025.10 token artifact and Gist export"
     },
     {
       "name": "discord-harvest",
       "path": "skills/discord-harvest",
-      "description": "Extract and download images, links, and files from Discord conversations"
+      "description": "Archive Discord assets through authorized bot access, a user-provided Data Package, or manual local exports"
     },
     {
       "name": "eleventy-nunjucks",
@@ -31,7 +31,7 @@
     {
       "name": "figma-to-code",
       "path": "skills/figma-to-code",
-      "description": "Repo-first Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect"
+      "description": "Remote-first, repo-aware Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect"
     },
     {
       "name": "localhost-screenshots",
@@ -41,7 +41,7 @@
     {
       "name": "skill-architect",
       "path": "skills/skill-architect",
-      "description": "Portable skill authoring/review rubric bridging Skill Development, writing-skills, Anthropic/OpenAI skill-creator patterns, vendor adapters, and eval planning"
+      "description": "Open-spec portable skill authoring/review rubric bridging vendor patterns, adapters, and eval planning"
     }
   ]
 }

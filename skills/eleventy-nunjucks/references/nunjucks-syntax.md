@@ -79,7 +79,7 @@ Nunjucks `if` uses JavaScript-style truthiness. Falsy values include `false`, `n
 {% endfor %}
 ```
 
-### Async iteration
+### Async iteration — Eleventy v3 / Mozilla Nunjucks 3
 
 ```nunjucks
 {# Use asyncEach / asyncAll only when the loop body contains async filters or extensions. #}
@@ -90,6 +90,8 @@ Nunjucks `if` uses JavaScript-style truthiness. Falsy values include `false`, `n
 ```
 
 `asyncAll` runs iterations in parallel; `asyncEach` runs sequentially. Prefer `asyncAll` for local deterministic work unless ordering matters. Do not use async loops to fetch arbitrary third-party URLs from templates.
+
+Build Awesome v4 prereleases use the `@11ty/nunjucks` fork and no longer require async-specific `{% for %}` or `{% set %}` tags for the newly supported async paths. Do not apply that behavior to stable v3; see `build-awesome-v4.md`.
 
 ## Variables
 
@@ -230,17 +232,17 @@ Eleventy exposes these through `setNunjucksEnvironmentOptions`; enable them with
 
 Both affect `{% %}` only — never `{{ }}`. For per-tag control, use the hyphen syntax.
 
-## The `extends` / `block` anti-pattern in 11ty
+## Nunjucks `extends` versus Eleventy layouts
 
 Standalone Nunjucks supports template inheritance:
 
 ```nunjucks
-{# DO NOT USE THIS IN 11TY #}
+{# Supported Nunjucks inheritance #}
 {% extends "base.njk" %}
 {% block content %}<p>Page content</p>{% endblock %}
 ```
 
-**In 11ty, this bypasses the data cascade** — frontmatter from the child template is never merged into the parent. Use `layout:` frontmatter and render the child body through `content` with the safe filter in parent layouts (see main `SKILL.md` layout reminder).
+Eleventy supports this syntax, but it does not process frontmatter in the extended parent template. Prefer Eleventy `layout:` frontmatter and render the child body through `content | safe` when the site shell needs layout frontmatter, the Eleventy data cascade, or chained layouts. Use `{% extends %}` only when ordinary Nunjucks inheritance semantics are intentional.
 
 ## `raw` — escape Nunjucks parsing
 
@@ -299,7 +301,7 @@ Prefer per-value `| safe` over `{% autoescape false %}` blocks — narrower blas
 | `wordcount` | Token count | `{{ body \| wordcount }}` |
 | `dump` / `dump(2)` | Debug JSON; make the project filter cycle-safe | `<pre>{{ obj \| dump(2) }}</pre>` |
 
-## Async filter authoring
+## Async filter authoring — stable v3
 
 ```js
 // Standalone Nunjucks API — note the 3rd `true` arg
@@ -320,7 +322,7 @@ eleventyConfig.addNunjucksAsyncFilter("titleFor", (url, titles = {}, callback) =
 
 Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFilter` only when the filter is intentionally Nunjucks-specific or needs Nunjucks callback-style behavior.
 
-**Constraints:**
+**Eleventy v3 / Mozilla Nunjucks 3 constraints:**
 - Templates using async filters must be rendered through async render paths
 - Eleventy handles this automatically; standalone Nunjucks needs `env.render` with a callback or `renderString` returning a Promise
 - An async filter in a `{% for %}` loop without `asyncEach`/`asyncAll` will fail
@@ -335,7 +337,7 @@ Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFil
 | `groupby` return | Object shaped like `{ key: [items] }`; iterate `{% for k, items in x \| groupby("key") %}` | Group objects expose `grouper` / `list`-style attributes |
 | `truncate` default | `length=255, killwords=false, end="..."` | Same defaults |
 | Whitespace control | `{%- -%}`, `trimBlocks`, `lstripBlocks` | Same |
-| Async iteration | `asyncEach` / `asyncAll` (needed for async filters) | Not needed (sync engine) |
+| Async iteration | Stable v3: `asyncEach` / `asyncAll` for async filters; v4 prerelease differs | Not needed (sync engine) |
 | Empty collection truthiness | Empty arrays/objects are truthy in JavaScript semantics; check `.length` or use a helper when emptiness matters | Empty sequences/mappings are falsy |
 
 Most Jinja2 templates port to Nunjucks unchanged. The two areas that bite: macro context inheritance and `groupby` shape. In Nunjucks, do not destructure `groupby` as an array of `[key, items]` pairs; iterate it as an object.

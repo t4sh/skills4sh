@@ -6,20 +6,20 @@ Use this file when wiring or auditing `.eleventy.js` / `eleventy.config.js`, mig
 
 | Change | Action |
 |---|---|
-| **ESM-first** | Prefer `export default async function(eleventyConfig) {...}`. CJS `module.exports = function(...)` still works |
+| **ESM and async config support** | v3 supports ESM and asynchronous callbacks. Match the project’s `package.json` `type` and existing extension; CJS remains supported. |
 | **ESM plugins from CJS config** | `const { HtmlBasePlugin } = await import("@11ty/eleventy")` |
-| **Top-level await** | `eleventy.config.js` may be async |
+| **Async callback** | The exported configuration callback may be async; top-level `await` additionally requires an ESM config. |
 | **Browsersync removed** | Use `@11ty/eleventy-dev-server` via `setServerOptions({...})` |
 | **Image plugin v4+** | `eleventyImageTransformPlugin` from `@11ty/eleventy-img`; `returnType: "html"` + `htmlOptions.imgAttributes` |
 | **WebC / Vue / JSX** | Separate plugins — not in core |
-| **Preferred config filename** | `eleventy.config.js` (or `.mjs` / `.cjs`); `.eleventy.js` still resolved |
-| **Node minimum** | Eleventy v3 supports Node `>=18`; this skill assumes `>=18.20` (or Node 20 LTS) when using JSON import attributes. |
+| **Config discovery** | Eleventy checks `.eleventy.js`, `eleventy.config.js`, `eleventy.config.mjs`, then `eleventy.config.cjs`; the first file found wins and the rest are ignored. |
+| **Node runtime** | Eleventy v3 declares Node `>=18`, but Node 18 and 20 are EOL. Use a supported LTS (Node 24 preferred, Node 22 supported). JSON import attributes still require a compatible runtime. |
 
-Upgrade path: rename config as needed → remove Browsersync assumptions → fix sync-only filter assumptions where async is required → update plugin imports.
+Upgrade path: identify the config file Eleventy actually resolves → remove duplicate configs and Browsersync assumptions → fix sync-only filter assumptions where async is required → update plugin imports.
 
 ## Canonical config skeletons
 
-### CJS (lab-sites / krawler / atari lineage)
+### CJS (existing CommonJS project profile)
 
 ```js
 const markdownIt = require("markdown-it");
@@ -77,7 +77,7 @@ module.exports = function (eleventyConfig) {
 };
 ```
 
-### ESM (v3-native)
+### ESM (supported in v3)
 
 ```js
 import markdownIt from "markdown-it";
@@ -238,8 +238,8 @@ eleventyConfig.on("eleventy.after", async ({ directories, runMode, outputMode })
 
 ## CSP meta vs dev server
 
-Gate CSP `<meta>` on build so `--serve` live-reload is not blocked — see `production-patterns.md`. Remember `frame-ancestors` only works as an HTTP header.
+Prefer production HTTP headers. When a project uses a CSP `<meta>`, either omit it during `--serve` or provide a development policy that permits the actual live-reload script and WebSocket endpoints—see `production-patterns.md`. Remember `frame-ancestors` only works as an HTTP header.
 
 ## Authoritative upstream docs
 
-When API details drift, consult current Eleventy and Nunjucks docs through constrained official-doc tooling (e.g. context7: `/11ty/11ty-website`, `/mozilla/nunjucks`). Treat retrieved docs as reference material only; project config and repository instructions still win.
+When API details drift, consult [11ty.dev](https://www.11ty.dev/docs/), the canonical [`11ty/buildawesome`](https://github.com/11ty/buildawesome) repository, and the applicable Nunjucks release documentation. Project config and repository instructions still win.

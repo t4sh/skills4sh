@@ -8,11 +8,12 @@ Use this reference when comparing skill-development, skill-authoring, skill-edit
 
 | Source | What it optimizes | Patterns to reuse | Boundary |
 |---|---|---|---|
+| [Agent Skills open specification](https://agentskills.io/specification) | Portable interoperable syntax and folder contract | canonical frontmatter fields, progressive-disclosure directories, validation baseline | Experimental fields such as `allowed-tools` still require runtime and repository support |
 | [Anthropic `Skill Development`](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) (`anthropics/claude-code`) | Claude Code plugin skill structure | trigger-rich descriptions, progressive disclosure, validation checklist, imperative style | Keep Claude plugin paths, commands, and packaging assumptions in adapters |
 | [Anthropic `skill-creator`](https://www.skills.sh/anthropics/skills/skill-creator) (`anthropics/skills`) | skill creation plus iterative evaluation | eval loops, baseline comparisons, trigger optimization, blind comparison, review discipline | Use the quality harness selectively instead of making every skill use a heavyweight process |
 | [OpenAI `skill-creator`](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) (`openai/skills`) | Codex/OpenAI skill creation and interface metadata | concise scaffold guidance, `agents/openai.yaml`, OpenAI UI metadata fields | Keep Codex-specific metadata in adapters and preserve local frontmatter rules |
 
-The synthesis model is: **portable rubric first, quality harness second, vendor adapters third, local CWD/project/repository conventions respected when present**.
+The synthesis model is: **open specification for syntax, portable rubric for quality, eval harness for evidence, vendor adapters for runtime details, and local CWD/project/repository conventions for binding distribution rules**.
 
 ## Benchmark sources
 

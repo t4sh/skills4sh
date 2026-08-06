@@ -7,7 +7,7 @@
 - Session logs dominate the index — promote recurring patterns to `conventions/` or `decisions/`
 - Context memories go stale within days — always set `expires` dates
 
-### Multi-Agent Projects (Claude Code + Cursor + VS Code + Craft Agent)
+### Multi-Agent Projects (Codex + Claude Code + Cursor + VS Code + Craft Agent)
 - Index gets out of sync when multiple interfaces create files — run `sync` at session end
 - Duplicate memories from different interfaces covering same topic — `maintain` detects and suggests merges
 - Source attribution missing — always set the `source` field so you know which agent wrote what
@@ -36,5 +36,12 @@
 
 ### Memory Not Being Read by Other Interfaces
 - Verify `AGENTS.md` exists at project root and references `.agent-memory/`
+- Verify `CLAUDE.md` contains the exact `@AGENTS.md` import when Claude Code is in use; prose saying “read AGENTS.md” is not the documented import mechanism
 - If the project uses Claude Code settings, optionally check that `.claude/settings.json` allows reads from the memory directory; the portable entry point is still root `AGENTS.md`
 - Ensure `.cursor/rules/index.mdc` references `AGENTS.md`
+
+### Native Auto-Memory Conflicts or Duplication
+- Treat vendor auto-memory as client-local scratch, not as the cross-agent source of truth
+- Do not copy an entire native memory directory into `.agent-memory/`; distill only user-approved durable facts into the appropriate typed file
+- Claude Code auto-memory is machine-local and shared across worktrees for the same repository; do not assume it travels through git or is visible to Codex/Cursor
+- When a native memory contradicts `.agent-memory/`, surface the conflict and ask which fact is current before updating either system

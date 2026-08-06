@@ -4,7 +4,7 @@
 
 skill:
   name: eleventy-nunjucks
-  version: "0.1.7"
+  version: "0.1.8"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,18 +14,19 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: e17af24f000efff34724bd061037f28bebb82e850e6beb40b5f0d97c8cae529e
+    SKILL.md: 5c4cd7d58f34314b22cc3b0446182712c46716f8cf1ca45d5b1f8dd0fea0f10f
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
+    references/build-awesome-v4.md: b032042100c5114932a29481df1ada70040669b445581ea05e014838158d49ad
     references/build-pipeline.md: b6393bee8a6f569f9ab2f9f64a2d58c2330a847c93d31677f17f88963845fc5c
-    references/conventions.md: 09818c158d2345d3b4a70ede1fa330695a0b5e889b0ce7d6263dae6d476dab63
-    references/data-cascade.md: fd2329d6ed001f6e5bf439b7ac191e78b4d2d0a67ce70e1bd03e7d6da62b02c9
-    references/eleventy-config-api.md: 875493cf133708e1594c9b709a055240eb694daa7e2952741e213e9191870b53
+    references/conventions.md: a222e83ec556109916cd2df56bfcea1dafa0f9715dcd8f49d39032e95c5c5ce4
+    references/data-cascade.md: fedef145c9f34a3ebb09e8e210d12ea08b654956532c781908b2aeb1474f54a8
+    references/eleventy-config-api.md: 269bcbcee81deee0ba197710ded816dd6f9cd79ecb99e433d1fa45a929017338
     references/filters.md: 05543f78674653d7c0139ae0913fc2c0538d43a983a4246f8ad6aae335ba5b4a
-    references/nunjucks-syntax.md: eb45425aa6076d67d239b9a8e01e2aa0f7d23c99b128c2df653d25ea9dbcb2fc
-    references/production-patterns.md: 7204ee5a8b9b04e12dbd340bbeecb343d296f25e5d431751ffd434a4eb71be83
-    references/review-shipping.md: 8f64d10645ebd3526d781fd5b2b346919ee92cc72b9357dd61646c711c96fcfe
-    references/security-checklist.md: dfc5637fa269804cb3750bd58b8c644d5e9c75c67d6818128fe30909b66de86d
-    references/troubleshooting.md: 191b9b24a8692c1a7108b03de6a2e1d02b2d0b52b18fbeeb301e1ca9ee407dd0
+    references/nunjucks-syntax.md: f896b36443fd6e0f7bca20a42e44c3c564513089cc515a9f4d039b135c48fc56
+    references/production-patterns.md: 6454c463056eab1aa81fd3c450d9f38ad4374c10218bc1f245c0808d01af0ac1
+    references/review-shipping.md: 1436f81e4e4e3f95373d0f1847c7cb38d20ebeaad7c38d089abad0d1c2eaa297
+    references/security-checklist.md: 768cd76cc2db1bc692584467524672c79e1e780b16b336dbfb032453048e2763
+    references/troubleshooting.md: 0666a9b9eddd7f6dcfdc642e6543777d91ef5378f10b905444d054a09fd6ec08
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
@@ -42,7 +43,12 @@ dependencies:
     type: npm
     optional: false
     version: ">=3.0.0"
-    reason: "Skill encodes Eleventy v3 conventions; v2 APIs differ"
+    reason: "Skill uses Eleventy v3 as the stable production baseline; v2 APIs differ"
+  - name: "@awesome.me/buildawesome"
+    type: npm
+    optional: true
+    version: "4.0.0-alpha.10"
+    reason: "Optional, exactly pinned Build Awesome v4 prerelease migration track"
   - name: markdown-it
     type: npm
     optional: false

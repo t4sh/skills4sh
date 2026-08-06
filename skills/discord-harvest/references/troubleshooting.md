@@ -4,7 +4,7 @@
 
 - **Message count:** last 10 messages when the user does not specify scope
 - **Content types:** images, files, and links unless the user narrows the request
-- **DM path:** requires an authenticated Discord web session; bot tokens cannot read DMs
+- **DM/account path:** requires a local Discord Data Package or files the user exported manually; bot tokens cannot read normal user DMs
 
 ## Edge Cases
 
@@ -13,16 +13,16 @@
 - **Threads:** separate API channels — list active and archived threads after the parent channel; attachments only in threads will not appear in parent messages.
 - **Large files:** Discord attachment limits vary by account, server plan, and policy changes; do not hard-code a size assumption. `curl` handles large downloads but they may take time.
 - **Duplicates:** deduplicate before downloading.
-- **Browser login:** user must be logged into Discord web for the DM path.
+- **Data Package scope:** the Messages export covers messages sent by the requesting account, not a complete transcript of received DM content.
 
 ## Common Issues by Source Type
 
-### DMs (Browser Path)
-- **Login required** — Discord web requires authentication; bot tokens don't work for DMs
-- **DOM selectors change** — Discord updates their class names periodically; always take a snapshot first and adapt selectors if the standard ones fail
-- **Lazy-loaded images** — images below the fold won't have `src` populated until scrolled into view; scroll before extracting
-- **2FA prompts** — if the user has 2FA enabled and hasn't authenticated recently, the browser may show a verification screen
-- **Rate limiting on scroll** — scrolling too fast through message history may cause Discord to throttle content loading
+### DMs and account exports (local paths)
+- **Data Package not requested yet** — ask the user to request it through Discord's documented account-data flow; do not automate the request or log in for them
+- **Incomplete DM history** — the package contains messages sent by the requesting account. Ask the user to download received attachments manually when they are needed
+- **Package layout changed** — inspect the delivered archive and identify its Messages data files; do not depend on a hard-coded directory layout
+- **Expired CDN URLs** — report them. Do not recover them by scraping Discord Web or reusing browser/session credentials
+- **Manual import has symlinks or special files** — skip them; copy only regular non-symlink files after staging confirmation
 
 ### Server Channels (Bot API Path)
 - **Missing permissions** — bot needs `VIEW_CHANNEL` and `READ_MESSAGE_HISTORY` permissions; NSFW channels need additional permissions
@@ -49,17 +49,18 @@
 - Check if the channel is in a category with restricted permissions
 - For private channels, the bot needs explicit access
 
-### Browser Shows Login Page Instead of DM
-- User needs to log in manually — the skill cannot authenticate
-- Check if Discord is requiring email/phone verification
-- Try clearing browser cookies and logging in fresh
+### User asks to scrape Discord Web or use a self-bot
+- Refuse that acquisition method because it automates a normal user account or authenticated Discord session
+- Offer the bot API for an authorized server channel
+- Offer a user-provided Discord Data Package for their sent-message data
+- Offer a manually exported local folder for received DM files or other gaps
 
 ### Downloads Failing with 403/404
 - CDN URLs have expired — re-extract the URLs and download immediately
 - The attachment was deleted from Discord
 - Network firewall blocking Discord CDN domains
 
-### Selectors Not Matching Any Elements
-- Discord updated their DOM structure — take an annotated screenshot and inspect
-- Try fallback selectors: `[id^="message-content"]`, `[class*="markup"]`, `[data-list-item-id]`
-- The conversation may be empty or still loading — wait and retry
+### Export does not contain the requested conversation
+- Confirm the package belongs to the expected account and that the user selected the correct local archive
+- Explain that received messages are outside the requesting account's sent-message export
+- Continue only with files the user manually exports into a local folder; do not fall back to browser automation

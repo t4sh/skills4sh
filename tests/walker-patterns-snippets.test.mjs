@@ -27,9 +27,9 @@ function loadWalkerHelpers() {
 }
 
 function loadConvertHelpers() {
-  const block = jsBlockAfter('## `scripts/tokens-to-figma/convert-to-w3c.mjs`');
+  const block = jsBlockAfter('## `scripts/tokens-to-figma/convert-to-dtcg.mjs`');
   const helpers = snippetBetween(block, 'function tokenPath', 'const tokens = parseCustomProperties');
-  return Function(`${helpers}; return { tokenPath, parseCustomProperties, buildW3c };`)();
+  return Function(`${helpers}; return { tokenPath, tokenType, dtcgValue, parseCustomProperties, buildDtcg };`)();
 }
 
 function loadPushHelpers() {
@@ -109,7 +109,7 @@ test('walker snippet extracts Tailwind theme vars with root fallback', () => {
   );
 });
 
-test('walker and W3C converter snippets keep tokenPath mappings in parity', () => {
+test('walker and DTCG converter snippets keep tokenPath mappings in parity', () => {
   const walker = loadWalkerHelpers();
   const converter = loadConvertHelpers();
   const samples = [
@@ -179,32 +179,51 @@ test('walker snippet produces figma-export contract shape for a fixture section'
   });
 });
 
-test('convert-to-w3c snippet parses CSS and skips explicit path conflicts instead of overwriting', () => {
-  const { parseCustomProperties, buildW3c } = loadConvertHelpers();
+test('convert-to-dtcg snippet emits structured DTCG values and fails closed', () => {
+  const { parseCustomProperties, buildDtcg } = loadConvertHelpers();
   const parsed = parseCustomProperties(`
     :root {
       --ink-900: #000;
       --space-4: 1rem;
+      --font-display: Inter, sans-serif;
       --tw-internal: ignored;
     }
   `);
-  assert.deepEqual(parsed.map((token) => token.path).sort(), ['palette/ink/900', 'spacing/4']);
+  assert.deepEqual(parsed.map((token) => token.path).sort(), [
+    'palette/ink/900',
+    'spacing/4',
+    'typography/family/display',
+  ]);
 
-  const warnings = [];
-  const originalWarn = console.warn;
-  console.warn = (message) => warnings.push(message);
-  try {
-    const w3c = buildW3c([
-      { path: 'palette/ink', name: 'ink', value: '#111' },
-      { path: 'palette/ink/900', name: 'ink-900', value: '#000' },
-      { path: 'spacing/4', name: 'space-4', value: '1rem' },
-    ]);
-    assert.equal(w3c.palette.ink.$value, '#111');
-    assert.equal(w3c.spacing['4'].$value, '1rem');
-    assert.deepEqual(warnings, ['SKIP token path conflict: palette/ink/900 extends existing leaf palette/ink']);
-  } finally {
-    console.warn = originalWarn;
-  }
+  const dtcg = buildDtcg(parsed);
+  assert.deepEqual(dtcg.palette.ink['900'], {
+    $value: { colorSpace: 'srgb', components: [0, 0, 0] },
+    $type: 'color',
+  });
+  assert.deepEqual(dtcg.spacing['4'], {
+    $value: { value: 1, unit: 'rem' },
+    $type: 'dimension',
+  });
+  assert.deepEqual(dtcg.typography.family.display, {
+    $value: ['Inter', 'sans-serif'],
+    $type: 'fontFamily',
+  });
+
+  assert.throws(
+    () => parseCustomProperties(':root { --mystery-token: 12qu; }'),
+    /No explicit DTCG type mapping/,
+  );
+  assert.throws(
+    () => parseCustomProperties(':root { --space-fluid: 10vw; }'),
+    /Unsupported dimension value/,
+  );
+  assert.throws(
+    () => buildDtcg([
+      { path: 'palette/ink', type: 'color', value: { colorSpace: 'srgb', components: [0, 0, 0] } },
+      { path: 'palette/ink/900', type: 'color', value: { colorSpace: 'srgb', components: [0, 0, 0] } },
+    ]),
+    /Token path conflict/,
+  );
 });
 
 test('push-to-figma snippet formats anonymous gist success URLs', () => {

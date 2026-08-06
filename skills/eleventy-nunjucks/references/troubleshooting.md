@@ -260,7 +260,7 @@ const siteData = require("./site")();
 
 ### Frontmatter not overriding directory data
 
-**Cause:** Directory data is at Level 4; frontmatter is at Level 6 — frontmatter should win. If it doesn't, the key names differ.
+**Cause:** Template frontmatter has higher priority than directory data. If it does not appear to win, the keys are differently nested, a template/computed source has higher priority, or the expected data file is not the one Eleventy resolved.
 
 **Diagnosis:**
 
@@ -386,7 +386,7 @@ const md = markdownIt({ html: false, linkify: true, typographer: true });
 
 **Cause:** CSP `<meta>` is being emitted in dev mode, blocking `eleventy --serve` live-reload scripts.
 
-**Fix:** Gate on `runMode`:
+**Fix:** Omit the production meta policy during `serve`, or provide a development policy that explicitly permits the actual live-reload script and WebSocket endpoints. The build-only pattern is the simpler fallback:
 
 ```nunjucks
 {% if eleventy.env.runMode == "build" %}

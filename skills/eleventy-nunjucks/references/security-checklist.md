@@ -53,10 +53,10 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
 
 ## 2. HTTP headers (CSP, X-Frame, HSTS)
 
-- [ ] **CSP `<meta>` emitted on build only, not on dev serve.**
+- [ ] **Development CSP is compatible with live reload.** Prefer response headers in production. If the project uses a meta policy, omit it during `serve` or explicitly permit the live-reload script and WebSocket endpoints.
   ```bash
   grep -nE "Content-Security-Policy" src/_includes/layouts/*.njk
-  # Should be wrapped in {% if eleventy.env.runMode == "build" %}
+  # Review the build/serve condition and the actual development endpoints.
   ```
 
 - [ ] **`frame-ancestors` is delivered as an HTTP header, not via `<meta>`.**
@@ -82,7 +82,7 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
   # script-src should not contain 'unsafe-inline'
   ```
 
-- [ ] **`style-src 'unsafe-inline'` is documented if present.** Tailwind v4 may need it for some patterns; if not, drop it.
+- [ ] **`style-src 'unsafe-inline'` is documented if present.** Tailwind’s generated stylesheet does not require it by itself; retain it only for an identified inline-style path.
 
 - [ ] **`connect-src` matches actual XHR/fetch destinations.** No `*` wildcards in production.
 
@@ -263,10 +263,10 @@ If the site has any forms (contact, signup, search):
 
 ## 10. Build pipeline integrity
 
-- [ ] **CI uses `pnpm install --frozen-lockfile`** (or equivalent), not `npm install`.
+- [ ] **CI uses the repository’s lockfile-preserving install command** (`pnpm install --frozen-lockfile`, `npm ci`, or the project-manager equivalent).
 - [ ] **`packageManager` field in `package.json` is pinned to an exact version.**
 - [ ] **Dependabot or equivalent is enabled.**
-- [ ] **Critical dependencies (`@11ty/eleventy`, `markdown-it`, `tailwindcss`) get security patches within a week.**
+- [ ] **Security advisories for critical dependencies (`@11ty/eleventy`, `markdown-it`, `tailwindcss`) are triaged and patched within the project’s documented severity-based SLA.**
 - [ ] **No `*` or `latest` version specifiers in `package.json`.**
   ```bash
   grep -nE '"\^?[*]"|"\^?latest"' package.json
@@ -309,29 +309,64 @@ If the site has any forms (contact, signup, search):
 ```bash
 #!/usr/bin/env bash
 # scripts/security-audit.sh — run before deploy
-set -e
+set -euo pipefail
+
+if [ "$#" -ne 1 ]; then
+  echo "Usage: $0 https://example.com" >&2
+  exit 64
+fi
+
+target_url="$1"
+output_dir="${OUTPUT_DIR:-out}"
+
+for required_dir in src "$output_dir"; do
+  if [ ! -d "$required_dir" ]; then
+    echo "Missing required directory: $required_dir" >&2
+    exit 1
+  fi
+done
+
 echo "→ Checking | safe usage…"
-grep -rnE "\|\s*safe\b" src/ | wc -l
+safe_count=$(grep -rnE "\|[[:space:]]*safe([[:space:]|}]|$)" src/ 2>/dev/null | wc -l | tr -d ' ' || true)
+echo "  ${safe_count} occurrence(s); review each trust boundary"
 
 echo "→ Checking dump | safe (must be zero)…"
-grep -rnE "\|\s*dump\s*\|\s*safe" src/ && exit 1 || echo "  ok"
+if grep -rnE "\|[[:space:]]*dump[[:space:]]*\|[[:space:]]*safe([[:space:]|}]|$)" src/; then
+  exit 1
+else
+  echo "  ok"
+fi
 
 echo "→ Checking inline scripts without escape filter (must be zero)…"
-grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ \
-  | grep -v -E "jsonScript|jsonCompact" && exit 1 || echo "  ok"
+if grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ \
+  | grep -v -E "jsonScript|jsonCompact"; then
+  exit 1
+else
+  echo "  ok"
+fi
 
 echo "→ Checking output for secret-shaped files (must be zero)…"
-if find out \( -name '.env*' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' \) -print -quit | grep -q .; then
+if find "$output_dir" \( -name '.env*' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' \) -print -quit | grep -q .; then
   exit 1
 else
   echo "  ok"
 fi
 
 echo "→ Checking output for inline credentials…"
-grep -rE 'BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY|AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}' out/ && exit 1 || echo "  ok"
+if grep -rE 'BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY|AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}' "$output_dir"; then
+  exit 1
+else
+  echo "  ok"
+fi
 
 echo "→ Production headers…"
-curl -sI "$1" | grep -iE 'content-security-policy|x-frame-options|strict-transport-security'
+headers=$(curl --fail --silent --show-error --head "$target_url")
+for header in content-security-policy x-frame-options strict-transport-security; do
+  if ! grep -qi "^${header}:" <<<"$headers"; then
+    echo "Missing required header: ${header}" >&2
+    exit 1
+  fi
+done
 
 echo "✓ Audit complete"
 ```

@@ -19,7 +19,7 @@ In `skills4sh`, examples of this rubric in practice can be inspected across the 
 | Predictability | The skill steers the agent toward the same process each run: invocation fit is intentional, branches are distinct, steps have checkable completion criteria, and pruning removes no-op or stale guidance. |
 | Portable core | The main workflow can be followed by a generic file-reading agent without vendor-only assumptions. |
 | Progressive disclosure | `SKILL.md` contains the operating path; long comparisons, matrices, and edge cases live in linked references. |
-| Local compliance | Frontmatter, license, version, lockfiles, security manifests, README/plugin metadata, hashes, and runtime conventions match the current project or repository's expectations when present. |
+| Portable + local compliance | Start with the Agent Skills open specification for portable folder/frontmatter structure, then match the current repository's accepted fields, license/version policy, lockfiles, security manifests, README/plugin metadata, hashes, and runtime conventions. |
 | Evidence-backed guidance | Claims about quality, defects, or external tools cite files, commands, or primary sources. |
 | Embedded-code correctness | Any shipped CI, shell, or code — helper scripts, snippets, workflow examples — is reviewed for functional correctness and executed against a fixture, not merely security-scanned or read for shape; audits report the fixture command and observed output or mark the check skipped with risk. |
 | Executable-surface triage | Skill audits catch common code-review-adjacent risks — untested snippets, fail-open logic, shell/runtime portability, external tool/network fragility, path/quoting hazards, credential boundaries, parser edge cases, and missing CI visibility — then route deep algorithm/security/performance analysis to a code-review lens. |
@@ -233,6 +233,7 @@ Eval claims and adapter coverage need calibrated handling:
 
 - Treat prompt-vector catalogs as retrieval/fixture evidence unless they also include observed run status, baseline failure, with-skill result, or transcript summary. For high-risk behavior-shaping, ops, safety, discipline, and review skills, prompt-only evals are incomplete evidence, not a universal CI failure.
 - Treat missing or partial vendor adapters as a repository-policy question. If local docs require adapters, report missing metadata as a packaging gap; if no rule exists, report it as a policy decision and recommend either consistent adapters or an explicit selective-coverage rationale.
+- Treat the open specification's experimental `allowed-tools` field as opt-in runtime metadata. Do not add it to a portable skill when the target repository rejects, ignores, or cannot enforce it; document the local decision instead.
 - Keep weak-description checks deterministic only when the rule is portable and low-false-positive. In `skills4sh`, generic trigger-only descriptions fail mechanically; richer trigger quality remains a review judgment.
 
 Stop at triage. If the finding requires algorithm redesign, exploit analysis, performance profiling, concurrency review, or broad refactoring, hand it to a dedicated code-review lens and keep `skill-architect` focused on skill quality, evidence, and verification path.

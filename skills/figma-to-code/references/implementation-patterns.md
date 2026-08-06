@@ -20,7 +20,9 @@ If a request mixes commands, choose order from the user's intent instead of appl
 
 Ask for confirmation before writing durable rule files or submitting mappings when the user's wording is exploratory.
 
-## Desktop MCP vs Remote MCP
+## Remote MCP first; Desktop when needed
+
+Prefer Figma's Remote MCP for most users and durable URL-based workflows. It avoids depending on a locally open Figma Desktop selection and is the default for shared links, automation, and repository work. Use Desktop MCP when the user explicitly says "the selected frame," needs selection-based access in the open desktop app, or their organization/plan requires the desktop path.
 
 Desktop MCP can usually operate from the current Figma Desktop selection. When the user says "use the selected frame" and no URL is provided, call the relevant tool without `fileKey` if the schema supports selection-based access. If the tool asks for `nodeId`, pass the selected node ID in the format the tool expects.
 
@@ -37,6 +39,23 @@ Remote MCP needs a durable Figma target. Prefer passing the full Figma URL when 
 Branch URLs use the shape `https://www.figma.com/design/:fileKey/branch/:branchKey/:fileName?node-id=42-15`. Preserve the full URL when the tool accepts URLs. On the first attempt, do not pass `branchKey` as `fileKey`. If a remote tool that requires separate `fileKey` and `nodeId` returns file-not-found or invalid file access, retry once with **`branchKey` as `fileKey`**. If the server does not expose branch parameters, use the desktop selection inside the branch or ask for a canonical node URL from the intended branch.
 
 Links without `node-id` require an intent check. Desktop MCP can use the selected node in the open file. Remote MCP should ask for a specific frame/component node URL unless the user explicitly asks to inspect the whole file first. Prototype links without a node may point to a flow, not an implementation frame; ask the user to select or share the exact source frame before coding.
+
+### Current capability routing
+
+Inspect the connected server schema first; tool availability depends on server, plan, seat, and rollout. Use these official roles when present:
+
+| Capability/tool role | Route |
+|---|---|
+| `get_design_context`, `get_metadata`, `get_screenshot`, `get_variable_defs` | Core repository implementation, decomposition, visual source, and token mapping |
+| `get_motion_context` | Prototype transitions, motion intent, interaction timing, and implementation notes; do not infer animation solely from static layers |
+| `get_libraries` | Inventory libraries available to the authenticated user before selecting reusable sources |
+| `search_design_system` | Search components, styles, and variables across the available design system instead of recreating them |
+| `download_assets` | Export durable image/SVG assets through the repository's asset pipeline; validate returned files and paths |
+| Make-aware `get_design_context` | Inspect Figma Make resources and translate the result into repository code under the same repo-first boundary |
+| `get_context_for_code_connect` | Gather mapping-specific component context before Code Connect decisions |
+| `use_figma` | Out of scope here: load the host's first-party Figma write skill and require explicit user authorization before changing Figma |
+
+If a named tool is absent, use the closest read-only capability and report the fidelity gap. Never improvise a write call or scrape Figma's web UI.
 
 ## Asset Rules
 
@@ -71,6 +90,8 @@ Use the active server schema; tool names below are the common Figma MCP set.
 | `get_metadata` | Frame has many children or prior context truncated | Single small component with complete context |
 | `get_variable_defs` | Tokens/variables needed for colors, spacing, type | Unit uses only existing project tokens |
 | `get_screenshot` | Visual source of truth for implement or correction | Never skip for implement unless user accepts reduced fidelity |
+| `get_motion_context` | Target includes prototype transitions or motion behavior | Static component with no interaction/motion requirement |
+| `get_libraries` / `search_design_system` | Reuse across published libraries is part of the task | Target and repository component mapping are already known |
 
 Run independent analysis calls in parallel when the host supports it.
 
@@ -97,7 +118,7 @@ For **N** implementation units under one frame:
 - **Single component or card:** one `get_design_context`; no metadata pass unless truncated.
 - **Page or dashboard:** metadata first → implement regions bottom-up or outside-in (layout shell → sections → atoms).
 - **Reuse:** if a Figma instance maps to an existing repo component via Code Connect, implement by extending that component — no duplicate context fetch.
-- **Rate limits:** if limited, prioritize metadata + screenshot on root, then context for the highest-risk regions only; document skipped regions.
+- **Rate limits:** use `whoami` when available to identify plan/seat context, then prioritize metadata + screenshot on root and context for the highest-risk regions only; document skipped regions after one narrowed retry.
 
 ## Correction Loop
 
@@ -212,7 +233,7 @@ Request: "Code Connect this component" or "map this Figma component to our Butto
 2. Check whether the host provides the **`figma-code-connect`** skill or another native Code Connect workflow. If so, use this skill to plan and validate mappings, then use `figma-code-connect` or the native workflow for template authoring and submission when the user approves.
 3. Confirm the Figma target is a component, component set, or instance of a published library component. Code Connect mapping is not for arbitrary frames.
 4. Confirm plan and access:
-   - Call `whoami` when available. Code Connect requires a Figma **Organization or Enterprise** plan; stop with a clear blocker on Free or Professional.
+   - Call `whoami` when available. Code Connect requires an eligible Figma **Organization or Enterprise** plan plus a **Dev or Full seat**; stop with a clear blocker when plan or seat is ineligible.
    - Figma MCP server is connected.
    - Code Connect tools are available, or the host's native Code Connect workflow is available.
    - The user can access the Figma library and the code repository.

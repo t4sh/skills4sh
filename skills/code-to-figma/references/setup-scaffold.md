@@ -11,7 +11,7 @@ Produce the following files. Adapt all paths, class selectors, token prefix maps
 The project-specific walker. Use the reference implementation in [`references/walker-patterns.md`](walker-patterns.md) as the template.
 
 Key functions to adapt:
-- **`tokenPath(name)`** — maps CSS custom property names to W3C DTCG-style slash paths. Derive from the token naming convention found in step 1. Every prefix pattern must be listed; use `semantic/${name}` as the catch-all.
+- **`tokenPath(name)`** — maps CSS custom property names to DTCG slash paths. Derive it from the token naming convention found in step 1. Every prefix pattern must be listed; a `semantic/${name}` catch-all still requires an explicit `$type` mapping for every semantic token.
 - **`parseClassVarMap(css)`** — framework-agnostic; copy verbatim from the reference.
 - **`buildUtilityMap(themeVars)`** — Tailwind v4 only. If the project uses custom CSS, omit this and rely solely on `parseClassVarMap`.
 - **`walkNodes(parent, ...)`** — adapt `TEXT_TAGS` and depth limit to the project's markup conventions.
@@ -19,11 +19,11 @@ Key functions to adapt:
 
 Output contract: `process.stdout.write(JSON.stringify({ meta, sections }, null, 2) + '\n')` — see [`references/figma-export-contract.md`](figma-export-contract.md).
 
-#### `scripts/tokens-to-figma/convert-to-w3c.mjs`
+#### `scripts/tokens-to-figma/convert-to-dtcg.mjs`
 
-Reads the project's CSS custom properties and emits a W3C DTCG JSON file (`<project>-tokens.w3c.json`) beside the script. The `tokenPath()` function here must match the one in the walker exactly. Use the reference in [`references/walker-patterns.md`](walker-patterns.md).
+Reads the project's CSS custom properties and emits a DTCG Format 2025.10 JSON file (`<project>-tokens.w3c.json`) beside the script. The `tokenPath()` function must match the walker exactly, and the project must provide explicit token-type mappings. Unsupported types, values, aliases, or path conflicts must fail the build instead of emitting a mislabeled artifact. Use the reference in [`references/walker-patterns.md`](walker-patterns.md).
 
-Generate the file during setup with `node scripts/tokens-to-figma/convert-to-w3c.mjs`, inspect the diff, and commit the `.w3c.json` output to the repo — it is the human-readable diff target for token changes.
+Generate the file during setup with `node scripts/tokens-to-figma/convert-to-dtcg.mjs`, inspect the structured-value diff, and commit the `.w3c.json` output to the repo — it is the human-readable diff target for token changes.
 
 #### `scripts/tokens-to-figma/push-to-figma.mjs`
 
@@ -51,7 +51,7 @@ Saved at the repo root. Records the frozen config so CI can run headlessly.
 Add to the project's `package.json`:
 
 ```json
-"figma:tokens": "node scripts/tokens-to-figma/convert-to-w3c.mjs",
+"figma:tokens": "node scripts/tokens-to-figma/convert-to-dtcg.mjs",
 "figma:export": "node scripts/figma-export/walk-<site>.mjs",
 "figma:sync":   "node scripts/figma-export/walk-<site>.mjs | node scripts/tokens-to-figma/push-to-figma.mjs"
 ```
@@ -61,7 +61,7 @@ Add to the project's `package.json`:
 Run the converter once during setup, before the first sync:
 
 ```bash
-node scripts/tokens-to-figma/convert-to-w3c.mjs
+node scripts/tokens-to-figma/convert-to-dtcg.mjs
 git status --short -- scripts/tokens-to-figma/*.w3c.json
 ```
 

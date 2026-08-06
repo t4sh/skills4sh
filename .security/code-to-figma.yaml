@@ -4,7 +4,7 @@
 
 skill:
   name: code-to-figma
-  version: "0.1.5"
+  version: "0.2.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,12 +14,12 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 3e1e4f45edd0e440182285fd96b6adb70e16a38296415a913073c85a37270d79
+    SKILL.md: 4ee5ba915b13f4c5ad5e5dacc094bff0531ff5e5b4dd545fed2c3650ce827ef3
     references/benchmarks.md: 4bbf828e6ba2db5b2248fe557d7efda92d7da14a84dc0e72beb01e2b6d7bf9fe
-    references/ci-and-gist-setup.md: 3ef04f995e75f7463ce09cb97c1757de45c520514c1b03c56f0d507ea248adcb
-    references/figma-export-contract.md: 08e0cc4939a35249077438662e90c00ab2d1513e52c375bfb4636166ee991bb8
-    references/setup-scaffold.md: ac9da85a36ccc2852f67477600fd6d996238dee556e00ea88fd9516acdbc15f4
-    references/walker-patterns.md: e6e70b38827d105f245ce3b30535bd697be019de900a8c0c870ae6361a3cf5b9
+    references/ci-and-gist-setup.md: 23e18f12584a1f04d90916e520fad19ca5f996f7200f7033f8f37c3081c1ac54
+    references/figma-export-contract.md: d30625fb0b943185da62bb3953702eafd1755a20ba4770570fab6c64cfc668f6
+    references/setup-scaffold.md: 0e9af03c3f089bc1c971e60f8a51f052ec64d1f583ab7221421e46bdc1008a92
+    references/walker-patterns.md: 5219dcd74ec251cca055deacd518a3343fb81eaad5dbfe45b0b882c5cb1f3718
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; script generation, CLI calls, and Gist writes are all gated by user approval at runtime"

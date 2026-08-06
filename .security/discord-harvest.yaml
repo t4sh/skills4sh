@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "1.7.7"
+  version: "2.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -14,12 +14,12 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 091c22b9cc4ee321c2ae9a379fcd6c68d37da0bf70998b225765dcdb16d3217f
+    SKILL.md: 4210edc0a225c379ce297743e15bbd799c54a2b7fc307d7636d22bb108c2bad5
     assets/icon.svg: 1a98cde7a434820fea4d55c74d99b2112fb3022d5cd18067ec1eb3d8c411becc
-    references/code-examples.md: b3c80680674c9afec473a4ea3bd1d4ce80b5f7052129d825fb9c7a94c54f06f8
-    references/design-philosophy.md: ce6d26ed9957a8416a2579d2b497b012614fa50d12994b29484a42a50a07a0d9
+    references/code-examples.md: 7661097e9ec57c9589ff3e28bc6028c77ade721579cfd696c4011894a64a9144
+    references/design-philosophy.md: 349195ab8d1cf6c5e74e9071e2d85051ea78c868411ac8d638df98214b36c64a
     references/folder-structure.md: 7b68013011a62d078cadc1dacfc27c2b64132c7f319d7696afd7c1bb20b6b932
-    references/troubleshooting.md: 4d167f38ed52b162be780c1bf8cd426ceb63761f05b4de1aa2e163725fc46f0c
+    references/troubleshooting.md: cf2df2c0afc0ac8a96722b41ec4a301f1af7d136f65dc86803b32f2956ed56e1
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
@@ -35,7 +35,7 @@ dependencies:
   - name: discord-bot-token
     type: credential
     optional: true
-    reason: "Required only for server channel extraction (Path A); DM extraction uses browser"
+    reason: "Required only for authorized server-channel extraction (Path A); account/DM paths use a user-provided Discord Data Package or manually exported local files and never automate Discord Web"
 
 scanning:
   guardskills: SAFE
