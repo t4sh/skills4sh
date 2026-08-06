@@ -123,10 +123,10 @@ describe("skill-standard-check — frontmatter contract", () => {
 });
 
 describe("skill-standard-check — body and install-command gates", () => {
-  test("install-this-skill sections and version-qualified npx skills add commands are rejected", async () => {
+  test("install-this-skill sections and npx skills add commands are rejected", async () => {
     const dir = setupTmp();
     try {
-      await buildFixture(dir, `${VALID_SKILL}\n## Installation\n\n\`\`\`bash\nnpx skills@latest add t4sh/skills4sh --skill demo\n\`\`\`\n`);
+      await buildFixture(dir, `${VALID_SKILL}\n## Installation\n\n\`\`\`bash\nnpx skills add t4sh/skills4sh --skill demo\n\`\`\`\n`);
       const { errors } = await runSkillStandardChecks(dir);
       assert.ok(errors.some((e) => e.includes("must not contain an install-this-skill section")), errors.join("\n"));
       assert.ok(errors.some((e) => e.includes("must not embed 'npx skills add' install commands")), errors.join("\n"));

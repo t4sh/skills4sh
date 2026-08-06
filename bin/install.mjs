@@ -656,7 +656,7 @@ function parseArgs(argv) {
     // npm's --yes prompt).
     else if (a === "-y" || a === "--yes") out.yes = true;
     // npm's --global must appear before the package name; if a user passes
-    // it trailing we tolerate it as a no-op so `npx skills@latest add <repo> -g`
+    // it trailing we tolerate it as a no-op so `npx skills add <repo> -g`
     // doesn't error.
     else if (a === "-g" || a === "--global") {
       /* no-op */
