@@ -23,14 +23,14 @@ These skills are plain [Agent Skills](https://agentskills.io/specification): eac
 Recommended install path:
 
 ```bash
-npx skills add t4sh/skills4sh                                # install all skills
-npx skills add t4sh/skills4sh --skill agent-memory           # only agent-memory
-npx skills add t4sh/skills4sh --skill code-to-figma          # only code-to-figma
-npx skills add t4sh/skills4sh --skill discord-harvest        # only discord-harvest
-npx skills add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nunjucks
-npx skills add t4sh/skills4sh --skill figma-to-code          # only figma-to-code
-npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
-npx skills add t4sh/skills4sh --skill skill-architect        # only skill-architect
+npx skills@latest add t4sh/skills4sh                                # install all skills
+npx skills@latest add t4sh/skills4sh --skill agent-memory           # only agent-memory
+npx skills@latest add t4sh/skills4sh --skill code-to-figma          # only code-to-figma
+npx skills@latest add t4sh/skills4sh --skill discord-harvest        # only discord-harvest
+npx skills@latest add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nunjucks
+npx skills@latest add t4sh/skills4sh --skill figma-to-code          # only figma-to-code
+npx skills@latest add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
+npx skills@latest add t4sh/skills4sh --skill skill-architect        # only skill-architect
 ```
 
 Re-running the same command is safe and can be used to sync the installed skill copy with this repository.
