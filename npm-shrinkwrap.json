@@ -8,9 +8,6 @@
       "name": "skills4sh",
       "version": "0.5.0",
       "license": "MIT",
-      "dependencies": {
-        "undici": "6.28.0"
-      },
       "bin": {
         "skills4sh": "bin/install.mjs"
       },
