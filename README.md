@@ -23,14 +23,14 @@ These skills are plain [Agent Skills](https://agentskills.io/specification): eac
 Recommended install path:
 
 ```bash
-npx skills add t4sh/skills4sh                                # install all skills
-npx skills add t4sh/skills4sh --skill agent-memory           # only agent-memory
-npx skills add t4sh/skills4sh --skill code-to-figma          # only code-to-figma
-npx skills add t4sh/skills4sh --skill discord-harvest        # only discord-harvest
-npx skills add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nunjucks
-npx skills add t4sh/skills4sh --skill figma-to-code          # only figma-to-code
-npx skills add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
-npx skills add t4sh/skills4sh --skill skill-architect        # only skill-architect
+npx skills@latest add t4sh/skills4sh                                # install all skills
+npx skills@latest add t4sh/skills4sh --skill agent-memory           # only agent-memory
+npx skills@latest add t4sh/skills4sh --skill code-to-figma          # only code-to-figma
+npx skills@latest add t4sh/skills4sh --skill discord-harvest        # only discord-harvest
+npx skills@latest add t4sh/skills4sh --skill eleventy-nunjucks      # only eleventy-nunjucks
+npx skills@latest add t4sh/skills4sh --skill figma-to-code          # only figma-to-code
+npx skills@latest add t4sh/skills4sh --skill localhost-screenshots  # only localhost-screenshots
+npx skills@latest add t4sh/skills4sh --skill skill-architect        # only skill-architect
 ```
 
 Re-running the same command is safe and can be used to sync the installed skill copy with this repository.
@@ -38,7 +38,7 @@ Re-running the same command is safe and can be used to sync the installed skill 
 For a noninteractive global/user-level install, pass the target agent explicitly:
 
 ```bash
-npx skills add t4sh/skills4sh -g -a codex -y
+npx skills@latest add t4sh/skills4sh -g -a codex -y
 ```
 
 Replace `codex` with your agent/runtime name when supported, such as `amp`, `cline`, `kimi-code-cli`, `opencode`, `warp`, or `zed`. The exact reload/restart behavior depends on the agent.
@@ -46,13 +46,13 @@ Replace `codex` with your agent/runtime name when supported, such as `amp`, `cli
 ### Uninstall
 
 ```bash
-npx skills remove agent-memory                               # remove agent-memory
-npx skills remove code-to-figma                              # remove code-to-figma
-npx skills remove discord-harvest                            # remove discord-harvest
-npx skills remove eleventy-nunjucks                          # remove eleventy-nunjucks
-npx skills remove figma-to-code                              # remove figma-to-code
-npx skills remove localhost-screenshots                      # remove localhost-screenshots
-npx skills remove skill-architect                           # remove skill-architect
+npx skills@latest remove agent-memory                               # remove agent-memory
+npx skills@latest remove code-to-figma                              # remove code-to-figma
+npx skills@latest remove discord-harvest                            # remove discord-harvest
+npx skills@latest remove eleventy-nunjucks                          # remove eleventy-nunjucks
+npx skills@latest remove figma-to-code                              # remove figma-to-code
+npx skills@latest remove localhost-screenshots                      # remove localhost-screenshots
+npx skills@latest remove skill-architect                           # remove skill-architect
 ```
 
 Add `-g` to remove from global/user scope. `skills remove --all` is intentionally **not** listed: it can remove skills beyond this repository, depending on the installer and destination.

@@ -8,6 +8,9 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+### Changed
+- Standardized generic installer examples on `npx skills@latest`.
+
 ## [0.5.0] — 2026-08-06
 
 ### Changed
