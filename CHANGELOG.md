@@ -8,8 +8,14 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.5.1] — 2026-08-07
+
 ### Changed
 - Standardized generic installer examples on `npx skills@latest`.
+- Bumped package and plugin metadata to 0.5.1.
+
+### Security
+- Updated the exact-pinned optional `undici` dependency from 6.27.0 to 6.28.0 while preserving optional-only shrinkwrap metadata.
 
 ## [0.5.0] — 2026-08-06
 
@@ -357,7 +363,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/t4sh/skills4sh/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/t4sh/skills4sh/compare/v0.4.14...v0.5.0
 [0.4.14]: https://github.com/t4sh/skills4sh/compare/v0.4.13...v0.4.14
 [0.4.13]: https://github.com/t4sh/skills4sh/compare/v0.4.12...v0.4.13

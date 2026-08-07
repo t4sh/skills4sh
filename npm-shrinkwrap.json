@@ -1,12 +1,12 @@
 {
   "name": "skills4sh",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "skills4sh",
-      "version": "0.5.0",
+      "version": "0.5.1",
       "license": "MIT",
       "bin": {
         "skills4sh": "bin/install.mjs"
@@ -15,13 +15,13 @@
         "node": ">=22"
       },
       "optionalDependencies": {
-        "undici": "6.27.0"
+        "undici": "6.28.0"
       }
     },
     "node_modules/undici": {
-      "version": "6.27.0",
-      "resolved": "https://registry.npmjs.org/undici/-/undici-6.27.0.tgz",
-      "integrity": "sha512-YmfV3YnEDzXRC5lZ2jWtWWHKGUm1zIt8AhesR1tens+HTNv+YZlN/dp6G727LOvMJ8xjP9Be7Y2Sdr96LDm+pg==",
+      "version": "6.28.0",
+      "resolved": "https://registry.npmjs.org/undici/-/undici-6.28.0.tgz",
+      "integrity": "sha512-LIY910g9TI13YS95lrMFrs8Rm/u/irgHeTWoKCoteeJ04CUJ92eEfj0rVn+7VKMPBpUPiUoBKfhNyLI23EE/KA==",
       "license": "MIT",
       "optional": true,
       "engines": {
