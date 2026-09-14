@@ -82,8 +82,10 @@ grep -rE "async.*=>" src/_data/ .eleventy.js
 cat package.json | grep packageManager
 # pnpm — use pnpm; npm — use npm; bun — use bun
 
-# If the package manager is correct but node_modules is stale or partial, reinstall with it
-node -e "require('fs').rmSync('node_modules', { recursive: true, force: true })"
+# Inspect the declared and resolved package before reinstalling.
+pnpm why @11ty/eleventy
+pnpm exec eleventy --version
+# Use the existing manager's locked install only after diagnosing a partial install.
 pnpm install --frozen-lockfile      # or npm ci / bun install --frozen-lockfile
 ```
 
@@ -178,7 +180,7 @@ return {
 
 ```bash
 # Count open vs end for each block type in the affected file
-for kw in if for block macro autoescape raw call; do
+for kw in if for block macro raw call; do
   open=$(grep -cE "{%[- ]*$kw\b" path/to/file.njk)
   close=$(grep -cE "{%[- ]*end$kw\b" path/to/file.njk)
   [ "$open" != "$close" ] && echo "$kw mismatch: $open / $close"
@@ -189,26 +191,28 @@ done
 
 ### Macro doesn't see `page` or `site` variables
 
-**Cause:** `{% import %}` doesn't inherit scope.
+**Cause:** `{% import %}` doesn't inherit scope. A macro that reads a free variable such as `page` or `site` without receiving it as a parameter gets `undefined`.
 
-**Fix:**
+**Fix — pass the value explicitly (preferred):**
 
 ```nunjucks
-{# ❌ #}
-{% import "macros/page-link.njk" as nav %}
-{{ nav.pageLink() }}        {# `page` undefined inside the macro #}
-
-{# ✅ #}
-{% import "macros/page-link.njk" as nav with context %}
-{{ nav.pageLink() }}
+{# macros/page-link.njk #}
+{% macro pageLink(page) %}<a href="{{ page.url }}">Current page</a>{% endmacro %}
 ```
-
-Or pass the variable explicitly:
 
 ```nunjucks
 {% from "macros/page-link.njk" import pageLink %}
-{{ pageLink(page) }}        {# pass page as arg #}
+{{ pageLink(page) }}        {# ✅ — page arrives as an argument #}
 ```
+
+**Fix — or import the whole context:**
+
+```nunjucks
+{% import "macros/page-link.njk" as nav with context %}
+{{ nav.pageLink() }}        {# ✅ — only when the macro reads page/site as a free variable #}
+```
+
+Passing arguments and importing context are separate valid choices; see `nunjucks-syntax.md` § The `with context` trap.
 
 ### Autoescape surprises — something escapes that shouldn't
 
@@ -440,9 +444,9 @@ document.addEventListener("site:before-page-unload", destroy);
 
 ### `version-banner.js` fires constantly
 
-**Cause:** Polling `/version.json` from inline JS via `fetch` is hitting CORS preflight in CSP'd contexts.
+**Diagnosis:** Check the network request, response cache headers, polling interval, and SHA comparison. Same-origin GET requests do not acquire a CORS preflight merely because CSP is enabled. A cross-origin request may additionally need CORS and `connect-src` permission.
 
-**Fix:** Use a `<meta name="site-build-sha">` tag and read on each navigation, rather than fetching JSON:
+**Optional alternative:** Read build metadata on navigation if the product only needs update detection then. This does not detect a deployment while the user remains on the same page:
 
 ```nunjucks
 <meta name="site-build-sha" content="{{ build.sha }}" />
@@ -462,7 +466,7 @@ const currentSha = document.querySelector('meta[name="site-build-sha"]').content
 **Common culprits:**
 
 1. `markdown-it` plugins — each adds overhead
-2. Async filters used in many templates — they serialize the render
+2. Async filters used in many templates — repeated work or sequential loops can dominate
 3. `_data/*.js` doing slow IO on every build
 4. Passthrough copy of `node_modules/` or other large directories
 
@@ -482,7 +486,8 @@ DEBUG=Eleventy:* pnpm build 2>&1 | grep -E "render|copy" | head -20
 **Cause:** 11ty rebuilds the entire site on every change, including unaffected pages.
 
 **Mitigations:**
-- Eleventy v3 incremental builds are mostly automatic; check there's no `--ignore-initial` style flag overriding it
+- Opt in with `eleventy --serve --incremental` or the project’s equivalent config. `--ignore-initial` skips the startup build; it does not disable incremental mode.
+- Incremental dependency tracking has limits, including Nunjucks include dependencies. Verify changed layouts/includes and collection consumers, and keep a full build as the publication gate. See [incremental builds](https://www.11ty.dev/docs/usage/incremental/).
 - Reduce `addWatchTarget` scope to just the files that actually require rebuilds
 - Move large data sets to async-cached files
 

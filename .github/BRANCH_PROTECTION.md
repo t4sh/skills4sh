@@ -62,4 +62,4 @@ Same pattern applies if you ever need to retire / replace a required check entir
 4. Commit and push the snapshot via direct push (now allowed)
 5. Re-enable `enforce_admins`
 
-Publishing is allowed only from an annotated signed `vX.Y.Z` tag that points at the workflow checkout commit. `npm-publish.yml` verifies the tag before publish and verifies npm registry metadata after publish, including `_hasShrinkwrap`, `gitHead`, and provenance attestation.
+Publishing is allowed only from an annotated signed `vX.Y.Z` tag that points at the workflow checkout commit. `npm-publish.yml` verifies the tag before publish and verifies npm registry metadata after publish, including the pinned `undici` bundle declaration, `gitHead`, and provenance attestation.

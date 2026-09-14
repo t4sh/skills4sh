@@ -186,7 +186,7 @@ function hasConcreteTriggerDetail(description) {
   const separators = (description.match(/,|;|\bor\b/gi) ?? []).length;
   return /"[^"\n]{3,}"/.test(description)
     || /`[^`\n]+`/.test(description)
-    || /\b[\w.-]+\.(?:md|mdx|js|mjs|cjs|ts|tsx|jsx|py|json|ya?ml|toml|njk|html|css)\b/i.test(description)
+    || /\b[\w.-]+\.(?:md|mdx|js|mjs|cjs|ts|tsx|jsx|py|json|ya?ml|toml|njk|html|css|csv)\b/i.test(description)
     || /\bwhen paths? include\b|\bor mentions\b|\bwhen debugging\b|\bwhen working on\b/i.test(description)
     || (separators >= 2 && countWords(description) >= 12);
 }

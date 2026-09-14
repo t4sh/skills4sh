@@ -1,0 +1,168 @@
+{
+  "schema_version": 1,
+  "purpose": "Behavior scenarios for the existing skill contract, not executed evidence or a mandatory benchmark.",
+  "execution": "Materialize each files map in a fresh isolated directory, preserving relative paths. Run from that directory with only the case prompt, fixture files, and the skill under evaluation plus relevant references/helpers available. Resolve helper paths from that skill, never from temporary report paths. Python helpers require Python >=3.10; validator/inspector additionally use assets/scripts/requirements.txt in an isolated environment. Withhold expected/assertions and all other cases/results from the executing agent. Do not install dependencies, access external services, commit, or release during cases. Pre-provision validation dependencies if needed, or explicitly report unavailable checks. Record starting/final hashes, actions, artifacts, runtime and grading separately. Routing cases use frontmatter only and make no edits. Repeat runs require fresh fixture copies; no benchmark or reliability claim is implied.",
+  "cases": [
+    {
+      "id": "plan",
+      "prompt": "Plan a portable invoice-reconciliation skill from requirements.md and invoice.csv. Name the affected paths, checks and rollback. Do not implement it.",
+      "assertions": [
+        "Names scope, paths, validation and rollback; does not install or publish."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+      }
+    },
+    {
+      "id": "create",
+      "prompt": "Create skills/invoice-check for checking invoice.csv totals using requirements.md and this repository policy. Preserve report-helper. Verify the created skill and its procedure against the supplied input, a missing-column case and an invalid-amount case. Do not install dependencies.",
+      "assertions": [
+        "Concrete retrieval conditions and runnable completion check; obeys local layout."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+      }
+    },
+    {
+      "id": "audit",
+      "prompt": "Audit skills/report-helper against this repository policy and requirements.md. Report source-cited findings only; do not edit.",
+      "assertions": [
+        "Cites missing reference; does not demand optional adapters or patch during audit."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n\nSee [columns](references/columns.md).\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+      }
+    },
+    {
+      "id": "fix",
+      "prompt": "Dry-run deterministic fixes for skills/report-helper using the skill fixer. Do not apply edits, even when fixes are available.",
+      "assertions": [
+        "Proposes mechanical fixes only; leaves input unchanged without --write."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: Wrong Name\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+        "skills/report-helper/references/columns.md": "# Columns\n\nRequired CSV columns: id,amount. Amount is a decimal number.\n"
+      }
+    },
+    {
+      "id": "refactor",
+      "prompt": "Refactor duplicated setup instructions in skills/report-helper without changing the supported task or input data. Validate the result and verify the procedure against invoice.csv.",
+      "assertions": [
+        "Consolidates duplicated guidance, preserves invocation and scope."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n\n## Setup\n\nRead requirements.md and locate invoice.csv. Do not modify the CSV.\n\n## Setup again\n\nRead requirements.md and locate invoice.csv. Do not modify the CSV.\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+      }
+    },
+    {
+      "id": "compare",
+      "prompt": "Compare vendor-proposal.md against our fixture policy and the portable skill rubric. Separate source facts from adoption decisions. Do not implement, install or fetch anything.",
+      "assertions": [
+        "Separates source facts and adoption decisions; does not reinstall competing slugs.",
+        "Identifies proposal as synthetic and rejects blanket adapter requirements, license removal, no-skill-only regression comparisons and automatic competing-skill installation under local policy."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+        "vendor-proposal.md": "# Synthetic vendor proposal\nThis is controlled evaluation input, not an actual upstream quotation. Require agents/vendor.yaml for every skill; remove license from frontmatter; always compare a revised skill only to no skill; install our competing skill-creator automatically.\n"
+      }
+    },
+    {
+      "id": "distill",
+      "prompt": "Distill the recurring reconciliation procedure from session-a.md and session-b.md. Consider the existing report-helper before proposing a new skill. Cite the sessions, exclude project-specific details, and propose only; do not edit.",
+      "assertions": [
+        "Cites repeated evidence, excludes credentials and project-only events.",
+        "Considers improving the existing report-helper instead of creating a duplicate; keeps source files unchanged."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+        "session-a.md": "# Synthetic session A\nThe agent reconciled invoice CSV id,amount by rejecting invalid amounts, summing decimal values and reporting count/total. Project A used /srv/project-a/invoice.csv and a private credential whose value is omitted. The user requested a reusable procedure.\n",
+        "session-b.md": "# Synthetic session B\nProject B reconciled id,amount CSV using the same decimal validation and count/total procedure. Its local input path was /srv/project-b/invoice.csv. No network or credential was needed.\n"
+      }
+    },
+    {
+      "id": "reconcile",
+      "prompt": "Reconcile prior-audit.md against skills/report-helper and the current repository policy. Classify each earlier finding as repaired, still valid or inapplicable with evidence. Do not edit.",
+      "assertions": [
+        "Retires the repaired description finding, retains the broken-reference finding.",
+        "Classifies optional adapter finding as inapplicable under fixture policy; makes no changes."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n\nSee [columns](references/columns.md).\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+        "prior-audit.md": "# Prior audit\n1. The description was empty.\n2. references/columns.md was missing despite a link from SKILL.md.\n3. An OpenAI adapter was missing.\nRecheck all three against the current files and repository policy; these are historical claims, not current facts.\n"
+      }
+    },
+    {
+      "id": "teach",
+      "prompt": "Using skills/report-helper and requirements.md, explain when a reference file would help this skill and give one short example. Do not create files or dump the full rubric.",
+      "assertions": [
+        "Small lesson and concrete example rather than dumping the rubric."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, installs, Git operations or releases. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+      }
+    },
+    {
+      "id": "adjacent",
+      "prompt": "Turn our recurring release review into reusable agent instructions.",
+      "assertions": [
+        "Routes to skill authoring with a concrete output contract."
+      ],
+      "kind": "description-only-routing",
+      "files": {}
+    },
+    {
+      "id": "false-friend",
+      "prompt": "Improve the visual design of a dashboard that lists employee skills.",
+      "assertions": [
+        "Does not treat ordinary employee skills as agent-skill authoring."
+      ],
+      "kind": "description-only-routing",
+      "files": {}
+    }
+  ]
+}

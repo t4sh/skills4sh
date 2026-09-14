@@ -19,40 +19,40 @@ DUPLICATE_SECTION_WORDS = 75
 REQUIRED_TOP = {"name", "description"}
 
 
-def unquote_scalar(value: str) -> str:
-    """Remove one layer of matching surrounding quotes and unescape the body.
-
-    Quotes are handled as a single matched pair so an already-escaped value such
-    as ``\\"create X\\"`` is not mangled into doubled backslashes.
-    """
-    value = value.strip()
-    if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
-        inner = value[1:-1]
-        if value[0] == '"':
-            return inner.replace('\\"', '"').replace("\\\\", "\\")
-        return inner.replace("''", "'")
-    return value
-
-
-def parse_frontmatter(text: str) -> tuple[dict[str, str], int] | tuple[None, int]:
+def parse_frontmatter(text: str) -> tuple[dict[str, object], int] | tuple[None, int]:
     match = re.match(r"^---\n([\s\S]*?)\n---\n?", text)
     if not match:
         return None, 0
-    fields: dict[str, str] = {}
-    in_metadata = False
-    for raw in match.group(1).splitlines():
-        if not raw.strip() or raw.lstrip().startswith("#"):
-            continue
-        top = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", raw)
-        if top:
-            key, value = top.groups()
-            fields[key] = unquote_scalar(value)
-            in_metadata = key == "metadata"
-            continue
-        nested = re.match(r"^\s+([A-Za-z0-9_-]+):\s*(.*)$", raw)
-        if nested and in_metadata:
-            key, value = nested.groups()
-            fields[f"metadata.{key}"] = unquote_scalar(value)
+    try:
+        import yaml
+    except ImportError as exc:
+        raise ValueError("PyYAML is required for validation; use the pinned assets/scripts/requirements.txt in an isolated Python environment") from exc
+
+    class UniqueSafeLoader(yaml.SafeLoader):
+        def construct_mapping(self, node, deep=False):
+            # Reject ambiguous duplicate declarations instead of silently taking
+            # the last value. SafeLoader never constructs Python objects.
+            self.flatten_mapping(node)
+            result = {}
+            for key_node, value_node in node.value:
+                key = self.construct_object(key_node, deep=deep)
+                if not isinstance(key, str):
+                    raise ValueError("YAML mapping keys must be strings")
+                if key in result:
+                    raise ValueError(f"duplicate YAML key: {key}")
+                result[key] = self.construct_object(value_node, deep=deep)
+            return result
+
+    try:
+        fields = yaml.load(match.group(1), Loader=UniqueSafeLoader)
+    except yaml.YAMLError as exc:
+        raise ValueError(f"invalid YAML frontmatter: {exc}") from exc
+    if not isinstance(fields, dict):
+        raise ValueError("YAML frontmatter must be a mapping")
+    metadata = fields.get("metadata")
+    if "metadata" in fields:
+        if not isinstance(metadata, dict) or any(not isinstance(v, str) for v in metadata.values()):
+            raise ValueError("metadata must map string keys to string values; quote versions and numeric values")
     return fields, match.end()
 
 
@@ -119,7 +119,7 @@ def has_concrete_trigger_detail(description: str) -> bool:
     return bool(
         re.search(r'"[^"\n]{3,}"', description)
         or re.search(r"`[^`\n]+`", description)
-        or re.search(r"\b[\w.-]+\.(?:md|mdx|js|mjs|cjs|ts|tsx|jsx|py|json|ya?ml|toml|njk|html|css)\b", description, re.I)
+        or re.search(r"\b[\w.-]+\.(?:md|mdx|js|mjs|cjs|ts|tsx|jsx|py|json|ya?ml|toml|njk|html|css|csv)\b", description, re.I)
         or re.search(r"\bwhen paths? include\b|\bor mentions\b|\bwhen debugging\b|\bwhen working on\b", description, re.I)
         or (separators >= 2 and len(re.findall(r"\b\S+\b", description)) >= 12)
     )
@@ -193,7 +193,10 @@ def validate(skill_dir: Path) -> list[str]:
     if not skill_md.exists():
         return ["missing SKILL.md"]
     text = skill_md.read_text(encoding="utf-8")
-    frontmatter, body_start = parse_frontmatter(text)
+    try:
+        frontmatter, body_start = parse_frontmatter(text)
+    except ValueError as exc:
+        return [str(exc)]
     if frontmatter is None:
         return ["missing YAML frontmatter"]
 
@@ -201,17 +204,31 @@ def validate(skill_dir: Path) -> list[str]:
     for field in sorted(missing):
         errors.append(f"missing frontmatter field: {field}")
 
-    name = frontmatter.get("name", "")
-    if name and name != skill_dir.name:
+    name = frontmatter.get("name")
+    if not isinstance(name, str) or not name.strip():
+        errors.append("name must be a non-empty string")
+    elif name != skill_dir.name:
         errors.append(f"frontmatter name {name!r} does not match directory {skill_dir.name!r}")
-    if name and not re.match(r"^[a-z0-9-]+$", name):
-        errors.append(f"name {name!r} must be lowercase kebab-case")
+    if isinstance(name, str) and (len(name) > 64 or not re.fullmatch(r"[a-z0-9]+(?:-[a-z0-9]+)*", name)):
+        errors.append("name must be 1-64 lowercase alphanumeric/hyphen characters with no leading, trailing, or consecutive hyphens")
 
-    description = frontmatter.get("description", "")
-    if description and not has_trigger_clause(description):
+    description = frontmatter.get("description")
+    if not isinstance(description, str) or not description.strip():
+        errors.append("description must be a non-empty string")
+    elif len(description) > 1024:
+        errors.append("description must be at most 1024 characters")
+    elif not has_trigger_clause(description):
         errors.append("description should include concrete trigger/use conditions, e.g. 'Capability. Use when ...' or 'Use when ...'")
-    elif description and not has_concrete_trigger_detail(description):
+    elif not has_concrete_trigger_detail(description):
         errors.append("description trigger/use conditions are too generic; include a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger")
+
+    for field, limit in (("compatibility", 500), ("license", None), ("allowed-tools", None)):
+        if field in frontmatter:
+            value = frontmatter[field]
+            if not isinstance(value, str) or not value.strip():
+                errors.append(f"{field} must be a non-empty string")
+            elif limit and len(value) > limit:
+                errors.append(f"{field} must be at most {limit} characters")
 
     body_words = body_word_count(text[body_start:])
     if body_words > MAX_BODY_WORDS:

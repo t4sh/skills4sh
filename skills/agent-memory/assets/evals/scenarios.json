@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "purpose": "Behavioral fixture catalog; expected assertions are not executed results.",
+  "execution": "Use isolated case directories. Materialize files, replace OUTPUT with the absolute case output directory, fix the stated date, withhold assertions and routing labels, and record observed results separately. Never use actual credentials or external services. Files named captured/capabilities/navigation/environment/observations are synthetic evidence, not live tool results. Browser and network cases test decisions only; report that limitation. Filesystem cases may modify only explicitly authorized fixture paths.",
+  "cases": [
+    {
+      "id": "init-preservation",
+      "prompt": "Initialize shared memory for Codex and Claude Code only. Preserve existing instructions. No replacement of substantive files has been approved.",
+      "files": {
+        "AGENTS.md": "# Project rules\nAlways run make verify before integration. Preserve this rule.\n",
+        "CLAUDE.md": "# Claude notes\nUse the project glossary.\n",
+        "native-memory/MEMORY.md": "Machine-local scratch; not shared memory.\n"
+      },
+      "assertions": [
+        "Preserves existing substantive entrypoint content; stages changes requiring approval rather than overwriting.",
+        "Does not alter vendor-native scratch or add Cursor-only files."
+      ]
+    },
+    {
+      "id": "migration-plan",
+      "prompt": "Inspect this legacy memory and propose exact migration steps. Do not move or replace files yet.",
+      "files": {
+        "CURSOR.md": "# Existing Cursor instructions\nKeep formatter settings unchanged.\n",
+        ".agent-memory/INDEX.yaml": "- id: project--overview\n  type: project\n",
+        ".agent-memory/project--overview.md": "---\nsummary: Existing architecture notes\n---\nKeep the original architecture fact.\n"
+      },
+      "assertions": [
+        "Lists source/destination moves, backup and confirmation boundary.",
+        "No mutation of legacy files; no content loss."
+      ]
+    },
+    {
+      "id": "save-sync",
+      "prompt": "Sync memory and save session.md. Use 2026-09-13 as today. Make only memory-file changes; no Git operations.",
+      "files": {
+        "session.md": "Confirmed decision: use SQLite for the offline prototype; revisit next Thursday. No user preference was established. A credential location was mentioned, but its value must never enter shared memory.\n",
+        ".agent-memory/index.yaml": "- id: project/overview\n  type: project\n- id: context/missing\n  type: context\n",
+        ".agent-memory/project/overview.md": "---\nid: project/overview\ntype: project\ntitle: Fixture\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nOffline prototype.\n",
+        ".agent-memory/conventions/format.md": "---\nid: conventions/format\ntype: convention\ntitle: Fixture\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nUse project formatter.\n"
+      },
+      "assertions": [
+        "Indexes existing unindexed memory, removes orphan index entry, saves supported decision.",
+        "Revisit date resolves to 2026-09-17, not a copied template date.",
+        "No invented user preference or secret value; existing facts retained."
+      ]
+    },
+    {
+      "id": "status-maintain",
+      "prompt": "Report memory status and maintenance recommendations as of 2026-09-13. Do not delete, archive, or change files.",
+      "files": {
+        ".agent-memory/index.yaml": "- id: context/sprint\n  type: context\n- id: sessions/old\n  type: session\n",
+        ".agent-memory/context/sprint.md": "---\nid: context/sprint\ntype: context\ntitle: Fixture\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\nexpires: 2026-09-01\n---\n\nTemporary sprint context.\n",
+        ".agent-memory/sessions/old.md": "---\nid: sessions/old\ntype: session\ntitle: Fixture\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-06-01\nupdated: 2026-06-01\nstatus: active\n---\n\nA useful older design lesson.\n"
+      },
+      "assertions": [
+        "Reports expiry and stale session, distinguishing explicit expiry from fallback age.",
+        "No deletion or archival without approval; suggests preservation of useful learning."
+      ]
+    },
+    {
+      "id": "build-from-docs",
+      "prompt": "Build initial project memory from README.md and architecture.md. Summarize supported facts; do not infer personal preferences.",
+      "files": {
+        "README.md": "# Small Notes\nAn offline notes prototype using SQLite. Tests run with make verify.\n",
+        "architecture.md": "# Decision\nUse SQLite because the prototype must work offline. Revisit synchronization when multi-device support is requested.\n"
+      },
+      "assertions": [
+        "Creates concise sourced project/decision memory and synchronized index.",
+        "No user preference or unrequested native-memory migration."
+      ]
+    },
+    {
+      "id": "retrieval",
+      "prompt": "Using only skill frontmatter, decide load/skip for each request.",
+      "prompts": [
+        {
+          "text": "Sync .agent-memory after our architecture decision.",
+          "load": true
+        },
+        {
+          "text": "Initialize cross-agent project memory.",
+          "load": true
+        },
+        {
+          "text": "Diagnose a memory leak in Node.",
+          "load": false
+        },
+        {
+          "text": "Explain how human short-term memory works.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "Labels withheld; report false positives and negatives separately. Not actual host discovery."
+      ]
+    },
+    {
+      "id": "relative-date-boundary",
+      "prompt": "Save the confirmed decision in session.md to shared project memory. The session date is 2027-01-01 UTC. Keep session.md unchanged; memory and index updates are authorized.",
+      "files": {
+        "session.md": "Confirmed: retain SQLite for the offline prototype; review the choice next Thursday.\n",
+        ".agent-memory/index.yaml": "[]\n"
+      },
+      "assertions": [
+        "Computes the review date as 2027-01-07 from the supplied session date, not current host date or a template.",
+        "Saves supported facts with indexed memory files; leaves session.md unchanged.",
+        "Does not materialize or run skill-author evals during the save task."
+      ]
+    }
+  ]
+}

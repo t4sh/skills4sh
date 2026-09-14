@@ -3,6 +3,7 @@
 
 import { readFile } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
+import { validatePublishedMetadata } from "./lib/published-package.mjs";
 
 const pkg = JSON.parse(await readFile("package.json", "utf8"));
 const version = pkg.version;
@@ -11,20 +12,8 @@ const MAX_ATTEMPTS = 12;
 const RETRY_DELAY_MS = 5_000;
 
 const view = await npmViewWithRetry(version);
-
-if (view._hasShrinkwrap !== true) {
-  throw new Error(`skills4sh@${version} registry metadata must have _hasShrinkwrap: true`);
-}
-
-if (view.gitHead && view.gitHead !== expectedGitHead) {
-  throw new Error(`skills4sh@${version} gitHead mismatch: expected ${expectedGitHead}, got ${view.gitHead}`);
-}
-
-if (!view.dist?.attestations?.provenance) {
-  throw new Error(`skills4sh@${version} is missing npm provenance attestation metadata`);
-}
-
-console.log(`✓ skills4sh@${version} has _hasShrinkwrap, gitHead, and provenance metadata`);
+validatePublishedMetadata(view, pkg, expectedGitHead);
+console.log(`✓ skills4sh@${version} has the pinned undici bundle, gitHead, and provenance metadata`);
 
 async function npmViewWithRetry(version) {
   let lastErr;

@@ -28,6 +28,12 @@ Never create a `vX.Y.Z` tag or GitHub release before the PR containing
 
 ## Prerequisites
 
+- Use npm 12.0.2, selected by `package.json#packageManager`, with Node 22.23.1
+  or a compatible newer release. CI installs the pinned npm version explicitly.
+- Run `npm ci --ignore-scripts --no-audit --no-fund` before packing. The root
+  `package-lock.json` controls the build dependency tree; `bundleDependencies`
+  carries `undici` into the tarball. npm 12 removed shrinkwrap support, so
+  consumers receive the bundled dependency instead of a published lockfile.
 - Local git can push tags to `origin`.
 - Local tag signing is enabled and verifiable.
 - `gh` is authenticated for `t4sh/skills4sh`.
@@ -157,6 +163,9 @@ Expected results:
 
 - npm version equals `package.json.version`.
 - npm `gitHead` equals the merged `main` commit that was tagged.
+- Registry metadata declares the exact pinned `undici` bundle. `check:pack`
+  verifies the tarball contents before publish, and the installation test
+  verifies that it installs with an empty cache in offline mode.
 - npm reports a verified registry signature.
 - npm reports a verified provenance attestation.
 
@@ -235,6 +244,7 @@ Expected result: no output.
 For a release PR, run the relevant local checks before pushing:
 
 ```bash
+npm ci --ignore-scripts --no-audit --no-fund
 npm run check:drift
 npm run check:pack
 npm test

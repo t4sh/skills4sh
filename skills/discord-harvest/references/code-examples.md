@@ -120,7 +120,7 @@ flag_suspicious() {
 }
 ```
 
-Run over every attachment filename and embed title during the staging step (A3/B4). Include matches in the summary report under a **Flagged Content** section.
+Run over every attachment filename and embed title during the staging step (A3/B2). Include matches in the summary report under a **Flagged Content** section.
 
 ### Download Commands
 

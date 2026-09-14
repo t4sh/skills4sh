@@ -66,15 +66,26 @@ jobs:
 
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          # Node 24 (active LTS) ships with npm 11.x, which has OIDC-based
-          # registry-PUT auth for Trusted Publisher. Node 22 ships with npm
-          # 10.9.x — it signs SLSA provenance via OIDC, but does NOT use
-          # OIDC to authenticate the publish itself, so the registry 404s
-          # under a token-less Trusted Publisher setup. validate.yml still
-          # tests installer code on Node 22 + 24; this is publish-runner-
-          # only, no consumer-facing change. (engines.node = ">=22".)
+          # Use a current Node 24 patch, then select the pinned npm 12 below.
+          # npm 12 supports OIDC Trusted Publishing and bundles dependencies
+          # in place of the removed shrinkwrap behavior.
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
+
+      - name: Install validation and render-test dependencies
+        run: |
+          npm install --global "$(node -p "require('./package.json').packageManager")" --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
+          python3 -m venv /tmp/skills4sh-python
+          /tmp/skills4sh-python/bin/python -m pip install --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
+          echo "SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python" >> "$GITHUB_ENV"
+          npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund
+
+      - name: Validate portable skill syntax and links
+        run: |
+          for skill_dir in skills/*/; do
+            "$SKILL_TEST_PYTHON" skills/skill-architect/assets/scripts/validate_skill.py "$skill_dir"
+          done
 
       - name: Pre-publish guards (mirrors local prepublishOnly + validate)
         env:
@@ -88,7 +99,7 @@ jobs:
           npm run check:drift
           npm run check:pack
 
-      - name: Run installer unit tests
+      - name: Run installer, helper, and snippet tests
         run: node --test tests/*.test.mjs
 
       - name: Publish to npm (OIDC Trusted Publisher + provenance)

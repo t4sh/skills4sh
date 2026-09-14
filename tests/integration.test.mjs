@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { spawn, spawnSync } from "node:child_process";
 import { computeSkillFolderHash } from "../bin/install.mjs";
+import { parsePackJson } from "../bin/lib/npm-pack.mjs";
 
 const root = resolve(".");
 const bin = join(root, "bin", "install.mjs");
@@ -386,15 +387,25 @@ test("packed tarball installs a working skills4sh binary", async () => {
       stdio: ["ignore", "pipe", "pipe"],
     });
     assert.equal(packed.status, 0, packed.stderr);
-    const [{ filename, files }] = JSON.parse(packed.stdout);
-    assert.ok(files.some((file) => file.path === "npm-shrinkwrap.json"));
+    const { filename, files } = parsePackJson(packed.stdout, "npm pack");
+    assert.ok(files.some((file) => file.path === "node_modules/undici/package.json"), "run npm ci before packing to install the bundled dependency");
 
-    const install = spawnSync("npm", ["install", "--prefix", app, join(dir, filename)], {
+    // An empty cache plus offline mode proves the dependency comes from the tarball.
+    const install = spawnSync("npm", ["install", "--prefix", app, "--offline", "--cache", join(dir, "cache"), "--ignore-scripts", "--no-audit", "--no-fund", join(dir, filename)], {
       cwd: root,
       encoding: "utf8",
       stdio: ["ignore", "pipe", "pipe"],
     });
     assert.equal(install.status, 0, install.stderr);
+    const installedRoot = join(app, "node_modules", "skills4sh");
+    const source = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+    const bundled = JSON.parse(await readFile(join(installedRoot, "node_modules", "undici", "package.json"), "utf8"));
+    assert.equal(bundled.version, source.optionalDependencies.undici);
+    const proxy = spawnSync(process.execPath, ["--input-type=module", "-e",
+      'import { ProxyAgent } from "./node_modules/undici/index.js"; if (typeof ProxyAgent !== "function") process.exit(1);'], {
+      cwd: installedRoot, encoding: "utf8",
+    });
+    assert.equal(proxy.status, 0, proxy.stderr);
 
     const help = spawnSync(join(app, "node_modules", ".bin", "skills4sh"), ["--help"], {
       cwd: app,

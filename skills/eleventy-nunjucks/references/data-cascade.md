@@ -38,8 +38,9 @@ module.exports = {
 
 **Computed data — highest priority:**
 
+Example: src/pages/pricing.njk
+
 ```yaml
-# src/pages/pricing.njk
 ---
 layout: layouts/page.njk
 title: Pricing
@@ -72,8 +73,9 @@ The template-level pattern is cleaner; use `eleventyComputed` when the final val
 "/assets/images/og/default.png"
 ```
 
+Example: src/pages/launch.njk — template frontmatter
+
 ```yaml
-# src/pages/launch.njk — template frontmatter
 ---
 ogImage: "/assets/images/og/launch-hero.png"
 ---

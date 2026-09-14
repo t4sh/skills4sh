@@ -179,14 +179,16 @@ Path is resolved at render time. Cached by string value, so vary in finite ways 
 ### The `with context` trap
 
 ```nunjucks
-{# By default, imported macros do NOT see the current scope. #}
-{% import "macros/page-link.njk" as nav %}
-{{ nav.pageLink(page) }}      {# ❌ — `page` is undefined inside the macro #}
-
-{# Fix — pass current context: #}
-{% import "macros/page-link.njk" as nav with context %}
-{{ nav.pageLink() }}          {# ✅ #}
+{# macros/page-link.njk: an explicit parameter needs no inherited context #}
+{% macro pageLink(page) %}<a href="{{ page.url }}">Current page</a>{% endmacro %}
 ```
+
+```nunjucks
+{% import "macros/page-link.njk" as nav %}
+{{ nav.pageLink(page) }}
+```
+
+If a macro instead reads a free variable such as `site.name` without receiving it as a parameter, import it `with context`. Passing arguments and importing context are separate valid choices.
 
 This differs from `{% include %}`, which always inherits scope.
 
@@ -257,19 +259,16 @@ To output literal `{{ }}` or `{% %}`:
 
 Common cases: code examples in documentation pages, embedded templates for downstream tooling.
 
-## `autoescape` blocks
+## Autoescaping
+
+Stock Mozilla Nunjucks 3.2.4 has no `{% autoescape %}` block tag. Configure autoescaping through the environment and use `safe` only for a reviewed, trusted HTML value:
 
 ```nunjucks
-{# Default: HTML escape applied to all {{ }} #}
-{{ "<b>x</b>" }}                          {# &lt;b&gt;x&lt;/b&gt; #}
-
-{# Disable for a block — rare, audit carefully #}
-{% autoescape false %}
-  {{ trusted_html }}                       {# raw output #}
-{% endautoescape %}
+{{ "<b>x</b>" }}                  {# &lt;b&gt;x&lt;/b&gt; with autoescape enabled #}
+{{ trusted_html | safe }}         {# intentional HTML insertion #}
 ```
 
-Prefer per-value `| safe` over `{% autoescape false %}` blocks — narrower blast radius.
+Custom autoescape extensions require their own documentation and tests. They are not a portable built-in API.
 
 ## Built-in filters — full table
 
@@ -324,7 +323,7 @@ Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFil
 
 **Eleventy v3 / Mozilla Nunjucks 3 constraints:**
 - Templates using async filters must be rendered through async render paths
-- Eleventy handles this automatically; standalone Nunjucks needs `env.render` with a callback or `renderString` returning a Promise
+- Eleventy handles this automatically; standalone Nunjucks needs a callback for `env.render` / `env.renderString`; neither automatically returns a Promise. Wrap the callback explicitly when using `await`
 - An async filter in a `{% for %}` loop without `asyncEach`/`asyncAll` will fail
 - Keep async filters local and deterministic. Network refresh belongs in an explicit prebuild step that writes validated JSON for templates to consume.
 

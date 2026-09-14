@@ -5,7 +5,6 @@ node_modules/
 __MACOSX/
 __pycache__/
 *.pyc
-package-lock.json
 
 # skills CLI installation artifacts
 .agents/
@@ -13,3 +12,7 @@ package-lock.json
 .continue/
 .pi/
 *.tgz
+
+# Proto runtime storage (session logs and agent work state)
+.proto/
+.proto-logs/

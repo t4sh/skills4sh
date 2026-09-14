@@ -6,7 +6,7 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
 
 1. Walk every section in order before a production deploy
 2. For each box: either tick it or write a one-line waiver explaining why it doesn't apply
-3. The `grep` / `curl` commands are copy-paste-ready — run them against the project root
+3. Adapt input/output/config paths before running the shell searches. They are triage hints: multiline templates and custom code can evade them. Verify rendered output and HTTP responses too.
 
 ---
 
@@ -43,11 +43,8 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
   # If true: document why in the project's AGENTS.md
   ```
 
-- [ ] **`{% autoescape false %}` blocks are reviewed line-by-line.**
-  ```bash
-  grep -rnE "{%\s*autoescape\s+false\s*%}" src/
-  # Each block: confirm the content inside is sanitized upstream
-  ```
+- [ ] **Template source is trusted.** `markdownTemplateEngine: "njk"` executes templates before Markdown rendering; `html: false` is not a template sandbox. Render external Markdown as data, and do not allow it to define executable templates, filters, config, or arbitrary frontmatter.
+- [ ] **Custom escaping extensions are reviewed.** Stock Nunjucks 3 has no `{% autoescape %}` block tag; do not copy Jinja-only syntax into templates.
 
 ---
 
@@ -92,6 +89,8 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
   # Expected: max-age=31536000 (1 year) or longer
   ```
 
+- [ ] **nginx locations retain security headers.** A location with its own `add_header` suppresses inherited server headers by default; use the shared include from `production-patterns.md` in every affected location. Verify pages, assets, redirects, and errors.
+
 - [ ] **All security headers use `always` flag in nginx** (otherwise they're skipped on error responses).
   ```bash
   grep -E "add_header.*Content-Security|add_header.*X-Frame|add_header.*Strict-Transport" /etc/nginx/conf.d/*.conf | grep -v "always"
@@ -127,7 +126,7 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
   # Expected: zero results
   ```
 
-- [ ] **Source maps not shipped to production.** (`tailwindcss --minify` disables them; verify.)
+- [ ] **Source-map policy matches the build.** Minification is not a general guarantee that maps are disabled. Inspect output and document intentional public maps.
   ```bash
   find out -name '*.map'
   # Expected: zero results (or document each one)
@@ -158,17 +157,18 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
 
 ---
 
-## 5. View Transitions / DOM swap
+## 5. Custom soft-navigation / DOM swap
 
-- [ ] **HTML swapped via View Transitions is sanitized with DOMPurify** (or equivalent).
+- [ ] **HTML swapped into the DOM by a custom router is sanitized with DOMPurify** (or equivalent).
   ```bash
   grep -rnE 'innerHTML\s*=' src/assets/js/ | grep -v -E 'DOMPurify|sanitize'
   # Expected: zero results (every innerHTML write is preceded by sanitization)
   ```
 
-- [ ] **`ADD_TAGS: ['style']` is set in DOMPurify config if per-page `<style>` blocks are needed.**
+- [ ] **Sanitizer config is not widened beyond the project's CSS policy.** Preserving `<style>` tags is only for trusted authored pages with an explicit CSS policy; do not add `ADD_TAGS: ['style']` for arbitrary remote HTML.
   ```bash
   grep -A3 'DOMPurify\.sanitize' src/assets/js/ | grep "ADD_TAGS"
+  # Each match: confirm the source is trusted authored HTML, not remote content
   ```
 
 - [ ] **Soft-nav targets are validated.** No `<a href="javascript:…">` or `<a href="data:…">` survives sanitization.

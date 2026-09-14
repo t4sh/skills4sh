@@ -96,9 +96,29 @@ def fix_skill(skill_dir: Path) -> tuple[str, list[Edit]]:
 
     frontmatter, fm_start, fm_end = parse_frontmatter_block(text)
     if frontmatter is not None:
-        lines = frontmatter.splitlines()
-        name_line_idx = next((i for i, line in enumerate(lines) if re.match(r"^name:\s*", line)), None)
+        lines = frontmatter.split("\n")
+        content_lines = [line for line in lines if line.strip() and not line.lstrip().startswith("#")]
+        # Only reason about a column-zero block mapping with literal keys.
+        # Otherwise a valid indented, escaped, or explicit key can be mistaken
+        # for an absent name and insertion would corrupt the document.
+        simple_key = r"^(?:[A-Za-z0-9_-]+|'[A-Za-z0-9_-]+'|\"[A-Za-z0-9_-]+\")\s*:(?:\s|$)"
+        if (content_lines and content_lines[0][0].isspace()) or any(
+            not line[0].isspace() and not re.match(simple_key, line)
+            for line in content_lines
+        ):
+            raise ValueError("unsupported YAML mapping key shape for mechanical fixes; use column-zero literal keys or review manually; no changes written")
+        name_lines = [i for i, line in enumerate(lines) if re.match(r"^(?:name|\"name\"|'name')\s*:", line)]
+        if len(name_lines) > 1 or re.search(r"^(?:<<\s*:|[\{\[])", frontmatter, re.M):
+            raise ValueError("unsupported frontmatter for mechanical fixes: duplicate names, merge keys, or flow mappings; no changes written")
+        name_line_idx = name_lines[0] if name_lines else None
         expected_name = skill_dir.name
+        if name_line_idx is not None:
+            raw_name = lines[name_line_idx].split(":", 1)[1].strip()
+            literal = re.fullmatch(r"(?:[A-Za-z0-9 _-]*|'[A-Za-z0-9 _-]*'|\"[A-Za-z0-9 _-]*\")", raw_name)
+            following = lines[name_line_idx + 1:]
+            next_content = next((line for line in following if line.strip() and not line.lstrip().startswith("#")), "")
+            if not literal or (next_content and next_content[0].isspace()):
+                raise ValueError("unsupported YAML name shape for mechanical fixes; use a simple single-line literal name or review manually; no changes written")
         if name_line_idx is None:
             lines.insert(0, f"name: {expected_name}")
             next_frontmatter = "\n".join(lines)
@@ -138,7 +158,10 @@ def main() -> int:
     parser.add_argument("--write", action="store_true", help="write fixes to SKILL.md; default is dry-run")
     args = parser.parse_args()
 
-    next_text, edits = fix_skill(args.skill_dir)
+    try:
+        next_text, edits = fix_skill(args.skill_dir)
+    except ValueError as exc:
+        parser.exit(1, f"cannot safely fix skill: {exc}\n")
     if not edits:
         print("✓ no deterministic fixes available")
         return 0
