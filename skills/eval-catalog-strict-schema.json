@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "required_keys": [
+    "id",
+    "prompt",
+    "kind",
+    "assertions",
+    "files",
+    "prompts"
+  ],
+  "types": {
+    "id": "string",
+    "prompt": "string",
+    "kind": "string",
+    "assertions": "array",
+    "files": "object",
+    "prompts": "array"
+  },
+  "constraints": {
+    "assertions_items_type": "object",
+    "files_values_type": "array"
+  }
+}
