@@ -175,3 +175,15 @@ describe("skill-standard-check — disallowed auxiliary docs", () => {
     }
   });
 });
+
+test('description recognizes a CSV file cue without mandatory quoting', async () => {
+  const dir = setupTmp();
+  try {
+    await buildFixture(dir, VALID_SKILL.replace(/^description:.*$/m,
+      'description: "Create monthly reports. Use when asked to review sales.csv or summarize monthly revenue."'));
+    const { errors } = await runSkillStandardChecks(dir);
+    assert.deepEqual(errors, []);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

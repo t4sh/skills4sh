@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Portable agent skills for Codex, Claude Code, Cursor, VS Code, and compatible runtimes",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "author": {
     "name": "t4sh"
   },
@@ -16,7 +16,7 @@
     {
       "name": "code-to-figma",
       "path": "skills/code-to-figma",
-      "description": "Generate a CI-anchored code → Figma pipeline with a conforming DTCG 2025.10 token artifact and Gist export"
+      "description": "Generate a CI-anchored code \u2192 Figma pipeline with a conforming DTCG 2025.10 token artifact and Gist export"
     },
     {
       "name": "discord-harvest",

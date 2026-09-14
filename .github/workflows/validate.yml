@@ -5,7 +5,7 @@ on:
     paths:
       - 'skills/**'
       - 'skills-lock.json'
-      - 'npm-shrinkwrap.json'
+      - 'package-lock.json'
       - 'package.json'
       - 'README.md'
       - 'SECURITY.md'
@@ -46,45 +46,20 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      - name: Check SKILL.md frontmatter
+      - name: Install validation and render-test dependencies
         run: |
-          errors=0
-          for skill_md in skills/*/SKILL.md; do
-            dir=$(dirname "$skill_md")
-            name=$(basename "$dir")
+          npm install --global "$(node -p "require('./package.json').packageManager")" --ignore-scripts --no-audit --no-fund
+          npm ci --ignore-scripts --no-audit --no-fund
+          python3 -m venv /tmp/skills4sh-python
+          /tmp/skills4sh-python/bin/python -m pip install --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
+          echo "SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python" >> "$GITHUB_ENV"
+          npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund
 
-            echo "Checking $name..."
-
-            # Verify frontmatter exists
-            if ! head -1 "$skill_md" | grep -q '^---$'; then
-              echo "  ERROR: Missing YAML frontmatter"
-              errors=$((errors + 1))
-              continue
-            fi
-
-            # Extract name field
-            fm_name=$(sed -n '/^---$/,/^---$/p' "$skill_md" | grep '^name:' | head -1 | sed 's/name: *//' | tr -d '"')
-            if [ "$fm_name" != "$name" ]; then
-              echo "  ERROR: name '$fm_name' does not match directory '$name'"
-              errors=$((errors + 1))
-            fi
-
-            # Check required fields
-            for field in name description; do
-              if ! sed -n '/^---$/,/^---$/p' "$skill_md" | grep -q "^$field:"; then
-                echo "  ERROR: Missing required field: $field"
-                errors=$((errors + 1))
-              fi
-            done
-
-            echo "  OK"
+      - name: Validate portable skill syntax and links
+        run: |
+          for skill_dir in skills/*/; do
+            "$SKILL_TEST_PYTHON" skills/skill-architect/assets/scripts/validate_skill.py "$skill_dir"
           done
-
-          if [ "$errors" -gt 0 ]; then
-            echo ""
-            echo "Found $errors error(s)"
-            exit 1
-          fi
 
       - name: Check skill completeness
         run: |
@@ -134,5 +109,5 @@ jobs:
       - name: Verify npm package payload
         run: npm run check:pack
 
-      - name: Run installer unit tests
+      - name: Run installer, helper, and snippet tests
         run: node --test tests/*.test.mjs

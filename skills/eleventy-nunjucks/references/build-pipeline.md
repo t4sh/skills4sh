@@ -20,9 +20,9 @@ $ pnpm dev
 
 ```bash
 concurrently \
-  --kill-others-on-fail \      # one process exits non-zero → kill all
-  --names tw,11ty \            # log prefix per process (tw | …, 11ty | …)
-  --prefix-colors blue,green \ # color the prefix per process
+  --kill-others-on-fail \
+  --names tw,11ty \
+  --prefix-colors blue,green \
   'pnpm run dev:tailwind' 'pnpm run dev:eleventy --port=3000'
 ```
 
@@ -117,7 +117,7 @@ Tailwind v4 auto-detects sources via the `@source` directive (or its absence —
 @source "../src/**/*.{njk,md,html,js}";
 ```
 
-Explicit `@source` is recommended — it limits the scan to project template files and avoids accidentally picking up classes in `node_modules/`.
+`@source` adds explicit sources; it does not disable automatic detection. For an exclusive source set, use `@import "tailwindcss" source(none);` and list the required sources.
 
 ## Linting
 
@@ -308,8 +308,8 @@ Turborepo caches `out/` by input hash. A rebuild that touches nothing under `src
 |---|---|---|
 | `dev` shows no styles initially | `build:tailwind` not run before `concurrently` | Add `pnpm run build:tailwind &&` to the dev script |
 | Edits to CSS don't trigger reload | `addWatchTarget("src/assets/")` missing | Add to `.eleventy.js` |
-| Build is fast locally, slow in CI | No `--minify` on Tailwind in CI | Match scripts; or accept the slowness |
-| `out/` has dev-only files (e.g. `tailwind.css.map`) | Source-maps enabled in dev, not gated for prod | `--no-source-map` in build:tailwind |
+| Build is fast locally, slow in CI | Different runtime, cold caches, or repeated work | Compare timings and inputs before changing flags |
+| `out/` has dev-only files (e.g. `tailwind.css.map`) | Source-maps enabled in dev, not gated for prod | Inspect the active tool’s map flags and remove maps only under the project’s output policy |
 | Prettier mangles `.njk` indentation | Plugin not installed or wrong parser | `pnpm add -D prettier-plugin-jinja-template` and check `.prettierrc` |
 | `pnpm verify` passes locally, fails in CI | Locale, line endings, Node version drift | Pin `engines.node`, use `pnpm install --frozen-lockfile` |
 | Inline-build flatten breaks links | Page references absolute paths the flatten script doesn't rewrite | Use relative paths in templates, or extend `inline-build.mjs` URL rewriter |

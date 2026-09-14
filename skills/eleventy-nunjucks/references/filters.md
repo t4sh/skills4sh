@@ -1,16 +1,10 @@
 # Filters reference
 
-Copy-paste-ready filter implementations. Drop these into the project's `.eleventy.js`.
+Opt-in filter recipes for an existing Eleventy configuration. Match the project's module format and register only helpers its templates need. This reference is the canonical implementation source; configuration examples link here instead of duplicating implementations.
 
-## Why a canonical filter set?
+## Content filters — opt in individually
 
-Three reasons, in order:
-
-1. **Templates become portable.** A `.njk` file that uses `{{ items | where("status", "active") | sort_by("date") }}` works in any project that ships this set.
-2. **Subtle bugs are pre-fixed.** The canonical implementations handle the gotchas (non-array input, type coercion in `where`, null-safe `keys`/`values`).
-3. **Reviewers know what's safe.** A reviewer seeing `| jsonScript | safe` knows it's the project's escape filter, not a bypass.
-
-## The universal nine — content filters
+The compatibility recipes named `slice` and `dump` override Nunjucks built-ins. Preserve existing semantics unless the project deliberately adopts these replacements and tests affected templates. Prefer distinct names for new helpers when a built-in already exists.
 
 ```js
 // .eleventy.js / eleventy.config.js
@@ -55,14 +49,20 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addFilter("where", (arr, key, val) => {
     if (!Array.isArray(arr)) return arr;
     const target = String(val);
-    return arr.filter((item) => String(item[key]) === target);
+    return arr.filter((item) => item != null && String(item[key]) === target);
   });
 
-  // 6. sort_by — sort array of objects by key. Returns a copy.
+  // 6. sort_by — stable ascending sort; equal keys retain input order.
+  //    Null/missing keys sort last. Returns a copy; use comparable key types.
   //    For descending: chain with reverse: {{ items | sort_by("date") | reverse }}
   eleventyConfig.addFilter("sort_by", (arr, key) => {
     if (!Array.isArray(arr)) return arr;
-    return [...arr].sort((a, b) => (a[key] > b[key] ? 1 : -1));
+    return [...arr].sort((a, b) => {
+      const av = a?.[key], bv = b?.[key];
+      if (av == null) return bv == null ? 0 : 1;
+      if (bv == null) return -1;
+      return av > bv ? 1 : av < bv ? -1 : 0;
+    });
   });
 
   // 7. json — parse a JSON string. Safe-falls back to input on parse failure.
@@ -125,18 +125,18 @@ eleventyConfig.addFilter("normalize_path", (url) => {
 
 ## Security filter — `jsonScript`
 
-`JSON.stringify` is **not** safe inside `<script>` tags. String values may contain `</script>`, `<!--`, U+2028 (line separator), or U+2029 (paragraph separator) — any of which breaks out of the script context or causes silent parse errors.
+`JSON.stringify` is **not** safe inside `<script>` tags. String values may contain `</script>`, `<!--`, U+2028 (line separator), or U+2029 (paragraph separator). Escaping `<` prevents HTML-parser breakout; the additional escapes preserve compatibility with older JavaScript consumers.
 
 ```js
 /**
  * Safely embed a value inside a <script> tag.
  *
  * Escapes:
- *   <        → <  (prevents </script> breakout)
- *   >        → >  (defensive — paired with < escape)
- *   &        → &  (HTML-safe)
- *   U+2028   →    (line separator — silent JS parse error)
- *   U+2029   →    (paragraph separator — silent JS parse error)
+ *   <        → \u003c  (prevents </script> breakout)
+ *   >        → \u003e  (defensive — paired with < escape)
+ *   &        → \u0026  (HTML-safe)
+ *   U+2028   → \u2028  (legacy JavaScript compatibility)
+ *   U+2029   → \u2029  (legacy JavaScript compatibility)
  *
  * The escapes are JS-string-literal escapes; JSON.parse decodes them back to
  * the original characters losslessly. Consumers see the original strings.
@@ -144,7 +144,7 @@ eleventyConfig.addFilter("normalize_path", (url) => {
  * Use as: <script>window.X = {{ obj | jsonScript | safe }};</script>
  */
 eleventyConfig.addFilter("jsonScript", (val) =>
-  JSON.stringify(val ?? null)
+  (JSON.stringify(val ?? null) ?? "null")
     .replace(/</g, "\\u003c")
     .replace(/>/g, "\\u003e")
     .replace(/&/g, "\\u0026")
@@ -155,17 +155,15 @@ eleventyConfig.addFilter("jsonScript", (val) =>
 
 ### Companion — `jsonCompact`
 
-A leaner variant that only escapes `<` (sufficient for non-user-derived data):
+A compatibility alias for existing templates; use the same serializer and failure behavior:
 
 ```js
 eleventyConfig.addFilter("jsonCompact", (obj) =>
-  JSON.stringify(obj).replace(/</g, "\\u003c"),
+  eleventyConfig.getFilter("jsonScript")(obj),
 );
 ```
 
-Pick based on the data source:
-- **`jsonScript`** for any data that includes user-controlled strings (CMS, forms, satellite repo content)
-- **`jsonCompact`** for authored configuration (`site.json`, `nav.json`) — smaller output
+Use `jsonScript` for new templates. Retain `jsonCompact` only for existing call sites; both require JSON-serializable values. Circular values and BigInt should fail with a clear build error.
 
 Never use plain `JSON.stringify` in templates; never use `| dump | safe`.
 
@@ -253,12 +251,12 @@ For projects with relational data in `_data/*.json` (profiles, jobs, companies):
 // {{ slug | findBy(data, "slug") }} — generic finder
 eleventyConfig.addFilter("findBy", (val, arr, key) => {
   if (!Array.isArray(arr)) return null;
-  return arr.find((item) => item[key] === val) || null;
+  return arr.find((item) => item != null && item[key] === val) || null;
 });
 
 // Or per-collection wrappers if templates use them often:
 eleventyConfig.addFilter("findProfile", (slug, profiles) =>
-  Array.isArray(profiles) ? profiles.find((p) => p.slug === slug) || null : null
+  Array.isArray(profiles) ? profiles.find((p) => p != null && p.slug === slug) || null : null
 );
 ```
 
@@ -269,7 +267,7 @@ Generic `findBy` is preferable; per-collection wrappers add maintenance burden f
 Before adding a filter, walk this list:
 
 - [ ] **Does it exist already?** Grep the project's `.eleventy.js` and the Nunjucks built-ins. Existing filter conventions: `md`, `dump`, `slice`, `limit`, `where`, `sort_by`, `json`, `keys`, `values`, `safe`, `escape`, `length`, `join`, `default`, `groupby`, `dictsort`, `batch`. Nunjucks `groupby` returns an object (`{ key: [items] }`), so iterate it with `{% for k, items in x | groupby("key") %}` rather than documenting custom pair arrays.
-- [ ] **Null-safe input.** Return the input unchanged if it's the wrong type; don't throw.
+- [ ] **Null-safe input.** Define malformed-input behavior explicitly. The array recipes preserve non-array input; `where` skips null members and `sort_by` puts missing keys last. Serialization errors should fail the build rather than emit invalid script data.
 - [ ] **No side effects.** Filters render during build, including on retries — no fetches, no writes, no random.
 - [ ] **Deterministic.** Same input → same output. `Math.random()` breaks incremental builds and visual diffs.
 - [ ] **Document the gotcha.** If the filter does something subtle (string coercion in `where`, `dump` not safe in scripts), add a `/** … */` block.
@@ -286,9 +284,9 @@ eleventyConfig.addAsyncFilter("titleFor", async (url, titles = {}) => {
 ```
 
 **Caveats:**
-- Async filters slow the build linearly with the number of usages
+- Async cost depends on work, repetition, caching, and loop scheduling; measure before optimizing
 - No network IO inside filters: retries multiply calls, make builds non-deterministic, and expose templates to untrusted third-party content
-- Failure mode matters: an unhandled rejection aborts the build with no partial output
+- Failure mode matters: an unhandled rejection fails the build; earlier files may already have been written, so publish only after the complete build passes
 - Prefer loading precomputed data in `_data/*.js` and passing it into the filter
 
 ## Shortcodes vs filters — quick rule

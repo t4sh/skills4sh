@@ -185,7 +185,7 @@ Quick read-only health check. Count files by type, check index ↔ filesystem sy
 5. **Use `expires` on context.** Context goes stale. Set a review date.
 6. **Reference, don't copy.** Point to source docs instead of duplicating content.
 7. **No secrets.** No credentials, PII, or sensitive data in memory files.
-8. **Absolute dates.** Convert "next Thursday" to "2026-03-27" when saving.
+8. **Absolute dates.** Resolve relative dates from the date and timezone supplied by the task; otherwise use the current date and timezone. Compute and verify the calendar date, then save it as `YYYY-MM-DD`. Never copy a date from a template. Ask only when the intended reference date or relative phrase is ambiguous.
 
 For frontmatter schema, memory types, and templates, see [references/templates.md](references/templates.md).
 
@@ -221,3 +221,7 @@ Use these prompts to choose the operation, then proceed without collecting unnec
 | Vendor auto-memory (for example Claude Code machine-local memory) | Local scratch and automatic recall inside one client | Knowledge must be portable, reviewable, shareable through git, or consistent across clients/worktrees |
 | Session handoff note | One-time transfer between chats | Durable decisions, conventions, and project context need lifecycle management |
 | Memory MCP/server | Searchable centralized service is already approved | Plain files, git review, and zero runtime dependencies are preferred |
+
+## Behavioral evals
+
+**Authors/reviewers only:** use the [scenario catalog](assets/evals/scenarios.json) when explicitly evaluating this skill. Skip it during normal task execution. Materialize each case in a fresh temporary directory, withhold assertions from the executing agent, and grade the resulting artifacts and actions. The catalog defines expected behavior; it is not evidence of a passing run. Synthetic browser and service inputs test decisions only, not live integrations.

@@ -79,7 +79,7 @@ Complete this checklist for any PR that modifies files under `skills/`.
 - [ ] Content hashes in `.security/<name>.yaml` updated to match
 - [ ] `.security/<name>.yaml` updated with new hashes
 - [ ] Version bumped in SKILL.md, skills-lock.json, and `.security/<name>.yaml` if behavior or installable bundle content changed
-- [ ] If `package.json` version bumped: `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and `npm-shrinkwrap.json` bumped to match where required by CI
+- [ ] If `package.json` version bumped: `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and `package-lock.json` bumped to match where required by CI
 - [ ] If `package.json` version bumped: no `vX.Y.Z` tag or GitHub release will be created until after this PR is merged to `main`
 
 ### Metadata (AST04)

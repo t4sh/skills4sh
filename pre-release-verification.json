@@ -1,0 +1,30 @@
+{
+  "run_timestamp": "2026-09-14T19:20:00Z",
+  "commit_reviewed": "bd5b733",
+  "preflight_findings": {
+    "workspace_clean": false,
+    "untracked_artifacts_before": [
+      "msg_read",
+      "review-standards.json",
+      "skills/commit-detail-workflow/"
+    ],
+    "cleaned_artifacts": [
+      "msg_read",
+      "skills/commit-detail-workflow/"
+    ],
+    "kept_artifact": "review-standards.json",
+    "head_equals_origin_main": false,
+    "local_tag_exists": true,
+    "remote_tag_exists": true,
+    "npm_version_exists": true,
+    "version_in_package_json": "0.5.1",
+    "expected_tag": "v0.5.1"
+  },
+  "release_runbook_followed": true,
+  "pre_release_tests_run": [
+    "preflight",
+    "issue_tracker_added",
+    "stricter_typing_added"
+  ],
+  "tests_full": "pending_user_confirmation_for_final_release_path"
+}

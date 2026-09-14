@@ -1,10 +1,10 @@
 # Build Awesome v4 prerelease
 
-Use this reference only when a project explicitly opts into Eleventy/Build Awesome v4, uses `@awesome.me/buildawesome`, installs `@11ty/eleventy@canary`, or contains the generic `.data.*` / `.server.*` suffixes.
+Use this reference only when a project explicitly opts into Eleventy/Build Awesome v4, uses `@awesome.me/buildawesome`, installs `@11ty/eleventy@canary`, or configures the v4 generic `.data.*` / `.server.*` suffixes. Filenames alone are only a cue to inspect package metadata.
 
 ## Version gate
 
-This guidance was verified on **August 6, 2026** against:
+This guidance was verified on **September 13, 2026** against:
 
 | Track | Verified version | Status |
 |---|---|---|

@@ -125,7 +125,7 @@ Easiest way to regenerate both: run `node bin/hash-check.mjs` — it prints expe
 
 ### 6. Test the skill in a host
 
-Skills are prompts. The only meaningful way to test them is to install into a real Claude Code / Cursor / Copilot session and exercise the trigger:
+Skill behavior needs a forward test or runnable eval with explicit expectations. Installation and mechanical checks alone do not establish behavior quality. To exercise a skill in a fresh session:
 
 ```bash
 node bin/install.mjs --skill <your-skill> --dest /tmp/skills4sh-test
@@ -133,7 +133,7 @@ node bin/install.mjs --skill <your-skill> --dest /tmp/skills4sh-test
 node bin/install.mjs --skill <your-skill>
 ```
 
-Then open Claude Code or Cursor and invoke a request that should match the skill's trigger phrasing. There is no automated test for skill *behavior* — only for the installer that delivers it.
+Then open Claude Code or Cursor and invoke a request that should match the skill's trigger phrasing. Keep prompt catalogs separate from observed run evidence. The repository also exercises portable helper scripts and extracted Eleventy/Nunjucks code examples against pinned fixtures.
 
 ---
 
@@ -175,6 +175,20 @@ Requirements:
 Plugins are not delivered by `npx skills@latest add`; they are imported directly into their host per the plugin README.
 
 ### Changing scripts (`bin/`)
+
+Use npm 12.0.2 (pinned in `package.json#packageManager`) with Node 22.23.1 or a compatible newer release. Install the root dependency before packing or running the full suite: it is bundled into the published tarball.
+
+Set up the packaging, helper, and rendering test dependencies:
+
+```bash
+npm ci --ignore-scripts --no-audit --no-fund
+python3 -m venv /tmp/skills4sh-python
+/tmp/skills4sh-python/bin/python -m pip install --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
+export SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python
+npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund
+```
+
+On Windows, use the virtual environment's `Scripts/python.exe` and set `SKILL_TEST_PYTHON` in the calling shell. Python helpers require 3.10 or newer. Fixture dependencies live under `tests/fixtures/eleventy/`, use their own `package-lock.json`, and are excluded from the published installer. The render tests cover stable Eleventy 3.1.6, Nunjucks 3.2.4, and the Tailwind 4.3.3 selector recipe; they do not certify the v4 alpha migration or browser/nginx deployment recipes.
 
 `bin/` is the installer and the check scripts (Node 22+, ESM). Changes here are tooling changes — keep them covered by `tests/`, run the full local check suite, and follow the supply-chain posture in [SECURITY.md](SECURITY.md).
 

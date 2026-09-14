@@ -2,34 +2,50 @@
 // Verify the npm package payload before publishing.
 //
 // The dry-run check validates the file list npm will publish. The real pack
-// check validates the produced tarball. npm only adds the registry-level
-// _hasShrinkwrap flag during publish, so bin/verify-published.mjs checks that
-// after the package is live.
+// check validates the produced tarball and the pinned dependency bundled in it.
+// npm 12 no longer supports shrinkwrap; package-lock.json controls npm ci,
+// and bundleDependencies carries the installed dependency into the tarball.
 
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { parsePackJson } from "./lib/npm-pack.mjs";
 
 const root = process.cwd();
 const tmp = await mkdtemp(join(tmpdir(), "skills4sh-pack-"));
 
 try {
+  const source = JSON.parse(await readFile(join(root, "package.json"), "utf8"));
+  const lock = JSON.parse(await readFile(join(root, "package-lock.json"), "utf8"));
+  const expectedUndici = source.optionalDependencies?.undici;
+  if (!source.bundleDependencies?.includes("undici") || !expectedUndici
+    || lock.packages?.["node_modules/undici"]?.version !== expectedUndici
+    || lock.packages?.[""]?.version !== source.version) {
+    throw new Error("package-lock.json and the bundled undici declaration must match package.json; run npm install --package-lock-only");
+  }
   const dryRun = run("npm", ["pack", "--json", "--dry-run"], { cwd: root });
   const dry = parsePackJson(dryRun.stdout, "npm pack --dry-run");
-  const dryFiles = new Set((dry.files ?? []).map((f) => f.path));
-  requireFile(dryFiles, "npm-shrinkwrap.json", "dry-run package file list");
+  const dryFiles = new Set(dry.files.map((f) => f.path));
+  requireFile(dryFiles, "node_modules/undici/package.json", "dry-run package file list (run npm ci --ignore-scripts --no-audit --no-fund before packing)");
+  requireFile(dryFiles, "node_modules/undici/index.js", "dry-run package file list");
+  requireFile(dryFiles, "node_modules/undici/LICENSE", "dry-run package file list");
   requireFile(dryFiles, "skills-lock.json", "dry-run package file list");
   requireFile(dryFiles, "bin/install.mjs", "dry-run package file list");
+  for (const path of dryFiles) {
+    if (path.split("/").includes("__pycache__") || path.endsWith(".pyc")) {
+      throw new Error(`dry-run package file list includes Python bytecode: ${path}`);
+    }
+  }
 
   const packed = run("npm", ["pack", "--json", "--pack-destination", tmp], { cwd: root });
   const pack = parsePackJson(packed.stdout, "npm pack");
   const tgz = join(tmp, pack.filename);
-  const extractDir = join(tmp, "extract");
+  const packageDir = join(tmp, "package");
 
   run("tar", ["-xzf", tgz, "-C", tmp], { cwd: root });
-  const pkg = JSON.parse(await readFile(join(extractDir, "..", "package", "package.json"), "utf8"));
+  const pkg = JSON.parse(await readFile(join(packageDir, "package.json"), "utf8"));
   if (pkg.name !== "skills4sh") throw new Error(`packed package has unexpected name: ${pkg.name}`);
   // Dev scripts (check:*, test, setup:hooks, prepublishOnly, prepack, postpack)
   // reference files outside package.json#files; they're stripped from the
@@ -42,25 +58,17 @@ try {
       `the prepack hook (bin/clean-package-for-publish.mjs) should have stripped them.`,
     );
   }
-  await readFile(join(extractDir, "..", "package", "npm-shrinkwrap.json"));
+  const undici = JSON.parse(await readFile(join(packageDir, "node_modules/undici/package.json"), "utf8"));
+  if (!pkg.bundleDependencies?.includes("undici")
+    || pkg.optionalDependencies?.undici !== expectedUndici
+    || undici.name !== "undici" || undici.version !== expectedUndici) {
+    throw new Error(`packed undici must match the locked version ${expectedUndici}`);
+  }
 
-  console.log("✓ npm pack includes npm-shrinkwrap.json + scripts stripped from published package.json");
+  console.log(`✓ npm pack bundles undici@${expectedUndici}, excludes Python bytecode, and strips published scripts`);
 } finally {
   restorePackageJsonBackup();
   await rm(tmp, { recursive: true, force: true });
-}
-
-function parsePackJson(stdout, label) {
-  let parsed;
-  try {
-    parsed = JSON.parse(stdout);
-  } catch (err) {
-    throw new Error(`${label} did not emit JSON: ${err.message}`);
-  }
-  if (!Array.isArray(parsed) || parsed.length !== 1) {
-    throw new Error(`${label} returned unexpected JSON shape`);
-  }
-  return parsed[0];
 }
 
 function requireFile(files, path, label) {

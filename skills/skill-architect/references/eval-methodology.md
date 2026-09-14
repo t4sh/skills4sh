@@ -9,11 +9,11 @@ Use this reference when a skill change should be tested, not merely reviewed.
 | Static validation | Every skill change | frontmatter, links, word count, lockfile, security manifest, hashes |
 | Trigger scenario | Description or retrieval changes | list realistic prompts that should and should not load the skill |
 | Forward test | Behavior-shaping workflow changes | fresh agent/session uses the skill on a realistic task with expected answer withheld |
-| Baseline comparison | Skill claims to improve agent behavior | compare output without skill vs with skill |
+| Baseline comparison | Evaluating an update or claiming benefit | previous vs proposed revision for regressions; no-skill vs with-skill for benefit over no skill |
 | Blind comparison | Quality is subjective | hide which output used which skill; grade against rubric |
 | Benchmark loop | High-value repeated workflow | run many prompts, aggregate pass/fail and failure modes |
 
-## [Anthropic `skill-creator`](https://www.skills.sh/anthropics/skills/skill-creator) lessons
+## [Anthropic `skill-creator`](https://github.com/anthropics/skills/tree/main/skills/skill-creator) lessons
 
 The Anthropic `skill-creator` is valuable because it treated skill authoring like product iteration:
 
@@ -34,6 +34,41 @@ The useful test-driven documentation rule is:
 > If the agent was not observed failing without the skill, the skill may be documenting taste rather than teaching missing behavior.
 
 Apply this most strongly to discipline-enforcing skills, review rubrics, safety rules, and workflow skills that try to prevent shortcuts.
+
+## Match guidance to the failure
+
+Classify observed behavior before choosing wording. This selectively adapts [Obra's failure-form guidance](comparative-study.md#source-freshness-and-historical-inputs); it does not make pressure testing mandatory for every edit.
+
+| Observed failure | Guidance to try | Verification |
+|---|---|---|
+| Knows a rule but violates it under pressure | Explicit prohibition, relevant rationalization and stop condition | Replay the pressure scenario and observe compliance |
+| Completes the task in the wrong shape | Positive output contract: required parts and their order | Check the resulting artifact against that contract |
+| Omits a required element | Required field or slot in the artifact template | Check that the field is present and meaningfully filled |
+| Applies a rule under the wrong condition | Observable trigger, action, and fallback | Exercise both matching and non-matching conditions |
+
+For mixed failures, separate the causes. Do not turn every style problem into a prohibition list. Compare old and proposed wording on the same task with isolated contexts and withheld grading criteria; retain the smallest wording that addresses the observed failure. A wording micro-test does not replace a realistic forward test or demonstrate general superiority.
+
+## Select the baseline and control the comparison
+
+Use this comparison when behavior evaluation is warranted; changes fully covered by deterministic checks can remain on the static-validation rung. Before running, state the question, target revisions, fixtures, grading criteria and conditions:
+
+- **Updating an existing skill:** compare the previous revision with the proposed revision. Preserve a snapshot or content hash of each, including relevant references and helpers. This tests regression relative to the existing contract.
+- **Claiming benefit over no skill:** add a no-skill arm. Previous-versus-proposed evidence alone cannot establish that benefit.
+- **New skill:** use no skill as the baseline when evaluating added value.
+
+Keep the task, starting files, model/settings, available tools and budgets equivalent across arms. Use independent contexts and fresh copies of mutable fixtures so one run cannot teach or alter another. Grade with the same criteria; hide the revision labels when subjective grading matters. Record unavoidable differences as confounders rather than attributing them to the skill.
+
+## Hold out retrieval prompts
+
+Use a development/evaluation split when tuning a description. Assemble representative direct phrases, paraphrases, path cues and false friends; freeze an unseen evaluation set before editing. Do not tune against that set or expose its expected labels to the agent making the routing decision. If its results drive another rewrite, it becomes development data; reserve new unseen prompts for the next evaluation.
+
+Report false positives and false negatives separately, with counts and denominators. No universal split ratio or prompt count is required. A hand-selected small set supports only a bounded retrieval check. Distinguish a description-only routing exercise from actual runtime skill discovery; testing an explicitly loaded skill does not prove automatic retrieval.
+
+## Repeat only when the claim warrants it
+
+Use repeated runs for claims of reliable behavioral improvement, speed or cost. Declare the repeat count and stopping rule before comparing; use the same number and conditions for each arm. Preserve every result, including failures, timeouts and retries. Report pass counts over attempted runs and variation in relevant measurements; separate successful-run latency from completion rate. Record token/timing provenance and mark unavailable metrics unavailable.
+
+For small samples, show individual outcomes and avoid statistical-significance claims. Neither a single win nor an average without failures establishes reliability. Mechanical edits covered by deterministic checks do not need repeated agent runs, a benchmark service, or a mandatory iteration count. These measurement refinements selectively adapt [Anthropic's evaluation methods](comparative-study.md#source-freshness-and-historical-inputs).
 
 ## Test-vector catalog
 
@@ -95,11 +130,13 @@ For every skill with meaningful retrieval risk, maintain a small set:
 
 A forward test packet should include:
 
-- skill version
+- skill version and content snapshot/hash (versions can be unchanged during drafting)
 - prompt
 - fixture files or repo state
 - expected behavior withheld from the agent
 - transcript or summary
+- baseline choice, conditions, and any confounders
+- attempted runs, observed outcomes, and unavailable metrics
 - pass/fail result
 - patch decision
 

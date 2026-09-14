@@ -178,7 +178,7 @@ Report these as review findings with the same evidence bar as code findings: sou
 
 A plan or distilled skill proposal is the product when another agent or future session will execute it. It must be self-contained enough for a fresh executor:
 
-- exact source paths, relevant excerpts, and local conventions
+- exact source paths or URLs, accessible authoritative artifacts, and local conventions
 - in-scope and out-of-scope boundaries
 - ordered steps with verification commands and expected results
 - done criteria that are machine-checkable where possible
@@ -186,7 +186,13 @@ A plan or distilled skill proposal is the product when another agent or future s
 - STOP conditions for mismatches, failed verification, or scope expansion
 - rejected findings or patterns with concise rationales
 
-Avoid phrases like "as discussed" or "the relevant file" in handoff artifacts. Inline the context or cite where to read it.
+Prefer references to authoritative plans, specifications, ADRs and diffs over copying them into another competing artifact. Check whether the intended executor can access each reference; include the relevant revision or drift check when its content can change. If access is unavailable, include only the essential excerpts and their provenance, or stop for a required missing input. Never assume the next executor shares the current filesystem, credentials or conversation. Redact sensitive values instead of copying them for completeness.
+
+For plans with dependent tasks, add a compact contract to each dependency boundary: **consumes** (exact input artifact/schema/signature), **produces** (output artifact/schema/signature), and **done** (verification plus expected result). Map every requirement to a task or an explicitly deferred decision; identify gaps before execution. A single independent audit does not need a dependency matrix.
+
+Example: task A consumes `invoice.csv` with `id,amount` columns and produces `totals.json` with `{count,total}`; task B consumes that schema and produces `report.md`. Done: both outputs reconcile against the supplied fixture totals. Map the parsing requirement to A and report formatting to B. Do not invent missing schema or business rules to fill the contract.
+
+These are selective adaptations of the handoff sources in the [comparative study](comparative-study.md#source-freshness-and-historical-inputs), not requirements to invoke their workflows or adopt their commit/tool defaults. Avoid phrases like "as discussed" or "the relevant file": cite accessible context or supply the minimum missing context.
 
 ## Enumeration consistency
 

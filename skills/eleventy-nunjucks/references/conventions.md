@@ -52,7 +52,7 @@ my-site/
 │   │   │   └── utilities.css     # @layer utilities
 │   │   ├── js/                   # vanilla ES modules; one file per concern
 │   │   └── images/
-│   ├── pages/                    # Variant A only — see § The two valid `dir` configurations
+│   ├── pages/                    # Variant A only — see § Two example `dir` configurations
 │   │   ├── index.njk
 │   │   └── *.{njk,md,html}
 │   ├── robots.txt
@@ -61,7 +61,7 @@ my-site/
 └── docs/                         # optional — design specs, content briefs
 ```
 
-## The two valid `dir` configurations
+## Two example `dir` configurations
 
 ### A — pages in subdirectory
 
@@ -129,7 +129,7 @@ eleventyConfig.addPassthroughCopy({ "src/assets/js":     "assets/js" });
 eleventyConfig.addPassthroughCopy({ "src/assets/images": "assets/images" });
 ```
 
-These three are universal. Add specific entries for `robots.txt`, `sitemap.xsl`, `public/`, or domain-specific docs (`*.md` agent files) on top.
+Use only mappings for assets the project actually owns. Add specific entries for `robots.txt`, `sitemap.xsl`, `public/`, or domain-specific docs (`*.md` agent files) on top.
 
 ### 5. Asset watch target
 
@@ -199,7 +199,7 @@ src/_includes/sections/
     └── footer-01.njk
 ```
 
-The numbered variants are **load-bearing**:
+Numbered variants are optional. If the project adopts them:
 - A new variant ships under a new number without breaking existing pages
 - Old pages keep working with the old variant
 - Promote a variant globally by changing one `{% include %}` per consumer page
@@ -243,7 +243,7 @@ Patterns to expect (and accept) varying between projects:
 Convention is the default — not the prison. Deviate when:
 
 - **The project is one HTML file.** Skip the section/macro/data structure; just a single `.njk` + minimal config.
-- **The deploy target enforces a different output directory** (e.g. Cloudflare Pages wants `dist/`). Match the deploy target.
+- **The deploy configuration selects a different output directory.** Match its configured value; do not assume a host requires `dist/`.
 - **The project is a JSON API, not a website.** Pagination + `permalink: foo.json` + `eleventyExcludeFromCollections: true` is a valid pattern; the `_includes/` machinery is overkill.
 
 Document any deviation in `AGENTS.md` so future agents don't try to "fix" it.

@@ -2,10 +2,10 @@
 name: skill-architect
 description: "Architect and audit portable agent skills for retrieval, predictability, progressive disclosure, evals, and repository gates. Use when the user asks to \"create a skill\", \"author a skill\", \"improve a skill\", \"review a skill\", \"refactor a skill\", \"compare skill rubrics\", \"distill a skill from sessions\", \"reconcile skill plans\", or \"teach skill authoring\"; when paths include `skills/<name>/SKILL.md`, `references/*.md`, helper scripts, evals, lockfiles, security manifests, or vendor adapters; or when mentions include skill-creator, Skill Development, skills.sh, trigger descriptions, completion criteria, leading words, or model/user invocation."
 license: MIT
-compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10
+compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10; validation and inspection require PyYAML 6.0.3
 metadata:
   author: t4sh
-  version: "0.1.3"
+  version: "0.1.4"
   tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, claude, codex, openai, anthropic, antigravity, azure
 ---
 
@@ -15,16 +15,7 @@ Architect portable, high-quality agent skills from a vendor-neutral perspective.
 
 ## Why this skill exists
 
-Several high-signal upstream skills overlap while emphasizing different strengths:
-
-| Source | Strength to preserve | Boundary to avoid |
-|---|---|---|
-| [Agent Skills **open specification**](https://agentskills.io/specification) | Canonical portable folder/frontmatter contract, progressive-disclosure directories, compatibility metadata, and validation baseline | Experimental fields such as `allowed-tools` are runtime-dependent and do not override a repository's accepted schema |
-| [Anthropic **Skill Development**](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) | Strong structure, trigger descriptions, progressive disclosure, validation checklist | Claude Code plugin-specific assumptions are not portable as-is |
-| [Anthropic **skill-creator**](https://www.skills.sh/anthropics/skills/skill-creator) | Skill evals, baseline-vs-with-skill testing, trigger optimization, blind comparison, benchmark loops | Too heavy and Claude-specific to be the whole portable rubric |
-| [OpenAI **skill-creator**](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) | Codex/OpenAI compatibility, concise scaffold guidance, `agents/openai.yaml` metadata | Too OpenAI-specific to be the central standard |
-
-Treat the Agent Skills specification as the portable syntax baseline, then use this skill as a quality and governance synthesis: it directs, plans, and reviews skill work at the architecture level, then routes into source-specific, project-specific, or repository-specific details only when needed. Concrete examples of this rubric in practice can be inspected across the `skills4sh` skills.
+Anthropic and OpenAI publish overlapping `skill-creator` skills; maintaining competing same-name implementations creates ownership and portability conflicts. Preserve one portable synthesis: open specification for syntax, structural guidance from Skill Development, selective evaluation methods from Anthropic/Obra, and isolated runtime details from OpenAI and other vendors. The [comparative study](references/comparative-study.md) owns source details and adoption boundaries. Local distribution rules remain binding.
 
 ## Operating mode
 
@@ -144,11 +135,13 @@ Use a bounded executable-surface triage before invoking a full code-review lens.
 
 For eval and adapter claims, calibrate the finding to local policy and evidence quality: prompt-only eval catalogs are useful retrieval vectors but incomplete evidence for high-risk behavior claims, and missing vendor adapters are packaging defects only when the local repo requires them. Weak descriptions are deterministic failures only when the rule is portable and low-false-positive; in `skills4sh`, generic trigger-only wording such as `Use when creating skills.` fails mechanically.
 
+**Authors/reviewers evaluating Skill Architect itself only:** skip this catalog when using Skill Architect for another task. The [mode scenario catalog](assets/evals/scenarios.json) supplies self-contained fixture files for all nine modes, isolation instructions, grading criteria, and description-only routing prompts. Materialize a fresh case directory and withhold grading from the executor; the catalog is test input, not evidence that those modes passed.
+
 For test vectors, harness setup, enumeration consistency, and severity calibration, use [Eval methodology](references/eval-methodology.md) and [Portable rubric](references/house-rubric.md) rather than expanding `SKILL.md`.
 
 ### 5. Make handoffs executable
 
-When producing a plan, proposal, audit packet, or distilled skill spec for another agent or a future session, write for the weakest plausible executor. Include exact paths, relevant excerpts, local conventions, scope boundaries, verification commands with expected results, drift checks when source state matters, and STOP conditions for mismatches.
+When producing a plan, proposal, audit packet, or distilled skill spec for another agent or a future session, write for the weakest plausible executor. Reference accessible authoritative artifacts with exact paths or URLs; include essential excerpts only when the executor needs them. Preserve local conventions, scope boundaries, verification commands with expected results, drift checks, and STOP conditions. For dependent tasks, specify consumed/produced interfaces and requirement coverage using the [handoff plan rubric](references/house-rubric.md#handoff-plan-rubric).
 
 Record rejected findings or non-adopted patterns with one-line rationales so they do not return in the next audit or reconciliation pass.
 
@@ -180,15 +173,19 @@ Optional helper scripts live under `assets/scripts/` so they ship as inert skill
 | [`assets/scripts/fix_skill.py`](assets/scripts/fix_skill.py) | Dry-run or apply conservative deterministic fixes to `SKILL.md`, then rerun validation |
 | [`assets/scripts/scaffold_skill.py`](assets/scripts/scaffold_skill.py) | Create a starter skill folder using the portable rubric |
 
+`inspect_skill.py` and `validate_skill.py` each accept **one skill folder per invocation**. For multiple skills, invoke each helper separately for each folder; reuse the same Python environment.
+
+Validation and inspection use the pinned [Python dependency file](assets/scripts/requirements.txt). If PyYAML is unavailable, report the missing capability; do not silently substitute shape checks for YAML validation. Scaffold and fix helpers need only Python. The fixer accepts column-zero literal mapping keys and simple single-line literal names; it refuses unsupported key or name syntax before any edits. Use manual review for those cases, then validate.
+
 Read or run scripts only when the task needs deterministic inspection or scaffolding. Local validation commands and CI, when present, remain the source of truth.
 
 ### Deterministic checks vs judgment
 
-Skill work splits across three layers — keep them separate and route each check to the layer that can decide it:
+Skill work splits across four layers — keep them separate and route each check to the layer that can decide it:
 
 | Layer | Owns | Examples |
 |---|---|---|
-| Portable validator (`validate_skill.py`) | Minimal deterministic checks that hold inside one skill folder, no repo metadata or network | frontmatter present + `name`/directory match + kebab-case, description has concrete trigger detail, body within the hard size cap, `references/*.md` linked from `SKILL.md`, in-skill relative Markdown link targets, and same/cross-file Markdown heading anchors |
+| Portable validator (`validate_skill.py`) | Minimal deterministic checks that hold inside one skill folder, no repo metadata or network | valid YAML and typed, non-empty fields; specification length limits + `name`/directory match + kebab-case, description has concrete trigger detail, body within the hard size cap, `references/*.md` linked from `SKILL.md`, in-skill relative Markdown link targets, and same/cross-file Markdown heading anchors |
 | Portable fixer (`fix_skill.py`) | Safe mechanical edits that require no taste or domain judgment; dry-run unless `--write` is explicit | frontmatter `name` normalization and insertion of missing `references/*.md` links in `SKILL.md` |
 | Local binding gate (project CI) | Deterministic checks that depend on repo conventions; **binding and a superset** | file hashes, `skills-lock.json`, security manifests, doc-sync, semver — in `skills4sh`: `check:drift`, `check:guardskills`, `hash-check`, `npm test` |
 | This skill's rubric (judgment) | What no script can decide | trigger *quality*, executable-surface triage, embedded-code *correctness* (review + fixture run), body altitude beyond the cap, vendor-isolation, narrative bloat |

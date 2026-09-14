@@ -25,7 +25,7 @@ Upgrade path: identify the config file Eleventy actually resolves → remove dup
 const markdownIt = require("markdown-it");
 
 module.exports = function (eleventyConfig) {
-  // html: false → .md cannot inject raw HTML (safer for agent-facing .md)
+  // html: false escapes raw Markdown HTML; it does not disable template execution.
   // html: true  → .md may include HTML (trusted authoring only)
   const md = markdownIt({ html: false, linkify: true, typographer: true });
   eleventyConfig.setLibrary("md", md);
@@ -34,39 +34,7 @@ module.exports = function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "src/assets/js": "assets/js" });
   eleventyConfig.addPassthroughCopy({ "src/assets/images": "assets/images" });
 
-  eleventyConfig.addFilter("md", (s) => md.render(s || ""));
-  eleventyConfig.addFilter("dump", (obj) => {
-    const seen = new WeakSet();
-    return JSON.stringify(obj, (key, value) => {
-      if (typeof value === "object" && value !== null) {
-        if (seen.has(value)) return "[Circular]";
-        seen.add(value);
-      }
-      return value;
-    }, 2);
-  });
-  eleventyConfig.addFilter("slice", (arr, a, b) => (Array.isArray(arr) ? arr.slice(a, b) : arr));
-  eleventyConfig.addFilter("limit", (arr, n) => (Array.isArray(arr) ? arr.slice(0, n) : arr));
-  eleventyConfig.addFilter("where", (arr, k, v) =>
-    Array.isArray(arr) ? arr.filter((i) => String(i[k]) === String(v)) : arr,
-  );
-  eleventyConfig.addFilter("sort_by", (arr, k) =>
-    Array.isArray(arr) ? [...arr].sort((a, b) => (a[k] > b[k] ? 1 : -1)) : arr,
-  );
-  eleventyConfig.addFilter("json", (s) => {
-    try {
-      return JSON.parse(s);
-    } catch {
-      return s;
-    }
-  });
-  eleventyConfig.addFilter("keys", (o) => (o ? Object.keys(o) : []));
-  eleventyConfig.addFilter("values", (o) => (o ? Object.values(o) : []));
-
-  eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`);
-
-  eleventyConfig.addWatchTarget("src/assets/");
-  eleventyConfig.setServerOptions({ liveReload: true, domDiff: true, port: 3000 });
+  // Register only the project-selected recipes from references/filters.md.
 
   return {
     dir: { input: "src/pages", includes: "../_includes", data: "../_data", output: "out" },
@@ -105,6 +73,8 @@ export default async function (eleventyConfig) {
 ```
 
 ## Markdown engine
+
+Treat authored `.md` templates and untrusted Markdown data differently. With `markdownTemplateEngine: "njk"`, Nunjucks executes before Markdown rendering. `html: false` does not make untrusted template source safe. Prefer passing external Markdown as data into the pure `md` filter. If processing an untrusted Markdown document directly, disable template preprocessing (`markdownTemplateEngine: false`) and isolate its frontmatter/configuration effects; disabling raw HTML alone is insufficient. Nunjucks [does not sandbox template execution](https://mozilla.github.io/nunjucks/api.html#user-defined-templates-warning).
 
 `markdown-it({ html: ?, linkify: true, typographer: true })`
 

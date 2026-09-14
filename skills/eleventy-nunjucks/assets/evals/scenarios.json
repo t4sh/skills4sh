@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "purpose": "Five behavioral evaluations, separate from render-unit tests. Inputs and assertions are not observed pass evidence.",
+  "execution": "Materialize each files map under an isolated directory. Keep assertions and routing load labels from the acting agent. Stable build cases use the dependencies locked in tests/fixtures/eleventy in the source repository, or provision the same pinned dependencies separately. Version inventory is synthetic/read-only. Record starting/final hashes, prompt, observed output, grading, runtime and limitations in an external run report. No mandatory repetitions or release mutation.",
+  "cases": [
+    {
+      "id": "version-selection",
+      "prompt": "Inspect each project inventory. Which skill track applies, what evidence decides it, and is any migration authorized? Do not install or change dependencies.",
+      "kind": "workflow",
+      "fixture_note": "Controlled package inventories, not installable packages or v4 runtime tests. generic.data.js is deliberately just an application file.",
+      "files": {
+        "stable/package.json": "{\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\"\n  }\n}",
+        "stable/node_modules/@11ty/eleventy/package.json": "{\"name\": \"@11ty/eleventy\", \"version\": \"3.1.6\", \"engines\": {\"node\": \">=18\"}}",
+        "stable/eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
+        "stable/generic.data.js": "export default { label: \"application metadata\" };\n",
+        "alpha/package.json": "{\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@awesome.me/buildawesome\": \"4.0.0-alpha.10\"\n  }\n}",
+        "alpha/node_modules/@awesome.me/buildawesome/package.json": "{\"name\": \"@awesome.me/buildawesome\", \"version\": \"4.0.0-alpha.10\", \"engines\": {\"node\": \">=22.15\"}}",
+        "alpha/eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n"
+      },
+      "assertions": [
+        "Stable inventory stays v3 despite generic suffix.",
+        "Alpha is explicitly prerelease, Node >=22.15, v4 reference loaded.",
+        "No migration/install authorized; missing lockfile limits reproducibility; no live latest claim from fixtures."
+      ]
+    },
+    {
+      "id": "layout-debugging",
+      "prompt": "The homepage build finishes but displays YAML and misses its layout. Diagnose and apply the smallest fix, then build and inspect the output.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
+        "content/index.njk": "{# Home page #}\n---\nlayout: base.njk\ntitle: Home\n---\n<h1>Home</h1>\n",
+        "content/_includes/base.njk": "<!doctype html><html><title>{{ title }}</title><body><main>{{ content | safe }}</main></body></html>\n"
+      },
+      "assertions": [
+        "Moves/removes only the comment before frontmatter.",
+        "Build output has title Home and main containing h1; frontmatter not rendered.",
+        "No framework/config/directory rewrite."
+      ]
+    },
+    {
+      "id": "markdown-trust",
+      "prompt": "Our config sets html:false. Does that make external Markdown supplied as a template source and as data equally safe? Audit both routes without editing files; support the answer with the fixture render.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "import markdownIt from \"markdown-it\";\nexport default function(c) { const md = markdownIt({html:false}); c.setLibrary(\"md\",md); c.addFilter(\"md\", text => md.render(text)); return {dir:{input:\"content\",includes:\"_includes\",output:\"_site\"},markdownTemplateEngine:\"njk\"}; }\n",
+        "content/template.md": "{{ 7 * 7 }} <img src=x onerror=alert(1)>\n",
+        "content/_data/external.json": "{\"text\": \"{{ 7 * 7 }} <img src=x onerror=alert(1)>\"}",
+        "content/data.njk": "{{ external.text | md | safe }}\n"
+      },
+      "assertions": [
+        "Identifies template preprocessing executes expressions despite html:false.",
+        "Data route retains literal expression and escapes raw HTML.",
+        "Does not recommend compiling/safe-marking arbitrary untrusted template source.",
+        "No source edits."
+      ]
+    },
+    {
+      "id": "project-conventions",
+      "prompt": "Add an FAQ link to the existing homepage navigation. Preserve the project conventions and verify the resulting build.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
+        "content/index.njk": "---\nlayout: base.njk\ntitle: Home\n---\n<h1>Home</h1>\n",
+        "content/_includes/base.njk": "<!doctype html><html><title>{{ title }}</title><body>{% include \"nav.njk\" %}<main>{{ content | safe }}</main></body></html>\n",
+        "content/_includes/nav.njk": "<nav><a href=\"/\">Home</a></nav>\n",
+        "content/faq.njk": "---\ntitle: FAQ\n---\n<h1>FAQ</h1>\n",
+        "assets/site.css": ":root { color-scheme: light dark; }\n@media (prefers-color-scheme: dark) { body { background: #111; color: #eee; } }\n",
+        "PROJECT.md": "Use content/, _includes relative to content, and _site output. Plain CSS with system theme; full-page browser navigation. No custom router, numbered variants, theme expiry, or CSS framework.\n"
+      },
+      "assertions": [
+        "Adds FAQ anchor to existing nav; rendered href matches generated FAQ route.",
+        "Preserves config, directories, dependency files, CSS/system preference and full-page navigation.",
+        "No unsolicited framework or optional recipe additions."
+      ]
+    },
+    {
+      "id": "retrieval-boundaries",
+      "prompt": "Using only the description, decide whether to load this skill for each request.",
+      "kind": "description-only-routing",
+      "prompts": [
+        {
+          "id": "njk-layout",
+          "text": "My .njk page loses its layout frontmatter in Eleventy.",
+          "load": true
+        },
+        {
+          "id": "package-cue",
+          "text": "Review the build config; package.json uses @11ty/eleventy.",
+          "load": true
+        },
+        {
+          "id": "alpha",
+          "text": "Plan our migration to Build Awesome alpha.",
+          "load": true
+        },
+        {
+          "id": "standalone-nunjucks",
+          "text": "Add an async Nunjucks filter to our Node template renderer.",
+          "load": true
+        },
+        {
+          "id": "jinja",
+          "text": "Fix a Jinja2 template inheritance problem in Flask.",
+          "load": false
+        },
+        {
+          "id": "liquid",
+          "text": "Update Shopify Liquid product-template logic.",
+          "load": false
+        },
+        {
+          "id": "next",
+          "text": "Audit static exports and CSP for a Next.js site.",
+          "load": false
+        },
+        {
+          "id": "generic-server",
+          "text": "Debug api.server.js in a SvelteKit application.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "Positive and false-friend labels withheld from routing agent.",
+        "Report false positives and negatives separately; no claim about automatic host discovery."
+      ]
+    }
+  ]
+}

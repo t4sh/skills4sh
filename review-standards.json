@@ -1,0 +1,89 @@
+{
+  "findings": [
+    {
+      "file": "package.json",
+      "hunk": "scripts.pretest + bundleDependencies + package-lock shift",
+      "category": "hard_violation",
+      "severity": "none",
+      "detail": "No standard breach. package.json#version unchanged (0.5.1) per release-process invariant; bundleDependencies and optionalDependencies match docs/RELEASE_PROCESS.md update; file exclusions (!__pycache__/*.pyc) align with CONTRIBUTING.md plugin/script hygiene."
+    },
+    {
+      "file": "docs/RELEASE_PROCESS.md",
+      "hunk": "Prerequisites + Expected results section",
+      "category": "hard_violation",
+      "severity": "none",
+      "detail": "Matches package.json: mentions npm@12.0.2, Node 22.23.1, package-lock.json controlling the build, bundleDependencies carrying undici, removal of shrinkwrap. Consistent with docs/RELEASE_PROCESS.md line-23 invariant."
+    },
+    {
+      "file": "bin/check-test-env.mjs (new)",
+      "hunk": "full file",
+      "category": "smell",
+      "name": "Defensive guard well-structured",
+      "detail": "No Mysterious Name: variables python, problems, fixtureModules reveal purpose. No Primitive Obsession: probe.stdout.trim().split(...) yields major/minor tuple for Python version guard. No Message Chains: single exit code with structured console.error. No Duplicated Code: Python and fixture checks are independent, not repeated. Future-ready: handles SKILL_TEST_PYTHON override for CI vs local divergence (CONTRIBUTING.md Changing scripts section)."
+    },
+    {
+      "file": "bin/lib/npm-pack.mjs (new) + bin/lib/published-package.mjs (new)",
+      "hunk": "parsePackJson / validatePublishedMetadata",
+      "category": "smell",
+      "name": "Extracted shared shape (removes Duplicated Code / Shotgun Surgery)",
+      "detail": "Both helpers consolidate logic previously duplicated inline in bin/pack-check.mjs and bin/verify-published.mjs. parsePackJson handles npm 11 array shape vs npm 12 object-map shape (judgement call: complex boolean chain line 8-11 is defensive, not speculative generality). validatePublishedMetadata normalizes array vs single-object view. Removes Feature Envy: metadata validation now lives with package data rather than scattered across scripts."
+    },
+    {
+      "file": "bin/pack-check.mjs",
+      "hunk": "import parsePackJson; lock/undici checks; bytecode exclusions",
+      "category": "hard_violation",
+      "severity": "none",
+      "detail": "Conforms to release process: verifies bundleDependencies.includes('undici'), checks package-lock.json lock-drifts, validates bundled node_modules/undici/package.json, excludes __pycache__ / .pyc. Matches docs/RELEASE_PROCESS.md Verify npm section. No shrinkwrap reference remains."
+    },
+    {
+      "file": "bin/verify-published.mjs",
+      "hunk": "import validatePublishedMetadata; removal of _hasShrinkwrap check",
+      "category": "hard_violation",
+      "severity": "none",
+      "detail": "Replaces inline view._hasShrinkwrap check with validatePublishedMetadata (bundle + gitHead + provenance). Consistent with docs/RELEASE_PROCESS.md (no shrinkwrap reference). No Speculative Generality: only checks fields that release process requires."
+    },
+    {
+      "file": "skills-lock.json",
+      "hunk": "agent-memory (2.7.7 unchanged), eleventy-nunjucks 0.1.9, skill-architect 0.1.4",
+      "category": "hard_violation",
+      "severity": "low",
+      "detail": "Versions and computedHash updated for changed skills; agent-memory unchanged (only new assets/evals added, SKILL.md not edited - no version bump required per CONTRIBUTING.md Updating an existing skill). Consistent, though future reviewers should confirm whether new eval assets alone should trigger a computedHash refresh in this repo's convention (current behavior: only SKILL.md/reference changes trigger lock updates)."
+    },
+    {
+      "file": ".security/*.yaml (5 updated manifests)",
+      "hunk": "integrity.files additions + SKILL.md hash updates",
+      "category": "hard_violation",
+      "severity": "none",
+      "detail": "All 5 manifests (agent-memory, discord-harvest, eleventy-nunjucks, localhost-screenshots, skill-architect) include new assets/evals/scenarios.json hashes; versions match SKILL.md (eleventy 0.1.9, skill-architect 0.1.4); scanning.expected_findings unchanged; scanning.guardskills remains SAFE. skill-architect.yaml adds dependencies entry for PyYAML (version 6.0.3) with rationale - matches CONTRIBUTING.md Expected security findings and plugin/code rules. No HIGH/CRITICAL unacknowledged findings introduced."
+    },
+    {
+      "file": "skills/*/assets/evals/scenarios.json (new, 5 skills)",
+      "hunk": "full files",
+      "category": "smell",
+      "name": "Consistent catalog shape; no Data Clump / Primitive Obsession",
+      "detail": "All 5 catalogs share identical top-level structure (schema_version, purpose, execution, cases) - avoids Divergent Change. Each case has id, prompt, assertions; kind and files present where relevant. No Primitive Obsession: id strings encode domain concept; kind enum (workflow, description-only-routing) provides domain typing rather than raw strings. Synthetic evidence note (execution field) explicitly states these are not live results, addressing future-readiness for agents that might treat fixtures as executed passes (SKILL_AUTHORING_STANDARD.md Fixture-tested requirement)."
+    },
+    {
+      "file": "tests/npm-pack.test.mjs + tests/published-package.test.mjs (new)",
+      "hunk": "edge-case loops (null, arrays, ambiguous results, missing/stale/lock-drift fixtures)",
+      "category": "smell",
+      "name": "No Speculative Generality; coverage is targeted",
+      "detail": "Tests cover exactly the contract variations the helpers defend against (npm 11 array vs npm 12 object, ambiguous multi-record results, missing bundle, stale undici version, lock-drift). No extra abstraction layers; assertions reference exact error message patterns. Matches SKILL_AUTHORING_STANDARD.md Fixture-tested requirement."
+    },
+    {
+      "file": "tests/skill-standard-check.test.mjs (updated regex for .csv)",
+      "hunk": "/\\b[\\w.-]+\\.(?:...csv)\\b/",
+      "category": "hard_violation",
+      "severity": "none",
+      "detail": "Standard update: concrete trigger-detail regex now includes .csv, aligning with SKILL_AUTHORING_STANDARD.md retrieval-focused description rules (file-path cue requirement). No backward-break; existing descriptions unaffected."
+    },
+    {
+      "file": "skills/eleventy-nunjucks/references/* + SKILL.md (review fixes)",
+      "hunk": "drop autoescape, Markdown trust model, jsonScript escaping, sort_by stable/null-safe",
+      "category": "hard_violation",
+      "severity": "low",
+      "detail": "Changes per commit message align with standard guidance (drop unsafe patterns, add stable sort). Not a violation, but judgement: these reference edits should be paired with skills-lock.json hash updates - verified present. No new references lack SKILL.md links; progressive-disclosure discipline intact."
+    }
+  ],
+  "summary": "No documented standard violations found. Package version unchanged (0.5.1) so no release-process breach; docs/RELEASE_PROCESS.md, package.json, .security/*.yaml, and skills-lock.json are mutually consistent. New pretest guard (bin/check-test-env.mjs) is robust and defensive; extracted bin/lib/npm-pack.mjs and published-package.mjs eliminate duplicated parsing logic from pack-check/verify-published. All 5 new eval catalogs (assets/evals/scenarios.json) use a consistent shape (schema_version, purpose, execution, synthetic-evidence disclaimers) and include concrete assertions, meeting the fixture-tested standard (SKILL_AUTHORING_STANDARD.md). Tests for new helpers cover both npm 11/12 output shapes and defensive error paths. Security manifests updated with correct hashes and an appropriate scanning.dependencies entry (PyYAML 6.0.3) for skill-architect. One low-severity judgement note: agent-memory's skills-lock entry (2.7.7) didn't change despite new eval assets; current convention appears to only bump on SKILL.md/reference edits, which is consistent but worth confirming for future asset-only changes. Overall: future-ready, no smell that requires blocking repair."
+}

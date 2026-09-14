@@ -32,7 +32,7 @@ If the folder already exists from a previous run:
 
 ## links.md Format
 
-**Every link gets an entry.** On repeat runs, append a new section with a date header:
+**Every link gets an entry.** On repeat runs, append a new section with a date header. An OG image may be downloaded only from a validated Discord-CDN URL already supplied in the message embed. Never fetch the linked third-party page or its host to discover an image. Record an absent or off-allowlist image as not downloaded.
 
 ```markdown
 # Links from discord-dm-john-smith
@@ -41,7 +41,7 @@ If the folder already exists from a previous run:
 
 ### https://example.com/interesting-article
 - Found in message by @username
-- OG:image downloaded: `images/og_example-com-interesting-article.png`
+- Discord-CDN embed image downloaded (link host not fetched): `images/og_example-com-interesting-article.png`
 
 ### https://github.com/user/repo
 - Found in message by @username
@@ -51,7 +51,7 @@ If the folder already exists from a previous run:
 
 ### https://docs.google.com/document/d/abc123
 - Found in message by @username
-- OG:image downloaded: `images/og_docs-google-com-document.png`
+- Discord-CDN embed image downloaded (link host not fetched): `images/og_docs-google-com-document.png`
 ```
 
 ## manifest.json Format
@@ -77,7 +77,7 @@ If the folder already exists from a previous run:
   "downloads": {
     "images": [
       { "filename": "photo.png", "url": "https://cdn.discordapp.com/attachments/.../photo.png", "type": "attachment", "added": "2026-03-21" },
-      { "filename": "og_example-com.png", "url": "https://...", "type": "og:image", "parent_link": "https://example.com", "added": "2026-03-21" }
+      { "filename": "og_example-com.png", "url": "https://cdn.discordapp.com/attachments/.../preview.png", "type": "og:image", "parent_link": "https://example.com", "added": "2026-03-21" }
     ],
     "files": [
       { "filename": "document.pdf", "url": "https://cdn.discordapp.com/attachments/.../document.pdf", "type": "attachment", "added": "2026-03-21" }

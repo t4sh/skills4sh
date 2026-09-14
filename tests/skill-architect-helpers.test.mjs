@@ -7,9 +7,10 @@ import test from 'node:test';
 
 const env = { ...process.env, PYTHONDONTWRITEBYTECODE: '1' };
 const scripts = 'skills/skill-architect/assets/scripts';
+const python = process.env.SKILL_TEST_PYTHON || 'python3';
 
 function runPython(args, options = {}) {
-  const result = spawnSync('python3', args, {
+  const result = spawnSync(python, args, {
     encoding: 'utf8',
     env,
     ...options,
@@ -19,7 +20,7 @@ function runPython(args, options = {}) {
 }
 
 function runPythonFail(args, options = {}) {
-  const result = spawnSync('python3', args, {
+  const result = spawnSync(python, args, {
     encoding: 'utf8',
     env,
     ...options,
@@ -112,4 +113,113 @@ test('skill-architect fix helper dry-runs and applies only mechanical fixes', ()
 
   const validate = runPython([`${scripts}/validate_skill.py`, skillDir]);
   assert.match(validate.stdout, /✓ skill validation passed/);
+});
+
+const validDescription = 'description: \'Use when reviewing "SKILL.md" files.\'';
+for (const [label, slug, frontmatter, expected] of [
+  ['blank description', 'fixture', 'name: fixture\ndescription:', /description must be a non-empty string/],
+  ['blank name', 'fixture', `name:\n${validDescription}`, /name must be a non-empty string/],
+  ['consecutive hyphens', 'bad--name', `name: bad--name\n${validDescription}`, /consecutive hyphens/],
+  ['leading hyphen', '-bad', `name: -bad\n${validDescription}`, /leading, trailing/],
+  ['long name', 'a'.repeat(65), `name: ${'a'.repeat(65)}\n${validDescription}`, /1-64/],
+  ['malformed YAML', 'fixture', `name: fixture\n${validDescription}\nmetadata: [unclosed`, /invalid YAML/],
+  ['duplicate key', 'fixture', `name: fixture\n${validDescription}\nname: fixture`, /duplicate YAML key/],
+  ['typed description', 'fixture', 'name: fixture\ndescription: [review, files]', /description must be a non-empty string/],
+  ['long description', 'fixture', `name: fixture\ndescription: ${'a'.repeat(1025)}`, /at most 1024/],
+  ['long compatibility', 'fixture', `name: fixture\n${validDescription}\ncompatibility: ${'x'.repeat(501)}`, /at most 500/],
+  ['typed metadata', 'fixture', `name: fixture\n${validDescription}\nmetadata:\n  version: 1`, /metadata must map/],
+  ['unsafe YAML tag', 'fixture', `name: fixture\n${validDescription}\nmetadata: !!python/object:os.PathLike {}`, /invalid YAML/],
+]) {
+  test(`portable validator rejects ${label}`, () => {
+    const dir = join(mkdtempSync(join(tmpdir(), 'skill-invalid-')), slug);
+    mkdirSync(dir);
+    writeFileSync(join(dir, 'SKILL.md'), `---\n${frontmatter}\n---\n\n# Fixture\n`);
+    const result = runPythonFail([`${scripts}/validate_skill.py`, dir]);
+    assert.match(result.stdout, expected);
+  });
+}
+
+test('portable validator and inspector accept folded YAML and quoted metadata', () => {
+  const dir = join(mkdtempSync(join(tmpdir(), 'skill-yaml-')), 'fixture');
+  mkdirSync(dir);
+  writeFileSync(join(dir, 'SKILL.md'), `---\nname: fixture\ndescription: >-\n  Review skill structure.\n  Use when editing "SKILL.md" files.\nmetadata:\n  version: "1.0.0"\n---\n\n# Fixture\n`);
+  runPython([`${scripts}/validate_skill.py`, dir]);
+  const result = JSON.parse(runPython([`${scripts}/inspect_skill.py`, dir]).stdout);
+  assert.equal(result.version, '1.0.0');
+  assert.equal(result.description, 'Review skill structure. Use when editing "SKILL.md" files.');
+});
+
+test('portable validator recognizes a concrete CSV cue without formatting workarounds', () => {
+  const dir = join(mkdtempSync(join(tmpdir(), 'skill-csv-')), 'fixture');
+  mkdirSync(dir);
+  writeFileSync(join(dir, 'SKILL.md'), '---\nname: fixture\ndescription: "Create monthly reports. Use when asked to review sales.csv or summarize monthly revenue."\n---\n\n# Fixture\n');
+  runPython([`${scripts}/validate_skill.py`, dir]);
+});
+
+
+test('validation and inspection fail explicitly when their YAML dependency is unavailable', () => {
+  const dir = join(mkdtempSync(join(tmpdir(), 'skill-no-yaml-')), 'fixture');
+  mkdirSync(dir);
+  writeFileSync(join(dir, 'SKILL.md'), '---\nname: fixture\ndescription: Use when reviewing "SKILL.md" files.\n---\n\n# Fixture\n');
+  for (const helper of ['validate_skill.py', 'inspect_skill.py']) {
+    const result = runPythonFail(['-S', `${scripts}/${helper}`, dir]);
+    assert.match(result.stdout + result.stderr, /PyYAML is required/);
+    assert.doesNotMatch(result.stdout, /skill validation passed/);
+  }
+});
+
+
+for (const [label, name, metadata] of [
+  ['folded', '>-\n  fixture', ''],
+  ['anchored', '&slug fixture', 'metadata:\n  author: *slug\n'],
+  ['tagged', '!!str fixture', ''],
+]) {
+  test(`fixer refuses ${label} YAML names without corrupting valid input`, () => {
+    const dir = join(mkdtempSync(join(tmpdir(), 'skill-fix-yaml-')), 'fixture');
+    mkdirSync(dir);
+    const original = `---\nname: ${name}\ndescription: Use when reviewing "SKILL.md" files.\n${metadata}---\n\n# Fixture\n`;
+    writeFileSync(join(dir, 'SKILL.md'), original);
+    runPython([`${scripts}/validate_skill.py`, dir]);
+    for (const flags of [[], ['--write']]) {
+      const result = runPythonFail([`${scripts}/fix_skill.py`, dir, ...flags]);
+      assert.match(result.stderr, /unsupported YAML name shape/);
+      assert.equal(readFileSync(join(dir, 'SKILL.md'), 'utf8'), original);
+    }
+    runPython([`${scripts}/validate_skill.py`, dir]);
+  });
+}
+
+for (const [label, frontmatter] of [
+  ['indented mapping', '  name: fixture\n  description: Use when reviewing "SKILL.md" files.'],
+  ['escaped name key', '"na\\u006de": fixture\ndescription: Use when reviewing "SKILL.md" files.'],
+  ['explicit name key', '? name\n: fixture\ndescription: Use when reviewing "SKILL.md" files.'],
+]) {
+  test(`fixer refuses ${label} before any name or reference edits`, () => {
+    const dir = join(mkdtempSync(join(tmpdir(), 'skill-key-shape-')), 'fixture');
+    mkdirSync(join(dir, 'references'), { recursive: true });
+    const original = `---\n${frontmatter}\n---\n\n# Fixture\n`;
+    writeFileSync(join(dir, 'SKILL.md'), original);
+    // The unrelated missing link must not cause a partial write after refusal.
+    writeFileSync(join(dir, 'references', 'details.md'), '# Details\n');
+    const parsed = JSON.parse(runPython([`${scripts}/inspect_skill.py`, dir]).stdout);
+    assert.equal(parsed.name, 'fixture');
+    for (const flags of [[], ['--write']]) {
+      const result = runPythonFail(['-S', `${scripts}/fix_skill.py`, dir, ...flags]);
+      assert.match(result.stderr, /unsupported YAML mapping key shape/);
+      assert.equal(readFileSync(join(dir, 'SKILL.md'), 'utf8'), original);
+    }
+    assert.equal(JSON.parse(runPython([`${scripts}/inspect_skill.py`, dir]).stdout).name, 'fixture');
+  });
+}
+
+test('fixer retains missing-name insertion for a supported mapping without PyYAML', () => {
+  const dir = join(mkdtempSync(join(tmpdir(), 'skill-missing-name-')), 'fixture');
+  mkdirSync(dir);
+  const original = '---\n# Leading comment\ndescription: Use when reviewing "SKILL.md" files.\nmetadata:\n  version: "1.0.0"\n---\n\n# Fixture\n';
+  writeFileSync(join(dir, 'SKILL.md'), original);
+  runPython(['-S', `${scripts}/fix_skill.py`, dir]);
+  assert.equal(readFileSync(join(dir, 'SKILL.md'), 'utf8'), original);
+  runPython(['-S', `${scripts}/fix_skill.py`, dir, '--write']);
+  runPython([`${scripts}/validate_skill.py`, dir]);
+  assert.match(readFileSync(join(dir, 'SKILL.md'), 'utf8'), /^name: fixture$/m);
 });

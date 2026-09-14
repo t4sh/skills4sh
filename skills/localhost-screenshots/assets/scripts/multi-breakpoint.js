@@ -40,7 +40,7 @@ function isLocalUrl(value) {
     const parsed = new URL(value);
     const host = parsed.hostname.toLowerCase();
     return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
-      && (host === 'localhost' || host === '127.0.0.1' || host === '::1' || host.endsWith('.localhost'));
+      && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost'));
   } catch {
     return false;
   }

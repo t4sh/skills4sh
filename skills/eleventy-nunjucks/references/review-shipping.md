@@ -10,26 +10,28 @@ Use this file for PR template checks, grep-based regression sweeps, stability wa
 | `dump` chained to `safe` inside `<script>` | JSON-escaped, not JS-safe — `</script>` breakout | `jsonScript` / `jsonCompact` (`filters.md`) |
 | Global `autoescape: false` | Broad XSS surface | Default on; per-value safe filter with justification |
 | safe filter on CMS / form / external HTML | Direct XSS | Sanitize (e.g. DOMPurify) upstream |
-| `markdown-it({ html: true })` on untrusted markdown | HTML injection | `html: false`; shortcodes for controlled HTML |
+| Untrusted Markdown compiled as a template | Template execution despite `html: false` | Pass it as data to a Markdown renderer; do not preprocess untrusted source |
 | `addPassthroughCopy("src/**/*")` | May ship secrets and tooling | Explicit `{ src: dest }` maps |
 | Hardcoded colors / arbitrary px in templates | Breaks token system | CSS variables from design tokens |
 | Reimplementing `where` / `limit` / `sort_by` per repo | Subtle drift across projects | Canonical set in `filters.md` |
 | `_site/` output when deploy expects `out/` | Broken deploy scripts | `output: "out"` (or match host) |
 | `{% import %}` using `page.*` / `site.*` without `with context` | Undefined inside macros | `with context` or explicit args |
 | `eleventy.before` for static asset copy | Slower than passthrough | `addPassthroughCopy` |
-| New section files without `-NN` variant | Blocks safe iteration | `<domain>-NN.njk`; switch includes to promote |
+| Renaming a section used by existing pages | Broken includes | Preserve callers; numbered variants are optional project policy |
 | `concurrently` without `--kill-others-on-fail` | Stale CSS while 11ty still runs | Always pass `--kill-others-on-fail` |
-| Polling `/version.json` with CORS under strict CSP | Painful preflights | Build SHA in `<meta>` read at runtime |
+| Assuming a custom router/version endpoint exists | Missing lifecycle or update detection | Inspect the project’s router and deployment contract |
 | Skipping Prettier on `.njk` | Format drift | `prettier-plugin-jinja-template` + CI `format:check` |
 
 ## Syntax and security greps
 
 Run from project root; set `file` or adjust paths per repo layout.
 
+These shell searches are triage hints, not parser/security proofs. Adjust the input/config/output paths and inspect multiline constructs and custom extensions. A successful search is not a substitute for rendering the changed templates.
+
 ### Unclosed block tags
 
 ```bash
-for kw in if for block macro autoescape raw; do
+for kw in if for block macro raw; do
   open=$(grep -cE "{%[- ]*$kw\b" "$file")
   close=$(grep -cE "{%[- ]*end$kw\b" "$file")
   [ "$open" != "$close" ] && echo "$file: $kw mismatch ($open / $close)"
@@ -59,6 +61,8 @@ grep -rnE "{%\s*(import|from)\s+\"" src/ | while read -r line; do
     && echo "$line — imports $macro which references page/site without 'with context'"
 done
 ```
+
+The import search can also find valid explicit macro arguments. Check the macro signature and call before reporting missing context.
 
 ### Hardcoded hex / px in templates
 
@@ -97,7 +101,7 @@ grep -nE "markdownIt\(\{[^}]*html:\s*true" .eleventy.js eleventy.config.* 2>/dev
 - [ ] Layout slots use `{{ content | safe }}` where HTML output is intended
 - [ ] Each `| safe` justified
 - [ ] No `| dump | safe` in committed sources
-- [ ] Macro imports that need `page` / `site` use `with context`
+- [ ] Macros receive `page` / `site` through explicit arguments or `with context`
 
 ### Data cascade
 

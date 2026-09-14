@@ -49,64 +49,31 @@ Two rules:
 
 **Use a Chrome-connected MCP** for one or two screenshots or interactive debugging. It drives the user's real browser, which can already reach their localhost dev server. No Playwright install required.
 
-### MCP tool names (map to the host's server)
+### Bind capabilities to the current host
 
-Identifiers differ by host. Map **capabilities** to the host server's actual tools:
+Read the active browser server's tool schemas before calling it. A capability name below is a task requirement, not a callable tool or a portable argument shape.
 
-| Step | Capability | Claude Chrome MCP (example) | Cursor `cursor-ide-browser` |
-|------|------------|----------------------------|-----------------------------|
-| Tab | Create or select tab | `…tabs_context_mcp({ createIfEmpty: true })` | `browser_tabs` (per server docs) |
-| Navigate | Open URL | `…navigate({ url })` | `browser_navigate` |
-| Screenshot | Capture viewport | `…computer({ action: "screenshot" })` | `browser_take_screenshot` |
-| Resize | Viewport / window | `…resize_window({ width, height })` | Resize tools if available, or devtools |
-| Run JS | Evaluate in page | `…javascript_tool({ action: "javascript_exec", text })` | Follow the server's evaluate / snapshot workflow |
+| Step | Required capability | Completion evidence |
+|------|---------------------|---------------------|
+| Tab | List, select, or create a task tab | Returned tab identifier; follow host lock/snapshot rules |
+| Viewport | Set the requested CSS viewport dimensions | Browser-reported viewport dimensions match the request |
+| Navigate | Open the local URL and inspect navigation state | Requested and final main-frame URLs stay local |
+| Screenshot | Capture the requested viewport or full page | Returned image/artifact from that tab |
+| Optional inspection | Evaluate page data or inspect a snapshot | Captured strings stay inside the untrusted-content boundary |
 
-Follow the MCP server's lock/snapshot rules (e.g. Cursor: snapshot before structural changes).
+**Missing resize capability:** use a documented CDP capability only if the host exposes and permits it. The Chrome DevTools Protocol supplies [Emulation.setDeviceMetricsOverride](https://github.com/ChromeDevTools/devtools-protocol/blob/master/pdl/domains/Emulation.pdl) with width, height, device scale factor and mobile-emulation settings; map it through the host's actual schema and verify the resulting viewport. Do not invent a `browser_cdp` call or assume that screen/window size equals CSS viewport size. Clear task-created emulation overrides afterward.
 
-### Prerequisites
+If neither viewport control nor permitted CDP is available, use the project's existing Playwright workflow when it can satisfy the request. If that path is unavailable, report the missing capability; do not label an unchanged screenshot as the requested size or install another stack automatically.
 
-The user's dev server must be running (e.g., `npx @11ty/eleventy --serve --port=3000`).
+**Cursor adapter:** inspect the current tab tool's action enum and required identifiers; choose its documented list/new/select operation. Do not copy another server's create-if-empty payload. Follow the active server's lock, snapshot, navigation and screenshot requirements. Use the same capability fallback above when its tool list has no resize operation.
 
-### Quick screenshot flow (pattern)
+### Quick screenshot flow
 
-1. Ensure a browser tab (create if empty).
-2. Navigate to `http://localhost:<port>/<path>`.
-3. Take a viewport screenshot.
-4. Optionally resize, then screenshot again.
-
-### Example: capability sequence (host-neutral)
-
-Bind each capability to the host server's actual tool names from the table above. This is the canonical sequence; the host-specific blocks below are concrete bindings of it.
-
-```
-ensure_tab({ createIfEmpty: true })          # Tab
-navigate({ url: "http://localhost:3000/dashboard/" })  # Navigate
-screenshot()                                 # Screenshot (desktop)
-resize({ width: 375, height: 812 })          # Resize to mobile
-screenshot()                                 # Screenshot (mobile)
-```
-
-### Example: Claude Chrome MCP (one binding)
-
-```
-mcp__Claude_in_Chrome__tabs_context_mcp({ createIfEmpty: true })
-mcp__Claude_in_Chrome__navigate({ url: "http://localhost:3000/dashboard/" })
-mcp__Claude_in_Chrome__computer({ action: "screenshot" })
-mcp__Claude_in_Chrome__resize_window({ width: 375, height: 812 })
-mcp__Claude_in_Chrome__computer({ action: "screenshot" })
-```
-
-### Example: Cursor IDE browser (one binding)
-
-```
-browser_tabs({ createIfEmpty: true })        # or the server's tab tool
-browser_navigate({ url: "http://localhost:3000/dashboard/" })
-browser_take_screenshot()                     # desktop
-# resize via the server's resize tool or devtools, then:
-browser_take_screenshot()                     # mobile
-```
-
-Use `browser_snapshot` before structural interactions; follow **cursor-ide-browser** server instructions for lock/unlock if required. Tool names follow the server's docs — confirm against the host's actual tool list.
+1. Confirm the existing dev server URL and select/create one task tab using the host schema.
+2. Set the requested viewport **before navigation**, then verify its dimensions. With no requested size, retain and report the observed viewport.
+3. Navigate to the local target, check its final URL, and wait for the content that matters.
+4. Capture only the requested size(s). Report an artifact only after capture succeeds; never add a desktop/mobile sweep to a single-size request.
+5. Restore task-created emulation overrides and release task-owned browser resources according to host instructions.
 
 ### Debugging patterns (run JS in page)
 
@@ -126,15 +93,6 @@ JSON.stringify(document.querySelector('.target').getBoundingClientRect())
 
 ```js
 JSON.stringify({ title: document.title, url: location.href, stylesheets: document.querySelectorAll('link[rel=stylesheet]').length })
-```
-
-**Claude Chrome MCP** shape:
-
-```
-mcp__Claude_in_Chrome__javascript_tool({
-  action: "javascript_exec",
-  text: "<escaped one-line string>"
-})
 ```
 
 ### When NOT to Use Chrome MCP for Screenshots
@@ -232,3 +190,7 @@ For advanced patterns (persistent sessions, pixel-diff, AI snapshots, CI workflo
 | [references/interaction-templates.md](references/interaction-templates.md) | Auth flows, e-commerce flows, state variations, interactive mode, core interaction primitives |
 | [references/ai-snapshots.md](references/ai-snapshots.md) | ARIA snapshots, DOM snapshots, interactive element maps, incremental DOM diff |
 | [references/troubleshooting.md](references/troubleshooting.md) | Common issues by project type (SSG, Next.js, Tailwind, WordPress); full "What NOT to Do" list |
+
+## Behavioral evals
+
+**Authors/reviewers only:** use the [scenario catalog](assets/evals/scenarios.json) when explicitly evaluating this skill. Skip it during normal task execution. Materialize each case in a fresh temporary directory, withhold assertions from the executing agent, and grade the resulting artifacts and actions. The catalog defines expected behavior; it is not evidence of a passing run. Synthetic browser and service inputs test decisions only, not live integrations.
