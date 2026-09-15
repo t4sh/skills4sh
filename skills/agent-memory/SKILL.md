@@ -1,18 +1,17 @@
 ---
 name: agent-memory
-description: "Cross-interface persistent memory for project context, decisions, conventions, and session handoffs. Use when the user asks to \"manage project memory\", \"initialize .agent-memory\", \"migrate memory\", \"build memory from docs\", \"save session learnings\", \"sync memory\", \"run memory maintenance\", \"check memory status\", or mentions persistent memory across Codex, Claude Code, Cursor, VS Code, Craft Agent, or other file-reading agents."
+description: "Persist project decisions, conventions, and session handoffs as reviewable markdown in `.agent-memory/`. Use when asked to \"manage project memory\", \"initialize .agent-memory\", \"migrate memory\", \"build memory from docs\", \"save session learnings\", \"sync memory\", \"run memory maintenance\", \"check memory status\", or \"onboard a new developer\"; when `.agent-memory/` or `AGENTS.md` memory pointers are in play; when sharing project context with another developer or reviewing project memory in a pull request; or when context \"forgets between sessions\". Sync reconciles files already in the checkout. Not for memory leaks, RAM usage, or human memory."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
   version: "2.7.7"
-  tags: memory, context, cross-interface, agent, persistence, codex, claude-code
+  tags: memory, context, cross-interface, agent, persistence, grok, openclaw
 ---
 
 # Agent Memory Skill
 
-Manage cross-interface persistent memory for AI-assisted projects. Maintain a coherent, up-to-date knowledge base that any AI agent — Codex, Claude Code, Cursor, VS Code, Craft Agent, or any file-reading tool — can read and build upon across sessions.
-
+Manage persistent project memory as reviewable markdown in the repository. Any file-reading agent can read and update the same `.agent-memory/` files across sessions.
 
 ## Capabilities
 
@@ -20,7 +19,7 @@ Manage cross-interface persistent memory for AI-assisted projects. Maintain a co
 |------|---------|
 | Initialize | Scaffold `.agent-memory/` with structure and entry points |
 | Capture | Distill session decisions, feedback, and context into durable memory files |
-| Sync | Keep memory consistent across Codex, Claude Code, Cursor, VS Code, and other file-reading agents |
+| Sync | Reconcile `.agent-memory/` files already in the checkout, then save the session |
 | Maintain | Compact stale entries, resolve conflicts, clean orphaned files |
 | Migrate | Upgrade older formats (v1 flat files, `CURSOR.md`) to memory format v2.1 |
 | Build | Scan existing documentation and generate initial memory files |
@@ -42,7 +41,7 @@ Manage cross-interface persistent memory for AI-assisted projects. Maintain a co
 Before operating on memory, understand:
 
 1. **Current State** — Does `.agent-memory/` exist? What version/structure? Older formats needing migration?
-2. **User's Goal** — First-time setup, saving learnings, or maintenance?
+2. **Requested outcome** — First-time setup, saving learnings, or maintenance?
 3. **Project Context** — Project type, existing docs, how many people/agents contributing?
 
 ---
@@ -51,24 +50,19 @@ Before operating on memory, understand:
 
 | Keyword      | Operation  | Description |
 |--------------|------------|-------------|
-| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, AGENTS.md, an exact `@AGENTS.md` Claude import, plus per-agent pointer files for the agents in use (e.g. `.cursor/rules/index.mdc`) |
+| **init**     | Initialize | Scaffold `.agent-memory/`, README, index, and `AGENTS.md`, plus pointer files only for agents already in use |
 | **migrate**  | Migrate    | Detect and migrate older structures (CURSOR.md, flat files, INDEX.yaml) to memory format v2.1 |
 | **build**    | Build      | Scan project and auto-generate initial memory files from existing docs |
 | **save**     | Save       | Capture learnings from the current session into memory |
 | **maintain** | Maintain   | Compact, trim stale, fix index, clean old session logs |
-| **sync**     | Sync       | Pull in external changes + save current session (end-of-session habit) |
+| **sync**     | Sync       | Reconcile memory files already in the checkout + save current session |
 | **status**   | Status     | Read-only health check — file counts, staleness, sync |
 
-If no keyword is given, ask:
+Infer the operation from a clear request; a literal command keyword is not required. For example, “remember why we chose SQLite” routes to Save, and “reconcile these memory files and capture our decision” routes to Sync. Ask one focused question only when the intended operation or a required input remains ambiguous. Preserve read-only requests: onboarding or reviewing existing memory does not authorize rebuilding or saving it.
 
-> **What would you like to do with agent memory?**
-> 1. **Init** — Set up `.agent-memory/` for this project (first time)
-> 2. **Migrate** — Upgrade older memory structures to memory format v2.1
-> 3. **Build** — Scan project and generate initial memories
-> 4. **Save** — Capture current session learnings
-> 5. **Sync** — Pull in external changes + save this session (recommended end-of-session)
-> 6. **Maintain** — Compact, trim stale, fix index
-> 7. **Status** — Show memory health report
+For a developer handoff, read the index and relevant entries, summarize the current decisions and open questions, and cite their files. Preserve proposals as proposals. A newer timestamp alone does not resolve conflicting decisions; inspect their evidence and review status, then ask when the accepted direction is unknown. Record `supersedes` only when replacement is established.
+
+For cross-repository work, use accessible references to the owning project's decisions with a revision when relevant. Summarize only the context needed locally; identify unavailable sources rather than inventing their contents. A request concerning one repository does not authorize edits to another.
 
 ---
 
@@ -76,24 +70,22 @@ If no keyword is given, ask:
 
 Scaffold the `.agent-memory/` system from scratch.
 
-**Overwrite guard:** Before creating or changing `AGENTS.md`, `CLAUDE.md`, `.cursor/rules/index.mdc`, `.agent-memory/index.yaml`, or `.agent-memory/README.md`, inspect any existing file and preserve its content. If a target file already exists and is not a thin compatible pointer, stage the proposed replacement and ask before overwriting. Report every file kept, created, or changed.
+**Overwrite guard:** Before creating or changing `AGENTS.md`, `.agent-memory/index.yaml`, `.agent-memory/README.md`, or any pointer file listed in [references/agent-pointers.md](references/agent-pointers.md), inspect any existing file and preserve its content. If a target file already exists and is not a thin compatible pointer, stage the proposed replacement and ask before overwriting. Report every file kept, created, or changed.
 
 ### Memory format v2.1 — Entry Points
 
 ```
 project/
-├── AGENTS.md                 # Canonical shared instructions (all tools read it)
-├── CLAUDE.md                 # Thin Claude import → @AGENTS.md + Claude-specific notes
-├── .cursor/rules/index.mdc   # Cursor native: "Always" rule → references AGENTS.md (only when Cursor is in use)
-└── .agent-memory/            # Cross-interface persistent memory
+├── AGENTS.md          # Canonical shared instructions
+└── .agent-memory/     # Reviewable project memory
 ```
 
-**Key:** `AGENTS.md` is the shared source of truth. `CLAUDE.md` imports it with an exact `@AGENTS.md` line; add Claude-only notes below that import. Claude Code's auto-memory (`~/.claude/projects/<project>/memory/`) is machine-local scratch, loaded and managed by Claude Code separately—do not copy it wholesale into `.agent-memory/`, edit it as part of `init`, or claim it is shared across agents/worktrees. Never put shared instructions inside `.claude/` or `.cursor/`. Create only the per-agent pointer files for agents the project actually uses; `.cursor/rules/index.mdc` is Cursor-specific and should be skipped when Cursor is not in use.
+**Key:** `AGENTS.md` is the shared source of truth. Add thin pointer files only for agents the project already uses; recipes live in [references/agent-pointers.md](references/agent-pointers.md). Never put shared instructions inside a vendor-only directory. Detect native memory/rule locations read-only and report them; do not migrate or overwrite them implicitly.
 
 ### Steps
 
 1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `references/`, `sessions/` under `.agent-memory/`.
-2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), `AGENTS.md` (canonical shared instructions), `CLAUDE.md` (exact `@AGENTS.md` import plus optional Claude-only notes). Add per-agent pointer files only for agents the project uses — e.g. `.cursor/rules/index.mdc` (Cursor “Always” rule that points agents at `AGENTS.md` — same file Migrate creates from `CURSOR.md`) when a `.cursor/` directory exists or Cursor is otherwise in use. Skip it for non-Cursor projects. Detect native memory/rule locations read-only and report them; do not migrate or overwrite them implicitly.
+2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), and `AGENTS.md` (canonical shared instructions). Create pointer files only for agents already in use, following [references/agent-pointers.md](references/agent-pointers.md).
 3. **Fill in TODOs** in AGENTS.md with project's actual structure and rules.
 4. **Update `index.yaml`** and **report** what was created.
 
@@ -109,9 +101,9 @@ Detect and migrate older structures to memory format v2.1.
 | `INDEX.yaml` (uppercase) | `index.yaml` (lowercase) | Renamed |
 | Flat `{type}--{topic}.md` | `{type}/{topic}.md` | Moved to directory |
 | `summary:` frontmatter | `description:` frontmatter | Field renamed |
-| `CLAUDE.md` with full instructions (no AGENTS.md) | `AGENTS.md` + `CLAUDE.md` containing `@AGENTS.md` and Claude-only notes | Promoted |
+| `CLAUDE.md` with full instructions (no AGENTS.md) | `AGENTS.md` + a thin pointer file | Promoted; pointer recipe in [agent-pointers.md](references/agent-pointers.md) |
 
-**Steps:** Scan for each old structure listed above → preserve existing content → perform only confirmed migrations → update `CLAUDE.md` to an exact `@AGENTS.md` import only after moving shared instructions into `AGENTS.md` → keep any Claude-only notes below the import → reconcile `index.yaml` with filesystem → report what changed.
+**Steps:** Scan for each old structure listed above → preserve existing content → perform only confirmed migrations → move shared instructions into `AGENTS.md`, then rewrite leftover client files as thin pointers per [references/agent-pointers.md](references/agent-pointers.md) → reconcile `index.yaml` with filesystem → report what changed.
 
 **Migration guard:** Renames, moves, and pointer rewrites are destructive. Before renaming `CURSOR.md`, `INDEX.yaml`, or replacing instruction files, show the planned source and destination paths and ask for confirmation unless the file is empty or already an exact generated pointer. Keep a backup or `.migrated` file whenever content is moved.
 
@@ -136,7 +128,7 @@ Capture learnings from the current conversation into memory.
 
 1. **Review conversation** for: decisions, feedback, conventions, status changes, important context
 2. **For each piece:** update existing memory file or create new one in appropriate `{type}/` directory. Create session log in `sessions/` for significant sessions.
-3. **Source identifier:** `codex` | `claude-app` | `claude-code` | `vscode` | `craft-agent` | `other`
+3. **Source identifier:** record the writing runtime as a slug (`codex`, `claude-code`, `cursor`, `grok`, `openclaw`, `vscode`, `craft-agent`, or `other`)
 4. **Write files** using standard frontmatter format (see [references/templates.md](references/templates.md))
 5. **Update `index.yaml`** and **report** what was saved/updated
 
@@ -144,7 +136,7 @@ Capture learnings from the current conversation into memory.
 
 ## Operation: Sync
 
-Combined: ingest external changes **then** save session. Recommended end-of-session command for multi-editor workflows.
+Reconcile memory files **already present in the current checkout**, then save the session. Sync does not fetch, pull, merge, commit, push, or synchronize another repository or a vendor-native memory store. Git operations require their own task authorization and repository workflow.
 
 **Phase 1 — Ingest:** Scan for unindexed files in `.agent-memory/` (add to index) → scan for orphan index entries (remove) → read updated files for awareness.
 
@@ -196,6 +188,7 @@ For frontmatter schema, memory types, and templates, see [references/templates.m
 | File | Contents |
 |------|----------|
 | [references/templates.md](references/templates.md) | Session log template, sync/health report templates, frontmatter schema, memory types table |
+| [references/agent-pointers.md](references/agent-pointers.md) | Installer skill roots, thin pointer files, and native-memory scope and preservation boundaries |
 | [references/display-conventions.md](references/display-conventions.md) | How to render memory files inline (markdown, YAML, JSON, rich previews, guidelines) |
 | [references/troubleshooting.md](references/troubleshooting.md) | Common issues by project type (solo, multi-agent, team, monorepo), troubleshooting Q&A |
 
@@ -207,7 +200,7 @@ Use these prompts to choose the operation, then proceed without collecting unnec
 
 1. Does `.agent-memory/` already exist, and what structure/version does it use?
 2. Which operation fits the request: `init`, `migrate`, `build`, `save`, `sync`, `maintain`, or `status`?
-3. Which agent entry points exist already (`AGENTS.md`, `CLAUDE.md`, Cursor rules), do they point to the shared source of truth, and which vendor-native memory/rule stores must be preserved?
+3. Which instruction or pointer files already exist, do they point at `AGENTS.md`, and which vendor-native memory stores must be left untouched? See [references/agent-pointers.md](references/agent-pointers.md).
 4. Which project docs can seed memory without copying them verbatim?
 5. Is the memory local/private, or intended to be shared through git?
 
@@ -217,8 +210,8 @@ Use these prompts to choose the operation, then proceed without collecting unnec
 
 | Pattern | When it is enough | When agent-memory is the better fit |
 |---|---|---|
-| Single client instruction file (`CLAUDE.md`, Cursor rule, etc.) | One tool and a small project | Multiple tools need a shared, indexed memory base |
-| Vendor auto-memory (for example Claude Code machine-local memory) | Local scratch and automatic recall inside one client | Knowledge must be portable, reviewable, shareable through git, or consistent across clients/worktrees |
+| Single client instruction file | One tool and a small project | Multiple tools need a shared, indexed memory base |
+| Vendor auto-memory | Local scratch and automatic recall inside one client | Knowledge must be portable, reviewable, shareable through git, or consistent across checkouts |
 | Session handoff note | One-time transfer between chats | Durable decisions, conventions, and project context need lifecycle management |
 | Memory MCP/server | Searchable centralized service is already approved | Plain files, git review, and zero runtime dependencies are preferred |
 

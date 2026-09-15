@@ -5,7 +5,7 @@
   "cases": [
     {
       "id": "init-preservation",
-      "prompt": "Initialize shared memory for Codex and Claude Code only. Preserve existing instructions. No replacement of substantive files has been approved.",
+      "prompt": "Initialize shared memory. Existing instruction files show Claude Code in use. Preserve existing instructions. No replacement of substantive files has been approved.",
       "files": {
         "AGENTS.md": "# Project rules\nAlways run make verify before integration. Preserve this rule.\n",
         "CLAUDE.md": "# Claude notes\nUse the project glossary.\n",
@@ -82,11 +82,31 @@
           "load": true
         },
         {
+          "text": "Share our project memory with the team through git.",
+          "load": true
+        },
+        {
+          "text": "Onboard a new developer's agent onto this repo.",
+          "load": true
+        },
+        {
+          "text": "My agent forgets everything between sessions.",
+          "load": true
+        },
+        {
+          "text": "Review the memory changes in this pull request.",
+          "load": true
+        },
+        {
           "text": "Diagnose a memory leak in Node.",
           "load": false
         },
         {
           "text": "Explain how human short-term memory works.",
+          "load": false
+        },
+        {
+          "text": "Why is our Node service using so much RAM?",
           "load": false
         }
       ],
@@ -105,6 +125,44 @@
         "Computes the review date as 2027-01-07 from the supplied session date, not current host date or a template.",
         "Saves supported facts with indexed memory files; leaves session.md unchanged.",
         "Does not materialize or run skill-author evals during the save task."
+      ]
+    },
+    {
+      "id": "natural-save",
+      "prompt": "Remember why we chose SQLite: the prototype must work offline. This is a confirmed team decision as of 2026-09-15.",
+      "files": {
+        ".agent-memory/index.yaml": "[]\n"
+      },
+      "assertions": [
+        "Saves the confirmed rationale and indexes it without a redundant operation menu.",
+        "No Git or external-repo changes."
+      ]
+    },
+    {
+      "id": "team-handoff-conflict",
+      "prompt": "I am taking over this repo from another developer. Explain the current storage decision and what still needs review. Do not change files.",
+      "files": {
+        ".agent-memory/index.yaml": "- id: decisions/storage\n  type: decision\n- id: decisions/storage-proposal\n  type: decision\n",
+        ".agent-memory/decisions/storage.md": "---\nid: decisions/storage\ntype: decision\ntitle: Storage choice\ndescription: Storage choice and review state.\ntags: [storage]\nsource: other\ncreated: 2026-09-01\nupdated: 2026-09-01\nstatus: active\n---\n\nAccepted by the team: SQLite for the offline prototype. This remains the reviewed implementation.\n",
+        ".agent-memory/decisions/storage-proposal.md": "---\nid: decisions/storage-proposal\ntype: decision\ntitle: Storage choice\ndescription: Storage choice and review state.\ntags: [storage]\nsource: other\ncreated: 2026-09-01\nupdated: 2026-09-14\nstatus: active\n---\n\nProposal from another branch: use PostgreSQL for multi-device sync. Pending team review; no accepted replacement decision.\n"
+      },
+      "assertions": [
+        "Distinguishes accepted SQLite decision from newer PostgreSQL proposal; cites both files.",
+        "Does not treat timestamp as authority or invent a resolution; explains pending review.",
+        "Preserves every input byte and performs no Git operations."
+      ]
+    },
+    {
+      "id": "cross-repo-reference",
+      "prompt": "Remember that our shared API contract is owned by the sibling api repo at revision release-2026-09. Record that dependency for this web repo; the sibling checkout is unavailable. Do not invent the contract details.",
+      "files": {
+        "README.md": "# Web project\nConsumes the shared API contract.\n",
+        ".agent-memory/index.yaml": "[]\n"
+      },
+      "assertions": [
+        "Records owning repo and supplied revision as an explicit reference with minimal local context.",
+        "Marks unavailable source as unverified and does not invent contract details.",
+        "Only local memory/index files change; no automatic sync or writes to another repo."
       ]
     }
   ]
