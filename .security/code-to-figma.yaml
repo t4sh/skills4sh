@@ -14,12 +14,12 @@ integrity:
   hash_algorithm: sha256
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 4ee5ba915b13f4c5ad5e5dacc094bff0531ff5e5b4dd545fed2c3650ce827ef3
-    references/benchmarks.md: 4bbf828e6ba2db5b2248fe557d7efda92d7da14a84dc0e72beb01e2b6d7bf9fe
+    references/benchmarks.md: 921a8ce3601c518ecf7a746de7f2d1afe9d27ea89ff33284df78d7be00d90d46
     references/ci-and-gist-setup.md: 23e18f12584a1f04d90916e520fad19ca5f996f7200f7033f8f37c3081c1ac54
     references/figma-export-contract.md: d30625fb0b943185da62bb3953702eafd1755a20ba4770570fab6c64cfc668f6
     references/setup-scaffold.md: 0e9af03c3f089bc1c971e60f8a51f052ec64d1f583ab7221421e46bdc1008a92
     references/walker-patterns.md: 5219dcd74ec251cca055deacd518a3343fb81eaad5dbfe45b0b882c5cb1f3718
+    SKILL.md: 133d2281e6fba290df7296b461f446d0b439e9e0de1c6bc35239ad4888f3b69e
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; script generation, CLI calls, and Gist writes are all gated by user approval at runtime"

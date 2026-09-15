@@ -1,6 +1,6 @@
 {
   "name": "skills4sh",
-  "description": "Portable agent skills for Codex, Claude Code, Cursor, VS Code, and compatible runtimes",
+  "description": "Portable agent skills for any Agent Skills-compatible runtime",
   "version": "0.5.2",
   "author": {
     "name": "t4sh"

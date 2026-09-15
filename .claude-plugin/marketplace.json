@@ -4,7 +4,7 @@
     "name": "t4sh"
   },
   "metadata": {
-    "description": "Portable agent skills for Codex, Claude Code, Cursor, VS Code, and compatible runtimes"
+    "description": "Portable agent skills for any Agent Skills-compatible runtime"
   },
   "plugins": [
     {

@@ -34,7 +34,7 @@ Do not add auxiliary files such as per-skill README, changelog, or install docs 
 Before drafting a new skill, gather the minimum requirements that determine structure:
 
 1. **Task/domain** — what repeated task or decision surface the skill covers.
-2. **Trigger phrases and contexts** — exact user requests, file types, tool names, or error messages that should load the skill.
+2. **Trigger phrases and contexts** — exact request phrases, file types, tool names, or error messages that should load the skill.
 3. **Workflow shape** — whether the skill is a quick command reference, a multi-step operating procedure, or a router across several subcommands.
 4. **Deterministic helpers** — whether validation, formatting, export, comparison, or fixture generation should be a bundled script instead of repeatedly generated prose/code.
 5. **Reference split** — which details are essential in `SKILL.md` and which belong in `references/` or bundled resources allowed by this repository.

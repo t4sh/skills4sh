@@ -43,15 +43,15 @@ plugins/<name>/             # standalone plugins (executable code + per-folder R
 tests/                      # installer + integration tests (node:test)
 ```
 
-A skill is **pure documentation**: SKILL.md instructions plus optional reference markdown and static assets. No shell scripts, no executable code, no install hooks. The installer (`bin/install.mjs`) only copies files to a destination directory; it never executes anything from the skill.
+A skill is an **inert instruction bundle**: SKILL.md instructions plus optional reference markdown and static assets. Helper scripts and code examples may ship as inert assets; there are no install hooks. The installer (`bin/install.mjs`) only copies files to a destination directory; it never executes anything from the skill.
 
-Code that *is* executable lives in two places: `bin/` (the installer and check scripts) and `plugins/` (standalone plugins that run in their own host, e.g. Figma). Neither is delivered by `bin/install.mjs` and neither participates in the skill version-sync surface — they are documented in their own folders and reviewed as code.
+Standalone executable tooling lives in two places: `bin/` (the installer and check scripts) and `plugins/` (standalone plugins that run in their own host, e.g. Figma). Neither is delivered by `bin/install.mjs` and neither participates in the skill version-sync surface — they are documented in their own folders and reviewed as code.
 
 ---
 
 ## Adding a new skill
 
-Follow the repository [Skill Authoring Standard](docs/SKILL_AUTHORING_STANDARD.md) for structure, frontmatter, body-size targets, progressive disclosure, and validation expectations. In short: `Skill Development` is the primary structural standard for this repo, `writing-skills` contributes validation discipline, and Codex's system `skill-creator` is treated as compatibility guidance.
+Follow the repository [Skill Authoring Standard](docs/SKILL_AUTHORING_STANDARD.md) for structure, frontmatter, body-size targets, progressive disclosure, and validation expectations. Use `skill-architect` as the operational planning/review skill; the local standard governs how upstream structural, validation, and compatibility guidance applies.
 
 ### 1. Create the skill directory
 
@@ -133,20 +133,20 @@ node bin/install.mjs --skill <your-skill> --dest /tmp/skills4sh-test
 node bin/install.mjs --skill <your-skill>
 ```
 
-Then open Claude Code or Cursor and invoke a request that should match the skill's trigger phrasing. Keep prompt catalogs separate from observed run evidence. The repository also exercises portable helper scripts and extracted Eleventy/Nunjucks code examples against pinned fixtures.
+Then open the target runtime and invoke a request that should match the skill's trigger phrasing. Keep prompt catalogs separate from observed run evidence. The repository also exercises portable helper scripts and extracted Eleventy/Nunjucks code examples against pinned fixtures.
 
 ---
 
 ## Updating an existing skill
 
 1. Edit files under `skills/<name>/`.
-2. Bump `metadata.version` in `skills/<name>/SKILL.md` (semver — patch for typos, minor for additive content, major for breaking changes to triggers or scope).
+2. During planning, analysis, and testing, keep the current version. At the merge decision, bump `metadata.version` in `skills/<name>/SKILL.md` (semver — patch for typos, minor for additive content, major for breaking changes to triggers or scope).
 3. Regenerate hashes (see step 5 above).
-4. Update the version in **all seven places** (drift-check will tell you which).
+4. When the merge-time bump is chosen, update the version in **all seven places** (drift-check will tell you which).
 5. Add a CHANGELOG entry under `[Unreleased]` describing the change.
 6. Run the full local check suite (next section) and open a PR.
 
-**Semver monotonicity is enforced.** `npm run check:drift` compares the current SKILL.md version against the previous commit's version (`HEAD^`) and fails if it went backwards. If you genuinely need to roll back a version, do it in a separate commit with an explicit `BREAKING:` note.
+**Semver monotonicity is enforced.** `npm run check:drift` compares the current SKILL.md version against the previous commit's version (`HEAD^`) and fails if it went backwards. A rollback of content still needs a new version; a commit message cannot bypass this gate.
 
 ---
 
@@ -259,7 +259,7 @@ Never declare a real security issue as `acknowledged: true`. If the underlying i
 1. Use the [PR template](.github/PULL_REQUEST_TEMPLATE.md) — the Skill authoring audit section and OWASP AST10 checklist are the bar for skill changes.
 2. Required CI checks (configured in [.github/BRANCH_PROTECTION.md](.github/BRANCH_PROTECTION.md)) — all must pass:
    - `validate` (Node 22 + 24)
-   - `guardskills` (each of the 5 skills × Node 22 + 24)
+   - `guardskills` (each skill in the workflow matrix × Node 22 + 24)
    - `release-guards` (bin-tag-parity)
    - `codeql`
    - `dependency-review`

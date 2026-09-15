@@ -13,10 +13,9 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 448b5d0ab34fe7735ed7861748da9098cfc9e61938c108b2177b29848dfda848
     assets/evals/scenarios.json: 7f296e7a8b0ab77e53ab9e9f7058df6d052f9b38a30f9e91ce55c64e20325592
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/build-awesome-v4.md: 4c01280a537c4f43005be7afaded163c8175a2485c2aa489e7089bb36f549605
     references/build-pipeline.md: 0bbf6354ecd34aa4cc79558f389e46a6ab6038cc42f5145a04bfa40d21e03b5e
     references/conventions.md: 993dbdb0cc5bd2091d241a7bd1cd050a6ffafaa67226ed43f091bf7d3bc8fb3c
@@ -28,6 +27,7 @@ integrity:
     references/review-shipping.md: d79cc59aa70210a76341142616a2e175d0008ccddb1eb944a0864db922e92896
     references/security-checklist.md: ed2524be0da77fead3321c8f09d066c16ceb5146f6f25bde72903ec6db583e48
     references/troubleshooting.md: 7b958f3c9281e56bde3c4494101c1835272617af67cbdcb3882408171e76310b
+    SKILL.md: c5f945d979f2a2d011c4f32c4875cb33d2188521ff2d433b5400828a010930d2
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

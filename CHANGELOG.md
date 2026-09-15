@@ -8,6 +8,17 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+### Changed
+- Clarified all skill descriptions for the loading agent: capability plus `Use when asked to`, with runtime brands moved to README installer notes and per-skill pointer references (including Grok and OpenClaw).
+- Agent-memory Capabilities now match local-only sync; pointer files and install roots live in `references/agent-pointers.md`.
+- Documented merge-time version decisions for draft skill work and corrected the code-to-figma credential description.
+
+### Fixed
+- Discord download diagnostics omit tokenized URLs; repeat imports compare bytes and preserve distinct same-name assets. Capabilities and classify steps match that collision policy.
+- Documented the discord-harvest `R009_FILE_STAGE` expected finding in `SECURITY.md`.
+- Corrected the localhost comparison examples for pixelmatch ES-module imports and added executed PNG comparison fixtures.
+- Connected the eval catalog shape contract to fixture validation across every existing catalog.
+
 ## [0.5.1] — 2026-08-07
 
 ### Changed
