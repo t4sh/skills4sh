@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Portable agent skills for any Agent Skills-compatible runtime",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "author": {
     "name": "t4sh"
   },

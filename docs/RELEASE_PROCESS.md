@@ -59,13 +59,26 @@ Before merging a PR that changes `package.json.version`:
 Do not publish from the feature branch. The release tag must point at the
 merged `main` commit.
 
-Pre-merge in the next version-bump PR (do not cut a release for this
-alone): lengthen the retry budget in `bin/verify-published.mjs`. v0.5.2 and
-v0.5.3 `npm-publish.yml` runs failed `Verify published registry metadata`
-after `npm publish` printed `+ skills4sh@X.Y.Z`, because npm was still
-processing the tarball. The current window is 12 attempts × 5s (~60s). For
-v0.5.3, publish finished at 07:59:36Z and registry metadata appeared at
-08:02:14Z (~2.5 minutes). Cover at least a few minutes.
+### Registry visibility lag after publish
+
+npm 12 publishes asynchronously. `npm publish` prints `Your package is being
+processed and may take a few minutes to become available` and returns
+`+ skills4sh@X.Y.Z` before the registry serves that version. Measured lag from
+that line to the version being visible: **126s for v0.5.2** and **158s for
+v0.5.3**. Under npm 11 (v0.5.1 and earlier) the lag was under a second, which is
+why only v0.5.2 and v0.5.3 failed `Verify published registry metadata`.
+
+`bin/verify-published.mjs` budgets ~5 minutes (60 attempts × 5s) for this, and
+retries only while the registry is not serving the version yet (`E404` /
+`No match found for version`). Every other failure fails immediately, so the
+budget cannot mask a real defect as a propagation lag. The step also confirms
+`latest` points at the published version by reading npm's authoritative
+per-package dist-tags endpoint, because the packument itself is served with
+`cache-control: public, max-age=300`.
+
+A verify failure after `+ skills4sh@X.Y.Z` is a false negative on a release that
+already succeeded. Do not re-publish or move the tag for it; see Failed Release
+Recovery.
 
 ## Preflight Before Tagging
 
@@ -187,10 +200,18 @@ First determine whether npm published the version:
 npm view "skills4sh@$version" version gitHead --json
 ```
 
-If the publish step logged `+ skills4sh@$version` but verify 404'd, wait and
-retry `npm view`. npm may still be processing the tarball (a few minutes for
-v0.5.2 and v0.5.3). Once the version is visible with the expected `gitHead`,
-the release succeeded. Leave the failed Actions run; do not re-run
+If the publish step logged `+ skills4sh@$version`, the publish itself
+succeeded. Since v0.5.4 the verify step already waits ~5 minutes for the
+registry lag, so a verify failure now means either the wait was exceeded or the
+metadata is genuinely wrong. Check both before touching anything:
+
+```bash
+npm view "skills4sh@$version" version gitHead --json
+curl -s "https://registry.npmjs.org/-/package/skills4sh/dist-tags"
+```
+
+Once the version is visible with the expected `gitHead` and `latest` points at
+it, the release succeeded. Leave the failed Actions run; do not re-run
 `npm-publish.yml` and do not recreate the tag.
 
 If npm returns the version, do not reuse or move the tag. If a new publish is
