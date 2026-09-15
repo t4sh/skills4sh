@@ -135,7 +135,7 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory`, `discord-harvest`, `figma-to-code`, and `skill-architect` scan without overrides; `code-to-figma`, `eleventy-nunjucks`, and `localhost-screenshots` have documented expected findings that must match this file before overrides are accepted. |
+| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory`, `figma-to-code`, and `skill-architect` scan without overrides; `code-to-figma`, `discord-harvest`, `eleventy-nunjucks`, and `localhost-screenshots` have documented expected findings that must match this file before overrides are accepted. |
 | CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
 | Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
 | GitHub Actions SHA-pinning | All `uses:` directives across every workflow are pinned to a commit SHA (with a trailing `# vX.Y.Z` comment for human readability). Floating major tags (`@v4`) would expose CI to upstream compromise — see e.g. the tj-actions/changed-files 2025 incident. `.github/dependabot.yml` opens grouped weekly PRs to keep the SHAs moving forward; each upgrade PR hits the full required-checks matrix before merge. |
@@ -172,6 +172,12 @@ The following findings are expected and documented:
 | `R005_SECRET_READ` | HIGH/medium | `references/walker-patterns.md` | False positive (acknowledged). The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — sourcing the token from the environment instead of hardcoding it is the secure pattern. No secret file or credential store is read; the script is an adaptable template, not executed by the skill. |
 | `R008_ENV_ACCESS` | LOW | `references/ci-and-gist-setup.md`, `references/walker-patterns.md` | CI/template snippets reference `GIST_TOKEN` / `GIST_ID` via GitHub Actions secrets and `process.env`, while the local pusher may read `gistId` from config — the recommended pattern, shown as instructional examples. |
 | `R009_FILE_STAGE` | LOW | `SKILL.md`, `references/ci-and-gist-setup.md` | Instructional `/tmp/figma-export*.json` staging in the sync/verify and Gist-setup command examples — documentation, not skill-side file staging. |
+
+### discord-harvest
+
+| Finding | Severity | File(s) | Explanation |
+|---------|----------|---------|-------------|
+| `R009_FILE_STAGE` | LOW | `references/code-examples.md` | Approved CDN downloads use `mktemp` for byte comparison before copying into the archive; no execution or exfiltration of staged content. |
 
 ### eleventy-nunjucks
 
@@ -215,7 +221,7 @@ Run security scans locally:
 # guardskills (skill-specific; pinned to CI version)
 npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill code-to-figma --dry-run --force
-npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run
+npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run --force
 npx guardskills@1.2.1 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force
 npx guardskills@1.2.1 add t4sh/skills4sh --skill figma-to-code --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run

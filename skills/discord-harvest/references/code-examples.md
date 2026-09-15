@@ -15,8 +15,8 @@ sanitize_filename() {
   name=$(basename -- "$name")           # strip any path components (../../)
   name="${name//[^a-zA-Z0-9._-]/_}"     # allow only safe characters
   while [[ "$name" == .* ]]; do name="${name#.}"; done  # strip all leading dots (hidden files)
-  while [[ "$name" == *. ]]; do name="${name%.}"; done  # Windows forbids trailing dots
   name="${name:0:200}"                   # truncate to 200 chars max
+  while [[ "$name" == *. ]]; do name="${name%.}"; done  # Windows forbids trailing dots
   if [ -z "$name" ] || [ "$name" = "." ]; then
     name="unnamed"
   fi
@@ -40,7 +40,7 @@ validate_url() {
   local url="$1"
   # Must be HTTPS
   if [[ ! "$url" =~ ^https:// ]]; then
-    echo "SKIP: non-HTTPS URL blocked: $url" >&2
+    echo "SKIP: non-HTTPS URL blocked" >&2
     return 1
   fi
   # Extract the host only: strip scheme, then path, then userinfo and port.
@@ -52,14 +52,14 @@ validate_url() {
   host="${host%%:*}"   # drop :port; any bracketed IPv6 literal collapses to "[", still caught by the \[* check below
   # Block bracketed IP-literal hosts plus private/internal IPv4 ranges (SSRF protection).
   if [[ "$host" == \[* ]] || [[ "$host" =~ ^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|0\.0\.0\.0|169\.254\.) ]]; then
-    echo "SKIP: private/local URL blocked: $url" >&2
+    echo "SKIP: private/local URL blocked" >&2
     return 1
   fi
   # Strict allowlist — only exact Discord CDN hosts (no wildcard subdomains)
   if [[ "$host" =~ ^(cdn\.discordapp\.com|media\.discordapp\.net|images-ext-[0-9]+\.discordapp\.net)$ ]]; then
     return 0
   fi
-  echo "SKIP: untrusted URL domain: $url" >&2
+  echo "SKIP: untrusted URL domain" >&2
   return 1
 }
 ```
@@ -73,7 +73,8 @@ Discord CDN URLs contain ephemeral authentication tokens in query parameters. **
 ```bash
 redact_cdn_url() {
   local url="$1"
-  echo "${url%%\?*}"
+  url="${url%%\?*}"
+  printf '%s\n' "${url%%#*}"
 }
 ```
 
@@ -122,12 +123,57 @@ flag_suspicious() {
 
 Run over every attachment filename and embed title during the staging step (A3/B2). Include matches in the summary report under a **Flagged Content** section.
 
+### Collision and Repeat-Run Policy
+
+Compare bytes, never just names or sizes. Within a dedicated archive directory, keep a byte-identical existing asset and report it as skipped. Preserve different content under the first free suffix (`photo_2.png`, `photo_3.png`). Check existing suffixed candidates too so a repeated collision does not create another copy. Never follow a destination symlink. Run one writer per archive directory.
+
+The Bash snippets require Bash and standard file utilities (on Windows, use a configured Bash environment). This helper handles approved local assets and completed temporary downloads; the caller updates the manifest with its returned destination. Do not add a duplicate manifest asset entry on a skip.
+
+```bash
+copy_asset() {
+  local source="$1" out_dir="$2" original="$3"
+  if [[ ! -f "$source" || -L "$source" || ! -d "$out_dir" || -L "$out_dir" ]]; then
+    echo "SKIP: source or destination is not a regular file/directory" >&2
+    return 1
+  fi
+  local name stem ext candidate n=1
+  name=$(sanitize_filename "$original") || return 1
+  stem="$name"; ext=""
+  if [[ "$name" == *.* ]]; then stem="${name%.*}"; ext=".${name##*.}"; fi
+  candidate="$out_dir/$name"
+  while [[ -e "$candidate" || -L "$candidate" ]]; do
+    if [[ -f "$candidate" && ! -L "$candidate" ]] && cmp -s "$source" "$candidate"; then
+      printf 'skipped\t%s\n' "$candidate"
+      return 0
+    fi
+    n=$((n + 1))
+    candidate="$out_dir/${stem}_${n}${ext}"
+  done
+  # Never overwrite an existing destination; verify the completed copy.
+  cp -n "$source" "$candidate" && [[ ! -L "$candidate" ]] && cmp -s "$source" "$candidate" || {
+    echo "ERROR: asset copy failed; inspect destination before retrying" >&2
+    return 1
+  }
+  printf 'copied\t%s\n' "$candidate"
+}
+```
+
+For live downloads, a manifest attachment ID plus a verified local content hash can avoid a repeat request. If identity or integrity is uncertain, stage a download, compare its bytes with this helper, and report the outcome. A filename or size match alone never proves duplication.
+
 ### Download Commands
 
 ```bash
-# Always sanitize before passing to curl
-filename=$(sanitize_filename "{original_filename}")
-validate_url "{url}" && curl --proto '=https' --fail -o "{harvest_folder}/images/${filename}" "{url}"
+# Run only after staging approval. Load the helper functions above first.
+validate_url "{url}" || exit 1
+staged_asset=$(mktemp) || exit 1
+if curl --proto '=https' --fail -o "$staged_asset" "{url}"; then
+  copy_asset "$staged_asset" "{harvest_folder}/images" "{original_filename}"
+  copy_status=$?
+else
+  copy_status=1
+fi
+rm -f "$staged_asset"
+exit "$copy_status"
 ```
 
 **Do NOT pass raw Discord filenames or URLs directly to `curl -o`.** A crafted filename like `../../.env` would write outside the harvest folder. A crafted URL or redirect could hit internal network endpoints (SSRF). Avoid `curl -L` here: curl can follow redirects to a different host, and `--proto-redir '=https'` restricts redirected protocols but does not re-check the host allowlist.
@@ -139,8 +185,7 @@ validate_url "{url}" && curl --proto '=https' --fail -o "{harvest_folder}/images
 - **Do not use automatic redirects** for downloads; validate any redirected `Location` URL before retrying
 - Use the sanitized original filename from the URL/attachment when available
 - For OG:images, prefix with `og_` and use a sanitized version of the parent URL's domain+path
-- If filenames collide, append `_2`, `_3`, etc.
-- **Skip files that already exist** (same filename + same size) to avoid re-downloading on repeat runs
+- Apply the [collision and repeat-run policy](#collision-and-repeat-run-policy) to every copy/download: compare bytes, preserve different content under suffixes, and record the actual destination.
 
 ## Local Data Package and Manual-Import Staging
 
@@ -174,8 +219,7 @@ test -f "$source_file" && test ! -L "$source_file" || {
   echo "SKIP: source is not a regular non-symlink file" >&2
   exit 1
 }
-filename=$(sanitize_filename "$(basename -- "$source_file")")
-cp "$source_file" "{harvest_folder}/images/${filename}"
+copy_asset "$source_file" "{harvest_folder}/images" "$(basename -- "$source_file")"
 ```
 
 The bot API remains the only automated live-Discord path. Do not add browser-DOM extraction, self-bot clients, or authenticated-session scraping as a fallback.
