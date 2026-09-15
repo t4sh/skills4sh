@@ -27,9 +27,11 @@ Use the custom comparison and `pixelmatch` sections below when the task is an ad
 
 ## Before/After Comparison HTML
 
+Save the JavaScript examples as ES modules (`.mjs`, or `.js` in a `type: module` project). The enhanced HTML generator reuses `fs`, `path`, `escapeHtml`, and `htmlPath` from this first example; combine them without duplicate imports.
+
 ```js
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
 
 function escapeHtml(value) {
   return String(value)
@@ -83,14 +85,14 @@ ${breakpoints.map(f => {
 
 ```bash
 # Install pixelmatch (one-time)
-npm install pixelmatch pngjs
+npm install --save-dev --save-exact pixelmatch@7.2.0 pngjs@7.0.0
 ```
 
 ```js
-const { PNG } = require('pngjs');
-const pixelmatch = require('pixelmatch');
-const fs = require('fs');
-const path = require('path');
+import { PNG } from 'pngjs';
+import pixelmatch from 'pixelmatch';
+import fs from 'node:fs';
+import path from 'node:path';
 
 function diffScreenshots(beforePath, afterPath, diffPath, threshold = 0.1) {
   const before = PNG.sync.read(fs.readFileSync(beforePath));

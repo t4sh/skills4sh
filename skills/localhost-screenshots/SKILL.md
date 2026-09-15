@@ -1,6 +1,6 @@
 ---
 name: localhost-screenshots
-description: "Localhost screenshot capture and visual-regression workflow for responsive pages and local dev servers. Use when the user asks to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or any request involving programmatic screenshots of a local dev server or localhost site across viewport breakpoints."
+description: "Capture and compare localhost pages across viewports for visual regression. Use when asked to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or when capturing programmatic screenshots of a local dev server across viewport breakpoints."
 license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
@@ -65,7 +65,7 @@ Read the active browser server's tool schemas before calling it. A capability na
 
 If neither viewport control nor permitted CDP is available, use the project's existing Playwright workflow when it can satisfy the request. If that path is unavailable, report the missing capability; do not label an unchanged screenshot as the requested size or install another stack automatically.
 
-**Cursor adapter:** inspect the current tab tool's action enum and required identifiers; choose its documented list/new/select operation. Do not copy another server's create-if-empty payload. Follow the active server's lock, snapshot, navigation and screenshot requirements. Use the same capability fallback above when its tool list has no resize operation.
+**Host tab-tool schema:** inspect the current tab tool's action enum and required identifiers; choose its documented list/new/select operation. Do not copy another server's create-if-empty payload. Follow the active server's lock, snapshot, navigation and screenshot requirements. Use the same capability fallback above when its tool list has no resize operation.
 
 ### Quick screenshot flow
 
@@ -166,8 +166,7 @@ See [references/troubleshooting.md](references/troubleshooting.md) § "What NOT 
 
 ## Related Skills
 
-**Built-in (Claude Code):**
-- **dev-browser** — browser automation with persistent page state. Useful for interactive captures and manual navigation before screenshotting
+**Host-bundled browser skills:** if the runtime already ships a browser-automation skill (persistent page state, interactive navigation), use it for interactive captures before screenshotting. Do not treat a host brand name as a required step in this workflow.
 
 **Adjacent workflows:**
 - **One-off localhost screenshots** — a lightweight shot-scraper or browser MCP workflow may be enough when only one viewport or element capture is needed.
