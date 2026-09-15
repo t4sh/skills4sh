@@ -44,7 +44,7 @@ test('skill-architect scaffold, inspect, and validate helpers work against a fix
   const skillDir = join(root, 'fixture-skill');
   const skillText = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
   assert.match(skillText, /^name: fixture-skill$/m);
-  assert.match(skillText, /Use when the user asks to \\"review fixture workflows\\"/);
+  assert.match(skillText, /Use when asked to \\"review fixture workflows\\"/);
 
   mkdirSync(join(skillDir, 'assets', 'scripts', '__pycache__'), { recursive: true });
   writeFileSync(join(skillDir, 'assets', 'scripts', '__pycache__', 'helper.cpython-314.pyc'), 'bytecode');
@@ -53,7 +53,7 @@ test('skill-architect scaffold, inspect, and validate helpers work against a fix
   const summary = JSON.parse(inspect.stdout);
   assert.equal(summary.name, 'fixture-skill');
   assert.equal(summary.version, '0.1.0');
-  assert.match(summary.description, /Use when the user asks to "review fixture workflows"/);
+  assert.match(summary.description, /Use when asked to "review fixture workflows"/);
   assert.ok(summary.body_words > 50);
   assert.deepEqual(summary.references, []);
   assert.ok(!summary.files.some((file) => file.includes('__pycache__') || file.endsWith('.pyc')));

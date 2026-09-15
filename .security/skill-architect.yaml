@@ -13,19 +13,19 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: be67e1683c143672b51ed5f4877859581530091a6a7bee8f31fd2a69d3f2380f
     assets/evals/scenarios.json: e1df8ddbe1b98d052307736a12ccc5c9d154419f52a893e8f2d88ac09e281bab
     assets/scripts/fix_skill.py: 4ae4fec491e5e1c0dd5e2f0a93c8aa9f4352d10c94ee1c4ee769c4fe46ae6648
     assets/scripts/inspect_skill.py: 3a03977db891001f45e1fd0eb3dc108ce2090974f3223572419068a8d0d32dcd
     assets/scripts/requirements.txt: 0969da99a0bc2a1b71ed50584560f4588a37567ac63af3ddbaf3c4617ca5621a
-    assets/scripts/scaffold_skill.py: 6552a22213bf07f6ebe5f801b1e162a142afd3d8fad976c0d663fbc7ac763459
+    assets/scripts/scaffold_skill.py: f2bcf811764849b4dccf0a76b69fdbe169914cbcb616b69bf0f6a7459f59369e
     assets/scripts/validate_skill.py: 1d24da3f11df93523a109a57fb19e85e60c1b0741f7c61eaf6bef5f4b0131034
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/comparative-study.md: 5c0d20ea7d3500e16539d12c2264e5ce03377b8e83c2b165a3ea93a23908f404
     references/eval-methodology.md: 6f909f70d97933d71c610352ddeb6365e16e657d3fc0508e87dfe560baf9b73a
-    references/house-rubric.md: 8ff171635fbf720d5703952bb2d94d10e69c080959d5d200f96613f64d4ec753
+    references/house-rubric.md: d27e708cb9af95bc6a0a8ff7ad951864295395fd85a8c0ecb5bb8f65302df16d
     references/naming-and-packaging.md: 8d570f2bd0afc4f115e4bcf8a3f79da9660925a31c7aa865e694d9f5dd5348d0
-    references/vendor-adapters.md: 04dd6712232825456e98748d143b653d0b2283d192b59377789ba23b39826463
+    references/vendor-adapters.md: f6c622a5a88e8d46005bfcb1dc71568365971b56f0471f9da3a853cdefc945ad
+    SKILL.md: f52cf7d656e230e501235a8fac05fbdc71634b9cf57a5cda775a6a8aaa940cd2
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all helper scripts are inert assets and require explicit user or agent execution"

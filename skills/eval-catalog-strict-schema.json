@@ -1,12 +1,16 @@
 {
   "schema_version": 1,
+  "description": "Repository shape contract consumed by tests/skill-eval-fixtures.test.mjs; not JSON Schema. Workflow cases require fixture files. Description-only routing uses a standalone prompt or a labeled prompts array. Assertions are expected behavior, not observed results.",
+  "catalog_required_keys": [
+    "schema_version",
+    "purpose",
+    "execution",
+    "cases"
+  ],
   "required_keys": [
     "id",
     "prompt",
-    "kind",
-    "assertions",
-    "files",
-    "prompts"
+    "assertions"
   ],
   "types": {
     "id": "string",
@@ -14,10 +18,15 @@
     "kind": "string",
     "assertions": "array",
     "files": "object",
-    "prompts": "array"
+    "prompts": "array",
+    "fixture_note": "string"
   },
   "constraints": {
-    "assertions_items_type": "object",
-    "files_values_type": "array"
+    "assertions_items_type": "string",
+    "files_values_type": "string",
+    "kinds": [
+      "workflow",
+      "description-only-routing"
+    ]
   }
 }

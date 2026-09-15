@@ -60,28 +60,30 @@ Long comparisons, matrices, troubleshooting, and extended examples belong in `re
 
 A strong description has two required parts: a concise capability clause and concrete trigger/use conditions. It does five jobs:
 
-1. Names exact user phrases.
+1. Names exact request phrases.
 2. Names file paths, tools, APIs, or error messages.
 3. States contexts where the skill should load even if the phrase differs.
-4. Front-loads leading words that the user, docs, or codebase already use.
+4. Front-loads leading words that requests, docs, or the codebase already use.
 5. Avoids becoming a workflow summary.
+
+Write the description for the agent that loads the skill. Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.
 
 Preferred pattern:
 
 ```yaml
-description: "Capability summary. Use when the user asks to \"create X\", \"fix Y\", or \"review Z\"; when paths include `foo.config.js`; or when debugging named failure modes."
+description: "Capability summary. Use when asked to \"create X\", \"fix Y\", or \"review Z\"; when paths include `foo.config.js`; or when debugging named failure modes."
 ```
 
 Allowed short pattern when the capability is obvious from the skill name:
 
 ```yaml
-description: "Use when the user asks to \"create X\", \"fix Y\", or \"review Z\"; when paths include `foo.config.js`; or when debugging named failure modes."
+description: "Use when asked to \"create X\", \"fix Y\", or \"review Z\"; when paths include `foo.config.js`; or when debugging named failure modes."
 ```
 
 Legacy valid pattern:
 
 ```yaml
-description: "This skill should be used when the user asks to \"create X\", \"fix Y\", or \"review Z\"; when paths include `foo.config.js`; or when debugging named failure modes."
+description: "This skill should be used when asked to \"create X\", \"fix Y\", or \"review Z\"; when paths include `foo.config.js`; or when debugging named failure modes."
 ```
 
 Avoid:
@@ -92,6 +94,7 @@ Avoid:
 - second-person descriptions: "Use this when you..."
 - workflow summaries that omit retrieval cues
 - vendor-only trigger names unless the skill is truly vendor-specific
+- runtime compatibility advertising in descriptions; retain names that identify a real task or execution boundary
 
 
 ## Command mode rubric

@@ -2,7 +2,7 @@
 
 This repository uses the portable [`skill-architect`](../skills/skill-architect/) skill as the operational reference for planning, authoring, reviewing, and evolving skills. `skill-architect` bridges the overlapping strengths of [**Skill Development**](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) for structure, [**writing-skills**](https://www.skills.sh/obra/superpowers/writing-skills) for quality and validation discipline, Anthropic [**skill-creator**](https://www.skills.sh/anthropics/skills/skill-creator) for eval methodology, and OpenAI [**skill-creator**](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) for compatibility awareness.
 
-The goal is consistency across `skills/<name>/` folders while keeping skills useful in Claude Code, Cursor, Codex, and other file-reading agents.
+The goal is consistency across `skills/<name>/` folders while keeping skills useful to any file-reading agent that implements Agent Skills.
 
 ## Standard Precedence
 
@@ -61,13 +61,15 @@ metadata:
 Rules:
 
 - `name` must match the directory.
-- `description` is the retrieval surface. It must contain **a concise capability clause plus concrete trigger/use conditions**.
+- `description` is the retrieval surface for the agent that loads the skill. It must contain **a concise capability clause plus concrete trigger/use conditions**.
 - Preferred format: `Capability summary. Use when <specific triggers, file paths, tools, error text, or situations apply>.`
 - Allowed short format: `Use when <specific triggers, file paths, tools, error text, or situations apply>.`
 - The legacy strict format `This skill should be used when ...` remains valid, but is no longer the only accepted form.
+- Prefer `Use when asked to ...` over `Use when the user asks to ...`. The loading agent is the user of the skill.
+- Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.
 - Avoid loose summaries with no trigger/use conditions; they are harder for agents to retrieve reliably.
 - Avoid generic trigger-only descriptions such as `Use when creating skills.` The mechanical gate now requires concrete retrieval detail: a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger.
-- `metadata.version` is the skill version. Bump it for updates after the skill has landed on `main`; new-skill review commits before first merge may keep the same initial version.
+- `metadata.version` is the skill version. Planning, analysis, and testing branches may retain the released version during draft commits, including updates to existing skills. At the merge decision, choose the bump for the final diff and synchronize all version surfaces before merge. Keep hashes current during drafting; unchanged versions do not exempt validation or security checks. New skills may retain their initial version until first merge.
 - `tags` should include search synonyms, tool names, and domain terms.
 
 ## Body Size
@@ -92,6 +94,19 @@ The body should contain triggers already implied by the description only when th
 - Avoid narrative session history. Skills describe reusable behavior, not how one session solved a problem.
 
 ## Progressive Disclosure
+
+Write for the surface's consumer:
+
+| Surface | Contents |
+|---|---|
+| README | Outcomes, selection guidance, comparisons, examples, installation |
+| Frontmatter description | Capability and concrete load/skip conditions for the agent |
+| Compatibility metadata | Required tools, platform constraints, and runtime capabilities |
+| SKILL.md opening | Operation selection, prerequisites, immediate steps, and completion criteria |
+| References | Branch-specific recipes, schemas, troubleshooting, and host adapters |
+| Author-only footer | Eval entrypoints, benchmark methodology, and provenance |
+
+Frontmatter is not only installer metadata: the description supports retrieval, and compatibility can determine whether execution is possible. Keep required capability checks visible before action; link host-specific recipes at the step that needs them.
 
 Keep `SKILL.md` as the entrypoint:
 
