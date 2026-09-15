@@ -4,7 +4,7 @@
 
 skill:
   name: figma-to-code
-  version: "0.1.7"
+  version: "0.1.8"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -20,7 +20,7 @@ integrity:
     references/implementation-patterns.md: 40a08a589db5db8478dac24cbedc45768e99242de6afa4e159c1d0e1fd701699
     references/troubleshooting.md: b50e1cf7251256d20170d2de68d2b13aaa0103683d6d9427243cafa6aa9af74c
     references/verification-and-boundaries.md: f0f3b35a95fbce2a13c29896f43290ee577996cf5fa4c0e42bc11e2d11040339
-    SKILL.md: 29011ab342efc4042f6875b7fd40e0b3efc4590fabefda303b4f19cd5f512f0c
+    SKILL.md: d81a7020f7bf08890531159a17ee07096f11fea668fbac1a4389aa0d3cf0faa6
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

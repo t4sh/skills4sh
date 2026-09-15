@@ -220,7 +220,7 @@ def validate(skill_dir: Path) -> list[str]:
     elif not has_trigger_clause(description):
         errors.append("description should include concrete trigger/use conditions, e.g. 'Capability. Use when ...' or 'Use when ...'")
     elif not has_concrete_trigger_detail(description):
-        errors.append("description trigger/use conditions are too generic; include a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger")
+        errors.append("description trigger/use conditions are too generic; include a quoted request phrase, path/file cue, tool cue, named situation, or multi-clause trigger")
 
     for field, limit in (("compatibility", 500), ("license", None), ("allowed-tools", None)):
         if field in frontmatter:

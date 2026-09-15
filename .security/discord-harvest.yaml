@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "2.0.0"
+  version: "2.0.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -20,7 +20,7 @@ integrity:
     references/design-philosophy.md: 0192dda8e8299401636253fe3ba2c6741f01c3db56f246379156811c61000385
     references/folder-structure.md: c5c023ef4cd6eb2b21cdf78bdb7a7363a3b323101b77db4ea911956ef8e6219f
     references/troubleshooting.md: cf2df2c0afc0ac8a96722b41ec4a301f1af7d136f65dc86803b32f2956ed56e1
-    SKILL.md: 744efaf44bea6817825e738cda1b9805fdf5e3a19cb1314edacd5d32b86aada3
+    SKILL.md: 01b5febc2226e4b93b973e2fd976cd7d83061555d06547c85f8acdebb1fb5312
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

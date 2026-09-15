@@ -4,7 +4,7 @@
 
 skill:
   name: code-to-figma
-  version: "0.2.0"
+  version: "0.2.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -19,7 +19,7 @@ integrity:
     references/figma-export-contract.md: d30625fb0b943185da62bb3953702eafd1755a20ba4770570fab6c64cfc668f6
     references/setup-scaffold.md: 0e9af03c3f089bc1c971e60f8a51f052ec64d1f583ab7221421e46bdc1008a92
     references/walker-patterns.md: 5219dcd74ec251cca055deacd518a3343fb81eaad5dbfe45b0b882c5cb1f3718
-    SKILL.md: 133d2281e6fba290df7296b461f446d0b439e9e0de1c6bc35239ad4888f3b69e
+    SKILL.md: 3fd1e559c9889160df0c9e67866810bfd2f24f0ee3412694a4585af38525fbb2
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; script generation, CLI calls, and Gist writes are all gated by user approval at runtime"

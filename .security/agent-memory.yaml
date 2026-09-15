@@ -4,7 +4,7 @@
 
 skill:
   name: agent-memory
-  version: "2.7.7"
+  version: "2.7.8"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -20,7 +20,7 @@ integrity:
     references/display-conventions.md: 65ab691704ffbc624db2469d340e5962af8d10c35959ae658f41bb4dc832b12c
     references/templates.md: f945facfff6fcb421b82008dcbdb1127777e59c367bc2917f497f7ce9acc703c
     references/troubleshooting.md: 71576170aac7c0b61e8ef0611948c0dad09d51fd4fe186665d0cf3c0644b6580
-    SKILL.md: 6f77c42f82bea50d0f03e770f635166134a0ea107cef9ff698fd52b796b38182
+    SKILL.md: c4971617bc177ebff8f54afd5049fd8566105185799151b900986d42323c9f99
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

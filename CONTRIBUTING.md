@@ -78,7 +78,7 @@ metadata:
 ---
 ```
 
-The `description` is what an LLM agent matches against to decide whether to load the skill. Be specific about the *kinds of user requests* and *file paths* it covers. Avoid generic adjectives.
+The `description` is what an LLM agent matches against to decide whether to load the skill. Be specific about the *kinds of request phrases* and *file paths* it covers. Avoid generic adjectives.
 
 ### 3. Create the `.security/<name>.yaml` manifest
 

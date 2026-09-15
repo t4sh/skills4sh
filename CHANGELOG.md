@@ -8,10 +8,15 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.5.3] — 2026-09-15
+
 ### Changed
 - Clarified all skill descriptions for the loading agent: capability plus `Use when asked to`, with runtime brands moved to README installer notes and per-skill pointer references (including Grok and OpenClaw).
-- Agent-memory Capabilities now match local-only sync; pointer files and install roots live in `references/agent-pointers.md`.
+- Agent-memory Capabilities now match local-only sync, the Save/Status command table, and Init completion criteria; pointer files and install roots live in `references/agent-pointers.md`.
 - Documented merge-time version decisions for draft skill work and corrected the code-to-figma credential description.
+- Aligned authoring and contributor wording to request phrases for the loading agent.
+- Bumped bundled skill versions: agent-memory 2.7.8, code-to-figma 0.2.1, discord-harvest 2.0.1, eleventy-nunjucks 0.1.10, figma-to-code 0.1.8, localhost-screenshots 3.3.8, skill-architect 0.1.5.
+- Bumped package and plugin metadata to 0.5.3.
 
 ### Fixed
 - Discord download diagnostics omit tokenized URLs; repeat imports compare bytes and preserve distinct same-name assets. Capabilities and classify steps match that collision policy.
@@ -374,7 +379,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.5.1...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.5.3...HEAD
+[0.5.3]: https://github.com/t4sh/skills4sh/compare/v0.5.2...v0.5.3
 [0.5.1]: https://github.com/t4sh/skills4sh/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/t4sh/skills4sh/compare/v0.4.14...v0.5.0
 [0.4.14]: https://github.com/t4sh/skills4sh/compare/v0.4.13...v0.4.14

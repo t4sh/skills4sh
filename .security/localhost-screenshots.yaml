@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.3.7"
+  version: "3.3.8"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -25,7 +25,7 @@ integrity:
     references/playwright-patterns.md: 2c731e1bc81ecaad8fd816382d7e87a02238e2427b2c355e2983ab08b158038d
     references/troubleshooting.md: 691a69dd988b468c11a1d71982bad3149758c66b6772e04fef873d1b018b3ba2
     references/visual-regression.md: 56df83bde0b15e37ae3dba02b9b796e969bcaac1ac3ce52acac0f241ff7324da
-    SKILL.md: 34e246eab3e88e8ebd61507ba478468fb29a55c54ef5f813e53b4a0d70301543
+    SKILL.md: 7b9f160722c8e829dc13ccdeaab769b209271f1392eac714fb627d0fc33c1b45
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

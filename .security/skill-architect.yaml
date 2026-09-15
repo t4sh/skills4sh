@@ -4,7 +4,7 @@
 
 skill:
   name: skill-architect
-  version: "0.1.4"
+  version: "0.1.5"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -18,14 +18,14 @@ integrity:
     assets/scripts/inspect_skill.py: 3a03977db891001f45e1fd0eb3dc108ce2090974f3223572419068a8d0d32dcd
     assets/scripts/requirements.txt: 0969da99a0bc2a1b71ed50584560f4588a37567ac63af3ddbaf3c4617ca5621a
     assets/scripts/scaffold_skill.py: f2bcf811764849b4dccf0a76b69fdbe169914cbcb616b69bf0f6a7459f59369e
-    assets/scripts/validate_skill.py: 1d24da3f11df93523a109a57fb19e85e60c1b0741f7c61eaf6bef5f4b0131034
+    assets/scripts/validate_skill.py: 1c1ebffde61e64fe5e358bd8945b1b2b79c796add51e73b75087f9b7ed913a66
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/comparative-study.md: 5c0d20ea7d3500e16539d12c2264e5ce03377b8e83c2b165a3ea93a23908f404
     references/eval-methodology.md: 6f909f70d97933d71c610352ddeb6365e16e657d3fc0508e87dfe560baf9b73a
     references/house-rubric.md: d27e708cb9af95bc6a0a8ff7ad951864295395fd85a8c0ecb5bb8f65302df16d
     references/naming-and-packaging.md: 8d570f2bd0afc4f115e4bcf8a3f79da9660925a31c7aa865e694d9f5dd5348d0
     references/vendor-adapters.md: f6c622a5a88e8d46005bfcb1dc71568365971b56f0471f9da3a853cdefc945ad
-    SKILL.md: f52cf7d656e230e501235a8fac05fbdc71634b9cf57a5cda775a6a8aaa940cd2
+    SKILL.md: 86f05b65c6c0c79d38a0e0a4ba1eefc4a9aba016183864320b51747d4aa769ad
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all helper scripts are inert assets and require explicit user or agent execution"

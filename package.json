@@ -1,6 +1,6 @@
 {
   "name": "skills4sh",
-  "version": "0.5.2",
+  "version": "0.5.3",
   "description": "Portable agent skills for any Agent Skills-compatible runtime.",
   "type": "module",
   "packageManager": "npm@12.0.2",

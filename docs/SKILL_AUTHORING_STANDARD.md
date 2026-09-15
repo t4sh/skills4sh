@@ -68,7 +68,7 @@ Rules:
 - Prefer `Use when asked to ...` over `Use when the user asks to ...`. The loading agent is the user of the skill.
 - Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.
 - Avoid loose summaries with no trigger/use conditions; they are harder for agents to retrieve reliably.
-- Avoid generic trigger-only descriptions such as `Use when creating skills.` The mechanical gate now requires concrete retrieval detail: a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger.
+- Avoid generic trigger-only descriptions such as `Use when creating skills.` The mechanical gate now requires concrete retrieval detail: a quoted request phrase, path/file cue, tool cue, named situation, or multi-clause trigger.
 - `metadata.version` is the skill version. Planning, analysis, and testing branches may retain the released version during draft commits, including updates to existing skills. At the merge decision, choose the bump for the final diff and synchronize all version surfaces before merge. Keep hashes current during drafting; unchanged versions do not exempt validation or security checks. New skills may retain their initial version until first merge.
 - `tags` should include search synonyms, tool names, and domain terms.
 

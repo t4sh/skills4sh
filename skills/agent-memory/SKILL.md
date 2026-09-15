@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.7.7"
+  version: "2.7.8"
   tags: memory, context, cross-interface, agent, persistence, grok, openclaw
 ---
 
@@ -18,11 +18,12 @@ Manage persistent project memory as reviewable markdown in the repository. Any f
 | Area | Outcome |
 |------|---------|
 | Initialize | Scaffold `.agent-memory/` with structure and entry points |
-| Capture | Distill session decisions, feedback, and context into durable memory files |
-| Sync | Reconcile `.agent-memory/` files already in the checkout, then save the session |
-| Maintain | Compact stale entries, resolve conflicts, clean orphaned files |
 | Migrate | Upgrade older formats (v1 flat files, `CURSOR.md`) to memory format v2.1 |
 | Build | Scan existing documentation and generate initial memory files |
+| Save | Distill session decisions, feedback, and context into durable memory files |
+| Maintain | Compact stale entries, resolve conflicts, clean orphaned files |
+| Sync | Reconcile `.agent-memory/` files already in the checkout, then save the session |
+| Status | Read-only health check — file counts, staleness, sync |
 
 ## Design Principles
 
@@ -86,7 +87,7 @@ project/
 
 1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `references/`, `sessions/` under `.agent-memory/`.
 2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), and `AGENTS.md` (canonical shared instructions). Create pointer files only for agents already in use, following [references/agent-pointers.md](references/agent-pointers.md).
-3. **Fill in TODOs** in AGENTS.md with project's actual structure and rules.
+3. **Complete `AGENTS.md`:** replace every placeholder with the project's actual structure and rules. Done when no TODO or placeholder tokens remain.
 4. **Update `index.yaml`** and **report** what was created.
 
 ---
