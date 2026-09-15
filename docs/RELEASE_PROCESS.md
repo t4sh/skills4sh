@@ -59,6 +59,14 @@ Before merging a PR that changes `package.json.version`:
 Do not publish from the feature branch. The release tag must point at the
 merged `main` commit.
 
+Pre-merge in the next version-bump PR (do not cut a release for this
+alone): lengthen the retry budget in `bin/verify-published.mjs`. v0.5.2 and
+v0.5.3 `npm-publish.yml` runs failed `Verify published registry metadata`
+after `npm publish` printed `+ skills4sh@X.Y.Z`, because npm was still
+processing the tarball. The current window is 12 attempts × 5s (~60s). For
+v0.5.3, publish finished at 07:59:36Z and registry metadata appeared at
+08:02:14Z (~2.5 minutes). Cover at least a few minutes.
+
 ## Preflight Before Tagging
 
 Start from a clean checkout. Then sync `main` and derive the expected tag from
@@ -179,8 +187,14 @@ First determine whether npm published the version:
 npm view "skills4sh@$version" version gitHead --json
 ```
 
-If npm returns the version, do not reuse or move the tag. Bump to the next
-package version and release again.
+If the publish step logged `+ skills4sh@$version` but verify 404'd, wait and
+retry `npm view`. npm may still be processing the tarball (a few minutes for
+v0.5.2 and v0.5.3). Once the version is visible with the expected `gitHead`,
+the release succeeded. Leave the failed Actions run; do not re-run
+`npm-publish.yml` and do not recreate the tag.
+
+If npm returns the version, do not reuse or move the tag. If a new publish is
+still needed, bump to the next package version and release again.
 
 If npm returns 404 or no version, the version was not published. It is
 acceptable to repair the GitHub release/tag, but only after confirming the tag
