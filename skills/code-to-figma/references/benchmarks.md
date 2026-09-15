@@ -29,7 +29,7 @@ Keep commands manual and explicit; avoid shell loops or environment variables in
 
 | Attribute | Value |
 |-----------|--------|
-| Differentiator | CI-anchored, zero-credential **code → Figma** pipeline generation; pairs with the `tokens-sync-to-figma` plugin |
+| Differentiator | CI-anchored **code → Figma** pipeline generation without a Figma API credential in CI; pairs with the `tokens-sync-to-figma` plugin |
 | Direction | One-directional: code → Gist → Figma (the reverse leg is the `figma-to-code` skill) |
 
 ## Peer comparison
@@ -49,10 +49,10 @@ Compared against peer state on **2026-05-19** (skills.sh listing pages).
 | Setup friction | Front-loaded once (walker + CI + Gist) | Standing (Figma API token, `figma-use`, agent) |
 | Per-sync friction | Zero — CI on push; designer one-click in plugin | Per-run agent + human approval |
 | Direction | One-way by design (reverse = `figma-to-code`) | Bidirectional parity |
-| Credentials at sync | None | Figma API / Dev-Mode |
+| Credentials at sync | GitHub Gist credential; no Figma API credential in CI | Figma API / Dev-Mode |
 | Source of truth | Committed code via CI snapshot | Negotiated parity |
 
-The deliberate trade: this skill does **less** (one-way, no diff/approval) to achieve the lowest recurring friction and a zero-credential sync path. Bidirectionality is intentionally delegated to the `figma-to-code` skill rather than folded in here.
+The deliberate trade: this skill does **less** (one-way, no diff/approval) to achieve the lowest recurring friction and a sync path that needs a GitHub Gist credential but no Figma API credential in CI. Bidirectionality is intentionally delegated to the `figma-to-code` skill rather than folded in here.
 
 ## Recommended peer review set
 

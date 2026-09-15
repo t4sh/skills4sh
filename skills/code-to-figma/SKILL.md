@@ -1,11 +1,11 @@
 ---
 name: code-to-figma
-description: "CI-anchored code-to-Figma token export pipeline for keeping Figma aligned with the codebase. Use when the user asks to \"sync code to Figma\", \"export design tokens to Figma\", \"set up a Figma sync pipeline\", \"wire up the tokens-sync-to-figma plugin\", \"generate a figma-export.json\", \"create a page walker\", or \"keep Figma up to date with the codebase\"."
+description: "Export design tokens and page structure from the codebase into a CI pipeline a Figma plugin can consume. Use when asked to \"sync code to Figma\", \"export design tokens to Figma\", \"set up a Figma sync pipeline\", \"wire up the tokens-sync-to-figma plugin\", \"generate a figma-export.json\", \"create a page walker\", or \"keep Figma up to date with the codebase\"."
 license: MIT
 compatibility: macOS, Linux, or Windows with Node.js, Git, `jq`, and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.2.0"
+  version: "0.2.1"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 

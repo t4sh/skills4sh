@@ -1,14 +1,13 @@
 #!/usr/bin/env node
-// Preflight for `npm test`. The suite needs two things a fresh clone does not
-// have: a Python interpreter with PyYAML (for the skill-architect helpers) and
-// the separately-locked Eleventy fixture install (for the render tests).
+// Preflight for `npm test`. The suite needs dependencies a fresh clone does not
+// have: Python with PyYAML and separately locked rendering/comparison fixtures.
 //
 // Without this guard, a missing dependency surfaces as ~25 unrelated assertion
 // failures whose real cause is buried in captured stderr. Fail once, up front,
 // with the exact commands to fix it.
 //
 // CI does not run this: validate.yml and npm-publish.yml provision both
-// dependencies explicitly and invoke `node --test` directly.
+// fixture groups explicitly and invoke `node --test` directly.
 
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
@@ -60,17 +59,19 @@ if (probe.error) {
   }
 }
 
-// --- Eleventy fixture install ---------------------------------------------
-const fixtureModules = join(root, "tests", "fixtures", "eleventy", "node_modules");
-if (!existsSync(fixtureModules)) {
-  problems.push({
-    what: "Eleventy fixture dependencies are not installed",
-    why: `missing ${join("tests", "fixtures", "eleventy", "node_modules")}`,
-    fix: [
-      "Install the separately-locked render-test fixture:",
-      "  npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund",
-    ],
-  });
+// --- Rendering/comparison fixture installs --------------------------------
+for (const fixture of ['eleventy', 'visual']) {
+  const fixtureModules = join(root, 'tests', 'fixtures', fixture, 'node_modules');
+  if (!existsSync(fixtureModules)) {
+    problems.push({
+      what: `${fixture} fixture dependencies are not installed`,
+      why: `missing ${fixtureModules}`,
+      fix: [
+        'Install the separately locked fixture:',
+        `  npm ci --prefix tests/fixtures/${fixture} --ignore-scripts --no-audit --no-fund`,
+      ],
+    });
+  }
 }
 
 // --- Report ----------------------------------------------------------------

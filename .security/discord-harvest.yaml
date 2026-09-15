@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "2.0.0"
+  version: "2.0.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,14 +13,14 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 874030f3d0d9545376603b56c5d690e9a19745300fd98914dc7a433db16b2c92
-    assets/evals/scenarios.json: 396edd9b640876bf4c11a1d806695ad563d5fa369b3be64a883c5079bd512887
+    assets/evals/scenarios.json: 7ffe51f88a0401e59d4e1def40a215fa1498f5f3b8b1f63c28dc334e1a28044d
     assets/icon.svg: 1a98cde7a434820fea4d55c74d99b2112fb3022d5cd18067ec1eb3d8c411becc
-    references/code-examples.md: adc6ce02041155e9a9086a0ad8c26381cd1087b9fea1dc4cc1c490907bf1704b
-    references/design-philosophy.md: 349195ab8d1cf6c5e74e9071e2d85051ea78c868411ac8d638df98214b36c64a
-    references/folder-structure.md: 67c909ec4151b32b8ff291c9dc2d4392febea3bfbefe7332bd3f39366490d9ab
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
+    references/code-examples.md: 58ac76848f10c3a6f3d300939c843ca3db0b2c3f3fcfaa57e74b0548078a689c
+    references/design-philosophy.md: 0192dda8e8299401636253fe3ba2c6741f01c3db56f246379156811c61000385
+    references/folder-structure.md: c5c023ef4cd6eb2b21cdf78bdb7a7363a3b323101b77db4ea911956ef8e6219f
     references/troubleshooting.md: cf2df2c0afc0ac8a96722b41ec4a301f1af7d136f65dc86803b32f2956ed56e1
+    SKILL.md: 01b5febc2226e4b93b973e2fd976cd7d83061555d06547c85f8acdebb1fb5312
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
@@ -40,7 +40,12 @@ dependencies:
 
 scanning:
   guardskills: SAFE
-  guardskills_risk_score: 0
+  guardskills_risk_score: 2
   snyk: pass
   codeql: pass
-  expected_findings: []
+  expected_findings:
+    - id: R009_FILE_STAGE
+      severity: low
+      confidence: low
+      file: references/code-examples.md
+      reason: "Approved CDN downloads use mktemp for byte comparison before copying into the archive; no execution or exfiltration of staged content."

@@ -97,6 +97,18 @@ Treat Microsoft Azure skills as an enterprise repository-pattern study:
 
 Do not copy Azure service assumptions into generic skills. Use Azure patterns for enterprise-grade metadata and governance only after source inspection.
 
+## Grok
+
+Grok reads `AGENTS.md` and skills from `.grok/skills/` (project) and `~/.grok/skills/` (user). It may also scan `~/.agents/skills/`. Keep the portable workflow in `SKILL.md`; do not put Grok-only trigger language in descriptions.
+
+Installer check: `npx skills@latest add <repo> --skill <name> --copy -g -a grok`
+
+## OpenClaw
+
+OpenClaw loads Agent Skills from workspace `skills/` first, then project `.agents/skills/`, `~/.agents/skills/`, and `~/.openclaw/skills/`. Use `{baseDir}` only in OpenClaw-specific helper notes. The portable workflow remains `SKILL.md` plus linked references.
+
+Installer check: `npx skills@latest add <repo> --skill <name> --copy -g -a openclaw`
+
 ## Adapter review questions
 
 Before adding an adapter, answer:

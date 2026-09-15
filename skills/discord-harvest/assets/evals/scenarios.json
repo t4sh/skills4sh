@@ -37,7 +37,7 @@
         "output/manifest.json": "{\n  \"source\": \"manual\",\n  \"files\": [\n    {\n      \"filename\": \"old.txt\",\n      \"path\": \"files/old.txt\",\n      \"type\": \"file\",\n      \"size\": 4\n    }\n  ]\n}"
       },
       "assertions": [
-        "Copies approved regular file once, second run skips existing file.",
+        "Copies approved regular file once, second run skips the byte-identical file.",
         "Preserves old file/link/manifest record and source bytes; honest new/skipped counts."
       ]
     },

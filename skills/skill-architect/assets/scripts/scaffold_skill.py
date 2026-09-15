@@ -24,7 +24,7 @@ One-paragraph purpose statement. Explain what repeated task this skill makes rel
 
 ## When this skill applies
 
-- Keep the frontmatter description concrete; replace scaffold defaults with exact user phrases before release.
+- Keep the frontmatter description concrete; replace scaffold defaults with exact request phrases before release.
 - Add file-path or tool cues.
 - Add false-friend cases if important.
 
@@ -82,7 +82,7 @@ def main() -> int:
 
     title = titleize(slug)
     description_text = (
-        f'{title} workflow support. Use when the user asks to "{args.phrase}", '
+        f'{title} workflow support. Use when asked to "{args.phrase}", '
         f"requests repeatable {title} guidance, or needs {slug} procedures, checks, or handoffs."
     )
 

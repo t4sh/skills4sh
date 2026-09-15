@@ -4,7 +4,7 @@
 
 skill:
   name: figma-to-code
-  version: "0.1.7"
+  version: "0.1.8"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,14 +13,14 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 9366e925d511c49cc99228e02368f67fe9879d9e5b8e23e7c1a8489d8e7ad4a8
     assets/icon.svg: 729bf2cf1e6d95abcb8e3d7615ad2c5a234dc8c539685006f0df51b3f81241fe
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/benchmarks.md: a9695fdf800ab6d88f8d015c9afd3f1f6736d01bfbf779581e35cee3f0f07cad
     references/design-philosophy.md: 7c786c2605221627a04c61c7e2a8cf7da38d4ae46ace0bc3099bcf33e600e8cd
-    references/implementation-patterns.md: 89d4bd5f2e1b49f6bf4f197381f1c7bf8a6cdb150b2eb615b40385a1534fc90e
-    references/troubleshooting.md: 739d011a2ea3219ba2488fa68d47e13b9534cb2994f064e886309677b0242041
+    references/implementation-patterns.md: 40a08a589db5db8478dac24cbedc45768e99242de6afa4e159c1d0e1fd701699
+    references/troubleshooting.md: b50e1cf7251256d20170d2de68d2b13aaa0103683d6d9427243cafa6aa9af74c
     references/verification-and-boundaries.md: f0f3b35a95fbce2a13c29896f43290ee577996cf5fa4c0e42bc11e2d11040339
+    SKILL.md: d81a7020f7bf08890531159a17ee07096f11fea668fbac1a4389aa0d3cf0faa6
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

@@ -1,11 +1,11 @@
 ---
 name: eleventy-nunjucks
-description: "Eleventy v3, Build Awesome v4 prerelease, and Nunjucks operating guide for static-site authoring, templates, build pipelines, migrations, and security review. Use when the user asks to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", \"migrate to Build Awesome\", or \"audit my static site\"; when `package.json` includes `@11ty/eleventy` or `@awesome.me/buildawesome`; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `.11tydata.js`, `.data.js`, `.11ty.js`, or `.server.js`; or when debugging Nunjucks rendering or Eleventy data cascades, filters, shortcodes, and security. Generic static-site/security topics and `.data.js`/`.server.js` names require confirmed Eleventy or Build Awesome context; standalone Nunjucks work is also in scope."
+description: "Build, debug, and review Eleventy v3 sites and Nunjucks templates, including the Build Awesome v4 prerelease migration. Use when asked to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", \"migrate to Build Awesome\", or \"audit my static site\"; when `package.json` includes `@11ty/eleventy` or `@awesome.me/buildawesome`; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `.11tydata.js`, `.data.js`, `.11ty.js`, or `.server.js`; or when debugging Nunjucks rendering or Eleventy data cascades, filters, shortcodes, and security. Generic static-site/security topics and `.data.js`/`.server.js` names require confirmed Eleventy or Build Awesome context; standalone Nunjucks work is also in scope."
 license: MIT
 compatibility: macOS, Linux, or Windows; Eleventy v3 supports Node >=18, but supported Node 22 or 24 LTS is recommended
 metadata:
   author: t4sh
-  version: "0.1.9"
+  version: "0.1.10"
   tags: 11ty, eleventy, eleventy-v3, build-awesome, build-awesome-v4, nunjucks, static-site, ssg, jamstack, tailwind, markdown-it, autoescape, xss-prevention, csp, design-tokens
 ---
 

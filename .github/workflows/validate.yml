@@ -54,6 +54,7 @@ jobs:
           /tmp/skills4sh-python/bin/python -m pip install --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
           echo "SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python" >> "$GITHUB_ENV"
           npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund
+          npm ci --prefix tests/fixtures/visual --ignore-scripts --no-audit --no-fund
 
       - name: Validate portable skill syntax and links
         run: |

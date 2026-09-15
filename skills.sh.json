@@ -1,0 +1,21 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Memory & skills",
+      "description": "Preserve shared project understanding and improve reusable agent workflows.",
+      "skills": ["agent-memory", "skill-architect"]
+    },
+    {
+      "title": "Design & UI",
+      "description": "Connect designs with code and verify interfaces with screenshots.",
+      "skills": ["figma-to-code", "code-to-figma", "localhost-screenshots"]
+    },
+    {
+      "title": "Web & content",
+      "description": "Build static sites and archive Discord content from authorized sources.",
+      "skills": ["eleventy-nunjucks", "discord-harvest"]
+    }
+  ]
+}

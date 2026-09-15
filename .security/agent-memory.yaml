@@ -4,7 +4,7 @@
 
 skill:
   name: agent-memory
-  version: "2.7.7"
+  version: "2.7.8"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,13 +13,14 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    SKILL.md: 79ba95e6c7f6d526e6b2a236748846819887b0d44f60d1f087a170476662285a
-    assets/evals/scenarios.json: 8051b750ab1b7f5ade102a889f358188b166d59be629827e7e45f0df4f63cd49
+    assets/evals/scenarios.json: bb276691ee6b034780c715169d0cabca367ebb04dc39d95adbc5f4f8c03b371b
     assets/icon.svg: 79f4b8ad729980ed8165476de9c531adbfa4540260b7dc8cd7ddc326ad5ada1a
-    references/display-conventions.md: 1d65f3f2cf5253509f3c5b861df2839caee94fae5dd80b9ae5b3d6eea58c68b9
-    references/templates.md: 98ea6a0847a432a67390b53064f07c1d724062b163bc7e5ab774b11ef9b854ec
-    references/troubleshooting.md: 1d4bb5b7911087938de8e84746f7353c97cc141b6e74666203061b6acfb92236
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
+    references/agent-pointers.md: 485ade491c30ae29bdaf1c635f283d455a15570de3a2ca2f0966817e235ccc7d
+    references/display-conventions.md: 65ab691704ffbc624db2469d340e5962af8d10c35959ae658f41bb4dc832b12c
+    references/templates.md: f945facfff6fcb421b82008dcbdb1127777e59c367bc2917f497f7ce9acc703c
+    references/troubleshooting.md: 71576170aac7c0b61e8ef0611948c0dad09d51fd4fe186665d0cf3c0644b6580
+    SKILL.md: c4971617bc177ebff8f54afd5049fd8566105185799151b900986d42323c9f99
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

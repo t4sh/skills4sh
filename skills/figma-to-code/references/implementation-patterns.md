@@ -8,7 +8,7 @@ Use one command per request:
 
 - `/figma-to-code implement`: build or update code from a Figma frame, component, page, or selection.
 - `/figma-to-code tokens`: extract, compare, or import Figma variables into the repository token system.
-- `/figma-to-code rules`: create durable Figma-to-code rules for `AGENTS.md`, `CLAUDE.md`, Cursor rules, or similar agent guidance.
+- `/figma-to-code rules`: create durable Figma-to-code rules for the active runtime's instruction files. Write them using the table in [Design-System Rules](#design-system-rules).
 - `/figma-to-code code-connect`: map published Figma components to real code components using Code Connect tooling.
 
 If a request mixes commands, choose order from the user's intent instead of applying a fixed pipeline. Typical dependencies:
@@ -205,8 +205,8 @@ Request: "Create Figma guidelines for this repo" or "generate design system rule
 
 | Agent | Rule file |
 |---|---|
-| Codex | `AGENTS.md` or a project-local `AGENTS.md` in the affected package |
-| Claude Code | `CLAUDE.md` or a project-local `CLAUDE.md` in the affected package |
+| Default / Codex / Grok / OpenClaw / Copilot | `AGENTS.md` or a project-local `AGENTS.md` in the affected package |
+| Claude Code | `CLAUDE.md` with `@AGENTS.md`, or a focused Figma section under an existing Claude pointer |
 | Cursor | `.cursor/rules/figma-design-system.mdc` |
 | Windsurf | `.windsurfrules` |
 | Cline | `.clinerules` |

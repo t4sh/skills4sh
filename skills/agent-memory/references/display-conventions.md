@@ -1,6 +1,6 @@
 # Display Conventions — Full Reference
 
-When showing memory files or project documents to the user, **always render them inline in the chat** rather than opening external editors. This applies to all interfaces (Claude Code, Cursor, VS Code, Craft Agent).
+When showing memory files or project documents, **always render them inline in the chat** rather than opening external editors. This applies on every runtime.
 
 ## Universal (works everywhere)
 
@@ -13,7 +13,7 @@ When showing memory files or project documents to the user, **always render them
 
 ## Rich Previews (when interface supports them)
 
-If the interface supports rich preview blocks (e.g., Craft Agent), prefer these for binary and rich formats. Otherwise, fall back to describing the file with its path as a clickable link.
+If the interface supports rich preview blocks, prefer these for binary and rich formats. Otherwise, fall back to describing the file with its path as a clickable link.
 
 | Format | Rich Preview | Fallback |
 |--------|-------------|----------|

@@ -58,7 +58,7 @@ export async function runSkillStandardChecks(rootDir) {
     if (description && !hasTriggerClause(description)) {
       errors.push(`${skill}: SKILL.md description must include concrete trigger/use conditions (preferred: "Capability summary. Use when ..."; allowed: "Use when ...")`);
     } else if (description && !hasConcreteTriggerDetail(description)) {
-      errors.push(`${skill}: SKILL.md description trigger/use conditions are too generic; include a quoted user phrase, path/file cue, tool cue, named situation, or multi-clause trigger`);
+      errors.push(`${skill}: SKILL.md description trigger/use conditions are too generic; include a quoted request phrase, path/file cue, tool cue, named situation, or multi-clause trigger`);
     }
 
     for (const field of fm.metadataFields.keys()) {

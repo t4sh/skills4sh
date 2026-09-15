@@ -1,11 +1,11 @@
 ---
 name: figma-to-code
-description: "Repo-first Figma-to-code workflow for implementation, design tokens, design-system rules, and Code Connect. Use when the user asks to \"implement this Figma design\", \"turn this Figma into code\", \"build from a Figma link\", \"match this Figma mockup\", \"extract Figma design tokens\", \"create Figma design system rules\", \"set up Figma guidelines\", \"code connect this component\", or \"map this Figma component to code\"; or when a Figma URL/selection must become repository code, code tokens, agent rules, or Code Connect mappings."
+description: "Implement Figma designs in the existing codebase, map design tokens, and establish component mappings and project rules. Use when asked to \"implement this Figma design\", \"turn this Figma into code\", \"build from a Figma link\", \"match this Figma mockup\", \"extract Figma design tokens\", \"create Figma design system rules\", \"set up Figma guidelines\", \"code connect this component\", or \"map this Figma component to code\"; or when a Figma URL/selection must become repository code, code tokens, agent rules, or Code Connect mappings."
 license: MIT
 compatibility: macOS, Linux, or Windows with a configured Figma MCP server
 metadata:
   author: t4sh
-  version: "0.1.7"
+  version: "0.1.8"
   tags: figma, figma-mcp, figma-desktop-mcp, design-to-code, figma-to-react, figma-to-nextjs, implement-design, figma-implementation, design-system-rules, figma-design-system-rules, code-connect, figma-code-connect, design-tokens, token-extraction, react, nextjs, typescript, tailwind, frontend
 ---
 
@@ -19,7 +19,7 @@ Repo-first Figma MCP workflow — inspect the codebase before generated markup, 
 |------|---------|
 | Implement | Build repo-integrated UI from a Figma URL, frame, component, or desktop selection |
 | Tokens | Map Figma variables to the project's token system by semantic role |
-| Rules | Generate or update agent rules (`AGENTS.md`, `CLAUDE.md`, Cursor rules) for Figma workflows |
+| Rules | Generate or update project agent rules for Figma workflows |
 | Code Connect | Link published Figma library components to code implementations (eligible Organization/Enterprise plan and Dev or Full seat) |
 
 ## Commands
@@ -28,10 +28,10 @@ Choose one command before using Figma MCP. Keep implementation, token extraction
 
 | Command | Use when | Outcome |
 |---|---|---|
-| `/figma-to-code implement` | User asks to build UI from a Figma frame, component, URL, or selection | Production code integrated with the target repository |
-| `/figma-to-code tokens` | User asks to extract, import, sync, or compare Figma variables/design tokens | Token mapping or code-token updates aligned to the local token system |
-| `/figma-to-code rules` | User asks to create design-system rules, Figma guidelines, `AGENTS.md`, `CLAUDE.md`, or Cursor rules for Figma workflows | Project-specific agent rules for future Figma-to-code work |
-| `/figma-to-code code-connect` | User asks for Code Connect, component mapping, or linking Figma components to code | Component mapping plan, or submitted mappings when the active MCP/server workflow allows it |
+| `/figma-to-code implement` | Asked to build UI from a Figma frame, component, URL, or selection | Production code integrated with the target repository |
+| `/figma-to-code tokens` | Asked to extract, import, sync, or compare Figma variables/design tokens | Token mapping or code-token updates aligned to the local token system |
+| `/figma-to-code rules` | Asked to create design-system rules or Figma guidelines for future agent runs | Project-specific agent rules; write them to the files listed in [implementation-patterns.md](references/implementation-patterns.md#design-system-rules) |
+| `/figma-to-code code-connect` | Asked for Code Connect, component mapping, or linking Figma components to code | Component mapping plan, or submitted mappings when the active MCP/server workflow allows it |
 
 Default to `/figma-to-code implement` when the user provides a Figma design and asks for code. Use `/figma-to-code rules` for durable workflow instructions, and `/figma-to-code code-connect` only when the request is explicitly about Code Connect/component mappings. For MCP-driven Code Connect **template** authoring (`.figma.ts`), defer to the host's **`figma-code-connect`** skill when installed. Use this command as the repo-aware planning and verification layer; use the native workflow or `figma-code-connect` for publishing or submitting mappings when it is safer.
 
@@ -43,7 +43,7 @@ Route to the right skill or command before acting. Do not mix implement, write, 
 |-------------|-----|
 | Build or update **code in the repository** from a Figma frame, component, URL, or selection | This skill — `/figma-to-code implement` |
 | Extract, sync, or compare **Figma variables** to code tokens | This skill — `/figma-to-code tokens` |
-| Create durable **agent rules** (`AGENTS.md`, `CLAUDE.md`, Cursor rules) for Figma-to-code | This skill — `/figma-to-code rules` |
+| Create durable **agent rules** for Figma-to-code | This skill — `/figma-to-code rules` |
 | **Code Connect** mappings or component linking | This skill — `/figma-to-code code-connect`, or host **`figma-code-connect`** for `.figma.ts` templates |
 | Create, edit, or delete nodes **inside Figma** (variables, components, auto-layout writes) | Host **`figma-use`** (or equivalent write MCP skill) — not this skill |
 | Build or update a **full screen in Figma** from code or a description | Host **`figma-generate-design`** — not this skill |

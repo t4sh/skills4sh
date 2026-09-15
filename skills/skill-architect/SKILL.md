@@ -1,35 +1,17 @@
 ---
 name: skill-architect
-description: "Architect and audit portable agent skills for retrieval, predictability, progressive disclosure, evals, and repository gates. Use when the user asks to \"create a skill\", \"author a skill\", \"improve a skill\", \"review a skill\", \"refactor a skill\", \"compare skill rubrics\", \"distill a skill from sessions\", \"reconcile skill plans\", or \"teach skill authoring\"; when paths include `skills/<name>/SKILL.md`, `references/*.md`, helper scripts, evals, lockfiles, security manifests, or vendor adapters; or when mentions include skill-creator, Skill Development, skills.sh, trigger descriptions, completion criteria, leading words, or model/user invocation."
+description: "Architect and audit portable agent skills for retrieval, predictability, progressive disclosure, evals, and repository gates. Use when asked to \"create a skill\", \"author a skill\", \"improve a skill\", \"review a skill\", \"refactor a skill\", \"compare skill rubrics\", \"distill a skill from sessions\", \"reconcile skill plans\", or \"teach skill authoring\"; when paths include `skills/<name>/SKILL.md`, `references/*.md`, helper scripts, evals, lockfiles, security manifests, or vendor adapters; or when mentions include skill-creator, Skill Development, skills.sh, trigger descriptions, completion criteria, leading words, or model/user invocation."
 license: MIT
 compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10; validation and inspection require PyYAML 6.0.3
 metadata:
   author: t4sh
-  version: "0.1.4"
-  tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, claude, codex, openai, anthropic, antigravity, azure
+  version: "0.1.5"
+  tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, anthropic, openai, grok, openclaw
 ---
 
 # Skill Architect
 
 Architect portable, high-quality agent skills from a vendor-neutral perspective. Use this skill as an independent planning, creation, review, refactoring, comparison, distillation, reconciliation, and teaching layer for any agent skill repository or runtime.
-
-## Why this skill exists
-
-Anthropic and OpenAI publish overlapping `skill-creator` skills; maintaining competing same-name implementations creates ownership and portability conflicts. Preserve one portable synthesis: open specification for syntax, structural guidance from Skill Development, selective evaluation methods from Anthropic/Obra, and isolated runtime details from OpenAI and other vendors. The [comparative study](references/comparative-study.md) owns source details and adoption boundaries. Local distribution rules remain binding.
-
-## Operating mode
-
-Start with the current working context, not an upstream rubric. Check the CWD, project files, installed skill location, or repository convention first. Use the Agent Skills specification for portable baseline syntax; external rubrics inform content quality, while local rules win on accepted frontmatter fields, manifests, lockfiles, CI, and release gates. Do not add experimental `allowed-tools` unless the target runtime and repository schema both accept and enforce it.
-
-Use this order:
-
-1. **Classify the request** — choose `plan`, `create`, `audit`, `fix`, `refactor`, `compare`, `distill`, `reconcile`, or `teach` before deciding files or checks.
-2. **Read the local standard** — find the CWD/project/repository authoring standard, agent instructions, check commands, and target skill before editing.
-3. **Select the lens** — structure, quality/evals, vendor compatibility, distribution governance, or predictability.
-4. **Run the predictability pass** — check invocation fit, branch uniqueness, information hierarchy, completion criteria, leading words, duplication, sediment, sprawl, no-op lines, and premature-completion risk before proposing edits.
-5. **Plan the artifact** — decide the portable core, references, optional assets/scripts, vendor metadata, and validation path.
-6. **Patch narrowly** — avoid churn-only rewrites; improve only the requested surface and directly related standard violations.
-7. **Verify mechanically** — run repo checks or the closest local equivalent before handing back.
 
 ## Command modes
 
@@ -59,16 +41,30 @@ Use command-like modes when the user names one explicitly. If no mode is named, 
 - **Reconcile** must verify whether prior plans, findings, and proposals still match the current context; retire fixed or rejected items instead of re-reporting them.
 - **Teach** should explain the smallest useful rule, then give one concrete example rather than dumping the whole rubric.
 
+## Operating mode
+
+Start with the current working context, not an upstream rubric. Check the CWD, project files, installed skill location, or repository convention first. Use the Agent Skills specification for portable baseline syntax; external rubrics inform content quality, while local rules win on accepted frontmatter fields, manifests, lockfiles, CI, and release gates. Do not add experimental `allowed-tools` unless the target runtime and repository schema both accept and enforce it.
+
+Use this order:
+
+1. **Classify the request** — choose `plan`, `create`, `audit`, `fix`, `refactor`, `compare`, `distill`, `reconcile`, or `teach` before deciding files or checks.
+2. **Read the local standard** — find the CWD/project/repository authoring standard, agent instructions, check commands, and target skill before editing.
+3. **Select the lens** — structure, quality/evals, vendor compatibility, distribution governance, or predictability.
+4. **Run the predictability pass** — check invocation fit, branch uniqueness, information hierarchy, completion criteria, leading words, duplication, sediment, sprawl, no-op lines, and premature-completion risk before proposing edits.
+5. **Plan the artifact** — decide the portable core, references, optional assets/scripts, vendor metadata, and validation path.
+6. **Patch narrowly** — avoid churn-only rewrites; improve only the requested surface and directly related standard violations.
+7. **Verify mechanically** — run repo checks or the closest local equivalent before handing back.
+
 ## Skill architecture workflow
 
 ### 1. Gather concrete use cases
 
 Capture only the details that determine structure:
 
-- exact user phrases that should trigger the skill
+- exact request phrases that should trigger the skill
 - file paths, tools, APIs, or error messages that imply the skill
 - repeated task shape: quick reference, workflow, router, review rubric, or deterministic helper
-- target runtimes: Claude, Codex/OpenAI, Craft, Cursor, Antigravity, Azure/Copilot-style agents, or generic file-reading agents
+- target runtime capabilities: check required tools, permissions, and instruction loading; use [vendor-adapters.md](references/vendor-adapters.md) when host-specific execution or packaging details matter
 - whether the skill needs references, assets, examples, or helper scripts
 
 Ask one focused question if a structural choice is ambiguous. Otherwise infer from the CWD/project/repository pattern and state the assumption.
@@ -198,7 +194,7 @@ The litmus test: **if a script can decide it, automate it; if it needs reasoning
 |---|---|
 | [references/comparative-study.md](references/comparative-study.md) | Comparing Anthropic, OpenAI, Matt Pocock, Obra, Azure, Antigravity, or other skill-development/authoring/creator patterns |
 | [references/house-rubric.md](references/house-rubric.md) | Creating or reviewing a portable rubric; checking predictability, invocation fit, completion criteria, pruning, enumeration consistency, executable-surface triage, and severity calibration |
-| [references/vendor-adapters.md](references/vendor-adapters.md) | Separating portable core instructions from Claude, OpenAI/Codex, Craft, Cursor, Antigravity, Azure, or future agent metadata |
+| [references/vendor-adapters.md](references/vendor-adapters.md) | Runtime install roots, pointer files, and vendor metadata that must stay out of the portable workflow |
 | [references/eval-methodology.md](references/eval-methodology.md) | Testing triggers, building test-vector catalogs, setting up lightweight harnesses, comparing baseline behavior, or planning pressure tests |
 | [references/naming-and-packaging.md](references/naming-and-packaging.md) | Avoiding slug collisions, deciding names, updating lockfiles/security manifests, and packaging repo updates |
 

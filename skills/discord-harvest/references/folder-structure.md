@@ -26,9 +26,9 @@ Sanitize names: lowercase, replace spaces/special chars with hyphens, strip trai
 ## Repeat Run Behavior (append mode)
 
 If the folder already exists from a previous run:
-- **images/ and files/**: Add new files only. Skip if a file with the same name already exists.
+- **images/ and files/**: Follow the [collision and repeat-run policy](code-examples.md#collision-and-repeat-run-policy): skip byte-identical content among the original and suffixed names; preserve different content under a free suffix. Name or size equality alone is not duplication.
 - **links.md**: **Append** a new dated section at the bottom. Do NOT overwrite existing content. Use `>>` (append) not `>` (overwrite) when writing, or read-then-append with the Write tool.
-- **manifest.json**: Read existing manifest, merge new entries into the arrays, update totals and `harvested_at` timestamp.
+- **manifest.json**: Read existing manifest, merge new entries with the actual destination names, and update totals and run timestamps. Keep existing entries and do not append duplicate asset records for skipped files.
 
 ## links.md Format
 

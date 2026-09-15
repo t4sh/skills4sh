@@ -7,7 +7,7 @@ description: >-
 tags: [skill-authoring, descriptions, retrieval, skill-architect, standards]
 source: craft-agent
 created: 2026-06-13
-updated: 2026-06-13
+updated: 2026-09-15
 status: active
 ---
 
@@ -41,4 +41,5 @@ A 2026-06-13 `skills.sh` sample showed that public high-install skills commonly 
 - Prefer `Capability. Use when ...` for new skills.
 - Use `Use when ...` for discipline/rule skills where the capability is obvious.
 - Reject loose summaries that have no retrieval cues.
-- Keep concrete triggers: quoted user phrases, file paths, tools, file types, named errors, or situations.
+- Keep concrete triggers: quoted request phrases, file paths, tools, file types, named errors, or situations.
+- Write the description for the loading agent. Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.
