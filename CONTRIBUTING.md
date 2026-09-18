@@ -183,13 +183,13 @@ Set up the packaging, helper, and rendering test dependencies:
 ```bash
 npm ci --ignore-scripts --no-audit --no-fund
 python3 -m venv /tmp/skills4sh-python
-/tmp/skills4sh-python/bin/python -m pip install --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
+/tmp/skills4sh-python/bin/python -m pip --isolated install --require-hashes --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
 export SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python
 npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund
 npm ci --prefix tests/fixtures/visual --ignore-scripts --no-audit --no-fund
 ```
 
-On Windows, use the virtual environment's `Scripts/python.exe` and set `SKILL_TEST_PYTHON` in the calling shell. Python helpers require 3.10 or newer. Rendering and PNG comparison dependencies live under `tests/fixtures/eleventy/` and `tests/fixtures/visual/`, each with its own `package-lock.json`; both are excluded from the published installer. PNG comparison tests execute the documented pixel-diff and HTML generators. The render tests cover stable Eleventy 3.1.6, Nunjucks 3.2.4, and the Tailwind 4.3.3 selector recipe; they do not certify the v4 alpha migration or browser/nginx deployment recipes.
+Isolation tests require `uv` 0.12.16+ on `PATH` (CI pins that version with `astral-sh/setup-uv`). On Windows, use the virtual environment's `Scripts/python.exe` and set `SKILL_TEST_PYTHON` in the calling shell. Python helpers require 3.10 or newer. Rendering and PNG comparison dependencies live under `tests/fixtures/eleventy/` and `tests/fixtures/visual/`, each with its own `package-lock.json`; both are excluded from the published installer. PNG comparison tests execute the documented pixel-diff and HTML generators. The render tests cover stable Eleventy 3.1.6, Nunjucks 3.2.4, and the Tailwind 4.3.3 selector recipe; they do not certify the v4 alpha migration or browser/nginx deployment recipes.
 
 `bin/` is the installer and the check scripts (Node 22+, ESM). Changes here are tooling changes — keep them covered by `tests/`, run the full local check suite, and follow the supply-chain posture in [SECURITY.md](SECURITY.md).
 

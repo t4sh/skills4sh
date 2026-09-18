@@ -6,16 +6,18 @@
 // failures whose real cause is buried in captured stderr. Fail once, up front,
 // with the exact commands to fix it.
 //
-// CI does not run this: validate.yml and npm-publish.yml provision both
-// fixture groups explicitly and invoke `node --test` directly.
+// CI does not run this: validate.yml and npm-publish.yml provision Python,
+// uv 0.12.16, and fixture groups explicitly and invoke `node --test` directly.
 
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { join } from "node:path";
+import { compareSemver } from "./lib/parsers.mjs";
 
 const root = process.cwd();
 const python = process.env.SKILL_TEST_PYTHON || "python3";
 const problems = [];
+const minimumUvVersion = "0.12.16";
 
 // --- Python + PyYAML -------------------------------------------------------
 const probe = spawnSync(
@@ -43,7 +45,7 @@ if (probe.error) {
     fix: [
       "Create the isolated environment the helpers expect:",
       "  python3 -m venv /tmp/skills4sh-python",
-      "  /tmp/skills4sh-python/bin/python -m pip install --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt",
+      "  /tmp/skills4sh-python/bin/python -m pip --isolated install --require-hashes --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt",
       "  export SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python",
       "On Windows use the venv's Scripts/python.exe for both the install and the export.",
     ],
@@ -55,6 +57,35 @@ if (probe.error) {
       what: `Python ${major}.${minor} is too old for the helper scripts`,
       why: "skills/skill-architect/assets/scripts requires Python >= 3.10",
       fix: ["Install Python 3.10+ and re-run, or set SKILL_TEST_PYTHON to a newer interpreter."],
+    });
+  }
+}
+
+const uv = spawnSync("uv", ["--version"], { encoding: "utf8" });
+if (uv.error || uv.status !== 0) {
+  problems.push({
+    what: "uv is not installed or not runnable",
+    why: (uv.error?.message || uv.stderr || uv.stdout || "uv --version failed").trim().split("\n").slice(-1)[0],
+    fix: [
+      `Install uv ${minimumUvVersion}+ and keep it on PATH. Isolation tests require the preferred runner:`,
+      "  https://docs.astral.sh/uv/getting-started/installation/",
+      `CI pins uv ${minimumUvVersion} via astral-sh/setup-uv.`,
+    ],
+  });
+} else {
+  const match = uv.stdout.match(/\buv\s+(\d+\.\d+\.\d+)(?=\s|$)/i);
+  const version = match?.[1];
+  if (!version) {
+    problems.push({
+      what: "uv version could not be determined",
+      why: `unexpected output from uv --version: ${(uv.stdout || uv.stderr).trim() || "empty output"}`,
+      fix: [`Install uv ${minimumUvVersion}+ from https://docs.astral.sh/uv/getting-started/installation/.`],
+    });
+  } else if (compareSemver(version, minimumUvVersion) < 0) {
+    problems.push({
+      what: `uv ${version} is too old`,
+      why: `isolation tests require uv ${minimumUvVersion}+`,
+      fix: [`Upgrade uv to ${minimumUvVersion}+ and re-run.`],
     });
   }
 }

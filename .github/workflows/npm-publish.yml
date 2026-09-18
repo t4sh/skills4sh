@@ -72,12 +72,18 @@ jobs:
           node-version: '24'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          version: "0.12.16"
+          enable-cache: true
+
       - name: Install validation and render-test dependencies
         run: |
           npm install --global "$(node -p "require('./package.json').packageManager")" --ignore-scripts --no-audit --no-fund
           npm ci --ignore-scripts --no-audit --no-fund
           python3 -m venv /tmp/skills4sh-python
-          /tmp/skills4sh-python/bin/python -m pip install --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
+          /tmp/skills4sh-python/bin/python -m pip --isolated install --require-hashes --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt
           echo "SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python" >> "$GITHUB_ENV"
           npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund
           npm ci --prefix tests/fixtures/visual --ignore-scripts --no-audit --no-fund

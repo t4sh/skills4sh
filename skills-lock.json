@@ -40,8 +40,8 @@
     "skill-architect": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.5",
-      "computedHash": "e599ffd8e725d4b448039ee5a80f2fc82471d824a82fbc933a3aaa9ef5d6485a"
+      "version": "0.1.6",
+      "computedHash": "bb3435441cf6260021b01164696bdca6a3baaac7ed0446dbc044c9147db5e244"
     }
   }
 }
