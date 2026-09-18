@@ -12,7 +12,7 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 | eleventy-nunjucks | 0.1.10 | Yes |
 | figma-to-code | 0.1.8 | Yes |
 | localhost-screenshots | 3.3.8 | Yes |
-| skill-architect | 0.1.5 | Yes |
+| skill-architect | 0.1.6 | Yes |
 
 ## Reporting a Vulnerability
 
@@ -135,7 +135,7 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory`, `figma-to-code`, and `skill-architect` scan without overrides; `code-to-figma`, `discord-harvest`, `eleventy-nunjucks`, and `localhost-screenshots` have documented expected findings that must match this file before overrides are accepted. |
+| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory` and `figma-to-code` scan without overrides; `code-to-figma`, `discord-harvest`, `eleventy-nunjucks`, `localhost-screenshots`, and `skill-architect` have documented expected findings that must match this file before overrides are accepted. |
 | CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
 | Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
 | GitHub Actions SHA-pinning | All `uses:` directives across every workflow are pinned to a commit SHA (with a trailing `# vX.Y.Z` comment for human readability). Floating major tags (`@v4`) would expose CI to upstream compromise — see e.g. the tj-actions/changed-files 2025 incident. `.github/dependabot.yml` opens grouped weekly PRs to keep the SHAs moving forward; each upgrade PR hits the full required-checks matrix before merge. |
@@ -164,6 +164,13 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 ## Expected Security Findings
 
 The following findings are expected and documented:
+
+### skill-architect
+
+| Finding | Severity | File(s) | Explanation |
+|---------|----------|---------|-------------|
+| `R008_ENV_ACCESS` | LOW | `SKILL.md` | The temporary-venv fallback stores its generated path in a shell variable so every install and helper invocation stays inside the same isolated environment. |
+| `R009_FILE_STAGE` | LOW | `SKILL.md` | The documented fallback creates a temporary virtual environment for pinned validation dependencies; it does not stage user skill content or execute automatically. |
 
 ### code-to-figma
 

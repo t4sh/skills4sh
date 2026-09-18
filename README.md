@@ -14,7 +14,7 @@ Each skill is an [Agent Skills](https://agentskills.io/specification) folder. Th
 | [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 0.1.10 |
 | [figma-to-code](skills/figma-to-code/) | Implement Figma designs in your codebase, map design tokens, and establish component mappings and project rules | 0.1.8 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.3.8 |
-| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 0.1.5 |
+| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 0.1.6 |
 
 ## Three places to start
 

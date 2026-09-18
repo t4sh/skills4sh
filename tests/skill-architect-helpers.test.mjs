@@ -1,13 +1,198 @@
 import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 const env = { ...process.env, PYTHONDONTWRITEBYTECODE: '1' };
 const scripts = 'skills/skill-architect/assets/scripts';
 const python = process.env.SKILL_TEST_PYTHON || 'python3';
+const requirements = resolve(scripts, 'requirements.txt');
+const inspectScript = resolve(scripts, 'inspect_skill.py');
+const validateScript = resolve(scripts, 'validate_skill.py');
+const runUvScript = resolve(scripts, 'run_uv.py');
+const uvFlags = [
+  '--isolated',
+  '--no-project',
+  '--no-build',
+  '--no-config',
+  '--with-requirements',
+  requirements,
+];
+
+function venvPython(venvDir) {
+  return process.platform === 'win32'
+    ? join(venvDir, 'Scripts', 'python.exe')
+    : join(venvDir, 'bin', 'python');
+}
+
+function spawn(command, args, options = {}) {
+  const { env: extraEnv, ...rest } = options;
+  return spawnSync(command, args, {
+    encoding: 'utf8',
+    env: { ...env, ...extraEnv },
+    ...rest,
+  });
+}
+
+function runCommand(command, args, options = {}) {
+  const result = spawn(command, args, options);
+  assert.equal(
+    result.status,
+    0,
+    `${command} ${args.join(' ')}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`,
+  );
+  return result;
+}
+
+function writeSkill(dir, name, description) {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(
+    join(dir, 'SKILL.md'),
+    `---\nname: ${name}\ndescription: "${description}"\n---\n\n# ${name}\n`,
+  );
+}
+
+function writePoisonYaml(parent) {
+  const poison = join(parent, 'poison');
+  mkdirSync(join(poison, 'yaml'), { recursive: true });
+  writeFileSync(join(poison, 'yaml', '__init__.py'), '__version__ = "9.9.9-poison"\n');
+  return poison;
+}
+
+function provisionVenv(parent) {
+  const venvDir = join(parent, 'venv');
+  runCommand(python, ['-E', '-m', 'venv', venvDir]);
+  const venvPy = venvPython(venvDir);
+  runCommand(venvPy, ['-E', '-m', 'pip', '--isolated', 'install', '--require-hashes', '--only-binary=:all:', '-r', requirements], {
+    env: { PIP_NO_INDEX: '1' },
+  });
+  return venvPy;
+}
+
+function assertAvailableFindings(result, command) {
+  assert.notEqual(result.status, 0, `${command} unexpectedly passed\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`);
+  assert.match(result.stdout, /frontmatter name 'wrong-name' does not match directory 'bad-skill'/);
+  assert.doesNotMatch(
+    `${result.stdout}\n${result.stderr}`,
+    /Required uv version|No matching distribution found|ModuleNotFoundError: No module named 'yaml'|PyYAML is required/,
+  );
+}
+
+test('skill-architect documents the portable isolated validation runner ladder', () => {
+  const skill = readFileSync('skills/skill-architect/SKILL.md', 'utf8');
+  const evals = JSON.parse(readFileSync('skills/skill-architect/assets/evals/scenarios.json', 'utf8'));
+  const documentedUv = 'run_uv.py" run --isolated --no-project --no-build --no-config --with-requirements';
+
+  for (const helper of ['inspect_skill.py', 'validate_skill.py']) {
+    assert.match(
+      skill,
+      new RegExp(`${documentedUv.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]{0,80}python -E[\\s\\S]{0,180}${helper.replace('.', '\\.')}`),
+      `missing isolated uv command for ${helper}`,
+    );
+  }
+  assert.match(skill, /python3 -E -m venv "\$VALIDATION_VENV"/);
+  assert.match(skill, /pip --isolated install --require-hashes --only-binary=:all:/);
+  assert.match(readFileSync(requirements, 'utf8'), /PyYAML==6\.0\.3[\s\\]+--hash=sha256:/i);
+  assert.match(skill, /\$ValidationVenv\\Scripts\\python\.exe" -E/);
+  assert.match(skill, /never install validation dependencies into the global Python environment/i);
+  assert.match(skill, /only after both isolated runner paths are unavailable or fail/i);
+  assert.match(skill, /Do not use `python -I`/);
+  assert.match(evals.execution, /run_uv\.py with run --isolated --no-project --no-build --no-config --with-requirements python -E/);
+  assert.match(evals.execution, /pip --isolated/);
+  assert.match(evals.execution, /Never install validation dependencies into global Python/);
+  assert.match(evals.execution, /only after both supported isolated runners/);
+  assert.match(evals.cases[0].files['AGENTS.md'], /Isolated helper-requirement installs for validation\/inspection are allowed/);
+  assert.match(
+    evals.cases.find((c) => c.id === 'create').prompt,
+    /Do not install project or global dependencies/,
+  );
+});
+
+test('skill-architect temporary venv runner ignores host pip and PYTHONPATH config', () => {
+  const parent = mkdtempSync(join(tmpdir(), 'skill-architect-venv-runner-'));
+  const skillDir = join(parent, 'fixture-skill');
+  writeSkill(skillDir, 'fixture-skill', 'Review runner isolation. Use when editing SKILL.md files.');
+  const poison = writePoisonYaml(parent);
+  const venvPy = provisionVenv(parent);
+
+  const inspect = runCommand(venvPy, ['-E', inspectScript, skillDir], { env: { PYTHONPATH: poison } });
+  assert.equal(JSON.parse(inspect.stdout).name, 'fixture-skill');
+  const poisoned = spawn(venvPy, ['-c', 'import yaml; print(yaml.__version__)'], { env: { PYTHONPATH: poison } });
+  assert.equal(poisoned.status, 0, poisoned.stderr);
+  assert.match(poisoned.stdout, /9\.9\.9-poison/);
+  const isolated = runCommand(venvPy, ['-E', '-c', 'import yaml; print(yaml.__version__)'], { env: { PYTHONPATH: poison } });
+  assert.match(isolated.stdout, /^6\.0\.3$/m);
+});
+
+test('skill-architect uv isolated runner ignores host uv.toml, PYTHONPATH, and surrounding projects', () => {
+  assert.equal(spawn('uv', ['--version']).status, 0, 'uv must be installed; CI pins 0.12.16');
+  const project = mkdtempSync(join(tmpdir(), 'skill-architect-uv-project-'));
+  mkdirSync(join(project, 'probe_project'));
+  writeFileSync(join(project, 'probe_project', '__init__.py'), 'x = 1\n');
+  writeFileSync(
+    join(project, 'pyproject.toml'),
+    `[build-system]\nrequires = ["setuptools>=61"]\nbuild-backend = "setuptools.build_meta"\n[project]\nname = "probe-project"\nversion = "0.0.1"\nrequires-python = ">=3.10"\ndependencies = ["rich==13.9.4"]\n[tool.setuptools.packages.find]\nwhere = ["."]\n`,
+  );
+  writeFileSync(join(project, 'uv.toml'), 'required-version = "==0.0.0"\n');
+  const poison = writePoisonYaml(project);
+  const skillDir = join(project, 'fixture-skill');
+  writeSkill(skillDir, 'fixture-skill', 'Review runner isolation. Use when editing SKILL.md files.');
+
+  const blocked = spawn('uv', ['run', '--isolated', '--no-project', '--no-build', '--with-requirements', requirements, 'python', '-c', 'print("ran")'], {
+    cwd: project,
+  });
+  assert.notEqual(blocked.status, 0, blocked.stdout + blocked.stderr);
+  assert.match(blocked.stderr + blocked.stdout, /Required uv version/);
+
+  const hostileUvEnv = {
+    PYTHONPATH: poison,
+    UV_INDEX_URL: 'http://127.0.0.1:9/simple',
+    UV_INSECURE_HOST: '127.0.0.1',
+    UV_NO_BINARY: 'true',
+    UV_NO_VERIFY_HASHES: 'true',
+  };
+  const hostile = spawn('uv', ['run', ...uvFlags, 'python', '-E', '-c', 'import yaml'], {
+    cwd: project,
+    env: hostileUvEnv,
+  });
+  assert.notEqual(hostile.status, 0, 'direct uv unexpectedly ignored hostile UV_* settings');
+
+  const probe = runCommand(python, [
+    '-E',
+    runUvScript,
+    'run',
+    ...uvFlags,
+    'python',
+    '-E',
+    '-c',
+    'mods=[]\nfor n in ("yaml","rich"):\n    try:\n        m=__import__(n); mods.append(n+"="+getattr(m,"__version__","yes"))\n    except Exception as e:\n        mods.append(n+"="+type(e).__name__)\nprint(",".join(mods))\n',
+  ], { cwd: project, env: hostileUvEnv });
+  assert.match(probe.stdout, /yaml=6\.0\.3/);
+  assert.match(probe.stdout, /rich=ModuleNotFoundError/);
+  assert.doesNotMatch(probe.stderr + probe.stdout, /Building probe-project|Built probe-project|Required uv version/);
+
+  const inspect = runCommand(python, ['-E', runUvScript, 'run', ...uvFlags, 'python', '-E', inspectScript, skillDir], {
+    cwd: project,
+    env: hostileUvEnv,
+  });
+  assert.equal(JSON.parse(inspect.stdout).name, 'fixture-skill');
+});
+
+test('skill-architect runners treat validator non-zero output as available findings', () => {
+  assert.equal(spawn('uv', ['--version']).status, 0, 'uv must be installed; CI pins 0.12.16');
+  const parent = mkdtempSync(join(tmpdir(), 'skill-architect-findings-'));
+  const skillDir = join(parent, 'bad-skill');
+  writeSkill(skillDir, 'wrong-name', 'Loose summary only.');
+  const venvPy = provisionVenv(parent);
+
+  const venvResult = spawn(venvPy, ['-E', validateScript, skillDir]);
+  assertAvailableFindings(venvResult, 'venv validate');
+
+  const uvResult = spawn(python, ['-E', runUvScript, 'run', ...uvFlags, 'python', '-E', validateScript, skillDir], { cwd: parent });
+  assertAvailableFindings(uvResult, 'uv validate');
+});
 
 function runPython(args, options = {}) {
   const result = spawnSync(python, args, {

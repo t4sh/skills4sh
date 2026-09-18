@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10; validation and inspection require PyYAML 6.0.3
 metadata:
   author: t4sh
-  version: "0.1.5"
+  version: "0.1.6"
   tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, anthropic, openai, grok, openclaw
 ---
 
@@ -168,10 +168,48 @@ Optional helper scripts live under `assets/scripts/` so they ship as inert skill
 | [`assets/scripts/validate_skill.py`](assets/scripts/validate_skill.py) | Run a local portable-skill validation pass against one skill folder, with warning-only progressive-disclosure hints |
 | [`assets/scripts/fix_skill.py`](assets/scripts/fix_skill.py) | Dry-run or apply conservative deterministic fixes to `SKILL.md`, then rerun validation |
 | [`assets/scripts/scaffold_skill.py`](assets/scripts/scaffold_skill.py) | Create a starter skill folder using the portable rubric |
+| [`assets/scripts/run_uv.py`](assets/scripts/run_uv.py) | Start `uv` after removing inherited `UV_*` host configuration |
 
 `inspect_skill.py` and `validate_skill.py` each accept **one skill folder per invocation**. For multiple skills, invoke each helper separately for each folder; reuse the same Python environment.
 
-Validation and inspection use the pinned [Python dependency file](assets/scripts/requirements.txt). If PyYAML is unavailable, report the missing capability; do not silently substitute shape checks for YAML validation. Scaffold and fix helpers need only Python. The fixer accepts column-zero literal mapping keys and simple single-line literal names; it refuses unsupported key or name syntax before any edits. Use manual review for those cases, then validate.
+Validation and inspection require Python >=3.10 plus the version-and-hash-pinned [Python dependency file](assets/scripts/requirements.txt). Use an isolated runner; never install validation dependencies into the global Python environment.
+
+Prefer `uv` when it is available. It is the preferred adapter, not a portable requirement. Invoke it through `run_uv.py`, which removes the entire inherited `UV_*` namespace before `uv` starts; `--no-config` only ignores persistent files and does not neutralize variables such as `UV_INDEX` or `UV_NO_VERIFY_HASHES`. `--isolated` alone still installs a surrounding project: add `--no-project` so a nearby `pyproject.toml` is not built or imported, `--no-build` so only wheels are used (the same pin as `pip install --only-binary=:all:`), and `--no-config` so host `uv.toml` / `uv.ini` is ignored. Run helpers with `python -E` so `PYTHONPATH` cannot replace pinned PyYAML. Do not use `python -I`; it drops the script directory from `sys.path` and breaks `inspect_skill.py`'s sibling import of `validate_skill.py`.
+
+```bash
+python3 -E "/path/to/skill-architect/assets/scripts/run_uv.py" run --isolated --no-project --no-build --no-config --with-requirements "/path/to/skill-architect/assets/scripts/requirements.txt" python -E \
+  "/path/to/skill-architect/assets/scripts/inspect_skill.py" "/path/to/target-skill"
+python3 -E "/path/to/skill-architect/assets/scripts/run_uv.py" run --isolated --no-project --no-build --no-config --with-requirements "/path/to/skill-architect/assets/scripts/requirements.txt" python -E \
+  "/path/to/skill-architect/assets/scripts/validate_skill.py" "/path/to/target-skill"
+```
+
+On Windows, use `py -3 -E` instead of `python3 -E` for the launcher command.
+
+If `uv` is unavailable or cannot prepare its isolated environment, fall back to a temporary virtual environment. On macOS or Linux:
+
+```bash
+VALIDATION_VENV="$(mktemp -d)/venv"
+python3 -E -m venv "$VALIDATION_VENV"
+"$VALIDATION_VENV/bin/python" -E -m pip --isolated install --require-hashes --only-binary=:all: \
+  -r "/path/to/skill-architect/assets/scripts/requirements.txt"
+"$VALIDATION_VENV/bin/python" -E "/path/to/skill-architect/assets/scripts/inspect_skill.py" "/path/to/target-skill"
+"$VALIDATION_VENV/bin/python" -E "/path/to/skill-architect/assets/scripts/validate_skill.py" "/path/to/target-skill"
+```
+
+On Windows PowerShell:
+
+```powershell
+$ValidationVenv = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString())
+py -3 -E -m venv $ValidationVenv
+& "$ValidationVenv\Scripts\python.exe" -E -m pip --isolated install --require-hashes --only-binary=:all: `
+  -r "/path/to/skill-architect/assets/scripts/requirements.txt"
+& "$ValidationVenv\Scripts\python.exe" -E "/path/to/skill-architect/assets/scripts/inspect_skill.py" "/path/to/target-skill"
+& "$ValidationVenv\Scripts\python.exe" -E "/path/to/skill-architect/assets/scripts/validate_skill.py" "/path/to/target-skill"
+```
+
+A helper that starts and reports findings produced an available result, even when validation exits non-zero. Retry with the temporary-environment fallback only when `uv`, dependency resolution, or helper startup fails. Report validation or inspection as unavailable only after both isolated runner paths are unavailable or fail; name the attempted commands and setup errors. Do not silently substitute shape checks for YAML validation.
+
+Scaffold and fix helpers need only Python. The fixer accepts column-zero literal mapping keys and simple single-line literal names; it refuses unsupported key or name syntax before any edits. Use manual review for those cases, then validate.
 
 Read or run scripts only when the task needs deterministic inspection or scaffolding. Local validation commands and CI, when present, remain the source of truth.
 

@@ -8,6 +8,12 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.5.5] — 2026-09-18
+
+### Fixed
+- Made `skill-architect` 0.1.6 inspection and validation executable from a clean host: strip inherited `UV_*` settings before isolated `uv run --isolated --no-project --no-build --no-config` with `python -E`, verify pinned PyYAML distribution hashes, fall back to a temporary virtual environment using `pip --isolated --require-hashes`, never install PyYAML globally, and report the capability unavailable only after both isolated runners fail.
+- Bumped package and plugin metadata to 0.5.5.
+
 ## [0.5.3] — 2026-09-15
 
 ### Changed
