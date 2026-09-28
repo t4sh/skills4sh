@@ -25,6 +25,7 @@ body:
         - discord-harvest skill
         - eleventy-nunjucks skill
         - figma-to-code skill
+        - init-rulebook skill
         - localhost-screenshots skill
         - skill-architect skill
         - tokens-sync-to-figma plugin

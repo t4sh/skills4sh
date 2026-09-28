@@ -31,17 +31,23 @@
       "version": "0.1.8",
       "computedHash": "572ea84cb16cfe82941111dcce2ce62e9e3a14dfbac77e3e26fb6285d7acd501"
     },
+    "init-rulebook": {
+      "source": "t4sh/skills4sh",
+      "sourceType": "github",
+      "version": "0.1.0",
+      "computedHash": "83f8621246563d8ca354a05f68818fdf6c39f9188a56c3317d93da01a067596f"
+    },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "3.3.8",
-      "computedHash": "ed95234ec64205ebf95460b1eeb61552ca62d8c8426f241f6535e4946e09ae34"
+      "version": "3.4.0",
+      "computedHash": "e1c1fcd9130fb96507efd77b8b8db250dc115fb4a6914034a2097b321b6ca22e"
     },
     "skill-architect": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.6",
-      "computedHash": "bb3435441cf6260021b01164696bdca6a3baaac7ed0446dbc044c9147db5e244"
+      "version": "1.0.0",
+      "computedHash": "1a363b7b469985c6880e8a53d3b745c73ce4768fb5ace826c5297a47698f353a"
     }
   }
 }

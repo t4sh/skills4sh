@@ -20,7 +20,7 @@ const waitForSelector = process.argv[6] || '';
 function isLocalUrl(value) {
   try {
     const parsed = new URL(value);
-    const host = parsed.hostname.toLowerCase();
+    const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
     return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
       && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost'));
   } catch {

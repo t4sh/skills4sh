@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
+import { runInNewContext } from 'node:vm';
 
 const scripts = [
   'skills/localhost-screenshots/assets/scripts/quick.js',
@@ -12,7 +13,8 @@ const scripts = [
 ];
 
 for (const script of scripts) {
-  test(`${script} accepts IPv6 loopback through navigation and capture with a Playwright test double`, () => {
+  for (const url of ['http://[::1]:3000/', 'http://myapp.localhost:1355/dashboard?tab=preview', 'https://myapp.localhost/', 'https://fix-ui.myapp.localhost/dashboard', 'http://localhost.:3000/', 'http://myapp.localhost.:1355/dashboard?tab=preview', 'https://FEATURE.myapp.localhost./dashboard']) {
+  test(`${script} accepts ${url} through navigation and capture with a Playwright test double`, () => {
     const fixture = mkdtempSync(join(tmpdir(), 'localhost-ipv6-'));
     const moduleDir = join(fixture, 'node_modules', 'playwright');
     mkdirSync(moduleDir, { recursive: true });
@@ -41,7 +43,6 @@ for (const script of scripts) {
       };
       module.exports = { chromium: { launch: async () => ({ newPage: async () => page, close: async () => {} }) } };
     `);
-    const url = 'http://[::1]:3000/';
     const multi = script.endsWith('multi-breakpoint.js');
     const a11y = script.endsWith('screenshot-a11y.js');
     const args = multi ? [script, url, fixture, 'mobile:375x812']
@@ -65,12 +66,17 @@ for (const script of scripts) {
     }
   });
 
-  test(`${script} rejects external URLs before loading Playwright`, () => {
-    const result = spawnSync(process.execPath, [script, 'https://example.com'], { encoding: 'utf8' });
+  }
+
+  for (const url of ['https://example.com', 'https://myapp.localhost.evil.example', 'https://myapp.localhost@evil.example', 'https://myapp.test', 'https://myapp.local', 'https://machine.tailnet.ts.net', 'https://myapp.ngrok.app', 'https://myapp.localhost..', 'https://myapp.localhost.evil.example.', 'https://evil.example?.localhost', 'https://evil.com\\@myapp.localhost/']) {
+  test(`${script} rejects ${url} before loading Playwright`, () => {
+    const result = spawnSync(process.execPath, [script, url], { encoding: 'utf8' });
     assert.notEqual(result.status, 0);
     assert.match(result.stderr, /Refusing non-localhost URL/);
     assert.doesNotMatch(result.stderr, /Cannot find module 'playwright'/);
   });
+
+  }
 
   test(`${script} rejects malformed URLs before loading Playwright`, () => {
     const result = spawnSync(process.execPath, [script, 'not-a-url'], { encoding: 'utf8' });
@@ -121,7 +127,7 @@ for (const script of scripts) {
 
     try {
       const args = script.endsWith('multi-breakpoint.js')
-        ? [script, 'http://localhost:3000', join(fixture, 'shots'), 'mobile:375x812']
+        ? [script, 'http://myapp.localhost:1355', join(fixture, 'shots'), 'mobile:375x812']
         : script.endsWith('screenshot-a11y.js')
           ? [script, 'http://localhost:3000', join(fixture, 'page'), '375x812']
           : [script, 'http://localhost:3000', '375x812', join(fixture, 'quick.png')];
@@ -134,5 +140,34 @@ for (const script of scripts) {
     } finally {
       rmSync(fixture, { recursive: true, force: true });
     }
+  });
+}
+
+const patterns = readFileSync('skills/localhost-screenshots/references/playwright-patterns.md', 'utf8');
+const tlsSnippet = patterns.split('## Self-Signed HTTPS')[1].match(/```js\n([\s\S]*?)```/)[1];
+const verifiedTarget = { startedByThisTask: true, selfSigned: true, isPortless: false, tlsExceptionAuthorized: true };
+for (const [label, url, evidence, expected] of [
+  ['missing evidence', 'https://app.localhost', undefined, false],
+  ['null evidence', 'https://app.localhost', null, false],
+  ['Portless', 'https://app.localhost', { ...verifiedTarget, isPortless: true }, false],
+  ...Object.keys(verifiedTarget).map(key => [
+    'missing ' + key, 'https://app.localhost', Object.fromEntries(Object.entries(verifiedTarget).filter(([name]) => name !== key)), false,
+  ]),
+  ['verified self-signed server', 'https://app.localhost', verifiedTarget, true],
+  ['trailing root dot', 'https://app.localhost.', verifiedTarget, true],
+  ['external', 'https://example.com', verifiedTarget, false],
+  ['HTTP', 'http://localhost', verifiedTarget, false],
+  ['deceptive query', 'https://evil.example?.localhost', verifiedTarget, false],
+  ['deceptive backslash', 'https://evil.com\\@app.localhost/', verifiedTarget, false],
+]) {
+  test('documented HTTPS snippet: ' + label, async () => {
+    let options;
+    const sandbox = {
+      URL, BASE_URL: url,
+      browser: { newContext: async value => { options = value; return { newPage: async () => ({}) }; } },
+    };
+    if (evidence !== undefined) sandbox.captureTarget = evidence;
+    await runInNewContext('(async () => {' + tlsSnippet + '})()', sandbox);
+    assert.equal(options.ignoreHTTPSErrors, expected);
   });
 }

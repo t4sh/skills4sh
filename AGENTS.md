@@ -52,5 +52,6 @@ In summary:
 | discord-harvest | `skills/discord-harvest/` |
 | eleventy-nunjucks | `skills/eleventy-nunjucks/` |
 | figma-to-code | `skills/figma-to-code/` |
+| init-rulebook | `skills/init-rulebook/` |
 | localhost-screenshots | `skills/localhost-screenshots/` |
 | skill-architect | `skills/skill-architect/` |

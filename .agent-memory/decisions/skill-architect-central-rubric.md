@@ -1,19 +1,21 @@
 ---
 id: decisions/skill-architect-central-rubric
 type: decision
-title: "Use skill-architect as the evolving portable skill authoring rubric"
+title: "Use skill-architect as the stable portable skill authoring rubric"
 description: >-
   skill-architect is the central planning/review layer for multi-agent skill authoring, derived from Anthropic Skill Development, Anthropic skill-creator, and OpenAI skill-creator.
 tags: [skill-architect, skill-authoring, rubric, anthropic, openai, multi-agent]
 source: craft-agent
 created: 2026-06-13
-updated: 2026-06-30
+updated: 2026-09-27
 status: active
 ---
 
 ## Decision
 
-Use `skill-architect` as the evolving portable skill creator/authoring skill and central planning/review layer for CWD/project/repository skill work.
+Use `skill-architect` as the stable portable skill creator/authoring skill and central planning/review layer for CWD/project/repository skill work.
+
+The pending package release promotes the skill to stable `1.0.0`; this is draft release state, not evidence of publication. Follow the current skill metadata and release runbook for the shipped version.
 
 ## Why
 
@@ -29,6 +31,6 @@ The synthesis model is: **portable rubric first, quality harness second, vendor 
 
 - Treat `docs/SKILL_AUTHORING_STANDARD.md` as the binding local project contract for `skills4sh`, while `skill-architect` remains a portable standard for planning, authoring, reviewing, and evolving skills in any CWD/project/repository context.
 - Continue refining `skill-architect` with comparative lessons from famous `skills.sh` skill creation/development/maintenance/authoring/editing skills.
-- As of 2026-06-30, `skill-architect` 0.1.2 adds predictability, pruning, invocation-fit, completion-criteria, and executable-surface triage checks. Apply these before patching skill content.
+- Apply the predictability, pruning, invocation-fit, completion-criteria, and executable-surface triage checks in the current `skills/skill-architect/SKILL.md` before patching skill content.
 - Do not let a vendor-specific rubric replace the local project contract verbatim.
 - Avoid upstream slug collisions such as `skill-creator` by using explicit local or restored names.
