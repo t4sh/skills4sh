@@ -27,13 +27,13 @@
     },
     {
       "id": "local-boundary",
-      "prompt": "Assess the requested URL and observed redirect list for the localhost capture policy; no actual navigation.",
+      "prompt": "Assess each request and observed redirect in navigation.json for the localhost capture policy. State which requests may proceed; no actual navigation.",
       "files": {
-        "navigation.json": "[{\"requested\": \"http://[::1]:3000/\", \"final\": \"http://[::1]:3000/\"}, {\"requested\": \"http://localhost:3000/\", \"final\": \"https://example.com/login\"}, {\"requested\": \"http://localhost.evil.example/\", \"final\": \"http://localhost.evil.example/\"}]"
+        "navigation.json": "[{\"type\": \"main-frame\", \"requested\": \"http://[::1]:3000/\", \"final\": \"http://[::1]:3000/\"}, {\"type\": \"stylesheet\", \"document\": \"http://[::1]:3000/\", \"requested\": \"https://cdn.example.org/app.css\", \"final\": \"https://cdn.example.org/app.css\"}, {\"type\": \"main-frame\", \"requested\": \"http://localhost:3000/\", \"final\": \"https://example.com/login\"}, {\"type\": \"main-frame\", \"requested\": \"http://localhost.evil.example/\", \"final\": \"http://localhost.evil.example/\"}]"
       },
       "assertions": [
         "Accepts real loopback including IPv6, rejects deceptive host and external main-frame redirect.",
-        "Distinguishes navigation from external subresources; never claims a screenshot."
+        "Allows the external stylesheet as a subresource of the local page while blocking external main-frame navigation; never claims a screenshot."
       ]
     },
     {
@@ -66,6 +66,10 @@
         {
           "text": "Photograph a physical printed page.",
           "load": false
+        },
+        {
+          "text": "Screenshot my Portless app at https://feature.myapp.localhost/dashboard.",
+          "load": true
         }
       ],
       "assertions": [
@@ -94,6 +98,29 @@
         "Conditionally selects permitted CDP Emulation.setDeviceMetricsOverride through inspected host schema, not guessed host arguments.",
         "Verifies resulting CSS viewport before capture and restores task-created override afterward.",
         "No live operation or successful screenshot claim; no eval materialization."
+      ]
+    },
+    {
+      "id": "portless-route",
+      "prompt": "Plan one 390x844 screenshot of the dashboard for the feature worktree. Use the supplied route evidence; do not start services, change configuration, or take a capture.",
+      "files": {
+        "environment.json": "{\"project\":{\"dev\":\"portless run next dev\"},\"worktree\":\"feature\",\"routes\":[{\"name\":\"myapp\",\"url\":\"http://myapp.localhost:1355\"},{\"name\":\"feature.myapp\",\"url\":\"http://feature.myapp.localhost:1355\"}],\"host_browser_available\":true,\"requested_path\":\"/dashboard\",\"upstream_port\":4123}"
+      },
+      "assertions": [
+        "Selects the listed http://feature.myapp.localhost:1355/dashboard and preserves that proxy origin; does not use localhost:4123, invent a hostname, or assume HTTPS/443.",
+        "Uses the existing host browser for one viewport and verifies actual app readiness before capture; does not set ignoreHTTPSErrors, reconfigure the proxy, change trust, or claim success."
+      ]
+    },
+    {
+      "id": "portless-worktree-route-mismatch",
+      "prompt": "Plan one 390x844 screenshot of the dashboard for the feature worktree using environment.json. State the target URL if one can be established and the next action. Do not run commands, start services, change configuration, navigate, or capture.",
+      "files": {
+        "environment.json": "{\"project\":{\"dev\":\"portless run next dev\"},\"requested_worktree\":\"feature\",\"get_result\":\"https://feature.myapp.localhost\",\"routes\":[{\"name\":\"myapp\",\"url\":\"https://myapp.localhost\",\"source_worktree\":\"main\"}],\"requested_path\":\"/dashboard\",\"host_browser_available\":true}\n"
+      },
+      "assertions": [
+        "Reports requested feature route unavailable or asks for a confirmed feature-worktree URL.",
+        "Does not choose main-worktree route merely because it is listed, or navigate the unregistered get result.",
+        "Does not start services or claim successful capture."
       ]
     }
   ]

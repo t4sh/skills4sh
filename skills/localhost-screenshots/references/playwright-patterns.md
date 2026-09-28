@@ -247,12 +247,20 @@ await element.screenshot({ path: 'content-only.png' });
 
 ## Self-Signed HTTPS
 
-**Localhost only.** `ignoreHTTPSErrors` disables certificate validation for the context. Use it **only** when the target is a local dev server with a self-signed cert (`https://localhost`, `https://127.0.0.1`, `https://[::1]`, or `https://*.localhost`). Never enable it against external hostnames — that defeats the protection certificates provide and would let any MITM serve poisoned content to the screenshot run.
+**Localhost only, and not for Portless.** `ignoreHTTPSErrors` disables certificate validation for the context. Allow it only for a self-signed local server started by this task, with permission to use that exception. Supply `captureTarget` from verified server-start records and task authorization: `startedByThisTask`, `selfSigned`, `isPortless`, and `tlsExceptionAuthorized`. Never infer these from the hostname. Missing evidence keeps verification enabled. Portless always checks certificates; follow [portless.md](portless.md).
 
 ```js
-// Guarded: only flip ignoreHTTPSErrors for explicit localhost targets.
-const isLocal = /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\]|[^/]+\.localhost)(:|\/|$)/.test(BASE_URL);
-const context = await browser.newContext({ ignoreHTTPSErrors: isLocal });
+const parsed = new URL(BASE_URL);
+const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
+const isLocalHttps = parsed.protocol === 'https:'
+  && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost'));
+const allowSelfSigned = isLocalHttps
+  && typeof captureTarget !== 'undefined'
+  && captureTarget?.startedByThisTask === true
+  && captureTarget?.selfSigned === true
+  && captureTarget?.isPortless === false
+  && captureTarget?.tlsExceptionAuthorized === true;
+const context = await browser.newContext({ ignoreHTTPSErrors: allowSelfSigned });
 const page = await context.newPage();
 ```
 

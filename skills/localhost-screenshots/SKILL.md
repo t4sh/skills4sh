@@ -1,12 +1,12 @@
 ---
 name: localhost-screenshots
-description: "Capture and compare localhost pages across viewports for visual regression. Use when asked to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or when capturing programmatic screenshots of a local dev server across viewport breakpoints."
+description: "Capture and compare localhost pages across viewports for visual regression. Use when asked to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or capture a Portless app at a named .localhost URL."
 license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "3.3.8"
-  tags: screenshots, localhost, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
+  version: "3.4.0"
+  tags: screenshots, localhost, portless, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 
 # Localhost Screenshots
@@ -19,6 +19,10 @@ This skill captures screenshots of locally running websites. It supports two pri
 Playwright 1.62 also ships first-party CLI and MCP entry points. Use them when the host/project already exposes that workflow; keep the bundled scripts for explicit, reviewable localhost-only captures and deterministic CI. Do not install a second browser-control stack merely because the new entry points exist.
 
 For niche scenarios (persistent sessions, AI snapshots, CI workflows), see the [Reference Files](#reference-files) section.
+
+## Resolve the local target
+
+Use the user's exact app URL. When the project uses Portless, inspect its existing setup and active routes before choosing a target; follow [Portless](references/portless.md). Preserve the proxy hostname, scheme, port, and worktree subdomain throughout capture. All bundled helpers accept HTTP/HTTPS `*.localhost` URLs. Verify the expected app is ready before capturing; a route entry alone does not prove the server is running.
 
 ## Tool Decision Matrix — Read This First
 
@@ -110,7 +114,7 @@ Use Playwright for automated, repeatable screenshot sets across all breakpoints.
 ### Golden Rules
 
 1. **Always use Playwright's bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
-2. **Prefer HTTP; `file://` only for self-contained static HTML.** Serve over HTTP whenever a dev server, build output, or `npx serve` is available. `file://` is acceptable *only* when the page has no `fetch`/XHR to sibling files, no `<script type="module">`, no service workers, and no absolute `/asset` paths — otherwise those will break silently. When in doubt, serve over HTTP.
+2. **Keep an existing local origin's scheme. Prefer HTTP only when starting a server.** A verified HTTPS target, including a Portless route, stays HTTPS; do not rewrite it to HTTP. `file://` is acceptable *only* when the page has no `fetch`/XHR to sibling files, no `<script type="module">`, no service workers, and no absolute `/asset` paths — otherwise those will break silently. When starting a server and no HTTPS origin is already in use, serve over HTTP.
 3. **Keep main-frame navigation local.** Validate the requested URL and every main-frame redirect/final URL. The bundled helpers abort navigation when a localhost target redirects to an external hostname; external subresources may still load as part of the local page.
 
 ### Setup (run once per session)
@@ -124,7 +128,7 @@ Do not use `@latest` or an unversioned install. Install the explicit compatible 
 
 ### Quick workflow
 
-1. Ensure the site is served over HTTP (user's dev server, or run `npx serve _site -l 3000 --no-clipboard` in a separate terminal).
+1. Confirm the verified local origin responds. Keep an existing HTTPS origin, including Portless. When starting a static server, HTTP is enough (`npx serve _site -l 3000 --no-clipboard` in a separate terminal).
 2. Verify the server responds before screenshotting (see [playwright-patterns.md](references/playwright-patterns.md) § "Verifying the Server").
 3. Capture all 8 standard breakpoints (320–1920px) unless the user asks for specific sizes. Check the project's CSS/Tailwind config for custom breakpoints first.
 4. Save to `_screenshots/` in the project folder.
@@ -185,6 +189,7 @@ For advanced patterns (persistent sessions, pixel-diff, AI snapshots, CI workflo
 | [assets/scripts/multi-breakpoint.js](assets/scripts/multi-breakpoint.js) | Custom breakpoint list or a smaller scripted set before adopting the full 8-breakpoint pipeline |
 | [assets/scripts/screenshot-a11y.js](assets/scripts/screenshot-a11y.js) | Screenshot plus ARIA snapshot with optional `WIDTHxHEIGHT` viewport and `untrusted-page-content` JSON envelope for agent consumption |
 | [references/playwright-patterns.md](references/playwright-patterns.md) | Pre-flight checks, serving patterns, persistent sessions, breakpoint detection, canonical 8-breakpoint script templates |
+| [references/portless.md](references/portless.md) | Portless route discovery, worktree URLs, HTTPS trust, and local proxy troubleshooting |
 | [references/visual-regression.md](references/visual-regression.md) | Pixel-diff scoring, comparison HTML generation, GitHub Actions CI/CD workflow |
 | [references/interaction-templates.md](references/interaction-templates.md) | Auth flows, e-commerce flows, state variations, interactive mode, core interaction primitives |
 | [references/ai-snapshots.md](references/ai-snapshots.md) | ARIA snapshots, DOM snapshots, interactive element maps, incremental DOM diff |
