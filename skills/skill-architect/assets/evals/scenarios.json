@@ -150,7 +150,7 @@
       "id": "adjacent",
       "prompt": "Turn our recurring release review into reusable agent instructions.",
       "assertions": [
-        "Routes to skill authoring with a concrete output contract."
+        "Labels the request load because turning a recurring workflow into reusable agent instructions is skill authoring."
       ],
       "kind": "description-only-routing",
       "files": {}
