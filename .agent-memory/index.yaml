@@ -8,7 +8,7 @@
 
 - id: decisions/skill-architect-central-rubric
   type: decision
-  title: "Use skill-architect as the evolving portable skill authoring rubric"
+  title: "Use skill-architect as the stable portable skill authoring rubric"
   status: active
 
 - id: context/active-skill-architect-release
@@ -30,6 +30,11 @@
   type: context
   title: "TODO: bump changed skill versions before review PR"
   status: archived
+
+- id: context/next-package-release
+  type: context
+  title: "Next package release: rulebook, architect, and Portless support"
+  status: active
 
 - id: sessions/20260613-skill-architect-release-planning
   type: session

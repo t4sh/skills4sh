@@ -13,8 +13,9 @@ Each skill is an [Agent Skills](https://agentskills.io/specification) folder. Th
 | [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 2.0.1 |
 | [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 0.1.10 |
 | [figma-to-code](skills/figma-to-code/) | Implement Figma designs in your codebase, map design tokens, and establish component mappings and project rules | 0.1.8 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.3.8 |
-| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 0.1.6 |
+| [init-rulebook](skills/init-rulebook/) | Manage personal agent rules in `~/.agents/AGENTS.md`, with optional custom folders and dotfiles integration | 0.1.0 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.4.0 |
+| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 1.0.0 |
 
 ## Three places to start
 
@@ -93,8 +94,28 @@ Installing a skill also does not provision its dependencies. Figma workflows nee
 |-------|-----------------|
 | code-to-figma | “Set up a pipeline to export this repository's design tokens and page structure for the Figma plugin.” |
 | figma-to-code | “Implement this Figma design using our existing components and tokens.” |
+| init-rulebook | “Set up my personal agent rulebook.” |
 | discord-harvest | “Archive the images and attachments from this Discord export.” |
 | eleventy-nunjucks | “Help me debug the layout chain in this Eleventy site.” |
+
+### Manage your own agent rules
+
+`init-rulebook` helps anyone maintain personal agent instructions: working preferences, project conventions, and rules that apply only to particular tasks or actions. Start with one `~/.agents/AGENTS.md`; split it into linked rule files when useful. The skill loads the relevant rules at session start and after compaction, following your index's instructions.
+
+| Request | Result |
+|---|---|
+| `init-rulebook: setup` | Adopt your existing rulebook or create the default `~/.agents/AGENTS.md`, then configure your host's startup pointer |
+| `init-rulebook: setup in /path/to/my-rules` | Use a custom folder; choose personal or project scope for the pointer |
+| `init-rulebook: load` | Read the selected index and all rules applicable to the current task |
+| `init-rulebook: fine-tune` | Improve rule wording, grouping, and loading triggers |
+| `init-rulebook: link-dot-files` | Connect an existing dotfiles rulebook without moving its files |
+| `init-rulebook: update` | Refresh the installed skill from its recorded source, preserving your rules and pointer |
+| `init-rulebook: update rules` | Update the separately managed rulebook when requested |
+| `init-rulebook: status` | Check the pointer, files, and which rules would load |
+
+These are requests to your agent, not shell commands. Your rules stay outside the installed skill, so updating it from `t4sh/skills4sh` preserves your setup. Existing `~/.agents` symlinks and startup bridges can remain in place. The public [t4sh/dotfiles rule set](https://github.com/t4sh/dotfiles/tree/main/agents) is an optional example; adopting it keeps `~/.agents` as the tree and leaves its `~/.agents/rules/*.md` inventory sentence unchanged.
+
+**Host compatibility:** `~/.agents/AGENTS.md` is this skill's default shared rulebook location. Codex reads global instructions from its home directory (normally `~/.codex/AGENTS.md`, subject to overrides); setup puts the pointer in the effective instruction file. Codex also discovers user skills in `~/.agents/skills/`. The skill uses the portable `SKILL.md` format; each host's startup discovery still needs configuration. See the official [AGENTS.md guide](https://developers.openai.com/codex/guides/agents-md) and [skills guide](https://developers.openai.com/codex/skills).
 
 <details>
 <summary>Update, install the collection, or uninstall</summary>
@@ -152,7 +173,7 @@ See [SECURITY.md](SECURITY.md) for scan details, expected findings, and vulnerab
 
 Skill files do not execute themselves. Agents may follow their instructions and run optional helpers when the task and permissions allow.
 
-> **Stability:** `code-to-figma`, `eleventy-nunjucks`, `figma-to-code`, and `skill-architect` are pre-1.0: prompt content and triggers may change incompatibly between minor releases. `agent-memory`, `discord-harvest`, and `localhost-screenshots` reserve breaking changes for major versions.
+> **Stability:** `code-to-figma`, `eleventy-nunjucks`, `figma-to-code`, and `init-rulebook` are pre-1.0: prompt content and triggers may change incompatibly between minor releases. `agent-memory`, `discord-harvest`, `localhost-screenshots`, and `skill-architect` reserve breaking changes for major versions.
 
 ## License
 

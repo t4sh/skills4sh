@@ -4,8 +4,8 @@
   "groupings": [
     {
       "title": "Memory & skills",
-      "description": "Preserve shared project understanding and improve reusable agent workflows.",
-      "skills": ["agent-memory", "skill-architect"]
+      "description": "Preserve shared project understanding, load a personal agent rulebook, and improve reusable agent workflows.",
+      "skills": ["agent-memory", "init-rulebook", "skill-architect"]
     },
     {
       "title": "Design & UI",

@@ -1,7 +1,7 @@
 {
   "name": "skills4sh",
   "description": "Portable agent skills for any Agent Skills-compatible runtime",
-  "version": "0.5.5",
+  "version": "0.6.0",
   "author": {
     "name": "t4sh"
   },
@@ -32,6 +32,11 @@
       "name": "figma-to-code",
       "path": "skills/figma-to-code",
       "description": "Remote-first, repo-aware Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect"
+    },
+    {
+      "name": "init-rulebook",
+      "path": "skills/init-rulebook",
+      "description": "Set up, load, tune, link, and update a personal agent rulebook from any chosen folder"
     },
     {
       "name": "localhost-screenshots",

@@ -8,6 +8,22 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.6.0] — 2026-09-28
+
+### Added
+- Added Portless route discovery, origin preservation, and HTTPS troubleshooting to `localhost-screenshots` 3.4.0, with named-host capture and redirect regression coverage.
+- Added `init-rulebook` 0.1.0 with setup, load, fine-tune, link-dot-files, update, and status modes. Rulebooks can live in any readable folder; the public `t4sh/dotfiles` projection is an optional example.
+
+### Changed
+- Promoted `skill-architect` to 1.0.0. Breaking trigger or scope changes now require a major version; the packaging reference and README stability note say so.
+- Bumped package and plugin metadata to 0.6.0.
+
+### Fixed
+- `localhost-screenshots` requires a Portless route matching the requested app and worktree, preserves HTTPS verification for Portless, and requires explicit server provenance and authorization for self-signed exceptions. Helpers accept one trailing DNS root dot while preserving the requested URL; custom TLDs, LAN names, and tunnels remain unsupported.
+- `init-rulebook` follows an index's own inventory path and applicability headings. It compares canonical directory paths so symlink aliases remain valid, preserves the written `~/.agents/rules/*.md` inventory, and validates deferred rule paths without reading their contents.
+- Existing host startup pointers are preserved before setup considers writes; host discovery is independent of Codex-specific configuration. Conditional rule loading requires matching trigger evidence, and action gates stay deferred until their operation begins.
+- Eval fixtures now exercise external subresources, canonical path aliases, existing Cursor pointers, and selective status reads. Description-only routing assertions no longer require workflow artifacts.
+
 ## [0.5.5] — 2026-09-18
 
 ### Fixed

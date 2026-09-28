@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        skill: [agent-memory, code-to-figma, discord-harvest, eleventy-nunjucks, figma-to-code, localhost-screenshots, skill-architect]
+        skill: [agent-memory, code-to-figma, discord-harvest, eleventy-nunjucks, figma-to-code, init-rulebook, localhost-screenshots, skill-architect]
         node-version: ['22', '24']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
