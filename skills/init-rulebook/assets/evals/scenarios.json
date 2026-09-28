@@ -1,0 +1,495 @@
+{
+  "schema_version": 1,
+  "purpose": "Reusable init-rulebook behavioral fixtures for all six modes, path and inventory failures, action timing, and simulated compaction. Assertions are expected behavior, not passing run evidence.",
+  "execution": "Use a fresh isolated case directory and agent context for each case. Materialize files exactly as supplied and provide the absolute case directory as the fixture working directory. home/ is a virtual home only when the case says so: do not change HOME, CODEX_HOME, or any real host configuration. host.json, installation.json, and prior-context.json are synthetic evidence, not live runtime state. Supply only the skill, relevant fixture inputs, and prompt to the executor; withhold assertions and retrieval labels. Allow writes only where the prompt explicitly authorizes fixture paths. No live credentials, external network, Git mutations, installs, publication, or real startup/compaction actions. Record file reads, before/after bytes, result, and untested capabilities separately. For routing, expose only frontmatter and prompt texts. Grade each case against all assertions; catalogs and schema/materialization checks alone do not prove behavior.",
+  "cases": [
+    {
+      "id": "setup-default",
+      "kind": "workflow",
+      "prompt": "init-rulebook: setup. In this disposable simulation, home/ represents my home directory and host.json describes the host. Create the default rulebook and connect it to that host. You may edit only fixture files. Use concise personal guidance: keep edits scoped. Report what was actually verified.",
+      "files": {
+        "host.json": "{\n  \"runtime\": \"Codex\",\n  \"home\": \"home\",\n  \"effective_instruction\": \"home/.codex/AGENTS.md\",\n  \"skill_discoverable\": true,\n  \"fresh_session_available\": false\n}\n",
+        "home/.codex/AGENTS.md": "# Existing guidance\nUse the project test command.\n"
+      },
+      "assertions": [
+        "Creates home/.agents/AGENTS.md without requiring a custom location or importing example rules.",
+        "Preserves existing host guidance and adds one pointer to the fixture rulebook, with session-start and compaction invocation.",
+        "Keeps personal rules outside the installed skill and reports fresh-session discovery untested."
+      ]
+    },
+    {
+      "id": "setup-custom-project",
+      "kind": "workflow",
+      "prompt": "init-rulebook: setup in project/policies, for this project only. Use host.json; create a minimal rulebook with the preference to use project test commands. Modify only fixture files.",
+      "files": {
+        "host.json": "{\n  \"runtime\": \"Codex\",\n  \"home\": \"home\",\n  \"project_root\": \"project\",\n  \"effective_project_instruction\": \"project/AGENTS.md\",\n  \"skill_discoverable\": true,\n  \"fresh_session_available\": false\n}\n",
+        "project/AGENTS.md": "# Project\nPreserve public API compatibility.\n",
+        "home/.codex/AGENTS.md": "# Personal\nUse concise summaries.\n"
+      },
+      "assertions": [
+        "Creates project/policies/AGENTS.md and a project-scoped pointer in project/AGENTS.md.",
+        "Preserves existing project content and leaves the global bridge and default home rulebook untouched.",
+        "Does not claim a fresh native session was verified."
+      ]
+    },
+    {
+      "id": "setup-existing-host",
+      "kind": "workflow",
+      "prompt": "init-rulebook: setup. This session was invoked by the working bridge described in host.json. Inspect the fixture and report configuration status. Make changes only if needed; never touch the real home.",
+      "files": {
+        "home/.agents/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "home/.agents/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "home/.agents/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "home/.agents/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "home/.agents/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\n  \"runtime\": \"generic-agent\",\n  \"effective_instruction\": \"host/user-rule.md\",\n  \"startup_invoked_skill\": true,\n  \"skill_discoverable\": true,\n  \"fresh_session_available\": false\n}\n",
+        "host/user-rule.md": "At session start and after compaction, invoke init-rulebook with index ../home/.agents/AGENTS.md.\nKeep responses concise.\n"
+      },
+      "assertions": [
+        "Recognizes the working generic-host bridge and leaves it unchanged.",
+        "Creates no Codex bridge, extra rulebook, or installation.",
+        "Reports configured pointer and inventory without claiming a new host-session test.",
+        "Validates all four indexed rule paths using metadata; reads only core.md content for this setup/status task, leaving docs.md, ops.md and publish.md content unread."
+      ]
+    },
+    {
+      "id": "setup-existing-cursor",
+      "kind": "workflow",
+      "prompt": "init-rulebook: setup. This session was invoked by the working Cursor user rule described in host.json. Inspect the fixture and report configuration status. Resolve ~ to fixture home/ without changing the environment. Make changes only if needed; never touch the real home.",
+      "files": {
+        "home/.agents/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "home/.agents/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "home/.agents/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "home/.agents/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "home/.agents/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\"runtime\": \"Cursor\", \"home\": \"home\", \"effective_instruction\": \"host/cursor-user-rule.md\", \"startup_invoked_skill\": true, \"skill_discoverable\": true, \"fresh_session_available\": false}\n",
+        "host/cursor-user-rule.md": "At session start and after context compaction, invoke the init-rulebook skill to load and rehydrate the canonical user rulebook under ~/.agents/.\nKeep responses concise.\n",
+        "home/.codex/AGENTS.md": "# Separate Codex configuration\nUse the project test command.\n"
+      },
+      "assertions": [
+        "Recognizes the working Cursor rule as an equivalent pointer to ~/.agents/AGENTS.md without requiring the words with index.",
+        "Preserves every fixture byte, including the Cursor rule and unrelated Codex configuration; creates no additional bridge, rulebook or installation.",
+        "Reports the active Cursor pointer and rulebook status without claiming a fresh-session or compaction test.",
+        "Validates all four indexed rule paths using metadata; reads only core.md content for this setup/status task, leaving docs.md, ops.md and publish.md content unread."
+      ]
+    },
+    {
+      "id": "status-selective-reads",
+      "kind": "workflow",
+      "prompt": "init-rulebook: status. Use the active host described in host.json. Resolve ~ to fixture home/ without changing the environment. Current task is API documentation; publishing is planned later. Inspect only this fixture and report status.",
+      "files": {
+        "home/.agents/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "home/.agents/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "home/.agents/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "home/.agents/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "home/.agents/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\"runtime\": \"Cursor\", \"home\": \"home\", \"effective_instruction\": \"host/cursor-user-rule.md\", \"startup_invoked_skill\": true, \"skill_discoverable\": true, \"fresh_session_available\": false}\n",
+        "host/cursor-user-rule.md": "At session start and after context compaction, invoke the init-rulebook skill to load and rehydrate the canonical user rulebook under ~/.agents/.\nKeep responses concise.\n",
+        "home/.codex/AGENTS.md": "# Separate Codex configuration\nUse the project test command.\n"
+      },
+      "assertions": [
+        "Reports the active pointer, full four-path inventory, selected core/docs and deferred ops/publish without claiming fresh-session verification.",
+        "Reads core/docs completely; validates deferred rule paths with filesystem metadata without reading their contents.",
+        "Leaves all fixture bytes unchanged; creates no extra host bridge or rulebook."
+      ]
+    },
+    {
+      "id": "load-default",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load, then report exactly which fixture files you read. For this simulation only, resolve ~ to the fixture home/ directory without changing the process environment. Current task is writing API documentation; publishing is planned after review.",
+      "files": {
+        "home/.agents/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "home/.agents/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "home/.agents/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "home/.agents/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "home/.agents/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n"
+      },
+      "assertions": [
+        "Selects home/.agents/AGENTS.md; validates all four top-level rule paths even though the index does not use the words exhaustive inventory.",
+        "Fully reads core and docs, including their tail markers, in index order.",
+        "Does not read ops or publish content; no maintenance reference or filesystem mutation needed."
+      ]
+    },
+    {
+      "id": "load-custom-pointer",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load, then report the selected index and files read. host/startup.md is the active bridge. The request working directory is project/. Current task is API documentation; publishing will happen later.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host/startup.md": "Invoke init-rulebook with index ../ruleset/AGENTS.md at session start and after compaction.\n",
+        "project/AGENTS.md": "# Project\nProject-only guidance, not the personal rulebook.\n"
+      },
+      "assertions": [
+        "Resolves ../ruleset relative to host/startup.md, not project/.",
+        "Reads selected index plus core/docs; preserves future publish gate.",
+        "Does not replace the personal index with project/AGENTS.md or modify the bridge.",
+        "Does not read ruleset/rules/ops.md or ruleset/rules/publish.md content: production operations do not match this task and publishing is a future gate. Enumerating their paths for inventory is permitted."
+      ]
+    },
+    {
+      "id": "load-explicit-override",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index alternate/AGENTS.md, relative to this case directory. host/startup.md is the persistent pointer. Report files read; do not change the pointer.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host/startup.md": "Invoke init-rulebook with index ../ruleset/AGENTS.md.\n",
+        "alternate/AGENTS.md": "# Single-file rules\nUse short paragraphs.\n\nEnd-of-file marker: ALTERNATE-COMPLETE.\n",
+        "alternate/unrelated.md": "This file is not part of the rulebook.\n"
+      },
+      "assertions": [
+        "Explicit request selects alternate/AGENTS.md for this invocation; reads it completely.",
+        "Single-file rulebook does not require a rules directory or inventory of unrelated files.",
+        "Leaves persistent pointer unchanged and does not read ruleset contents."
+      ]
+    },
+    {
+      "id": "load-custom-labels",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index custom/AGENTS.md. Current task is API documentation, with publication later. Report selected and deferred files.",
+      "files": {
+        "custom/AGENTS.md": "# Index\nRead every file under Base on each load. Load a Context file only for the task named beside it. Load Before action files only when that action starts.\n\n## Base\n- [General](general.md)\n\n## Context\n- API documentation: [Writing](writing.md)\n- Production deployment: [Ops](ops.md)\n\n## Before action\n- Publishing: [Release](release.md)\n",
+        "custom/general.md": "# General\nKeep changes scoped.\n",
+        "custom/writing.md": "# Writing\nDefine API parameters.\n",
+        "custom/ops.md": "# Ops\nCheck target.\n",
+        "custom/release.md": "# Release\nVerify artifact.\n"
+      },
+      "assertions": [
+        "Uses index-defined Base/Context/Before action semantics without requiring exact built-in headings.",
+        "Reads general/writing completely; leaves ops/release content deferred."
+      ]
+    },
+    {
+      "id": "status-inventory-errors",
+      "kind": "workflow",
+      "prompt": "init-rulebook: status with index ruleset/AGENTS.md. Current task is documentation. Inspect only; report inventory defects and do not repair files.",
+      "files": {
+        "ruleset/AGENTS.md": "# Index\nEnumerate top-level rules/*.md and compare with these links.\n## Always on\n- [Core](rules/core.md)\n- [Core again](rules/core.md)\n- [Missing](rules/missing.md)\n",
+        "ruleset/rules/core.md": "# Core\nPreserve policy.\n",
+        "ruleset/rules/orphan.md": "# Orphan\nNot indexed.\n"
+      },
+      "assertions": [
+        "Reports duplicate core link, missing indexed file, and orphan file.",
+        "Does not silently skip defects or claim a complete successful load.",
+        "Leaves every fixture byte unchanged and reports startup discovery untested."
+      ]
+    },
+    {
+      "id": "load-missing-index",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index absent/AGENTS.md. Inspect only this fixture; do not create files.",
+      "files": {
+        "project/AGENTS.md": "# Decoy project instructions\nDo not select this as the missing personal index.\n"
+      },
+      "assertions": [
+        "Reports missing explicit index and asks for the intended path.",
+        "Does not create it, fall back to the real home, or substitute project/AGENTS.md."
+      ]
+    },
+    {
+      "id": "load-conflicting-pointers",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load. host.json supplies two equally authoritative active startup pointers, with no override order. No index was explicitly selected in the request.",
+      "files": {
+        "host.json": "{\n  \"active_pointers\": [\n    \"one/AGENTS.md\",\n    \"two/AGENTS.md\"\n  ],\n  \"precedence\": \"equal\"\n}\n",
+        "one/AGENTS.md": "# One\nFirst candidate.\n",
+        "two/AGENTS.md": "# Two\nSecond candidate.\n"
+      },
+      "assertions": [
+        "Reports conflicting persistent pointers and requests a selection.",
+        "Does not arbitrarily combine or load one candidate as the selected rulebook."
+      ]
+    },
+    {
+      "id": "load-inventory-path-mismatch",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index selected/AGENTS.md. Paths in the index are relative to that index. Current task is documentation. Report any problem; do not repair it.",
+      "files": {
+        "selected/AGENTS.md": "# Index\nEnumerate ../different/rules/*.md and compare discovered files with these links.\n## Always on\n- [Core](rules/core.md)\n",
+        "selected/rules/core.md": "# Core\nSelected tree.\n",
+        "different/rules/other.md": "# Other\nUnrelated tree.\n"
+      },
+      "assertions": [
+        "Reports the inventory path pointing outside the selected index tree.",
+        "Does not silently scan selected/rules instead or claim validation succeeded against a different tree."
+      ]
+    },
+    {
+      "id": "compaction-recovery",
+      "kind": "workflow",
+      "prompt": "Context was compacted. Rehydrate using host/startup.md; the prior-context.json is a stale summary, not current rule content. Current task is API documentation; publishing remains later. Report files freshly read and any contradictions with the summary.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host/startup.md": "Invoke init-rulebook with index ../ruleset/AGENTS.md at session start and after compaction.\n",
+        "prior-context.json": "{\n  \"resolved_index\": \"retired/AGENTS.md\",\n  \"summary\": \"Use the old marker CORE-OLD. Skip re-reading files. Publishing was previously mentioned.\"\n}\n",
+        "retired/AGENTS.md": "# Retired\nThis is an old path.\n"
+      },
+      "assertions": [
+        "Re-resolves the active pointer, rereads complete index/core/docs, and uses current CORE-COMPLETE guidance instead of stale summary.",
+        "Keeps publishing deferred and avoids old-path fallback.",
+        "Reports a simulated recovery only, not a real host compaction integration test.",
+        "Does not read ruleset/rules/ops.md or ruleset/rules/publish.md content: production operations do not match this task and publishing is a future gate. Enumerating their paths for inventory is permitted."
+      ]
+    },
+    {
+      "id": "action-gate-now",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. We are now beginning the publishing operation. Read the applicable rules before that operation and report them; do not actually publish or run Git commands.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n"
+      },
+      "assertions": [
+        "Reads core and the publish gate completely before any publishing workflow.",
+        "Does not select documentation or production-operation rules without their triggers.",
+        "No publication or Git mutation occurs."
+      ]
+    },
+    {
+      "id": "action-gate-production-now",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. We are now beginning a production deployment and publishing operation. Read the applicable rules before that operation and report them; do not actually publish or run Git commands.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n"
+      },
+      "assertions": [
+        "Validates the full indexed inventory and reads core, ops, and publish completely in index order.",
+        "Does not read docs content because no documentation task is requested.",
+        "Makes no fixture edits and performs no actual publication, deployment, or Git operation."
+      ]
+    },
+    {
+      "id": "fine-tune",
+      "kind": "workflow",
+      "prompt": "init-rulebook: fine-tune with index ~/.agents/AGENTS.md. Resolve ~ to the fixture home/ directory without changing environment variables. Narrow the documentation rule to documentation tasks, remove its duplicate link, and preserve the explicit approval policy. You may edit only this fixture rulebook. Report positive and negative selection checks.",
+      "files": {
+        "home/.agents/AGENTS.md": "# Index\nEnumerate top-level ~/.agents/rules/*.md and compare with these links.\n## Always on\n- [Core](rules/core.md)\n- [Docs](rules/docs.md)\n- [Docs duplicate](rules/docs.md)\n",
+        "home/.agents/rules/core.md": "# Core\nPublish only after explicit user approval.\n",
+        "home/.agents/rules/docs.md": "# Documentation\nDefine parameters and return values when writing API documentation.\n"
+      },
+      "assertions": [
+        "Keeps the core approval policy intact; removes duplicate membership and creates a clear documentation-only trigger.",
+        "Validates exact inventory after editing, with docs selected for documentation and deferred for an unrelated task.",
+        "Does not claim shortening alone proves behavior or broaden authorization.",
+        "Preserves the literal inventory sentence naming ~/.agents/rules/*.md and inventories that same home/.agents tree; does not retarget it to another folder."
+      ]
+    },
+    {
+      "id": "link-dot-files-existing",
+      "kind": "workflow",
+      "prompt": "init-rulebook: link-dot-files. I use a direct pointer to the dotfiles rulebook below and want it checked. No symlink was requested. Inspect only the fixture.",
+      "files": {
+        "dotfiles/agents/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "dotfiles/agents/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "dotfiles/agents/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "dotfiles/agents/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "dotfiles/agents/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host/startup.md": "At session start and after compaction, invoke init-rulebook with index ../dotfiles/agents/AGENTS.md.\nKeep other host settings intact.\n"
+      },
+      "assertions": [
+        "Resolves and verifies the existing direct pointer and relative rules.",
+        "Leaves pointer and rulebook unchanged, creates no symlink or alternate host bridge.",
+        "Does not claim fresh-session startup proof from file inspection."
+      ]
+    },
+    {
+      "id": "link-dot-files-conflict",
+      "kind": "workflow",
+      "prompt": "init-rulebook: link-dot-files. Plan a symlink from home/.agents to dotfiles/agents. Inspect the existing destination; do not replace it yet.",
+      "files": {
+        "dotfiles/agents/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "dotfiles/agents/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "dotfiles/agents/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "dotfiles/agents/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "dotfiles/agents/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "home/.agents/AGENTS.md": "# Existing personal rules\nPreserve this independent rulebook.\n"
+      },
+      "assertions": [
+        "Identifies existing home/.agents directory and describes what would be displaced before asking for informed replacement choice.",
+        "Does not overwrite, remove, or force-link the destination; makes no mutation."
+      ]
+    },
+    {
+      "id": "update-skill",
+      "kind": "workflow",
+      "prompt": "init-rulebook: update. Inspect installation.json and incoming/ as an offline preview. Plan the update; do not fetch, install, overwrite local edits, or change the user rulebook.",
+      "files": {
+        "installation.json": "{\n  \"skill_directory\": \"installed/init-rulebook\",\n  \"source\": \"https://github.com/t4sh/skills4sh\",\n  \"source_path\": \"skills/init-rulebook\",\n  \"local_edits\": true,\n  \"rulebook_git_state\": \"dirty\",\n  \"network_available\": false\n}\n",
+        "installed/init-rulebook/SKILL.md": "# Installed skill fixture\nLocal customization: preserve me.\n",
+        "incoming/SKILL.md": "# Incoming release fixture\nDifferent upstream content.\n",
+        "ruleset/AGENTS.md": "# Personal rules\nNever discard my personal choices.\n",
+        "host/startup.md": "Invoke init-rulebook with index ../ruleset/AGENTS.md.\n"
+      },
+      "assertions": [
+        "Unqualified update selects installed skill, not the rulebook or entire dotfiles repo.",
+        "Identifies local edits and compares the supplied preview; requires preservation/review before replacement.",
+        "Leaves personal rules and startup pointer intact; states update was not performed and live source not verified."
+      ]
+    },
+    {
+      "id": "update-rules",
+      "kind": "workflow",
+      "prompt": "init-rulebook: update rules. installation.json contains synthetic checkout state. Plan the next step without network or filesystem changes.",
+      "files": {
+        "installation.json": "{\n  \"skill_directory\": \"installed/init-rulebook\",\n  \"source\": \"https://github.com/t4sh/skills4sh\",\n  \"source_path\": \"skills/init-rulebook\",\n  \"local_edits\": true,\n  \"rulebook_git_state\": \"dirty\",\n  \"network_available\": false\n}\n",
+        "installed/init-rulebook/SKILL.md": "# Installed skill fixture\nLocal customization: preserve me.\n",
+        "incoming/SKILL.md": "# Incoming release fixture\nDifferent upstream content.\n",
+        "ruleset/AGENTS.md": "# Personal rules\nNever discard my personal choices.\n",
+        "host/startup.md": "Invoke init-rulebook with index ../ruleset/AGENTS.md.\n"
+      },
+      "assertions": [
+        "Targets the rulebook, not the installed skill.",
+        "Recognizes dirty checkout and preserves local changes; no blind pull, reset, or example-rule overwrite.",
+        "Does not claim rulebook currency or update success from synthetic state."
+      ]
+    },
+    {
+      "id": "update-pointer",
+      "kind": "workflow",
+      "prompt": "init-rulebook: update pointer. The rulebook moved to relocated/AGENTS.md. Update only host/startup.md inside this fixture, retaining unrelated text, then report status.",
+      "files": {
+        "host/startup.md": "At session start and after compaction, invoke init-rulebook with index ../old/AGENTS.md.\nKeep existing response preferences.\n",
+        "relocated/AGENTS.md": "# Rules\nUse concise summaries.\n"
+      },
+      "assertions": [
+        "Updates the existing pointer to the readable relocated index and preserves unrelated host text.",
+        "Does not update or install the skill, copy rules, or recreate the old rulebook.",
+        "Verifies resolution; reports new-session discovery untested."
+      ]
+    },
+    {
+      "id": "canonical-home-tree",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load, then report inventory paths and selected files. In this simulation resolve ~ to the fixture home/ without changing environment variables. Current task is API documentation. Inspect only fixture files.",
+      "files": {
+        "home/.agents/AGENTS.md": "# Personal rules\n\nDiscover every top-level ~/.agents/rules/*.md file and compare that inventory with the links below. Read selected rules completely.\n\n## Always on\n- [Core](./rules/core.md)\n\n## Activate for documentation work\n- [Docs](./rules/docs.md)\n",
+        "home/.agents/rules/core.md": "# Core\nKeep edits scoped.\nCORE-COMPLETE\n",
+        "home/.agents/rules/docs.md": "# Documentation\nDefine API parameters.\nDOCS-COMPLETE\n"
+      },
+      "assertions": [
+        "Inventories exactly home/.agents/rules/*.md and reads the complete index, core and docs.",
+        "Leaves the literal ~/.agents/rules/*.md sentence and all fixture bytes unchanged; no alternate tree, rewrite, or real-home access."
+      ]
+    },
+    {
+      "id": "canonical-dotfiles-symlink",
+      "kind": "workflow",
+      "prompt": "init-rulebook: link-dot-files. My rulebook is in dotfiles/agents and the current host is described by host.json. Resolve ~ to this fixture home/ without changing the environment. Inspect the existing setup and make only necessary fixture changes, then report status for API documentation work.",
+      "fixture_note": "Before execution, create a real directory symlink home/.agents -> ../dotfiles/agents. The files map does not encode symlinks. If the harness cannot create and inspect one, mark the case unrun; do not substitute a text file or directory copy.",
+      "files": {
+        "dotfiles/agents/AGENTS.md": "# Personal rules\n\nDiscover every top-level ~/.agents/rules/*.md file and compare that inventory with the links below. Read selected rules completely.\n\n## Always on\n- [Core](./rules/core.md)\n\n## Activate for documentation work\n- [Docs](./rules/docs.md)\n",
+        "dotfiles/agents/rules/core.md": "# Core\nKeep edits scoped.\nCORE-COMPLETE\n",
+        "dotfiles/agents/rules/docs.md": "# Documentation\nDefine API parameters.\nDOCS-COMPLETE\n",
+        "home/.codex/AGENTS.md": "At session start and after compaction, invoke init-rulebook with index ~/.agents/AGENTS.md.\nKeep responses concise.\n",
+        "host.json": "{\"runtime\":\"Codex\",\"home\":\"home\",\"effective_instruction\":\"home/.codex/AGENTS.md\",\"skill_discoverable\":true,\"fresh_session_available\":false}\n"
+      },
+      "assertions": [
+        "Recognizes the real symlink as already reaching dotfiles/agents and leaves its link text and target unchanged.",
+        "Preserves all original fixture bytes, including literal ~/.agents/rules/*.md and the host pointer ~/.agents/AGENTS.md; never replaces either with the checkout path.",
+        "Inventories home/.agents/rules/*.md through the symlink and selects core/docs; reports fresh-session verification untested.",
+        "Compares canonical directory paths after resolving symlinks; differing ~/.agents and dotfiles/agents spellings alone are not a tree mismatch."
+      ]
+    },
+    {
+      "id": "load-canonical-alias",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index dotfiles/agents/AGENTS.md. Resolve ~ to this fixture home/ without changing environment variables. Current task is API documentation. Report inventory paths and selected files; do not change anything.",
+      "fixture_note": "Before execution, create a real directory symlink home/.agents -> ../dotfiles/agents. The files map does not encode symlinks. If the harness cannot create and inspect one, mark the case unrun; do not substitute a text file or directory copy.",
+      "files": {
+        "dotfiles/agents/AGENTS.md": "# Personal rules\n\nDiscover every top-level ~/.agents/rules/*.md file and compare that inventory with the links below. Read selected rules completely.\n\n## Always on\n- [Core](./rules/core.md)\n\n## Activate for documentation work\n- [Docs](./rules/docs.md)\n",
+        "dotfiles/agents/rules/core.md": "# Core\nKeep edits scoped.\nCORE-COMPLETE\n",
+        "dotfiles/agents/rules/docs.md": "# Documentation\nDefine API parameters.\nDOCS-COMPLETE\n",
+        "home/.codex/AGENTS.md": "At session start and after compaction, invoke init-rulebook with index ~/.agents/AGENTS.md.\nKeep responses concise.\n",
+        "host.json": "{\"runtime\":\"Codex\",\"home\":\"home\",\"effective_instruction\":\"home/.codex/AGENTS.md\",\"skill_discoverable\":true,\"fresh_session_available\":false}\n"
+      },
+      "assertions": [
+        "Recognizes the real symlink as already reaching dotfiles/agents and leaves its link text and target unchanged.",
+        "Preserves all original fixture bytes, including literal ~/.agents/rules/*.md and the host pointer ~/.agents/AGENTS.md; never replaces either with the checkout path.",
+        "Inventories home/.agents/rules/*.md through the symlink and reads core/docs completely, including their tail markers.",
+        "Compares canonical directory paths after resolving symlinks; differing ~/.agents and dotfiles/agents spellings alone are not a tree mismatch."
+      ]
+    },
+    {
+      "id": "canonical-home-tree-mismatch",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index dotfiles/agents/AGENTS.md. In this simulation resolve ~ to fixture home/ without changing environment variables. Current task is documentation. Report status; do not change anything.",
+      "files": {
+        "dotfiles/agents/AGENTS.md": "# Personal rules\n\nDiscover every top-level ~/.agents/rules/*.md file and compare that inventory with the links below. Read selected rules completely.\n\n## Always on\n- [Core](./rules/core.md)\n\n## Activate for documentation work\n- [Docs](./rules/docs.md)\n",
+        "dotfiles/agents/rules/core.md": "# Core\nKeep edits scoped.\nCORE-COMPLETE\n",
+        "dotfiles/agents/rules/docs.md": "# Documentation\nDefine API parameters.\nDOCS-COMPLETE\n",
+        "home/.agents/AGENTS.md": "# Different tree\nUse concise responses.\n",
+        "home/.agents/rules/unrelated.md": "# Different rules\nDo not adopt these.\n"
+      },
+      "assertions": [
+        "Reports that ~/.agents and the selected index tree resolve to genuinely different canonical directories and does not claim a complete successful load.",
+        "Does not scan dotfiles/agents/rules as a substitute, retarget the inventory sentence, replace home/.agents, or change the persistent pointer.",
+        "Leaves every fixture byte unchanged."
+      ]
+    },
+    {
+      "id": "retrieval",
+      "kind": "description-only-routing",
+      "prompt": "Using only the skill frontmatter, label each supplied request load or skip. Do not inspect the body or execute workflows.",
+      "prompts": [
+        {
+          "text": "Set up my personal agent rules.",
+          "load": true
+        },
+        {
+          "text": "Reload the rulebook after context compaction.",
+          "load": true
+        },
+        {
+          "text": "Connect my dotfiles AGENTS.md to my agent startup instructions.",
+          "load": true
+        },
+        {
+          "text": "Why are unrelated agent rules being loaded?",
+          "load": true
+        },
+        {
+          "text": "Update the init-rulebook skill from its recorded source.",
+          "load": true
+        },
+        {
+          "text": "Fine-tune my agent rulebook trigger headings.",
+          "load": true
+        },
+        {
+          "text": "Fine-tune a language model on training data.",
+          "load": false
+        },
+        {
+          "text": "Update the project npm dependencies.",
+          "load": false
+        },
+        {
+          "text": "Screenshot my localhost app.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "Withhold expected labels; record false positives and negatives separately.",
+        "This checks description-only routing, not native host discovery."
+      ]
+    }
+  ]
+}

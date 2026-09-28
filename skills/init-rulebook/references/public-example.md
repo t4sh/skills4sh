@@ -1,0 +1,9 @@
+# Optional public rulebook example
+
+The public [t4sh/dotfiles `agents/` directory](https://github.com/t4sh/dotfiles/tree/main/agents) shows one complete, forkable rulebook layout. Its [`AGENTS.md` index](https://github.com/t4sh/dotfiles/blob/main/agents/AGENTS.md) links top-level `rules/*.md` files and classifies them with **Always on**, **Activate** (task-conditional), and **Action-gated** headings. It also tells the loader to compare every top-level `~/.agents/rules/*.md` file with those links. The [Codex bridge example](https://github.com/t4sh/dotfiles/blob/main/config/codex/AGENTS.md) shows a short user-level instruction that invokes `init-rulebook` at session start and after compaction.
+
+This is an **example**, not a required dependency or source of rules for new users. Clone or fork it only when requested. A user may instead keep an `AGENTS.md` and rules in any readable directory and point their host startup instruction there. Review example rules before adoption; they contain the author's preferences and may conflict with the user's own policies.
+
+This example keeps `~/.agents` as its rulebook tree. Leave the inventory sentence as `~/.agents/rules/*.md`. `~/.agents` is that `agents/` directory, or a symlink to it. The host startup instruction names `~/.agents/AGENTS.md`. A dotfiles checkout is this example once `~/.agents` resolves to its `agents/` directory. If `~/.agents` is absent or points somewhere else, report that and ask before linking. Do not retarget the inventory scan, and do not point the host at the checkout path instead.
+
+For an existing dotfiles setup, `~/.agents` may already resolve to a managed `agents/` directory, and the host bridge may already invoke `init-rulebook`. Detect and preserve that arrangement. Updating the published skill changes only the installed skill folder unless the user separately requests a rulebook or pointer update.

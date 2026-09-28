@@ -1,0 +1,37 @@
+# OWASP Agentic Skills Top 10 (AST10) Manifest
+# Canonical security manifest for init-rulebook skill
+# https://owasp.org/www-project-agentic-skills-top-10/
+
+skill:
+  name: init-rulebook
+  version: "0.1.0"
+  license: MIT
+  author: t4sh
+  repository: https://github.com/t4sh/skills4sh
+  path: skills/init-rulebook
+
+integrity:
+  hash_algorithm: sha256
+  files:
+    assets/evals/scenarios.json: fae0ac8ff8b4730b904fefdc2b99ff6ffe46a58d998e2adabecfc77436076b01
+    LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
+    references/onboarding.md: 28e460414e68da12cb3bdc865cc9498ea613451ae73c774fab02f8ba5b833eac
+    references/public-example.md: a31e7049966795c2f217f9eb34e27119f97fcf69e826cf19651071d879cffb1c
+    SKILL.md: b883b022f1a907cad7b3eb19f6f7bbe5f19cab65664d1802756f685923fef4e7
+permissions:
+  alwaysAllow: []
+  rationale: "Loading and status read files; setup, linking, and updates require ordinary host permissions at invocation time"
+
+execution_context:
+  sandbox: host-agent
+  network: outbound-only
+  filesystem: read-write
+  shell: none
+  risk_tier: low
+
+dependencies: []
+
+scanning:
+  guardskills: SAFE
+  guardskills_risk_score: 0
+  expected_findings: []
