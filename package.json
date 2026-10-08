@@ -37,7 +37,7 @@
     "node": ">=22"
   },
   "optionalDependencies": {
-    "undici": "6.28.0"
+    "undici": "6.29.0"
   },
   "bundleDependencies": [
     "undici"
