@@ -1,0 +1,6 @@
+interface:
+  display_name: "Localhost Screenshots"
+  short_description: "Screenshot and diff localhost pages across viewports"
+  default_prompt: "Use $localhost-screenshots to capture my local dev server at the viewports I need."
+policy:
+  allow_implicit_invocation: true

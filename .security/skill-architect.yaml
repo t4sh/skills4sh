@@ -4,7 +4,7 @@
 
 skill:
   name: skill-architect
-  version: "1.0.0"
+  version: "1.1.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,20 +13,22 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: c3f016b06ff1df21f3e2c63ba22e75a985e6b9d648a28aa31d6517d4b97faf4c
+    assets/evals/scenarios.json: 30a2b0e381b8de7925a15ee8fd49d5bfa77eddb425c729f6b0aebc6b54a42f83
     assets/scripts/fix_skill.py: 4ae4fec491e5e1c0dd5e2f0a93c8aa9f4352d10c94ee1c4ee769c4fe46ae6648
     assets/scripts/inspect_skill.py: 3a03977db891001f45e1fd0eb3dc108ce2090974f3223572419068a8d0d32dcd
     assets/scripts/requirements.txt: b2f9e537d6b626da7ff1b001fab54b3d5f2dffc4e1e7e095f8c656ee534ae82e
     assets/scripts/run_uv.py: f29d196142f698bb88cfec0ad647074ddfd70c11a4b6b5c940820d1f4a9a1dbe
-    assets/scripts/scaffold_skill.py: f2bcf811764849b4dccf0a76b69fdbe169914cbcb616b69bf0f6a7459f59369e
+    assets/scripts/scaffold_skill.py: ac06feb25b1ae9aced9a4b48e46af23d6d0eee6548a0005e76246919205db771
     assets/scripts/validate_skill.py: 1c1ebffde61e64fe5e358bd8945b1b2b79c796add51e73b75087f9b7ed913a66
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/comparative-study.md: 5c0d20ea7d3500e16539d12c2264e5ce03377b8e83c2b165a3ea93a23908f404
     references/eval-methodology.md: 6f909f70d97933d71c610352ddeb6365e16e657d3fc0508e87dfe560baf9b73a
-    references/house-rubric.md: d27e708cb9af95bc6a0a8ff7ad951864295395fd85a8c0ecb5bb8f65302df16d
-    references/naming-and-packaging.md: 81fa6839f1289531c9abf690c796746ca0ca9509b99d6f6493bd9eb40df87220
-    references/vendor-adapters.md: f6c622a5a88e8d46005bfcb1dc71568365971b56f0471f9da3a853cdefc945ad
-    SKILL.md: 799f8a5fc1252431d39d73fa234b28ce075723797cf2572bc2f70dafc21ed069
+    references/house-rubric.md: 2a7d557ceaf7d1b863baf926d4373b5e60fea64328d3b2fdf82d96886068ff49
+    references/naming-and-packaging.md: bc84d181820638f7ffbb540619e7c3044ffa07b5fdcc68c5b0cd98535f0fa782
+    references/vendor-adapters.md: feb7b2096411cdcd7988091ef298529442b5ccd215a63f7ebfbbe93802f74fc7
+    SKILL.md: 9d01fe203ebad655b3752f5cd1d55692e40421f7dc5cf9151faa13dea9d371bb
+    agents/openai.yaml: 00b90846faf64cdf42cde987a7c7634d8887b87e23beca6a7ec6001dab5e2526
+    references/helper-runtime.md: a17c07856135cd8cd0f892fae08cb218384b101fb53ac3e906a54549a7638b0c
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all helper scripts are inert assets and require explicit user or agent execution"
@@ -61,10 +63,10 @@ scanning:
     - id: R008_ENV_ACCESS
       severity: low
       confidence: low
-      file: SKILL.md
+      file: references/helper-runtime.md
       reason: "The temporary-venv fallback stores its generated path in a shell variable so every install and helper invocation stays inside the same isolated environment."
     - id: R009_FILE_STAGE
       severity: low
       confidence: low
-      file: SKILL.md
+      file: references/helper-runtime.md
       reason: "The documented fallback creates a temporary virtual environment for pinned validation dependencies; it does not stage user skill content or execute automatically."

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Code to Figma"
+  short_description: "Export code tokens to Figma through a CI and Gist pipeline"
+  default_prompt: "Use $code-to-figma to set up the CI pipeline that syncs our design tokens to Figma."
+policy:
+  allow_implicit_invocation: true

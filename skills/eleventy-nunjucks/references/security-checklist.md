@@ -32,10 +32,20 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
   # Expected: zero results
   ```
 
-- [ ] **No raw `{{ var }}` inside `<script>` blocks.** Must use an escape filter.
+- [ ] **No `| safe` expression inside `<script>` unless it is `jsonScript | safe` or `jsonCompact | safe`.** Covers any `<script …>` opening tag, including `type="module"` and `type="application/ld+json"`.
   ```bash
-  grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ | grep -v -E "jsonScript|jsonCompact"
+  grep -rnE '<script[^>]*>.*[{][{][^}]*[|][[:space:]]*safe([^[:alnum:]_]|$)' src/ \
+    | grep -vE '[|][[:space:]]*json(Script|Compact)[[:space:]]*[|][[:space:]]*safe'
+  # Expected: zero results
   ```
+
+- [ ] **Informational: review unfiltered `{{ var }}` inside `<script>`.** Autoescaping makes these HTML-safe, not JavaScript-safe; prefer `jsonScript`/`jsonCompact` for data.
+  ```bash
+  grep -rnE '<script[^>]*>.*[{][{][^|}]*[}][}]' src/
+  # Review each result; not a blocking gate
+  ```
+
+  Both searches are line-based. A `{{ … }}` on a later line than `<script>` evades them, and a line that mixes an allowed JSON filter with another `| safe` is dropped by the exclusion; inspect multi-line scripts and rendered output.
 
 - [ ] **Markdown engine `html` is `false` for any source that's not 100% trusted authored content.**
   ```bash
@@ -122,7 +132,7 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
 - [ ] **`out/` does not contain SSH keys, credentials, or service-account JSONs.**
   ```bash
   grep -rE 'BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY' out/ 2>/dev/null
-  grep -rE 'AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}|ctx7sk-[a-f0-9]+' out/ 2>/dev/null
+  grep -rE 'AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}' out/ 2>/dev/null
   # Expected: zero results
   ```
 
@@ -337,13 +347,16 @@ else
   echo "  ok"
 fi
 
-echo "→ Checking inline scripts without escape filter (must be zero)…"
-if grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ \
-  | grep -v -E "jsonScript|jsonCompact"; then
+echo "→ Checking | safe inside <script> (must be zero)…"
+if grep -rnE '<script[^>]*>.*[{][{][^}]*[|][[:space:]]*safe([^[:alnum:]_]|$)' src/ \
+  | grep -vE '[|][[:space:]]*json(Script|Compact)[[:space:]]*[|][[:space:]]*safe'; then
   exit 1
 else
   echo "  ok"
 fi
+
+echo "→ Unfiltered {{ }} inside <script> (informational)…"
+grep -rnE '<script[^>]*>.*[{][{][^|}]*[}][}]' src/ || echo "  none"
 
 echo "→ Checking output for secret-shaped files (must be zero)…"
 if find "$output_dir" \( -name '.env*' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' \) -print -quit | grep -q .; then

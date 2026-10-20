@@ -1,0 +1,6 @@
+interface:
+  display_name: "Init Rulebook"
+  short_description: "Set up and load a personal agent rulebook"
+  default_prompt: "Use $init-rulebook to load my agent rules for this task."
+policy:
+  allow_implicit_invocation: true

@@ -68,6 +68,18 @@ Borrow from [OpenAI `skill-creator`](https://github.com/openai/skills/tree/main/
 
 Keep OpenAI-specific metadata separate from the portable core. A portable skill may ship an adapter file only when the distribution target reads it.
 
+Codex facts, checked 2026-10-20 against [Codex skills docs](https://developers.openai.com/codex/skills) (redirects to [Build skills](https://learn.chatgpt.com/docs/build-skills)), the bundled `~/.codex/skills/.system/skill-creator`, and `codex-cli 0.163.0`. Recheck these on Codex upgrades:
+
+| Topic | Fact | Authoring consequence |
+|---|---|---|
+| Discovery roots | Repo `.agents/skills/` in each directory from the CWD up to the repo root; user `~/.agents/skills/`; admin `/etc/codex/skills/`; bundled system skills | Install portable skills under `.agents/skills/`; no Codex-only path is needed |
+| `agents/openai.yaml` interface | `interface.display_name`, `interface.short_description` (25-64 characters), `interface.icon_small`, `interface.icon_large`, `interface.brand_color`, `interface.default_prompt` (one sentence that names the skill as `$skill-name`) | Quote every string; keep icons under the skill's `assets/` |
+| `agents/openai.yaml` policy and dependencies | `policy.allow_implicit_invocation` defaults to `true`; `false` keeps the skill out of default context but still invocable as `$skill`. `dependencies.tools` declares MCP tools (`type: "mcp"`, `value`, `description`, `transport`, `url`) | Set `false` only for user-invoked skills; declare MCP dependencies instead of describing them in `SKILL.md` |
+| `compatibility` frontmatter | Codex's bundled `skill-creator/scripts/quick_validate.py` rejects the specification's `compatibility` key (it allows only `name`, `description`, `license`, `allowed-tools`, `metadata`), but the Codex runtime loader accepts it: `codex debug prompt-input` listed all 8 skills4sh skills with `compatibility` present | Keep `compatibility`; treat the `quick_validate.py` failure as a known false positive, not a reason to drop the field |
+| Description budget | Under the 10,000-character skills budget, Codex truncates each description to 120 characters | Front-load the capability clause and the strongest quoted trigger inside the first 120 characters |
+
+`scaffold_skill.py --openai-yaml` writes a minimal `agents/openai.yaml` with `display_name`, `short_description`, `default_prompt`, and `allow_implicit_invocation: true`.
+
 ## Craft Agent
 
 Craft-style skills are loaded by slug and `SKILL.md`. Keep instructions direct and make source/reference reads explicit when a skill requires them. Avoid assuming a browser, MCP source, or shell capability is active unless the skill checks and routes accordingly.

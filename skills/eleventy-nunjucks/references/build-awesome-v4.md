@@ -4,19 +4,20 @@ Use this reference only when a project explicitly opts into Eleventy/Build Aweso
 
 ## Version gate
 
-This guidance was verified on **September 13, 2026** against:
+This guidance was verified on **October 20, 2026** (npm dist-tags and release notes, checked 2026-10-20) against:
 
 | Track | Verified version | Status |
 |---|---|---|
-| Eleventy | `3.1.6` | Stable production baseline |
+| Eleventy | `3.1.7` (released 2026-10-15) | Stable production baseline; aliases `nunjucks` to `@11ty/nunjucks@3.3.0` |
 | Build Awesome / Eleventy | `4.0.0-alpha.10` | Prerelease |
-| Build Awesome Nunjucks fork | `@11ty/nunjucks@4.0.0-alpha.3` | Prerelease and behavior-changing |
+| Build Awesome Nunjucks fork | `@11ty/nunjucks@^4.0.0-alpha.3` (resolves to `4.0.0-alpha.4` on 2026-10-20) | Prerelease and behavior-changing |
 
 Before changing dependencies:
 
 1. Inspect `package.json`, its lockfile, the Node engine, the active config filename, and current Eleventy/Build Awesome package versions.
 2. Check the current [Build Awesome releases](https://github.com/11ty/buildawesome/releases) and package dist-tags.
 3. **STOP if the current canary/alpha is newer than `4.0.0-alpha.10`.** Read every intervening release note and update the migration plan before editing. Do not generalize alpha behavior into stable guidance.
+   **Stable drift recheck:** if `npm view @11ty/eleventy dist-tags.latest` is newer than `3.1.7`, read those stable release notes before comparing v3 and v4 behavior; the v3 column below describes `3.1.7`.
 4. Pin the selected prerelease exactly. Adapt the official install command to the repository’s existing package manager; do not introduce a second lockfile.
 
 The official alpha packages are:
@@ -26,7 +27,7 @@ The official alpha packages are:
 @awesome.me/buildawesome@alpha
 ```
 
-Existing Eleventy commands remain compatible. When adopting the renamed package, the equivalent CLI entry is `npx @awesome.me/buildawesome`; installing both packages is supported but usually unnecessary.
+Existing Eleventy commands remain compatible. When adopting the renamed package, run the locally installed `buildawesome` bin (for example `npx --no-install buildawesome` or a `package.json` script). Never run an untagged `npx @awesome.me/buildawesome`: its `latest` dist-tag is the `0.0.3` placeholder, not v4 (checked 2026-10-20). For a one-off run, pin the exact version: `npx @awesome.me/buildawesome@4.0.0-alpha.10`. Installing both packages is supported but usually unnecessary.
 
 ## Migration delta
 
@@ -38,7 +39,7 @@ Existing Eleventy commands remain compatible. When adopting the renamed package,
 | JavaScript template suffix | `.11ty.js` | Also recognizes `.server.js`; audit collisions before upgrading |
 | TypeScript | Project-specific transpilation or experimental canary support | Zero-config TypeScript remains prerelease behavior; config API types are published |
 | Incremental builds | Established single-change workflow | Supports batched incremental files |
-| Nunjucks | Mozilla Nunjucks 3.x | Uses the `@11ty/nunjucks` fork with a large async refactor |
+| Nunjucks | `3.1.7` aliases `nunjucks` to `@11ty/nunjucks@3.3.0` (Mozilla `3.2.4` behavior plus a watcher-dependency swap) | Uses the `@11ty/nunjucks` 4.x prerelease with a large async refactor |
 | Async template syntax | Async filters inside loops require `asyncEach` / `asyncAll`; async `set` is constrained | Ordinary `{% for %}` and `{% set %}` support the new async paths; macros may contain async child content |
 | Event emitter | Parallel behavior was the prior default | Default event mode is sequential; review listeners that assumed parallel execution |
 | Data aliases | `eleventyComputed`, `eleventyExcludeFromCollections`, `eleventyImport` | `buildAwesome*` aliases merge with their `eleventy*` counterparts |

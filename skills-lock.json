@@ -4,50 +4,50 @@
     "agent-memory": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.7.8",
-      "computedHash": "e7e78a2ef7c444960ae41546d46f9657c0f8ebe0977e8f76b6dd1cf20e19bdd3"
+      "version": "2.8.0",
+      "computedHash": "85fe4983be8cd944445ecef8a94ddbaac99dd1629f1a54a50668c451cebb8f16"
     },
     "code-to-figma": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.2.1",
-      "computedHash": "83850f07efb557f9dcd5da2c9efe91c7ac1addf998eda2c195ddaa144daabe30"
+      "version": "0.3.0",
+      "computedHash": "0c084498eea8aca83ebba2ed0aa06cebabc9f68c019590da648f624614f2b457"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.0.1",
-      "computedHash": "9d5b97da88baa0224c8f5b5e9bf0ceaa42c69376819eccf14b948fdad27160ee"
+      "version": "2.1.0",
+      "computedHash": "0d75db2e354c7374876a6639d40bd452896650b599cd30f1e64095916ee94478"
     },
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.10",
-      "computedHash": "6116a29e5f98516f8bff7a1d60a38b338d5c617356033c24c140ecd8fa5afaf9"
+      "version": "0.2.0",
+      "computedHash": "f5e7eb09fa096f1ddcd68b2615f21260fe5f367c7d3282d7337d94c2dd3fdd26"
     },
     "figma-to-code": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.8",
-      "computedHash": "572ea84cb16cfe82941111dcce2ce62e9e3a14dfbac77e3e26fb6285d7acd501"
+      "version": "0.2.0",
+      "computedHash": "8811cdd1014719fbbf9e6d084282f67f9e9e6020f19090b6655f6424933b6067"
     },
     "init-rulebook": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.1.0",
-      "computedHash": "83f8621246563d8ca354a05f68818fdf6c39f9188a56c3317d93da01a067596f"
+      "version": "0.2.0",
+      "computedHash": "ac5e5f3f9d75747fab1ad7e8a1a8d1a5132c253be07ffccbb954917c8b6117cb"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "3.4.0",
-      "computedHash": "e1c1fcd9130fb96507efd77b8b8db250dc115fb4a6914034a2097b321b6ca22e"
+      "version": "3.5.0",
+      "computedHash": "fbdbd9fc91b98d057131de64210625769cc3bf93a203a2f125d6af49120b002e"
     },
     "skill-architect": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.0.0",
-      "computedHash": "1a363b7b469985c6880e8a53d3b745c73ce4768fb5ace826c5297a47698f353a"
+      "version": "1.1.0",
+      "computedHash": "bbe10087b9eb7bb0bf1122987723302ede12cf0cb254883487d53ae59d3ace2e"
     }
   }
 }

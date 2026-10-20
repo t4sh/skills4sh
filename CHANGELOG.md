@@ -8,6 +8,31 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-20
+
+### Security
+- `discord-harvest` 2.1.0: the download recipe no longer interpolates message-derived URLs or filenames into shell source (`download_asset` / `download_staged` take values as arguments or tab-separated records), and `validate_url` cuts the authority at `/?#` and rejects `@` or `\` in it, closing `?@` / `#@` allowlist bypasses. Bot tokens stay in environment variables or a mode-600 header file, never on the command line. MCP servers must authenticate as a bot application.
+- `eleventy-nunjucks` 0.2.0: the inline-`<script>` audit now flags `| safe` output, including `<script type="module">`, while exempting `jsonScript`.
+
+### Added
+- Codex adapters: every skill ships `agents/openai.yaml` with a display name, short description, and `$skill` default prompt. Descriptions front-load capability and the strongest trigger into the first 120 characters, which Codex keeps when its skills context budget truncates descriptions.
+- Eval catalogs for `figma-to-code` and `code-to-figma`; new routing near-misses and workflow cases across the other skills.
+- `skill-architect` 1.1.0: `references/helper-runtime.md`, `scaffold_skill.py --author` and `--openai-yaml`, dated Codex adapter facts, and done conditions for every operating-mode step.
+
+### Changed
+- `init-rulebook` 0.2.0: complete rule text the host natively imports into the current context counts as read (not after compaction). Fresh-session discovery may be reported untested with the user's verification step, and Status has one definition.
+- `agent-memory` 2.8.0: `CURSOR.md` migration merges shared content into `AGENTS.md`. Save, Sync, Build, Migrate, and Maintain have done conditions. The Codex global skill root is `~/.agents/skills/`.
+- `figma-to-code` 0.2.0: `create_design_system_rules` is treated as a user-run MCP prompt, and Code Connect writes use `add_code_connect_map` after approval.
+- `code-to-figma` 0.3.0: the DTCG converter reads only base theme scopes, throws on duplicate token paths, and types `--font-weight-*` as `fontWeight` under `typography/weight/`. Regenerate existing `.w3c.json` output.
+- `localhost-screenshots` 3.5.0 and `eleventy-nunjucks` 0.2.0 narrow their triggers to localhost and confirmed Eleventy context respectively.
+- README and AGENTS.md list `~/.agents/skills/` as the Codex global root.
+- Bumped package and plugin metadata to 0.7.0.
+
+### Fixed
+- `localhost-screenshots` helpers resolve Playwright from the working project first, then beside the script, so globally installed skills work without `NODE_PATH`.
+- `eleventy-nunjucks` baseline is Eleventy 3.1.7 with `@11ty/nunjucks` 3.3.0; the Build Awesome alpha is pinned instead of the `latest` stub, and troubleshooting, data-cascade, and build-pipeline examples were corrected.
+- The installer ignores `__pycache__`, `*.pyc`, and `.DS_Store` when hashing an existing install, and helper commands run with `python -E -B`.
+
 ## [0.6.0] — 2026-09-28
 
 ### Added

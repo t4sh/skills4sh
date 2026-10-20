@@ -8,15 +8,17 @@ Load this reference when initializing or migrating memory, or when validating th
 
 Use these paths to confirm the skill is installed where the active runtime reads skills. The [skills CLI supported-agents table](https://github.com/vercel-labs/skills#supported-agents) is the live catalog; this subset is the set this collection documents.
 
-| Runtime | `skills` CLI `--agent` | Project skill root | Global skill root |
+| Runtime | `skills` CLI `--agent` | Project (repo) skill root | Global (user) skill root |
 |---|---|---|---|
 | Claude Code | `claude-code` | `.claude/skills/` | `~/.claude/skills/` |
-| Codex | `codex` | `.agents/skills/` | `~/.codex/skills/` |
+| Codex | `codex` | `.agents/skills/` (working directory up to repo root) | `~/.agents/skills/` |
 | Cursor | `cursor` | `.agents/skills/` | `~/.cursor/skills/` |
 | GitHub Copilot | `github-copilot` | `.agents/skills/` | `~/.copilot/skills/` |
 | Grok | `grok` | `.grok/skills/` | `~/.grok/skills/` |
 | OpenClaw | `openclaw` | `skills/` (workspace) | `~/.openclaw/skills/` |
 | Generic / shared | `universal` or host default | `.agents/skills/` | `~/.agents/skills/` |
+
+Codex roots checked 2026-10-20 against the [Codex skills documentation](https://developers.openai.com/codex/skills): user `$HOME/.agents/skills`, repo `.agents/skills` from the working directory up to the repository root, and admin `/etc/codex/skills`. The `skills` CLI's global `codex` target installs into `~/.agents/skills/`.
 
 OpenClaw also reads `~/.agents/skills/` and project `.agents/skills/` with lower precedence than workspace `skills/`. Grok also reads `AGENTS.md` and may scan `~/.agents/skills/`.
 
@@ -30,7 +32,7 @@ Write the smallest file that points at `AGENTS.md`. Preserve existing non-pointe
 |---|---|---|
 | Any | `AGENTS.md` | Canonical shared instructions; mention `.agent-memory/` |
 | Claude Code | `CLAUDE.md` | Exact `@AGENTS.md` import. Optional Claude-only notes below that line. Do not replace the import with prose such as “read AGENTS.md”. |
-| Cursor | `.cursor/rules/index.mdc` | Always-on rule that references `AGENTS.md`. Same destination Migrate uses when promoting `CURSOR.md`. Skip when `.cursor/` is absent and Cursor is not in use. |
+| Cursor | `.cursor/rules/index.mdc` | Always-on rule that references `AGENTS.md`. When Migrate promotes `CURSOR.md`, shared content goes into `AGENTS.md` and this file stays a thin pointer. Skip when `.cursor/` is absent and Cursor is not in use. |
 | Codex, Grok, OpenClaw, Copilot, generic | none extra | `AGENTS.md` is the pointer. Do not invent a vendor file. |
 
 Never put shared instructions inside `.claude/` or `.cursor/`. Those directories are vendor-local.

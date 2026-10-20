@@ -49,7 +49,7 @@ grep "addWatchTarget" .eleventy.js
 
 **Fix:**
 - Add `addWatchTarget("src/assets/")` if missing
-- Kill and restart `pnpm dev` (the `--kill-others-on-fail` flag should make this automatic for crash recovery)
+- Kill and restart `pnpm dev`. `--kill-others-on-fail` only stops the sibling process when one exits non-zero; it never restarts anything
 - Hard refresh the browser (`Cmd+Shift+R`)
 
 ### Build hangs and never exits
@@ -128,25 +128,21 @@ Trace the layout chain: page → layout1 → layout2 → base. Each layer's `{{ 
 - The section should appear in exactly one place in the chain
 - If it's in a layout, it shouldn't be in the pages that use that layout
 
-### `{{ content | safe }}` outputs literal `<p>…</p>` text instead of rendered HTML
+### Layout shows escaped HTML
 
-**Cause:** The page template is `.md`, but `markdownTemplateEngine` isn't set to `njk`, OR the layout is rendering content from a markdown source without `| safe`.
+**Symptom:** the page displays literal tags such as `&lt;p&gt;…&lt;/p&gt;` (rendered as visible `<p>` text) where the child page body should be.
+
+**Cause:** a layout in the chain outputs `{{ content }}` without `| safe`, so autoescaping HTML-escapes the child's already-rendered body.
 
 **Diagnosis:**
 
-```js
-// .eleventy.js — verify
-return {
-  htmlTemplateEngine: "njk",
-  markdownTemplateEngine: "njk",      // ← must be set
-};
-```
-
 ```nunjucks
-{# Layout — verify #}
-<main>{{ content | safe }}</main>      {# ✅ — safe is required #}
+{# Every layout in the chain — verify #}
+<main>{{ content | safe }}</main>      {# ✅ — renders the child body as HTML #}
 <main>{{ content }}</main>             {# ❌ — autoescaped, shows as text #}
 ```
+
+**Fix:** add `| safe` to the `content` output in the offending layout only. Do not mark other values safe to work around it.
 
 ### `Cannot read property 'X' of undefined` in template
 

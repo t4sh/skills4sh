@@ -4,7 +4,7 @@
 
 skill:
   name: init-rulebook
-  version: "0.1.0"
+  version: "0.2.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,11 +13,12 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: fae0ac8ff8b4730b904fefdc2b99ff6ffe46a58d998e2adabecfc77436076b01
+    assets/evals/scenarios.json: af5926b68a081828dadbfa2ad22ae4cbce158ca95c979e2094ec1e37ef2d3163
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/onboarding.md: 28e460414e68da12cb3bdc865cc9498ea613451ae73c774fab02f8ba5b833eac
-    references/public-example.md: a31e7049966795c2f217f9eb34e27119f97fcf69e826cf19651071d879cffb1c
-    SKILL.md: b883b022f1a907cad7b3eb19f6f7bbe5f19cab65664d1802756f685923fef4e7
+    references/onboarding.md: ac23a127052f20ec82babaa2d8a0393fb983d3e98d9859185576b4616dd1df51
+    references/public-example.md: 16bc78576273f7e2477d3e278ab8abcc64231e2c70473e27d17da4132b8e8962
+    SKILL.md: c7f5456be59e0f3f783306f2fc2beb58402eeb41f5cdf50a880487bb6ac7956e
+    agents/openai.yaml: d469314a54f16df989b943bd2be73a8b5d781b09499a34df8a4d6c21523a1c03
 permissions:
   alwaysAllow: []
   rationale: "Loading and status read files; setup, linking, and updates require ordinary host permissions at invocation time"

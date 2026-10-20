@@ -67,3 +67,38 @@ test('catalog fix case produces a real dry-run repair without modifying its inpu
     rmSync(root, { recursive: true, force: true });
   }
 });
+
+test('catalog audit-helper case ships a helper whose seeded defect reproduces on a fixture', () => {
+  const root = mkdtempSync(join(tmpdir(), 'architect-audit-helper-'));
+  const c = catalog.cases.find(c => c.id === 'audit-helper');
+  try {
+    assert.equal(c.kind, 'workflow');
+    for (const [path, contents] of Object.entries(c.files)) {
+      const target = join(root, path);
+      mkdirSync(resolve(target, '..'), { recursive: true });
+      writeFileSync(target, contents);
+    }
+    const helper = join(root, 'skills/report-helper/assets/scripts/total.py');
+    const run = csv => spawnSync(process.env.SKILL_TEST_PYTHON || 'python3', ['-E', '-B', helper, csv], { encoding: 'utf8' });
+    const good = run(join(root, 'invoice.csv'));
+    assert.equal(good.status, 0, good.stderr);
+    assert.equal(good.stdout.trim(), 'count=2 total=30.50');
+    const malformed = join(root, 'malformed.csv');
+    writeFileSync(malformed, 'id,amount\na,10.25x\nb,20.25\n');
+    const bad = run(malformed);
+    // Seeded defect: the unanchored regex accepts malformed input. If this ever
+    // fails closed, the audit case no longer tests fixture-run discipline.
+    assert.equal(bad.status, 0, bad.stderr);
+    assert.equal(bad.stdout.trim(), 'count=2 total=30.50');
+    assert.ok(c.assertions.some(a => /command plus observed output/.test(a)));
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('catalog keeps a named-skill routing near-miss for skill-creator', () => {
+  const c = catalog.cases.find(c => c.id === 'named-skill-near-miss');
+  assert.equal(c.kind, 'description-only-routing');
+  assert.ok(c.prompts.some(p => /skill-creator/.test(p.text) && p.load === false));
+  assert.ok(c.prompts.some(p => /skill-creator/.test(p.text) && p.load === true));
+});

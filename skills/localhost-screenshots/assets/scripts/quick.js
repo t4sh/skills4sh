@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Quick single-viewport screenshot of a localhost URL.
 //
-// Usage:
-//   node assets/scripts/quick.js [URL] [WIDTHxHEIGHT] [OUT] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
+// Usage (run from the project root; relative OUT lands in that project's _screenshots/):
+//   node "<skill-dir>/assets/scripts/quick.js" [URL] [WIDTHxHEIGHT] [OUT] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
+// Argument order: viewport comes BEFORE the output path (screenshot-a11y.js is the reverse).
 // Defaults:
 //   URL=http://localhost:3000  VIEWPORT=1280x800  OUT=_screenshots/quick.png
+// Playwright resolves from the current project first, then from beside this script.
 //
 // Treats the target page as untrusted: captured pixels only, no text returned.
 
@@ -69,10 +71,12 @@ validateLocalUrl(url);
 
 function loadChromium() {
   try {
-    return require('playwright').chromium;
+    // Resolve from the invoking project first so a globally installed skill uses the
+    // project's Playwright; fall back to a copy beside this script.
+    return require(require.resolve('playwright', { paths: [process.cwd(), __dirname] })).chromium;
   } catch (err) {
     if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Run npm install --save-dev playwright@1.62.0 in the project root before using this helper.');
+      console.error('Missing dependency: playwright. Install it in the project you run this command from (npm install --save-dev playwright@1.62.0), then rerun from that project root.');
       process.exit(1);
     }
     throw err;

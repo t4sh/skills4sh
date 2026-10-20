@@ -8,14 +8,14 @@ Each skill is an [Agent Skills](https://agentskills.io/specification) folder. Th
 
 | Skill | What it helps you do | Version |
 |-------|---------------------|---------|
-| [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 2.7.8 |
-| [code-to-figma](skills/code-to-figma/) | Build a CI pipeline that exports design tokens and page structure for a Figma plugin to consume | 0.2.1 |
-| [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 2.0.1 |
-| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 0.1.10 |
-| [figma-to-code](skills/figma-to-code/) | Implement Figma designs in your codebase, map design tokens, and establish component mappings and project rules | 0.1.8 |
-| [init-rulebook](skills/init-rulebook/) | Manage personal agent rules in `~/.agents/AGENTS.md`, with optional custom folders and dotfiles integration | 0.1.0 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.4.0 |
-| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 1.0.0 |
+| [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 2.8.0 |
+| [code-to-figma](skills/code-to-figma/) | Build a CI pipeline that exports design tokens and page structure for a Figma plugin to consume | 0.3.0 |
+| [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 2.1.0 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 0.2.0 |
+| [figma-to-code](skills/figma-to-code/) | Implement Figma designs in your codebase, map design tokens, and establish component mappings and project rules | 0.2.0 |
+| [init-rulebook](skills/init-rulebook/) | Manage personal agent rules in `~/.agents/AGENTS.md`, with optional custom folders and dotfiles integration | 0.2.0 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.5.0 |
+| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 1.1.0 |
 
 ## Three places to start
 
@@ -66,12 +66,14 @@ Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`,
 | Runtime | `--agent` | Project root | Global root |
 |---|---|---|---|
 | Claude Code | `claude-code` | `.claude/skills/` | `~/.claude/skills/` |
-| Codex | `codex` | `.agents/skills/` | `~/.codex/skills/` |
+| Codex | `codex` | `.agents/skills/` | `~/.agents/skills/` |
 | Cursor | `cursor` | `.agents/skills/` | `~/.cursor/skills/` |
 | GitHub Copilot | `github-copilot` | `.agents/skills/` | `~/.copilot/skills/` |
 | Grok | `grok` | `.grok/skills/` | `~/.grok/skills/` |
 | OpenClaw | `openclaw` | `skills/` | `~/.openclaw/skills/` |
 | Generic / shared | host default | `.agents/skills/` | `~/.agents/skills/` |
+
+Codex scans project `.agents/skills/` from the working directory up to the repository root and user `~/.agents/skills/`, and reads each skill's optional `agents/openai.yaml` for its `/skills` display name, short description, and default prompt (checked 2026-10-20 against the [Codex skills guide](https://developers.openai.com/codex/skills)).
 
 Pointer files (`AGENTS.md`, `CLAUDE.md`, Cursor rules, and similar) are documented per skill when a workflow writes them — see `agent-memory` [agent-pointers.md](skills/agent-memory/references/agent-pointers.md). They do not change the skill's commands.
 

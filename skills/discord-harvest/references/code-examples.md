@@ -43,12 +43,17 @@ validate_url() {
     echo "SKIP: non-HTTPS URL blocked" >&2
     return 1
   fi
-  # Extract the host only: strip scheme, then path, then userinfo and port.
-  # Checking the host (not the whole URL) avoids false matches in the path/query
-  # and closes userinfo tricks like https://cdn.discordapp.com@127.0.0.1/.
+  # Extract the host only: strip scheme, cut the authority at the first / ? or #,
+  # then drop :port. Checking the host (not the whole URL) avoids false matches in
+  # the path/query. Userinfo and backslashes are rejected outright: parsers disagree
+  # on them, so https://evil.example?@cdn.discordapp.com/ and
+  # https://cdn.discordapp.com@127.0.0.1/ must never reach curl.
   local host="${url#https://}"
-  host="${host%%/*}"   # drop path/query/fragment
-  host="${host##*@}"   # drop any user:pass@ prefix
+  host="${host%%[/?#]*}"   # authority ends at the first /, ? or #
+  if [[ "$host" == *[@\\]* ]]; then
+    echo "SKIP: userinfo or backslash in URL authority blocked" >&2
+    return 1
+  fi
   host="${host%%:*}"   # drop :port; any bracketed IPv6 literal collapses to "[", still caught by the \[* check below
   # Block bracketed IP-literal hosts plus private/internal IPv4 ranges (SSRF protection).
   if [[ "$host" == \[* ]] || [[ "$host" =~ ^(127\.|10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|localhost|0\.0\.0\.0|169\.254\.) ]]; then
@@ -95,8 +100,9 @@ flag_suspicious() {
   if [[ "$lower" =~ (ignore.*(previous|prior|above)|disregard|override.*instruction) ]]; then
     echo "injection:instruction-override"; return 0
   fi
-  # Role hijacking
-  if [[ "$lower" =~ (you.are.now|pretend.you|act.as|new.role) ]]; then
+  # Role hijacking (whole words only, so names like exact_assets.png do not match)
+  local role_hijack_re='(^|[^a-z])(you.are.now|pretend.you|act.as|new.role)([^a-z]|$)'
+  if [[ "$lower" =~ $role_hijack_re ]]; then
     echo "injection:role-hijack"; return 0
   fi
   # System markup
@@ -162,21 +168,69 @@ For live downloads, a manifest attachment ID plus a verified local content hash 
 
 ### Download Commands
 
+**Never substitute message-derived values into command text.** URLs, filenames, embed titles, and any other Discord field reach the shell only as positional arguments or as records read from a file, never pasted into a command, a double-quoted string, or a heredoc. A URL such as `https://cdn.discordapp.com/a$(touch${IFS}PWNED).png` executes if pasted into `"..."` shell source.
+
 ```bash
-# Run only after staging approval. Load the helper functions above first.
-validate_url "{url}" || exit 1
-staged_asset=$(mktemp) || exit 1
-if curl --proto '=https' --fail -o "$staged_asset" "{url}"; then
-  copy_asset "$staged_asset" "{harvest_folder}/images" "{original_filename}"
-  copy_status=$?
-else
-  copy_status=1
-fi
-rm -f "$staged_asset"
-exit "$copy_status"
+download_asset() {
+  # Usage: download_asset URL DEST_DIR ORIGINAL_FILENAME (all values as arguments)
+  local url="$1" dest_dir="$2" original="$3" staged_asset status
+  validate_url "$url" || return 1
+  staged_asset=$(mktemp) || return 1
+  # --disable ignores ~/.curlrc (which could enable -L); --globoff keeps [] and {} literal.
+  if curl --disable --proto '=https' --globoff --fail -o "$staged_asset" "$url"; then
+    copy_asset "$staged_asset" "$dest_dir" "$original"
+    status=$?
+  else
+    status=1
+  fi
+  rm -f "$staged_asset"
+  return "$status"
+}
+
+download_staged() {
+  # Usage: download_staged STAGED_LIST HARVEST_FOLDER
+  # STAGED_LIST holds one approved record per line: kind<TAB>url<TAB>original_filename,
+  # where kind is images or files.
+  local list="$1" harvest_folder="$2" kind url original failures=0
+  while IFS=$'\t' read -r kind url original || [[ -n "$kind" ]]; do
+    case "$kind" in
+      images|files) ;;
+      *) echo "SKIP: unknown asset kind" >&2; failures=$((failures + 1)); continue ;;
+    esac
+    download_asset "$url" "$harvest_folder/$kind" "$original" || {
+      echo "FAILED: $(redact_cdn_url "$url")" >&2
+      failures=$((failures + 1))
+    }
+  done < "$list"
+  [[ "$failures" -eq 0 ]]
+}
+```
+
+Run only after staging approval, with the helper functions above loaded. Write the staged list with the host's file-write tool or a JSON tool that escapes tabs and newlines (for example `jq -r '.[] | [.kind, .url, .filename] | @tsv'`); never build it with `echo`, `printf`, or an unquoted heredoc containing message values. Only operator-chosen paths appear in the command:
+
+```bash
+download_staged /absolute/path/to/staged-assets.tsv /absolute/path/to/discord-my-lab-resources
 ```
 
 **Do NOT pass raw Discord filenames or URLs directly to `curl -o`.** A crafted filename like `../../.env` would write outside the harvest folder. A crafted URL or redirect could hit internal network endpoints (SSRF). Avoid `curl -L` here: curl can follow redirects to a different host, and `--proto-redir '=https'` restricts redirected protocols but does not re-check the host allowlist.
+
+### Bot API Requests
+
+Read the bot token from an environment variable or the host's secret loader; never ask for it in chat. Pass it to curl through a private header file so it never appears on a command line, and never echo it or write it to the manifest, `links.md`, or logs. Validate guild, channel, and thread IDs as digits before building a route.
+
+```bash
+discord_api() {
+  # Usage: discord_api ROUTE   e.g. discord_api "/channels/$channel_id/messages?limit=10"
+  local route="$1" header_file status
+  [[ -n "${DISCORD_BOT_TOKEN:-}" ]] || { echo "DISCORD_BOT_TOKEN is not set" >&2; return 1; }
+  header_file=$(mktemp) || return 1   # mktemp creates the file with mode 600
+  printf 'Authorization: Bot %s\n' "$DISCORD_BOT_TOKEN" > "$header_file"
+  curl --disable --proto '=https' --globoff --fail -H @"$header_file" "https://discord.com/api/v10$route"
+  status=$?
+  rm -f "$header_file"
+  return "$status"
+}
+```
 
 ### Filename Rules
 

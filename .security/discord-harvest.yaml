@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "2.0.1"
+  version: "2.1.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,14 +13,15 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 7ffe51f88a0401e59d4e1def40a215fa1498f5f3b8b1f63c28dc334e1a28044d
+    assets/evals/scenarios.json: 4979eb35b1080f881a9fd8ea75a2d6a9e01d8a67ee50cb1cf1cf63e1fefd59f8
     assets/icon.svg: 1a98cde7a434820fea4d55c74d99b2112fb3022d5cd18067ec1eb3d8c411becc
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/code-examples.md: 58ac76848f10c3a6f3d300939c843ca3db0b2c3f3fcfaa57e74b0548078a689c
+    references/code-examples.md: 1b68452d00ffe80b4ef2470e2eafeeb0506f2f9f7970f023044558760260af26
     references/design-philosophy.md: 0192dda8e8299401636253fe3ba2c6741f01c3db56f246379156811c61000385
-    references/folder-structure.md: c5c023ef4cd6eb2b21cdf78bdb7a7363a3b323101b77db4ea911956ef8e6219f
-    references/troubleshooting.md: cf2df2c0afc0ac8a96722b41ec4a301f1af7d136f65dc86803b32f2956ed56e1
-    SKILL.md: 01b5febc2226e4b93b973e2fd976cd7d83061555d06547c85f8acdebb1fb5312
+    references/folder-structure.md: c426d4638437f1a64f566e0c4f04fcb6e35f73e3103e322dad4a9e7545b96722
+    references/troubleshooting.md: c3f8436e65fa8faad8a3a85ac43fd6732c844bf92df16f838dcce3d8a33ffa65
+    SKILL.md: e33a3cf302b1afd3001358f36b6b3c9018c13ee9837186a1384307b4614e82fe
+    agents/openai.yaml: 8c62aadd009cc471b080485cbe2a8c547c74f7f58516697e1aa87c4065602263
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
@@ -49,3 +50,8 @@ scanning:
       confidence: low
       file: references/code-examples.md
       reason: "Approved CDN downloads use mktemp for byte comparison before copying into the archive; no execution or exfiltration of staged content."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: references/code-examples.md
+      reason: "discord_api() reads DISCORD_BOT_TOKEN from the environment so the bot token never appears in chat or source; the value is written only to a mode-600 mktemp header file for curl -H @file, then deleted, keeping it off command lines, output, manifests, and logs."

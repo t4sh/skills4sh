@@ -119,6 +119,7 @@ test('walker and DTCG converter snippets keep tokenPath mappings in parity', () 
     'text-xl',
     'tracking-tight',
     'font-display',
+    'font-weight-bold',
     'fs-sm',
     'background',
   ];
@@ -224,6 +225,81 @@ test('convert-to-dtcg snippet emits structured DTCG values and fails closed', ()
     ]),
     /Token path conflict/,
   );
+});
+
+test('convert-to-dtcg snippet keeps light values when .dark or media queries redefine tokens', () => {
+  const { parseCustomProperties, buildDtcg } = loadConvertHelpers();
+  const css = `
+    @layer theme, base;
+    @layer base {
+      :root { --background: #fff; --foreground: #111; }
+      .dark { --background: #000; --foreground: #eee; }
+    }
+    :root.dark { --background: #010101; }
+    [data-theme="dark"] { --background: #020202; }
+    @media (prefers-color-scheme: dark) {
+      :root { --background: #030303; }
+    }
+    @supports (color: oklch(0 0 0)) {
+      :root { --foreground: #040404; }
+    }
+  `;
+  const parsed = parseCustomProperties(css);
+  assert.deepEqual(parsed.map((token) => token.name).sort(), ['background', 'foreground']);
+
+  const dtcg = buildDtcg(parsed);
+  assert.deepEqual(dtcg.semantic.background.$value, { colorSpace: 'srgb', components: [1, 1, 1] });
+  assert.deepEqual(
+    dtcg.semantic.foreground.$value,
+    { colorSpace: 'srgb', components: [0x11 / 255, 0x11 / 255, 0x11 / 255] },
+  );
+});
+
+test('convert-to-dtcg snippet reads @theme and @layer theme blocks', () => {
+  const { parseCustomProperties } = loadConvertHelpers();
+  const parsed = parseCustomProperties(`
+    @theme { --space-4: 1rem; }
+    @layer theme { :root, :host { --ink-900: #000; } }
+  `);
+  assert.deepEqual(parsed.map((token) => token.path).sort(), ['palette/ink/900', 'spacing/4']);
+});
+
+test('convert-to-dtcg snippet fails closed on conflicting base definitions and duplicate leaves', () => {
+  const { parseCustomProperties, buildDtcg } = loadConvertHelpers();
+  assert.throws(
+    () => parseCustomProperties(':root { --background: #fff; } :root { --background: #000; }'),
+    /Conflicting base definitions for --background/,
+  );
+  assert.equal(parseCustomProperties(':root { --background: #fff; } :root { --background: #fff; }').length, 1);
+  assert.throws(
+    () => buildDtcg(parseCustomProperties(':root { --text-xl: 1.25rem; --fs-xl: 1.5rem; }')),
+    /typography\/scale\/xl is defined twice/,
+  );
+});
+
+test('convert-to-dtcg snippet types font weights as fontWeight, not fontFamily', () => {
+  const { parseCustomProperties, buildDtcg, tokenType } = loadConvertHelpers();
+  assert.equal(tokenType('font-weight-bold'), 'fontWeight');
+  assert.equal(tokenType('font-display'), 'fontFamily');
+
+  const dtcg = buildDtcg(parseCustomProperties(`
+    :root { --font-weight-bold: 700; --font-weight-body: normal; --font-display: Inter; }
+  `));
+  assert.deepEqual(dtcg.typography.weight.bold, { $value: 700, $type: 'fontWeight' });
+  assert.deepEqual(dtcg.typography.weight.body, { $value: 'normal', $type: 'fontWeight' });
+  assert.deepEqual(dtcg.typography.family.display, { $value: 'Inter', $type: 'fontFamily' });
+
+  assert.throws(
+    () => parseCustomProperties(':root { --font-weight-huge: 1200; }'),
+    /Unsupported fontWeight value/,
+  );
+});
+
+test('walker snippet does not map font-weight theme vars to font-family utilities', () => {
+  const { buildUtilityMap } = loadWalkerHelpers();
+  const map = buildUtilityMap({ 'font-weight-bold': true, 'font-display': true });
+  assert.equal(map['font-weight-bold'], undefined);
+  assert.deepEqual(map['font-display'], { property: 'font-family', var: 'font-display' });
 });
 
 test('push-to-figma snippet formats anonymous gist success URLs', () => {

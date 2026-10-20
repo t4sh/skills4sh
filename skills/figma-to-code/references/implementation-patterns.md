@@ -52,8 +52,12 @@ Inspect the connected server schema first; tool availability depends on server, 
 | `search_design_system` | Search components, styles, and variables across the available design system instead of recreating them |
 | `download_assets` | Export durable image/SVG assets through the repository's asset pipeline; validate returned files and paths |
 | Make-aware `get_design_context` | Inspect Figma Make resources and translate the result into repository code under the same repo-first boundary |
-| `get_context_for_code_connect` | Gather mapping-specific component context before Code Connect decisions |
-| `use_figma` | Out of scope here: load the host's first-party Figma write skill and require explicit user authorization before changing Figma |
+| `get_code_connect_map` | Read back existing Code Connect mappings for instances in the target |
+| `add_code_connect_map` | Write one Code Connect mapping, only after the user approves that specific mapping |
+| `get_code_connect_suggestions`, `get_context_for_code_connect`, `send_code_connect_mappings` | Figma-prompted, server-driven: Figma or the `figma-code-connect` skill invokes them; do not call them unprompted |
+| `use_figma`, `generate_figma_design`, `send_code_to_figma`, `html_to_figma`, `upload_assets` | Out of scope here: load the host's first-party Figma write skill and require explicit user authorization before changing Figma |
+
+`create_design_system_rules` is an MCP **prompt** the user runs from the client, not an agent-callable tool. Tool and prompt roles above follow [Figma MCP tools and prompts](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/) (checked 2026-10-20).
 
 If a named tool is absent, use the closest read-only capability and report the fidelity gap. Never improvise a write call or scrape Figma's web UI.
 
@@ -200,7 +204,7 @@ Request: "Extract the Figma variables into our code tokens."
 Request: "Create Figma guidelines for this repo" or "generate design system rules."
 
 1. Inspect the repository before generating rules: package metadata, component directories, styling approach, token files, icons, image handling, tests, stories, and existing agent rule files.
-2. Call `create_design_system_rules` when the active MCP server exposes it, passing languages and frameworks that match the repository.
+2. Run the server's `create_design_system_rules` prompt when the client exposes it (or ask the user to run it) and treat the output as a draft; otherwise build rules from the repository inspection in step 1.
 3. Generate rules for the active agent target. Prefer an existing repo convention over this table, and prefer adding a focused Figma section over rewriting broad root instructions:
 
 | Agent | Rule file |
@@ -233,7 +237,7 @@ Request: "Code Connect this component" or "map this Figma component to our Butto
 2. Check whether the host provides the **`figma-code-connect`** skill or another native Code Connect workflow. If so, use this skill to plan and validate mappings, then use `figma-code-connect` or the native workflow for template authoring and submission when the user approves.
 3. Confirm the Figma target is a component, component set, or instance of a published library component. Code Connect mapping is not for arbitrary frames.
 4. Confirm plan and access:
-   - Call `whoami` when available. Code Connect requires an eligible Figma **Organization or Enterprise** plan plus a **Dev or Full seat**; stop with a clear blocker when plan or seat is ineligible.
+   - Call `whoami` when available and stop with a clear blocker when the plan or seat is ineligible (requirement: `/figma-to-code code-connect` in `SKILL.md`).
    - Figma MCP server is connected.
    - Code Connect tools are available, or the host's native Code Connect workflow is available.
    - The user can access the Figma library and the code repository.
@@ -245,7 +249,7 @@ Request: "Code Connect this component" or "map this Figma component to our Butto
    - Props and variants are part of the public API.
    - Required icons, slots, or children have real code representations.
    - Example usage or stories exist, or the component source is clear enough to map.
-6. Use the active MCP server's suggestion tool when available, such as `get_code_connect_suggestions`, to list unmapped components and properties.
+6. Call `get_code_connect_map` to read existing mappings. Suggestions (`get_code_connect_suggestions`, `get_context_for_code_connect`) are Figma-prompted; consume them when the server or `figma-code-connect` surfaces them, but do not call them directly.
 7. Inspect the repository for the real code component, exports, props, variants, and usage examples.
 8. Map Figma properties to actual code APIs:
    - Variant names to component variant props
@@ -253,8 +257,8 @@ Request: "Code Connect this component" or "map this Figma component to our Butto
    - Size modes to size props
    - Icons or slots to real children/slot APIs
 9. Mark unsupported Figma properties as intentionally unmapped instead of inventing props.
-10. Submit mappings only when the user asked to write/apply them and the MCP server exposes a mapping tool such as `send_code_connect_mappings`.
-11. Verify mappings with a readback or suggestion tool when available.
+10. Write a mapping with `add_code_connect_map` only after the user approves that specific mapping. `send_code_connect_mappings` confirms Figma-prompted suggestions and stays server-driven.
+11. Verify each written mapping by reading it back with `get_code_connect_map`.
 
 ## MCP Failure Playbook
 

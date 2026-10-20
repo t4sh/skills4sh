@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "purpose": "Behavioral fixture catalog for figma-to-code; expected assertions are not executed results.",
+  "execution": "Use isolated case directories. Materialize files, replace OUTPUT with the absolute case output directory, withhold assertions and routing labels, and record observed results separately. Files named mcp-* are synthetic Figma MCP payloads, not live tool results; never contact Figma or use real credentials. Routing cases use only the skill frontmatter.",
+  "cases": [
+    {
+      "id": "retrieval",
+      "kind": "description-only-routing",
+      "prompt": "Using only the figma-to-code frontmatter, label each supplied request load or skip. Do not inspect the body or execute workflows.",
+      "prompts": [
+        {
+          "text": "Implement this Figma design: https://www.figma.com/design/AbC123/App?node-id=42-15",
+          "load": true
+        },
+        {
+          "text": "Build the settings page from this Figma link in our Next.js repo.",
+          "load": true
+        },
+        {
+          "text": "Extract the Figma design tokens into our Tailwind theme.",
+          "load": true
+        },
+        {
+          "text": "Create Figma design system rules for this repository.",
+          "load": true
+        },
+        {
+          "text": "Code connect this Button component.",
+          "load": true
+        },
+        {
+          "text": "Set up CI that exports our CSS tokens to a Gist for the tokens-sync-to-figma plugin.",
+          "load": false
+        },
+        {
+          "text": "Generate a new screen inside Figma from this React page.",
+          "load": false
+        },
+        {
+          "text": "Draw a FigJam flow diagram of the checkout.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "Withhold expected labels; record false positives and negatives separately.",
+        "Code-to-Figma export and Figma-side writes are skips; this checks description-only routing, not host discovery."
+      ]
+    },
+    {
+      "id": "official-skill-routing",
+      "kind": "description-only-routing",
+      "prompt": "Assume the host also lists official Figma skills figma-implement-design, figma-code-connect, figma-generate-design, and figma-generate-library. Using the figma-to-code Skill Boundaries section, label whether figma-to-code should own each request (load) or hand off (skip).",
+      "prompts": [
+        {
+          "text": "Implement this Figma frame in our repo using our existing components.",
+          "load": true
+        },
+        {
+          "text": "Use figma-implement-design to build this frame.",
+          "load": false
+        },
+        {
+          "text": "Author .figma.ts Code Connect templates and submit them.",
+          "load": false
+        },
+        {
+          "text": "Build a design system library inside Figma from our tokens.",
+          "load": false
+        },
+        {
+          "text": "Keep Figma updated from our codebase on every push via CI.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "A user-named official skill wins over figma-to-code.",
+        "Code-to-Figma CI export routes to code-to-figma; Figma-side library/screen generation routes to figma-generate-library/figma-generate-design."
+      ]
+    },
+    {
+      "id": "implement-correction-pass",
+      "kind": "workflow",
+      "prompt": "Implement the Figma card in mcp-design-context.json into src/components/PlanCard.tsx using the repo's existing primitives. The synthetic screenshot spec is mcp-screenshot.json. Write code under OUTPUT and a completion summary to OUTPUT/summary.md. No live Figma access is available; treat the mcp-* files as the tool results.",
+      "files": {
+        "package.json": "{\"name\":\"fixture-app\",\"dependencies\":{\"react\":\"18.3.1\",\"tailwindcss\":\"4.1.0\"}}",
+        "src/components/Card.tsx": "export function Card({ children }: { children: React.ReactNode }) {\n  return <div className=\"rounded-lg bg-surface p-4 gap-4 flex flex-col\">{children}</div>;\n}\n",
+        "src/styles/tokens.css": ":root { --surface: #ffffff; --ink: #111111; --space-6: 1.5rem; }\n",
+        "mcp-design-context.json": "{\"node\":\"42:15\",\"name\":\"PlanCard\",\"layout\":{\"padding\":24,\"gap\":24,\"radius\":12},\"fills\":[\"var(--surface)\"],\"text\":[{\"content\":\"Pro\",\"fontSize\":20,\"fontWeight\":600,\"color\":\"var(--ink)\"}],\"font\":\"Inter Display\"}",
+        "mcp-screenshot.json": "{\"node\":\"42:15\",\"note\":\"Synthetic screenshot spec: 24px padding, 24px gap, 12px radius, Inter Display heading.\"}"
+      },
+      "assertions": [
+        "Reuses the existing Card primitive and tokens instead of introducing a new UI library.",
+        "Runs at least one correction pass that lists specific mismatches (e.g. gap-4 = 16px vs Figma gap 24px; p-4 vs 24px padding) and fixes them; does not mark the task complete after a single pass.",
+        "Summary includes a deviation report naming intentional deviations or unverifiable items (e.g. Inter Display font availability, no rendered visual check).",
+        "Does not claim pixel parity without a rendered comparison."
+      ]
+    }
+  ]
+}

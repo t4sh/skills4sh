@@ -111,6 +111,26 @@
       ]
     },
     {
+      "id": "load-native-import-current-context",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load. The host explicitly natively imports the complete current content of rules/core.md and provides it in this context: `# Core\nKeep edits within the requested task.\nEnd-of-file marker: CORE-NATIVE-COMPLETE.` Current task is API documentation; publishing is planned later. Report inventory and selected/deferred rules, and which files you actually read.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\nEnd-of-file marker: CORE-FILE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\"runtime\":\"Claude Code\",\"native_imports_current_context\":[\"rules/core.md\"],\"complete_text_supplied\":true}\n"
+      },
+      "assertions": [
+        "Resolves ruleset/AGENTS.md and inventories all four indexed rule paths.",
+        "Treats the complete core text explicitly supplied by the host in current context as loaded without rereading ruleset/rules/core.md; this does not apply after compaction.",
+        "Reads docs.md completely because its conditional trigger matches; leaves ops.md and publish.md contents unread.",
+        "Cites the core marker CORE-NATIVE-COMPLETE from the supplied text; reporting CORE-FILE-COMPLETE indicates an unnecessary reread of ruleset/rules/core.md.",
+        "Reports native-context use as simulated fixture behavior, not a live host-import verification."
+      ]
+    },
+    {
       "id": "load-custom-pointer",
       "kind": "workflow",
       "prompt": "init-rulebook: load, then report the selected index and files read. host/startup.md is the active bridge. The request working directory is project/. Current task is API documentation; publishing will happen later.",
@@ -240,6 +260,25 @@
         "Keeps publishing deferred and avoids old-path fallback.",
         "Reports a simulated recovery only, not a real host compaction integration test.",
         "Does not read ruleset/rules/ops.md or ruleset/rules/publish.md content: production operations do not match this task and publishing is a future gate. Enumerating their paths for inventory is permitted."
+      ]
+    },
+    {
+      "id": "load-task-change-reevaluate",
+      "kind": "workflow",
+      "prompt": "Earlier in this uncompacted session, init-rulebook loaded ruleset/AGENTS.md for an API documentation task; session.json records that load. The task has now changed: investigate why the production deployment target is unhealthy. No publishing is planned. Re-evaluate rule loading for the new task and report which files you read now and which stay deferred.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n\nEnd-of-file marker: OPS-COMPLETE.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "session.json": "{\n  \"compacted\": false,\n  \"selected_index\": \"ruleset/AGENTS.md\",\n  \"previous_task\": \"API documentation\",\n  \"read_completely_in_current_context\": [\"rules/core.md\", \"rules/docs.md\"]\n}\n"
+      },
+      "assertions": [
+        "Re-evaluates the conditional headings against the new production-operations task instead of keeping the earlier documentation selection as final.",
+        "Reads ruleset/rules/ops.md completely and cites OPS-COMPLETE; rereading core.md or docs.md is permitted but not required because the context was not compacted.",
+        "Leaves ruleset/rules/publish.md content unread because no publishing operation is starting.",
+        "Leaves every fixture byte unchanged and reports the session state as simulated, not a live host task-change test."
       ]
     },
     {
@@ -483,6 +522,14 @@
         },
         {
           "text": "Screenshot my localhost app.",
+          "load": false
+        },
+        {
+          "text": "Initialize .agent-memory for this repo.",
+          "load": false
+        },
+        {
+          "text": "Add a CLAUDE.md pointer for this repo.",
           "load": false
         }
       ],

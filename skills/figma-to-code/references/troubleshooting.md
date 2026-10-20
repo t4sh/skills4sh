@@ -4,7 +4,7 @@ Use these recovery steps when MCP tools are unavailable, missing, or failing. Pr
 
 ## Server Not Available
 
-1. Default to Remote MCP unless the user explicitly refers to the open desktop selection or their organization requires Desktop MCP.
+1. Default to Remote MCP unless the user explicitly refers to the open desktop selection or their organization requires Desktop MCP. Server names vary by host; examples include `user-Figma Desktop` (Desktop MCP) and `plugin-figma-figma` (Remote MCP via a host plugin). Match by the host's listed Figma server, not by these exact names.
 2. For remote MCP, use `whoami` or the server's identity tool when available. If the host exposes **`mcp_auth`**, call it for the Figma server when auth fails, then retry once. Ask for sign-in or a URL the authenticated account can access if access still fails.
 3. For Desktop MCP, ask the user to open Figma Desktop, select the target node, and reconnect the MCP server.
 4. Continue with screenshots or exports only if the user accepts reduced fidelity.
@@ -14,7 +14,7 @@ Use these recovery steps when MCP tools are unavailable, missing, or failing. Pr
 1. List the missing tool and the closest available alternatives.
 2. Use `get_metadata` plus `get_design_context` as the fallback for most implementation tasks.
 3. Use `get_variable_defs` or design-system search for token tasks.
-4. Treat Code Connect submission as blocked if mapping tools are unavailable.
+4. Treat Code Connect writes as blocked if `add_code_connect_map` is unavailable; report read-back as unverified if `get_code_connect_map` is unavailable.
 5. Treat motion as unverified when `get_motion_context` is unavailable; do not infer interaction timing from static layers.
 6. Route Figma writes to the host's first-party write skill when `use_figma` is present; do not substitute a repository-code workflow.
 

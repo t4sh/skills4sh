@@ -11,7 +11,7 @@ This is a mono-repo of agent skills. Each skill lives in `skills/<skill-name>/` 
 ## When asked to install a skill
 
 1. **Ask the user** where to install:
-   - **Global**: the host default (see README installer table: `~/.claude/skills/`, `~/.codex/skills/`, `~/.cursor/skills/`, `~/.grok/skills/`, `~/.openclaw/skills/`, `~/.agents/skills/`, or `--dest`)
+   - **Global**: the host default (see README installer table: `~/.claude/skills/`, `~/.cursor/skills/`, `~/.grok/skills/`, `~/.openclaw/skills/`, `~/.agents/skills/`, or `--dest`)
    - **Project**: `./.agents/skills/<skill-name>/`, or the project-local equivalent (`.claude/skills/`, `.grok/skills/`, workspace `skills/` for OpenClaw)
 2. Check for older installations (remove symlinks silently; ask before overwriting directories).
 3. **Copy** the full skill folder contents (`SKILL.md`, `LICENSE`, `references/`, and any `assets/`) to the destination.

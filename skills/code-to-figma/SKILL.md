@@ -1,11 +1,11 @@
 ---
 name: code-to-figma
-description: "Export design tokens and page structure from the codebase into a CI pipeline a Figma plugin can consume. Use when asked to \"sync code to Figma\", \"export design tokens to Figma\", \"set up a Figma sync pipeline\", \"wire up the tokens-sync-to-figma plugin\", \"generate a figma-export.json\", \"create a page walker\", or \"keep Figma up to date with the codebase\"."
+description: "Sync code tokens and page structure to Figma via a CI + Gist pipeline. Use when asked to \"set up a Figma sync pipeline\", \"sync code to Figma\", \"export design tokens to Figma\", \"update the page walker\", or \"wire up the tokens-sync-to-figma plugin\"; when paths include `figma-sync.config.json`, `figma-export.json`, `scripts/tokens-to-figma/`, or `.github/workflows/figma-sync.yml`; or when checking figma-sync Gist or CI status. Not for one-off screen generation inside Figma."
 license: MIT
 compatibility: macOS, Linux, or Windows with Node.js, Git, `jq`, and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.2.1"
+  version: "0.3.0"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 
@@ -55,7 +55,7 @@ Required local checks before relying on CI:
 ```bash
 node scripts/tokens-to-figma/convert-to-dtcg.mjs
 git status --short -- scripts/tokens-to-figma/*.w3c.json
-node scripts/figma-export/walk-<site>.mjs | jq '.sections | length'
+node scripts/figma-export/walk-<site>.mjs | jq -e '.sections | type == "array"'
 ```
 
 Keep the core boundary visible: CI produces `figma-export.json` and `<project>-tokens.w3c.json`; the `tokens-sync-to-figma` plugin consumes those artifacts inside the user-authorized Figma runtime. Do not require a Figma API key in CI.
@@ -66,8 +66,8 @@ Keep the core boundary visible: CI produces `figma-export.json` and `<project>-t
 
 1. Confirm `figma-sync.config.json` exists and the walker path is valid.
 2. Run: `node <walker> > figma-export.tmp.json`
-3. Validate: `jq '.sections | length' figma-export.tmp.json`
-4. Confirm `GIST_TOKEN` is exported or prefix the pusher command with it.
+3. Validate: `jq -e '.sections | type == "array"' figma-export.tmp.json` must exit 0; stop on failure.
+4. Confirm `GIST_TOKEN` is already exported from a secret manager per [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md#4--verify-locally-before-relying-on-ci); never type the PAT on the command line.
 5. Push: `node scripts/tokens-to-figma/push-to-figma.mjs < figma-export.tmp.json`
 6. Delete `figma-export.tmp.json` when done, then report sections and nodes exported and the Gist URL.
 
@@ -106,9 +106,14 @@ Report:
 | Export code tokens and page structure → Figma | This skill |
 | Import a Figma design → code | **`figma-to-code`** skill |
 | Edit Figma variables or components directly | The project's configured Figma write/design workflow (outside this skill) |
+| Generate a one-off screen or design in Figma from code, HTML, or a live page | Figma MCP write tools (`generate_figma_design`, `send_code_to_figma`, `html_to_figma`, `use_figma`) or official skills such as `figma-generate-design` ([Figma MCP tools](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/), checked 2026-10-20) — not this skill |
 | Sync an existing Gist manually | `/code-to-figma sync` |
 
 This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the Figma-side consumer — this skill produces the artifact it reads.
+
+## Behavioral evals
+
+**Authors/reviewers only:** use the [routing catalog](assets/evals/scenarios.json) when explicitly evaluating this skill; skip it during normal task execution. It holds description-only routing prompts with labels withheld from the executing agent; it is not evidence of a passing run. Converter behavior is fixture-tested by `tests/walker-patterns-snippets.test.mjs`.
 
 ## Reference Files
 

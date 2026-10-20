@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "purpose": "Description-only routing catalog for code-to-figma; expected labels are not executed results.",
+  "execution": "Use only the code-to-figma frontmatter. Withhold labels from the executing agent and record false positives and negatives separately. Do not run setup, contact GitHub, or create Gists.",
+  "cases": [
+    {
+      "id": "retrieval",
+      "kind": "description-only-routing",
+      "prompt": "Using only the code-to-figma frontmatter, label each supplied request load or skip. Do not inspect the body or execute workflows.",
+      "prompts": [
+        {
+          "text": "Set up a Figma sync pipeline that exports our design tokens on every push.",
+          "load": true
+        },
+        {
+          "text": "Sync code to Figma now; the scripts and figma-sync.config.json already exist.",
+          "load": true
+        },
+        {
+          "text": "Our token naming changed; update the page walker and DTCG converter.",
+          "load": true
+        },
+        {
+          "text": "Check the status of the figma-export.json Gist and the figma-sync CI run.",
+          "load": true
+        },
+        {
+          "text": "Wire up the tokens-sync-to-figma plugin to our Gist.",
+          "load": true
+        },
+        {
+          "text": "Implement this Figma design in our React app.",
+          "load": false
+        },
+        {
+          "text": "Generate this one landing page as a Figma design from our live site.",
+          "load": false
+        },
+        {
+          "text": "Extract Figma variables into our code tokens.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "Withhold expected labels; record false positives and negatives separately.",
+        "Figma-to-code direction routes to figma-to-code; one-off screen generation in Figma routes to the Figma MCP write tools or skills."
+      ]
+    }
+  ]
+}

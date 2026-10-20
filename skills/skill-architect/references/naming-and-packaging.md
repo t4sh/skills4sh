@@ -45,11 +45,12 @@ Then run:
 ```bash
 npm run check:skill-standard
 npm run check:drift
+npm run check:guardskills
 node bin/hash-check.mjs
 npm test
 ```
 
-Run guardskills when adding scripts, shell snippets, env references, network workflows, or security-sensitive guidance.
+This is the canonical `skills4sh` check list; `SKILL.md` links here instead of repeating it. `check:guardskills` matters most when changes add scripts, shell snippets, env references, network workflows, or security-sensitive guidance.
 
 ## Version policy
 

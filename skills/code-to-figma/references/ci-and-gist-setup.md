@@ -61,6 +61,7 @@ on:
       - 'apps/<site>/**'          # ← adapt to where the site lives
       - 'packages/tokens/**'
       - 'scripts/figma-export/**'
+      - 'scripts/tokens-to-figma/**'
       - '.github/workflows/figma-sync.yml'
 
 concurrency:
@@ -127,12 +128,16 @@ jobs:
 # Build the site first
 pnpm build   # or equivalent
 
-# Run the walker
-node scripts/figma-export/walk-<site>.mjs | jq '.sections | length'
+# Run the walker; jq -e exits non-zero when sections is missing or not an array
+node scripts/figma-export/walk-<site>.mjs | jq -e '.sections | type == "array"'
+
+# Load the PAT from a secure secret manager into the environment; never type it
+# on the command line. Replace the placeholder with your manager's read command.
+export GIST_TOKEN="$(<secret-manager-read-command>)"
 
 # Push manually. The pusher reads gistId from figma-sync.config.json by default.
-node scripts/figma-export/walk-<site>.mjs \
-  | GIST_TOKEN=<your-pat> node scripts/tokens-to-figma/push-to-figma.mjs
+node scripts/figma-export/walk-<site>.mjs | node scripts/tokens-to-figma/push-to-figma.mjs
+unset GIST_TOKEN
 ```
 
 ---
