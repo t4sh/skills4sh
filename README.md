@@ -61,6 +61,14 @@ For a global install targeting Codex:
 npx skills@latest add t4sh/skills4sh --skill agent-memory --copy -g -a codex
 ```
 
+To try an unreleased branch, pass the ref after `#`. The skills CLI records it as `ref` in its lock entry:
+
+```bash
+npx skills@latest add 't4sh/skills4sh#<branch>' --skill agent-memory --copy -g -a codex
+```
+
+Use the `#ref` form for branch names that contain `/`, such as `fix/my-change`; a `github.com/.../tree/<branch>` URL treats everything after the first `/` as a path. Reinstall from `t4sh/skills4sh` without a ref to return to released content after the branch merges.
+
 Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`, `openclaw`, or `github-copilot`. The [skills CLI supported-agents table](https://github.com/vercel-labs/skills#supported-agents) lists current `--agent` values and paths. Reload or restart as required by the host.
 
 | Runtime | `--agent` | Project root | Global root |
