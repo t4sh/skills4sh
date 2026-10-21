@@ -273,5 +273,5 @@ For specific levels:
 | Variable shows in `dump` but is `undefined` in template | Typo or shadow at a higher level | Re-grep for the key name |
 | `_data/*.js` value is the function definition, not the value | `module.exports = function() {…}` — Eleventy calls it; calling `require()` on it from another `_data/*.js` returns the function itself, not the result | Import the JSON file instead, or call the function explicitly |
 | `eleventyComputed` value is `[object Object]` | Returning an object from a string-typed Nunjucks expression | Use a JS function: `eleventyComputed: { x: (data) => ({…}) }` |
-| Directory data not applying | File named `<dir>-data.json` instead of `<dir>.json` (or `_dir.json`) | Match the dir basename exactly: `blog/blog.json` |
+| Directory data not applying | File named `<dir>-data.json` instead of `<dir>.json` | Match the dir basename exactly: `blog/blog.json` |
 | `layout:` frontmatter not honored | A higher-priority template or directory data source overrides layout frontmatter/global data | Trace each source in the official priority order |

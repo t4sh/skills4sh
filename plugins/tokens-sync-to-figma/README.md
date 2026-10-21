@@ -51,9 +51,7 @@ Freshness is surfaced, not assumed: on open, the plugin reports how old the mirr
 | A mode named **`Light`** (or any first mode) | Used to resolve fallback colors/fonts when a binding can't be applied. |
 | Variable names that match the token paths in `figma-export.json` | Lookup is by exact name; unmatched tokens fall back to a neutral default. |
 
-The collection and variables are **not created by the plugin** — generate them from the same code tokens (e.g. a Variables import step) so both sides share one naming scheme.
-
-> **v1 scope note.** Creating the variable collection is a one-time prerequisite you handle separately in v1. In v1.1 the Gist will carry a `tokens` section (W3C DTCG format) alongside `sections`, and the plugin will create or update the collection automatically on every sync — eliminating this prerequisite entirely. That work is paired with a companion `code-to-figma` skill that does the intelligent extraction on the code side and populates both halves of the Gist.
+The plugin **does not create or update variables.** It reads only the `sections` (and `meta`) of `figma-export.json` from the Gist and binds each `*Token` field to a local variable that already exists with that exact name. Creating the `Design Tokens` collection is a one-time prerequisite; repeat it only when tokens are added, renamed, or removed. Build it from the same code tokens (the `code-to-figma` skill commits a W3C DTCG `<project>-tokens.w3c.json` for this) so both sides share one naming scheme. The manual steps and an optional one-time agent path through the official Figma `figma-use` skill are in [`ci-and-gist-setup.md`](../../skills/code-to-figma/references/ci-and-gist-setup.md#prerequisite-design-tokens-variable-collection).
 
 ## `figma-export.json` contract
 
@@ -99,10 +97,12 @@ The plugin does not care *how* the export is produced — only that the `{ meta,
 
 The Gist's **raw** URL is what a designer pastes once into the plugin. After the first paste the URL and the preview-mode choice are remembered, so each subsequent refresh is a single click.
 
-## Install (local / unpublished)
+## Install (development import only)
 
-1. Figma → **Plugins → Development → Import plugin from manifest…**
-2. Select `plugins/tokens-sync-to-figma/manifest.json`.
+The plugin is **not published to the Figma Community**. Install it as a development plugin from a local clone of this repository:
+
+1. In the Figma desktop app → **Plugins → Development → Import plugin from manifest…**
+2. Select `plugins/tokens-sync-to-figma/manifest.json` in your clone.
 3. Run **Tokens sync to Figma**, paste the Gist raw URL, click **Sync from CI**.
 
 ## Manifest access

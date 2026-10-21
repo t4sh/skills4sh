@@ -23,16 +23,24 @@ Sanitize names: lowercase, replace spaces/special chars with hyphens, strip trai
 └── manifest.json    # Machine-readable summary (updated each run)
 ```
 
+## Host Notes
+
+Apply only on the named host; never search for these paths elsewhere.
+
+- **Craft:** Never save into the workspace `sources/` configuration directory (it holds MCP/API configs, not user data). When no output path was supplied and the host exposes a Sources tree, use its single Local Folder entry, or ask the user to choose among multiple entries.
+
 ## Repeat Run Behavior (append mode)
 
 If the folder already exists from a previous run:
 - **images/ and files/**: Follow the [collision and repeat-run policy](code-examples.md#collision-and-repeat-run-policy): skip byte-identical content among the original and suffixed names; preserve different content under a free suffix. Name or size equality alone is not duplication.
-- **links.md**: **Append** a new dated section at the bottom. Do NOT overwrite existing content. Use `>>` (append) not `>` (overwrite) when writing, or read-then-append with the Write tool.
+- **links.md**: **Append** a new dated section at the bottom. Do NOT overwrite existing content. Use `>>` (append) not `>` (overwrite) when writing, or read the existing file and write it back with the new section appended.
 - **manifest.json**: Read existing manifest, merge new entries with the actual destination names, and update totals and run timestamps. Keep existing entries and do not append duplicate asset records for skipped files.
 
 ## links.md Format
 
 **Every link gets an entry.** On repeat runs, append a new section with a date header. An OG image may be downloaded only from a validated Discord-CDN URL already supplied in the message embed. Never fetch the linked third-party page or its host to discover an image. Record an absent or off-allowlist image as not downloaded.
+
+Other people's content: archive only what the user may keep, record authors only when the user needs attribution (the `Found in message by @username` line is optional), and omit authors on request. Do not copy message text into the archive. Leave retention and deletion of the archive to the user, and mention that it contains other participants' files.
 
 ```markdown
 # Links from discord-dm-john-smith

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "purpose": "Behavior scenarios for the existing skill contract, not executed evidence or a mandatory benchmark.",
-  "execution": "Materialize each files map in a fresh isolated directory, preserving relative paths. Run from that directory with only the case prompt, fixture files, and the skill under evaluation plus relevant references/helpers available. Resolve helper paths from that skill, never from temporary report paths. Python helpers require Python >=3.10; validator/inspector additionally use the version-and-hash-pinned assets/scripts/requirements.txt in an isolated environment. Prefer the bundled assets/scripts/run_uv.py with run --isolated --no-project --no-build --no-config --with-requirements python -E for each helper so inherited UV_* settings are removed; when uv is unavailable or cannot prepare isolation, use a temporary virtual environment, pip --isolated install --require-hashes, and python -E. Never install validation dependencies into global Python. Isolated helper-requirement installs are allowed; do not install anything else, access external services, commit, or release during cases. Pre-provision dependency caches when the case environment has no package-index access. Report a helper unavailable only after both supported isolated runners are unavailable or fail before producing helper output. Withhold expected/assertions and all other cases/results from the executing agent. Record starting/final hashes, actions, artifacts, runtime and grading separately. Routing cases use frontmatter only and make no edits. Repeat runs require fresh fixture copies; no benchmark or reliability claim is implied.",
+  "execution": "Materialize each files map in a fresh isolated directory, preserving relative paths. Run from that directory with only the case prompt, fixture files, and the skill under evaluation plus relevant references/helpers available. Resolve helper paths from that skill, never from temporary report paths. Python helpers require Python >=3.10; validator/inspector additionally use the version-and-hash-pinned assets/scripts/requirements.txt in an isolated environment. Prefer the bundled assets/scripts/run_uv.py with run --isolated --no-project --no-build --no-config --with-requirements python -E -B for each helper so inherited UV_* settings are removed; when uv is unavailable or cannot prepare isolation, use a temporary virtual environment, pip --isolated install --require-hashes, and python -E -B. Never install validation dependencies into global Python. Isolated helper-requirement installs are allowed; do not install anything else, access external services, commit, or release during cases. Pre-provision dependency caches when the case environment has no package-index access. Report a helper unavailable only after both supported isolated runners are unavailable or fail before producing helper output. Withhold expected/assertions and all other cases/results from the executing agent. Record starting/final hashes, actions, artifacts, runtime and grading separately. Routing cases use frontmatter only and make no edits. Repeat runs require fresh fixture copies; no benchmark or reliability claim is implied.",
   "cases": [
     {
       "id": "plan",
@@ -46,6 +46,24 @@
         "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
         "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRead invoice.csv with columns id,amount. Sum decimal amounts, report count and total; reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n\nSee [columns](references/columns.md).\n",
         "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n"
+      }
+    },
+    {
+      "id": "audit-helper",
+      "prompt": "Audit skills/report-helper, including its bundled helper script, against this repository policy and requirements.md. Report source-cited findings only; do not edit skill files or invoice.csv.",
+      "assertions": [
+        "Executes assets/scripts/total.py against invoice.csv and at least one malformed-amount fixture created outside the inputs (for example an amount of 10.25x), or gives an explicit skipped-risk note naming the unrun command.",
+        "Reports each run as the exact command plus observed output, and flags that the unanchored AMOUNT regex (re.match without an end anchor) reports count=2 total=30.50 for malformed input, violating requirements.md.",
+        "Does not vouch for the helper from reading alone and does not edit the skill or invoice.csv."
+      ],
+      "kind": "workflow",
+      "files": {
+        "AGENTS.md": "# Evaluation project\nSkills live in skills/<name>/SKILL.md with LICENSE. Frontmatter name, description and license are required here; metadata and vendor adapters are optional. Preserve existing files unless the case authorizes edits. No network, global or project installs, Git operations or releases. Isolated helper-requirement installs for validation/inspection are allowed. Input CSVs are immutable. Use supplied project requirements; do not invent schema or business rules.\n",
+        "requirements.md": "# Invoice reconciliation requirements\nInput is UTF-8 invoice.csv with id,amount columns. Amounts are decimal numbers: use exact decimal arithmetic, not binary floating point. Reject missing required columns and invalid amounts; never report a successful total for malformed input. Output count and total, preserving input bytes. For the supplied sample, count is 2 and total is 30.50. No network or credentials are needed.\n",
+        "invoice.csv": "id,amount\na,10.25\nb,20.25\n",
+        "skills/report-helper/LICENSE": "MIT License\n\nCopyright (c) 2026 t4sh\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software and associated documentation files (the \"Software\"), to deal\nin the Software without restriction, including without limitation the rights\nto use, copy, modify, merge, publish, distribute, sublicense, and/or sell\ncopies of the Software, and to permit persons to whom the Software is\nfurnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\nFITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\nAUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\nLIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\nOUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\nSOFTWARE.\n",
+        "skills/report-helper/SKILL.md": "---\nname: report-helper\ndescription: Reconcile invoice totals. Use when checking invoice.csv or reviewing invoice totals.\nlicense: MIT\n---\n\n# Report helper\n\nRun [the totals helper](assets/scripts/total.py) with `python3 assets/scripts/total.py invoice.csv`. It reads columns id,amount, sums exact decimal amounts, and reports count and total; it must reject missing columns or invalid amounts. Do not change inputs.\n\n## Verification\n\nFor the supplied invoice.csv, report count 2 and total 30.50.\n",
+        "skills/report-helper/assets/scripts/total.py": "#!/usr/bin/env python3\n\"\"\"Print count and exact decimal total for an invoice CSV with id,amount columns.\"\"\"\nimport csv\nimport re\nimport sys\nfrom decimal import Decimal\n\nAMOUNT = re.compile(r\"-?\\d+\\.\\d{2}\")\n\n\ndef main(path: str) -> int:\n    with open(path, newline=\"\", encoding=\"utf-8\") as fh:\n        rows = list(csv.DictReader(fh))\n    total = Decimal(\"0\")\n    for row in rows:\n        match = AMOUNT.match(row[\"amount\"])\n        if not match:\n            print(f\"invalid amount: {row['amount']!r}\", file=sys.stderr)\n            return 1\n        total += Decimal(match.group(0))\n    print(f\"count={len(rows)} total={total}\")\n    return 0\n\n\nif __name__ == \"__main__\":\n    raise SystemExit(main(sys.argv[1]))\n"
       }
     },
     {
@@ -160,6 +178,30 @@
       "prompt": "Improve the visual design of a dashboard that lists employee skills.",
       "assertions": [
         "Does not treat ordinary employee skills as agent-skill authoring."
+      ],
+      "kind": "description-only-routing",
+      "files": {}
+    },
+    {
+      "id": "named-skill-near-miss",
+      "prompt": "Using only skill frontmatter and the rule that an explicitly named skill wins over keyword matches, decide load/skip for each request.",
+      "prompts": [
+        {
+          "text": "Use skill-creator to scaffold a new deploy-checklist skill.",
+          "load": false
+        },
+        {
+          "text": "Use the official skill-creator to package my skill for Codex.",
+          "load": false
+        },
+        {
+          "text": "Compare our skill rubric with the official skill-creator eval guidance.",
+          "load": true
+        }
+      ],
+      "assertions": [
+        "Skips skill-architect when the request explicitly names skill-creator as the skill to run; the named skill wins over the description's skill-creator mention cue.",
+        "Loads skill-architect when skill-creator is only the subject of comparison, reconciliation, or rubric review rather than the requested executor."
       ],
       "kind": "description-only-routing",
       "files": {}

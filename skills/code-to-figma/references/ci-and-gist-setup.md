@@ -61,6 +61,7 @@ on:
       - 'apps/<site>/**'          # ← adapt to where the site lives
       - 'packages/tokens/**'
       - 'scripts/figma-export/**'
+      - 'scripts/tokens-to-figma/**'
       - '.github/workflows/figma-sync.yml'
 
 concurrency:
@@ -127,19 +128,23 @@ jobs:
 # Build the site first
 pnpm build   # or equivalent
 
-# Run the walker
-node scripts/figma-export/walk-<site>.mjs | jq '.sections | length'
+# Run the walker; jq -e exits non-zero when sections is missing or not an array
+node scripts/figma-export/walk-<site>.mjs | jq -e '.sections | type == "array"'
+
+# Load the PAT from a secure secret manager into the environment; never type it
+# on the command line. Replace the placeholder with your manager's read command.
+export GIST_TOKEN="$(<secret-manager-read-command>)"
 
 # Push manually. The pusher reads gistId from figma-sync.config.json by default.
-node scripts/figma-export/walk-<site>.mjs \
-  | GIST_TOKEN=<your-pat> node scripts/tokens-to-figma/push-to-figma.mjs
+node scripts/figma-export/walk-<site>.mjs | node scripts/tokens-to-figma/push-to-figma.mjs
+unset GIST_TOKEN
 ```
 
 ---
 
 ## 5 — Connect the Figma plugin
 
-1. In Figma: **Plugins → Development → Import plugin from manifest** → select `plugins/tokens-sync-to-figma/manifest.json` from a local clone of [skills4sh](https://github.com/t4sh/skills4sh), **or** install from the Figma Community once published.
+1. In the Figma desktop app: **Plugins → Development → Import plugin from manifest** → select `plugins/tokens-sync-to-figma/manifest.json` from a local clone of [skills4sh](https://github.com/t4sh/skills4sh). The plugin is not published to the Figma Community; a development import from the repo clone is the only install path.
 2. Run **Tokens sync to Figma**.
 3. Paste the Gist raw URL and click **Sync from CI**.
 
@@ -150,11 +155,34 @@ https://gist.githubusercontent.com/<user>/<gist-id>/raw/figma-export.json
 
 The plugin remembers the URL after the first paste.
 
-### Prerequisite: `Design Tokens` variable collection (v1)
+### Prerequisite: Design Tokens variable collection
 
-In v1 the plugin requires a pre-existing Figma variable collection named **`Design Tokens`** with a **`Light`** mode. Variable names must match the `*Token` paths in `figma-export.json` exactly.
+The plugin does not create or update Figma variables. It fetches only `figma-export.json` (`meta` + `sections`), looks up variables by exact token-path name across all local collections, and gets the **`Light`** mode (or first mode) from **`Design Tokens`**. This global name lookup means exported token names must not collide with another local collection; inspect all collections and stop on a collision before running the plugin. Unmatched tokens fall back to neutral defaults (grey / Inter / 14px).
 
-Generate the collection from the same conforming `.w3c.json` source so both sides share one naming scheme. The bundled plugin currently consumes the existing section/variable contract; it does **not** yet create variables from the DTCG artifact. Treat direct DTCG-to-Figma-variable creation as unsupported until the plugin implements and tests that behavior—do not promise a future version or silently ignore the token tree.
+Creating that collection is a one-time prerequisite; maintaining its values is recurring work. Reconcile it whenever token values, aliases, names, types, or membership change. The plugin does not import the DTCG artifact or apply those changes. Build and maintain the collection from the committed `<project>-tokens.w3c.json` so both sides share one naming scheme.
+
+Token type mapping when creating variables: DTCG `color` → COLOR; `dimension`, `number`, `fontWeight`, `duration` → FLOAT (px or unitless value); `fontFamily` → STRING (first family in the stack). Use the slash-delimited token path as the variable name.
+
+Convert structured values explicitly: sRGB color components and alpha become Figma color channels; dimensions in `px` retain their numeric value, while `rem` needs the inspected project's root font size (never silently assume 16). If that size is responsive, report that a single FLOAT cannot represent all viewports and agree on the target. Convert durations to one documented unit, and resolve keyword font weights through an explicit numeric mapping (for example `normal` → 400, `bold` → 700). Resolve aliases only after validating target existence, acyclicity, and matching types; preserve same-type Figma variable aliases when the consuming property supports them. The current plugin reads font-family values as literal strings, so resolve DTCG fontFamily aliases to their terminal first-family string in Figma, retaining the alias in the DTCG source and recomputing that literal when its source changes. Stop on unsupported color spaces, ambiguous units/weights, or missing alias targets rather than inventing a value.
+
+**Manual path (always available).** In the target Figma file, open the Variables panel, create a collection named `Design Tokens`, rename its first mode to `Light`, and add one variable per token from the `.w3c.json` using the mapping above. A Variables import plugin the team already trusts is equivalent if it preserves the exact names.
+
+**Optional agent path (one-time, via the official Figma MCP).** When the user's agent session has the Figma MCP server connected and the `use_figma` tool is available to them, an agent can create the collection once from the `.w3c.json`. Figma documents `use_figma` as a remote-server tool for writing to Figma files, including variables ([Figma MCP tools and prompts](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/), checked 2026-10-21). Availability depends on the user's Figma plan, seat, and MCP client; this guide does not verify it, so check the tool list before offering this path.
+
+1. Load the official [`figma-use`](https://github.com/figma/mcp-server-guide/tree/main/skills/figma-use) skill before any `use_figma` call (checked 2026-10-21). For a reusable variable collection it directs agents to also load `figma-generate-library`.
+2. Run a read-only `use_figma` call that lists local variable collections. If `Design Tokens` already exists, stop and ask whether to update it; never create a duplicate collection.
+3. With the user's approval for the write, create `Design Tokens`, rename the default mode to `Light`, and create one variable per `.w3c.json` token with the mapping above and explicit `scopes` (`figma-use` requires setting them rather than keeping the default `ALL_SCOPES`). Return the collection ID, mode name, and variable count.
+4. Read back the collection and compare names, types, alias targets, and converted `Light` values with the `.w3c.json`; a matching count alone does not prove parity. Then run **Sync from CI** and inspect the expected text, colors, and typography, including fallback fonts or values.
+
+### Reconcile the collection on every token change
+
+1. Regenerate the DTCG artifact from the current build; compare it with the previously reviewed artifact and, when accessible, the target collection's current readback. Include **changed values and aliases under unchanged names**, not only additions/removals. Inspect all local collections for collisions with exported token-path names; stop and report ambiguous names before running the plugin. If the previous artifact, collection readback, or collision inventory is unavailable, mark the comparison incomplete.
+2. Prepare a delta table: token path, expected Figma type, previous value/alias, new converted value/alias, and action (`keep`, `add`, `update`, `rename`, `remove`). Use the conversion rules above. A plugin-consumed `fontFamilyToken` with a STRING alias must be listed as `update` to the resolved literal family, even when the source DTCG alias is valid; it cannot remain `keep`. Preserve variable IDs for value updates so existing bindings survive; don't delete and recreate the whole collection. A rename or removal needs a binding-impact decision, and must not silently delete in-use variables.
+3. For an authorized Figma write, use the available official Figma workflow to apply only the approved collection changes. If the user requested pipeline/export work only, or the required tools/permissions are absent, provide the delta for manual update instead. Manual maintenance uses the Variables panel or an already trusted import workflow; ask the user to confirm the resulting values or supply a readback.
+4. Verify the collection by reading back names, types, `Light` values, and aliases, including unchanged-name tokens whose values changed. Run the plugin against the newly uploaded export and inspect representative affected nodes: bound variable IDs must belong to the intended collection, and the actual font family must match the resolved literal. No grey fallback is insufficient: an old valid color can bind successfully and still be wrong.
+5. Report two statuses independently: **export uploaded** (validated Gist payload) and **Figma token parity verified/unverified** (collection comparison and rendered result). List pending deltas and unavailable checks. Never report the full sync complete from a successful Gist PATCH alone.
+
+CI automates the export and Gist update. Collection maintenance and the designer-run plugin step remain separate; they may need the user's manual action or an authorized agent session.
 
 ---
 

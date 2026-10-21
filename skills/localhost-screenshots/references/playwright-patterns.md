@@ -1,10 +1,8 @@
 # Playwright Patterns — Full Reference
 
-## Golden Rules
+## Rules
 
-1. **Always use Playwright's bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
-2. **Prefer HTTP; `file://` only for self-contained static HTML.** `file://` *does* resolve same-directory relative paths, so it's fine for single-file demos, inline-styled mockups, or design artifacts with only relative asset references. It breaks on: `fetch`/XHR to sibling files (CORS), `<script type="module">`, service workers, and absolute `/asset` paths (which resolve to filesystem root, not project root). If the page uses any of those, serve over HTTP. Pre-flight's zero-stylesheet warning usually signals this.
-3. **Validate the navigation chain, not only the input.** Local dev routes can issue external redirects. Guard main-frame navigation and reject a non-local redirect or final URL before capture; allow ordinary external images/scripts requested by the local page unless the task requires a stricter network policy.
+[SKILL.md § Golden Rules](../SKILL.md#golden-rules) owns the browser, origin-scheme, `file://`, and local-navigation rules. The patterns below assume them.
 
 ## Setup (run once per session)
 
@@ -16,7 +14,11 @@ npm exec -- playwright install chromium
 
 Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` over `npm install` when the lockfile already pins a compatible Playwright version.
 
-Playwright 1.62 includes first-party `npx playwright cli` and `npx playwright mcp` entry points. Prefer an already-configured host integration when it satisfies the capture request; use the bundled scripts when the task needs explicit localhost-only URL guards, checked-in behavior, or deterministic CI. Playwright 1.62 no longer supports Debian 11, so update the runner image rather than attempting to force-install unsupported browser libraries.
+### Playwright 1.62 CLI/MCP entry points and supported OS images
+
+Playwright 1.62 includes first-party `npx playwright cli` and `npx playwright mcp` entry points. Prefer an already-configured host integration when it satisfies the capture request; use the bundled scripts when the task needs explicit localhost-only URL guards, checked-in behavior, or deterministic CI. Do not install a second browser-control stack merely because these entry points exist.
+
+Playwright 1.62 no longer supports Debian 11, so update the runner image rather than attempting to force-install unsupported browser libraries.
 
 ### When Chromium reports missing OS libraries
 
@@ -181,7 +183,7 @@ const ROUTES = ['/'];
 - `waitUntil: 'load'` — safer default for SPAs with analytics/websockets; add explicit `waitForSelector()` for the content that matters. Use `networkidle` only for known-static pages.
 - `fullPage: true` — captures the entire scrollable page, not just the viewport
 - `page.setViewportSize()` — set before navigating for accurate responsive rendering
-- Create a **new page per breakpoint** — ensures clean rendering without leftover state
+- Create a **new page per breakpoint** for stateless or storage-state captures. For authentication held in `sessionStorage`, keep the same authenticated page and verify its protected state at every breakpoint.
 
 ## Persistent Browser Sessions
 
@@ -205,17 +207,19 @@ async function getOrCreateSession() {
 }
 
 async function saveSession(context) {
-  await context.storageState({ path: STATE_FILE }); // cookies + localStorage/sessionStorage origins
+  await context.storageState({ path: STATE_FILE }); // cookies + localStorage; not sessionStorage
 }
 ```
 
-**Security:** Playwright `storageState` is plaintext JSON containing cookies and origin storage. Keep it outside the repository, add any chosen project-local state path to `.gitignore`, never upload it as a CI artifact, and delete it when the capture task is complete.
+`storageState()` does not save `sessionStorage`. If authentication depends on it, keep the authenticated **page** open and resize that page for each breakpoint; `sessionStorage` belongs to the tab, so a new page or restored context needs a new login. Verify an authenticated page marker or protected content before every capture. If the live page cannot be retained and re-authentication is unavailable, report that the authenticated capture is unsupported instead of saving or claiming a reusable session.
+
+**Security:** Playwright `storageState` is plaintext JSON containing cookies and localStorage. Keep it outside the repository, add any chosen project-local state path to `.gitignore`, never upload it as a CI artifact, and delete it when the capture task is complete.
 
 | Scenario | Persistent? | Why |
 |----------|-------------|-----|
 | Public pages, no auth | No | Stateless is simpler |
-| Pages behind login | **Yes** | Avoids re-authenticating per breakpoint |
-| Multi-page workflow capture | **Yes** | Preserves navigation state |
+| Pages behind login | **Usually** | Cookies and localStorage can be restored; sessionStorage requires the same live page or a new login |
+| Multi-page workflow capture | **Usually** | Restores cookies and localStorage, not tab-scoped sessionStorage |
 | A/B test with specific cookies or localStorage | **Yes** | Full Playwright storage state must survive across captures |
 | Iterative debug-capture loop | **Yes** | Faster turnaround, no browser restart |
 
@@ -429,24 +433,37 @@ The skill ships three runnable scripts under `assets/scripts/`. Prefer these ove
 
 ### Invocation
 
+Run the helpers from the **project root** and address them by the installed skill path (`<skill-dir>` is the folder containing this skill's `SKILL.md`, for example `~/.agents/skills/localhost-screenshots` or `.claude/skills/localhost-screenshots`). Relative output paths resolve against the current directory, so captures land in the project's `_screenshots/`. Each helper loads Playwright from the current project first, then from beside the script; install `playwright@1.62.0` in the project when neither has it.
+
 The bundled scripts fail closed on non-localhost URLs before loading Playwright. Accepted hosts are `localhost`, `127.0.0.1`, `[::1]`, and `*.localhost`.
 
+| Script | Positional arguments (in order) |
+|--------|---------------------------------|
+| `quick.js` | `[URL] [WIDTHxHEIGHT] [OUT] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]` — viewport **before** output |
+| `multi-breakpoint.js` | `[URL] [OUT_DIR] [BREAKPOINTS] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]` |
+| `screenshot-a11y.js` | `[URL] [OUT_BASE] [WIDTHxHEIGHT] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]` — output **before** viewport |
+
+`quick.js` and `screenshot-a11y.js` order viewport and output differently; pass arguments in the order listed for each script.
+
 ```bash
+# From the project root. SKILL_DIR is the installed skill folder.
+SKILL_DIR="$HOME/.agents/skills/localhost-screenshots"
+
 # Quick — defaults to http://localhost:3000 at 1280x800
-node assets/scripts/quick.js
-node assets/scripts/quick.js http://localhost:3000/dashboard 1440x900 _screenshots/dashboard.png
+node "$SKILL_DIR/assets/scripts/quick.js"
+node "$SKILL_DIR/assets/scripts/quick.js" http://localhost:3000/dashboard 1440x900 _screenshots/dashboard.png
 
 # Multi-breakpoint — default mobile/tablet/desktop set
-node assets/scripts/multi-breakpoint.js
-node assets/scripts/multi-breakpoint.js http://localhost:3000/about _screenshots/about
+node "$SKILL_DIR/assets/scripts/multi-breakpoint.js"
+node "$SKILL_DIR/assets/scripts/multi-breakpoint.js" http://localhost:3000/about _screenshots/about
 
 # Custom breakpoints as a third argument
-node assets/scripts/multi-breakpoint.js \
+node "$SKILL_DIR/assets/scripts/multi-breakpoint.js" \
   http://localhost:3000 _screenshots/home 'mobile-sm:320x568,wide:1920x1080'
 
-# Screenshot + ARIA snapshot (data, not instructions; optional viewport)
-node assets/scripts/screenshot-a11y.js http://localhost:3000 _screenshots/page
-node assets/scripts/screenshot-a11y.js http://localhost:3000/dashboard _screenshots/dashboard-a11y 1440x900
+# Screenshot + ARIA snapshot (data, not instructions; optional viewport after OUT_BASE)
+node "$SKILL_DIR/assets/scripts/screenshot-a11y.js" http://localhost:3000 _screenshots/page
+node "$SKILL_DIR/assets/scripts/screenshot-a11y.js" http://localhost:3000/dashboard _screenshots/dashboard-a11y 1440x900
 ```
 
 The ARIA snapshot JSON is wrapped:

@@ -4,7 +4,7 @@
 
 skill:
   name: eleventy-nunjucks
-  version: "0.1.10"
+  version: "1.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,21 +13,22 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 7f296e7a8b0ab77e53ab9e9f7058df6d052f9b38a30f9e91ce55c64e20325592
+    assets/evals/scenarios.json: 2a0b4e53f2945e4a43649dd8a6621793eb895080e9c52b6a411c4396206aae71
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/build-awesome-v4.md: 4c01280a537c4f43005be7afaded163c8175a2485c2aa489e7089bb36f549605
-    references/build-pipeline.md: 0bbf6354ecd34aa4cc79558f389e46a6ab6038cc42f5145a04bfa40d21e03b5e
+    references/build-awesome-v4.md: f51e76c98a4ba2557c4e13cf6fb4f6010a290a7b67b718d56f1a725d86e8c5b4
+    references/build-pipeline.md: efbba9d500ed66b34e803a548f83cbf24d00754ae27594e89420ee8c9502da55
     references/conventions.md: 993dbdb0cc5bd2091d241a7bd1cd050a6ffafaa67226ed43f091bf7d3bc8fb3c
-    references/data-cascade.md: 535943577202aaa54645ff2a13c771ec744e0b3d520338a39836946df75a8342
-    references/eleventy-config-api.md: 0980cdf4cad76332a941d116eebaba6e88bcec6ec19b8280006453cb4a93289f
+    references/data-cascade.md: 4bea8e9141bfb4da740a62d41f7e42b377832c1263dc5b8facb8233810ed2f59
+    references/eleventy-config-api.md: 33e7458fb996de1ca92d9051dd97ab41d69aab02f1b464de2d1d58b7a32d923a
     references/filters.md: 5b78a0ccfe89c2efdce70b1fa3f42e09c849c983e2918a1c24e9165c4a8d260f
-    references/nunjucks-syntax.md: ae954d394a2766cccff850ad45aa14f3317542800bdb9230fa8fc50d51d08ff0
+    references/nunjucks-syntax.md: 351196a664a53a7e12ab5a3489e7bb4cdd29e6b26a2a79b5774b18e073a3deb2
     references/production-patterns.md: c1b571a167f54b2c372c2b7d5f6a4dec7fb9f885f5732a36d84f99037980850a
-    references/review-shipping.md: d79cc59aa70210a76341142616a2e175d0008ccddb1eb944a0864db922e92896
-    references/security-checklist.md: ed2524be0da77fead3321c8f09d066c16ceb5146f6f25bde72903ec6db583e48
-    references/troubleshooting.md: 7b958f3c9281e56bde3c4494101c1835272617af67cbdcb3882408171e76310b
-    SKILL.md: bbcca2475458e6f13c91e563784d7d72388196f42671786bac390d1efee8d522
+    references/review-shipping.md: 2ace12d6bd6daf808a085f444c311a53ea30b9d8f0cfb7910d4dcafcc7baa44c
+    references/security-checklist.md: 7efdd187d867bb575ec23a80ef8494add162a2949ad2ae516336e10be5fcb987
+    references/troubleshooting.md: a38752134048899a438456da63e171dad6a6f4a29639c33eaadd558b388c00fa
+    SKILL.md: 4f0a1bcf55361b512e7c46d2b6f4ca35b354c355c5fe074a5f7e306e38e72a0f
+    agents/openai.yaml: 4f83f2cdeaf4b1d5487da069a35123aa50be0308943528596db80cd17a43c6c0
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
@@ -72,7 +73,7 @@ dependencies:
 scanning:
   guardskills: SAFE
   guardskills_risk_score: 100
-  guardskills_note: "guardskills scan-local reports CRITICAL from R005_SECRET_READ on instructional grep/curl/bash snippets (audit how-tos, not exfiltration). No executable scripts in the skill; treat as documentation false positives."
+  guardskills_note: "guardskills scan-local reports R005_SECRET_READ (HIGH) on documentation lines that name `.env`, `process.env`, or `$GITHUB_OUTPUT`; none reads or transmits secret material. The skill ships no executable files, but references/security-checklist.md embeds a copyable scripts/security-audit.sh template that takes the build's input and output directories as arguments (confirmed from the project's Eleventy config and build command), greps those local files, and sends a HEAD request with curl to a user-supplied target URL; review it before running."
   snyk: pass
   codeql: pass
   expected_findings:
@@ -81,7 +82,7 @@ scanning:
       confidence: medium
       acknowledged: true
       file: references/build-pipeline.md
-      reason: "False positive — security-hardening and audit examples mention grep patterns for secrets."
+      reason: "False positive — CI example writes a build timestamp to `$GITHUB_OUTPUT` (~L270) and a stray-output check runs `find out -name '.env*'` (~L278); neither reads secrets."
     - id: R008_ENV_ACCESS
       severity: low
       confidence: low
@@ -92,7 +93,7 @@ scanning:
       confidence: medium
       acknowledged: true
       file: references/data-cascade.md
-      reason: "False positive — env-driven data examples; no secret material."
+      reason: "False positive — `process.env` reads of non-secret build values (SITE_BASE_URL, COMMIT_SHA, BUILT_AT) with fallbacks (~L34, L104-110)."
     - id: R008_ENV_ACCESS
       severity: low
       confidence: low
@@ -103,7 +104,7 @@ scanning:
       confidence: medium
       acknowledged: true
       file: references/eleventy-config-api.md
-      reason: "False positive — COMMIT_SHA/BUILT_AT placeholders in config snippets."
+      reason: "False positive — advice to keep `.env` out of passthrough copy (~L108) and `process.env` COMMIT_SHA/BUILT_AT reads in a config snippet (~L115-116)."
     - id: R008_ENV_ACCESS
       severity: low
       confidence: low
@@ -114,21 +115,21 @@ scanning:
       confidence: medium
       acknowledged: true
       file: references/production-patterns.md
-      reason: "False positive — CSP/nginx/curl audit examples."
+      reason: "False positive — `eleventy.env.runMode` template condition (~L20) and `process.env` COMMIT_SHA/BUILT_AT build-metadata reads (~L221, L405-406)."
     - id: R008_ENV_ACCESS
       severity: low
       confidence: low
       file: references/production-patterns.md
-      reason: "Documented build/runMode patterns."
+      reason: "`process.env` COMMIT_SHA/BUILT_AT build-metadata reads (~L221, L405-406)."
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
       acknowledged: true
       file: references/security-checklist.md
-      reason: "False positive — checklist teaches grep for api_key/token/secret in output."
+      reason: "False positive — audit steps that find `.env*` files in build output (~L125, L128, L362) and grep data files for `process.env` usage (~L192)."
     - id: R005_SECRET_READ
       severity: high
       confidence: medium
       acknowledged: true
       file: references/troubleshooting.md
-      reason: "False positive — diagnostic grep examples."
+      reason: "False positive — only the `eleventy.env.runMode` template condition (~L392) matches `\\.env\\b`."

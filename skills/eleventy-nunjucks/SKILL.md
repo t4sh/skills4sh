@@ -1,11 +1,11 @@
 ---
 name: eleventy-nunjucks
-description: "Build, debug, and review Eleventy v3 sites and Nunjucks templates, including the Build Awesome v4 prerelease migration. Use when asked to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", \"migrate to Build Awesome\", or \"audit my static site\"; when `package.json` includes `@11ty/eleventy` or `@awesome.me/buildawesome`; when paths include `.eleventy.js`, `eleventy.config.js`, `.njk`, `.11tydata.js`, `.data.js`, `.11ty.js`, or `.server.js`; or when debugging Nunjucks rendering or Eleventy data cascades, filters, shortcodes, and security. Generic static-site/security topics and `.data.js`/`.server.js` names require confirmed Eleventy or Build Awesome context; standalone Nunjucks work is also in scope."
+description: "Build, debug, and review Eleventy v3 sites and Nunjucks templates. Use when `package.json` includes `@11ty/eleventy` or `@awesome.me/buildawesome`; when paths include `.eleventy.js`, `eleventy.config.*`, `.njk`, `.11tydata.js`, or `.11ty.js`; when asked to \"create an 11ty page\", \"add a Nunjucks filter\", \"fix my layout chain\", \"review my .njk template\", \"set up Eleventy\", or \"migrate to Build Awesome\" (v4 prerelease); or when debugging Eleventy data cascades, shortcodes, autoescape, or `| safe` output. Standalone Nunjucks work is in scope; generic static-site, SSG, or CSP tasks need confirmed Eleventy or Nunjucks context."
 license: MIT
 compatibility: macOS, Linux, or Windows; Eleventy v3 supports Node >=18, but supported Node 22 or 24 LTS is recommended
 metadata:
   author: t4sh
-  version: "0.1.10"
+  version: "1.0.0"
   tags: 11ty, eleventy, eleventy-v3, build-awesome, build-awesome-v4, nunjucks, static-site, ssg, jamstack, tailwind, markdown-it, autoescape, xss-prevention, csp, design-tokens
 ---
 
@@ -13,15 +13,7 @@ metadata:
 
 Operational defaults for **Eleventy v3** and **Nunjucks** static sites — directory layout, configuration surface, filter inventory, autoescape rules, stability and security checks. Load this skill when authoring templates, editing build config, or reviewing static output before merge or deploy.
 
-> **Version boundary (rechecked September 13, 2026):** Eleventy `3.1.6` is the stable production baseline. Build Awesome `4.0.0-alpha.10` is a prerelease available through `@11ty/eleventy@canary` or `@awesome.me/buildawesome@alpha`. Existing Eleventy commands remain compatible, but v4 changes runtime and template behavior. Keep stable guidance as the default and load [`references/build-awesome-v4.md`](references/build-awesome-v4.md) before any v4 install or migration.
-
-## When this skill applies
-
-Use explicit Eleventy/Build Awesome or Nunjucks context. Generic static-site/security topics and `.data.*`/`.server.*` filenames alone do not select this skill over another framework. Standalone Nunjucks work is in scope; apply Eleventy-specific steps only when that project uses Eleventy. Relevant cues include:
-
-- Paths mentioning `.eleventy.js`, `eleventy.config.{js,mjs,cjs}`, `.njk`, `.11tydata.js`, `.data.js`, `.11ty.js`, `.server.js`, `src/_includes/`, or `src/_data/`
-- `package.json` lists `@11ty/eleventy` or `@awesome.me/buildawesome`
-- Topics: 11ty, Eleventy, Nunjucks, SSG, JAMstack, static site, layout chain, permalink, collection, shortcode, filter, dev server, CSP, JSON-LD in templates
+> **Version boundary (rechecked October 20, 2026 via npm dist-tags and release notes):** Eleventy `3.1.7` (released 2026-10-15) is the stable production baseline; it aliases `nunjucks` to `@11ty/nunjucks@3.3.0`, which keeps Mozilla Nunjucks `3.2.4` behavior. If the stable `latest` tag is newer than `3.1.7`, read the intervening release notes before relying on version-specific claims. Build Awesome `4.0.0-alpha.10` is a prerelease available through `@11ty/eleventy@canary` or `@awesome.me/buildawesome@alpha`. Existing Eleventy commands remain compatible, but v4 changes runtime and template behavior. Keep stable guidance as the default and load [`references/build-awesome-v4.md`](references/build-awesome-v4.md) before any v4 install or migration.
 
 ---
 
@@ -31,7 +23,7 @@ Use explicit Eleventy/Build Awesome or Nunjucks context. Generic static-site/sec
 2. **Choose the track.** Use the stable v3 guidance by default. If the project uses a v4 canary, the Build Awesome package, or its config explicitly enables the generic `.data.*` / `.server.*` suffixes, load `build-awesome-v4.md` and enforce its version-drift stop condition. Generic `.data.*` / `.server.*` names alone are not proof of v4: confirm package identity and resolved version first.
 3. **Open the task-specific reference** from the table below. Avoid loading every reference unless the change is large.
 
-The portable core targets **Eleventy 3.1.6 + Mozilla Nunjucks 3.2.4**. Version-sensitive v4 guidance is isolated in the prerelease reference. For upstream drift, prefer [11ty.dev](https://www.11ty.dev/docs/), [`11ty/buildawesome`](https://github.com/11ty/buildawesome), and the active package metadata; treat dated claims as revalidation markers.
+The portable core targets **Eleventy 3.1.7 + Nunjucks 3** (`@11ty/nunjucks@3.3.0` under Eleventy; Mozilla `nunjucks@3.2.4` standalone). Version-sensitive v4 guidance is isolated in the prerelease reference. For upstream drift, prefer [11ty.dev](https://www.11ty.dev/docs/), [`11ty/buildawesome`](https://github.com/11ty/buildawesome), and the active package metadata; treat dated claims as revalidation markers.
 
 ### Completion gate
 
@@ -51,7 +43,7 @@ Read paths from the active project config. The optional production profile is a 
 
 | Topic | Framework behavior or project choice |
 |---|---|
-| Eleventy | Stable v3.1.6 by default; Build Awesome v4 remains prerelease and version-gated |
+| Eleventy | Stable v3.1.7 by default; Build Awesome v4 remains prerelease and version-gated |
 | Node | v3 package floor `>=18`; use a supported LTS (Node 24 preferred, Node 22 supported). v4 prerelease requires `>=22.15`. |
 | Config name | Search order: `.eleventy.js`, `eleventy.config.js`, `eleventy.config.mjs`, `eleventy.config.cjs`; the first match wins |
 | Engines | `.njk`, `.md`, `.html` — markdown runs **through** Nunjucks when `markdownTemplateEngine` is `njk` |
@@ -141,7 +133,7 @@ Full Nunjucks tag and macro rules: `references/nunjucks-syntax.md`.
 
 ## Behavioral evaluations
 
-**Authors/reviewers only:** use the [evaluation catalog](assets/evals/scenarios.json) when explicitly evaluating this skill; skip it during normal site work. It contains five cases covering version selection, layout debugging, Markdown trust, project conventions and retrieval boundaries, with fixture inputs and grading criteria. Keep assertions hidden from the acting agent and record observed results separately. Existing render tests verify snippets; these scenarios check whether an agent applies the guidance appropriately. Synthetic version inventories do not certify v4 execution, and description-only routing does not measure host discovery.
+**Authors/reviewers only:** use the [evaluation catalog](assets/evals/scenarios.json) when explicitly evaluating this skill; skip it during normal site work. It contains seven cases covering version selection, layout debugging, Markdown trust, inline-script escaping review, project conventions, configured audit paths, and retrieval boundaries, with fixture inputs and grading criteria. Keep assertions hidden from the acting agent and record observed results separately. Existing render tests verify snippets; these scenarios check whether an agent applies the guidance appropriately. Synthetic version inventories do not certify v4 execution, and description-only routing does not measure host discovery.
 
 ---
 

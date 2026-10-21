@@ -1,0 +1,6 @@
+interface:
+  display_name: "Eleventy Nunjucks"
+  short_description: "Build, debug, and review Eleventy sites and Nunjucks templates"
+  default_prompt: "Use $eleventy-nunjucks to debug why this Eleventy page renders without its Nunjucks layout."
+policy:
+  allow_implicit_invocation: true

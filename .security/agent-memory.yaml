@@ -4,7 +4,7 @@
 
 skill:
   name: agent-memory
-  version: "2.7.8"
+  version: "2.8.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,14 +13,14 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: bb276691ee6b034780c715169d0cabca367ebb04dc39d95adbc5f4f8c03b371b
+    assets/evals/scenarios.json: d3264cfeb18795f9b48a36c1ff08a91f4d9e01c8615bdf81bcd036320933abed
     assets/icon.svg: 79f4b8ad729980ed8165476de9c531adbfa4540260b7dc8cd7ddc326ad5ada1a
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/agent-pointers.md: 485ade491c30ae29bdaf1c635f283d455a15570de3a2ca2f0966817e235ccc7d
-    references/display-conventions.md: 65ab691704ffbc624db2469d340e5962af8d10c35959ae658f41bb4dc832b12c
-    references/templates.md: f945facfff6fcb421b82008dcbdb1127777e59c367bc2917f497f7ce9acc703c
+    references/agent-pointers.md: ecef506d0510ff91e25d9e8b8b792587429f35303a548911326cc52d9ad60324
+    references/templates.md: 9d83ef60447496e8c40a6b49295f8fada95efc66bc3d69e0b6f64a0c44c9ba42
     references/troubleshooting.md: 71576170aac7c0b61e8ef0611948c0dad09d51fd4fe186665d0cf3c0644b6580
-    SKILL.md: c4971617bc177ebff8f54afd5049fd8566105185799151b900986d42323c9f99
+    SKILL.md: b64badd641156cd25476744db8ac3ea99cee2122ca28aca08ff9d65273c75eb7
+    agents/openai.yaml: c6ee6926aebf692824900bcb83a1d74796dc452b7b17b91d0cf9d90a9b998526
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

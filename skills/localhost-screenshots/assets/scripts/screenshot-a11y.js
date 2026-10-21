@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 // Screenshot plus ARIA snapshot for AI-agent consumption.
 //
-// Usage:
-//   node assets/scripts/screenshot-a11y.js [URL] [OUT_BASE] [WIDTHxHEIGHT] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
+// Usage (run from the project root; relative OUT_BASE lands in that project's _screenshots/):
+//   node "<skill-dir>/assets/scripts/screenshot-a11y.js" [URL] [OUT_BASE] [WIDTHxHEIGHT] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
+// Argument order: output path comes BEFORE the viewport (quick.js is the reverse).
 // Defaults:
 //   URL=http://localhost:3000  OUT_BASE=_screenshots/page  VIEWPORT=1280x800
+// Playwright resolves from the current project first, then from beside this script.
 //
 // Writes:
 //   <OUT_BASE>.png         visual screenshot
@@ -75,10 +77,12 @@ validateLocalUrl(url);
 
 function loadChromium() {
   try {
-    return require('playwright').chromium;
+    // Resolve from the invoking project first so a globally installed skill uses the
+    // project's Playwright; fall back to a copy beside this script.
+    return require(require.resolve('playwright', { paths: [process.cwd(), __dirname] })).chromium;
   } catch (err) {
     if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Run npm install --save-dev playwright@1.62.0 in the project root before using this helper.');
+      console.error('Missing dependency: playwright. Install it in the project you run this command from (npm install --save-dev playwright@1.62.0), then rerun from that project root.');
       process.exit(1);
     }
     throw err;

@@ -1,0 +1,6 @@
+interface:
+  display_name: "Skill Architect"
+  short_description: "Create, audit, and refactor portable agent skills"
+  default_prompt: "Use $skill-architect to audit this skill and propose evidence-backed fixes."
+policy:
+  allow_implicit_invocation: true

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "purpose": "Five behavioral evaluations, separate from render-unit tests. Inputs and assertions are not observed pass evidence.",
+  "purpose": "Seven behavioral evaluations, separate from render-unit tests. Inputs and assertions are not observed pass evidence.",
   "execution": "Materialize each files map under an isolated directory. Keep assertions and routing load labels from the acting agent. Stable build cases use the dependencies locked in tests/fixtures/eleventy in the source repository, or provision the same pinned dependencies separately. Version inventory is synthetic/read-only. Record starting/final hashes, prompt, observed output, grading, runtime and limitations in an external run report. No mandatory repetitions or release mutation.",
   "cases": [
     {
@@ -75,6 +75,41 @@
         "Adds FAQ anchor to existing nav; rendered href matches generated FAQ route.",
         "Preserves config, directories, dependency files, CSS/system preference and full-page navigation.",
         "No unsolicited framework or optional recipe additions."
+      ]
+    },
+    {
+      "id": "script-data-review",
+      "prompt": "Review these templates for inline script data and CSP before deploy. Report findings by file and line with fixes; do not edit files.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) {\n  c.addFilter(\"jsonScript\", v => JSON.stringify(v ?? null).replace(/[<>&\\u2028\\u2029]/g, ch => \"\\\\u\" + ch.charCodeAt(0).toString(16).padStart(4, \"0\")));\n  return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" };\n}\n",
+        "content/_data/settings.json": "{\"title\": \"</script><script>alert(1)</script>\", \"theme\": \"dark\"}",
+        "content/_includes/base.njk": "<!doctype html><html><head>\n<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'\">\n<script>window.settings = {{ settings | dump | safe }};</script>\n<script type=\"module\">boot({{ settings | jsonScript | safe }});</script>\n</head><body>{{ content | safe }}</body></html>\n",
+        "content/index.njk": "---\nlayout: base.njk\ntitle: Home\n---\n<h1>Home</h1>\n"
+      },
+      "assertions": [
+        "Flags `settings | dump | safe` inside <script> as a </script> breakout and recommends jsonScript or jsonCompact.",
+        "Accepts the `jsonScript | safe` module script as the documented exception.",
+        "Flags frame-ancestors in a CSP meta tag as ignored and moves it to an HTTP response header; flags script-src 'unsafe-inline'.",
+        "Keeps layout `content | safe` out of the finding set and makes no file edits."
+      ]
+    },
+    {
+      "id": "security-audit-directory-selection",
+      "prompt": "Run the documented pre-deploy security audit on this built fixture and report its result. Inspect the project config and build command first; use a local fake header response rather than external network.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\"scripts\":{\"build\":\"eleventy --input=content --output=_site\"}}",
+        "eleventy.config.mjs": "export default function() { return { dir: { input: \"content\", output: \"_site\" } }; }\n",
+        "content/index.njk": "<h1>Home</h1>\n",
+        "_site/index.html": "<h1>Home</h1>\n",
+        "headers.txt": "content-security-policy: default-src 'self'\nx-frame-options: DENY\nstrict-transport-security: max-age=31536000\n"
+      },
+      "assertions": [
+        "Selects content and _site from inspected config and build command; does not assume src/out.",
+        "Runs or explains the documented three-argument audit with a fake curl/fixture header response and checks its observed exit status.",
+        "Reports missing input/output directories as actionable failures; does not claim live production header verification."
       ]
     },
     {

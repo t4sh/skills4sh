@@ -85,6 +85,23 @@ For feedback/decision types, include **Why:** and **How to apply:** sections.
 
 Pointer files and native auto-memory locations live in [agent-pointers.md](agent-pointers.md). Keep shared rules in `AGENTS.md`; do not duplicate pointer recipes here.
 
+## Index Registry
+
+Create `.agent-memory/index.yaml` as `[]` during Init when no memories exist. When entries are saved, use a YAML sequence of records. The required fields are `id`, `type`, `title`, and `status`; the `id` maps to `.agent-memory/{id}.md` and matches that file's frontmatter. Keep an existing compatible registry and its entries rather than rewriting it to match this example.
+
+```yaml
+- id: decisions/storage
+  type: decision
+  title: "Storage choice"
+  status: active
+- id: context/current-sprint
+  type: context
+  title: "Current sprint focus"
+  status: active
+```
+
+Additional useful registry metadata such as a short description or tags may be retained. The index should contain one entry for each memory file and no orphan entries.
+
 ## Memory Types
 
 | Type       | Directory      | What Goes Here                                  | Changes     |

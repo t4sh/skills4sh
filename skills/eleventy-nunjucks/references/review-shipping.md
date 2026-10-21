@@ -48,7 +48,7 @@ Each result needs a semantic decision: keep it when ordinary Nunjucks inheritanc
 
 ### `| safe`, `| dump | safe`, and inline-`<script>` escaping
 
-These XSS/escaping greps are maintained canonically in [`security-checklist.md`](security-checklist.md) §1 (Output escaping) — run that section here rather than duplicating the patterns. It covers `| safe` review, the forbidden `dump | safe`, and raw `{{ var }}` inside `<script>` without `jsonScript`/`jsonCompact`.
+These XSS/escaping greps are maintained canonically in [`security-checklist.md`](security-checklist.md) §1 (Output escaping) — run that section here rather than duplicating the patterns. It covers `| safe` review, the forbidden `dump | safe`, the blocking `| safe`-inside-`<script>` check (any `<script …>` tag; only `jsonScript`/`jsonCompact` are exempt), and the informational unfiltered `{{ var }}`-inside-`<script>` review.
 
 ### `import` / `from` without `with context` when macros touch `page` / `site`
 

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -82,24 +82,34 @@ function assertAvailableFindings(result, command) {
 
 test('skill-architect documents the portable isolated validation runner ladder', () => {
   const skill = readFileSync('skills/skill-architect/SKILL.md', 'utf8');
+  const runtime = readFileSync('skills/skill-architect/references/helper-runtime.md', 'utf8');
   const evals = JSON.parse(readFileSync('skills/skill-architect/assets/evals/scenarios.json', 'utf8'));
   const documentedUv = 'run_uv.py" run --isolated --no-project --no-build --no-config --with-requirements';
 
+  // SKILL.md keeps only the essential rule and points to the runtime reference.
+  assert.match(skill, /\(references\/helper-runtime\.md\)/);
+  assert.match(skill, /never install validation dependencies into the global Python environment/i);
+  assert.match(skill, /do not use `python -I`/i);
+  assert.match(skill, /`python -E -B`/);
+  assert.doesNotMatch(skill, /VALIDATION_VENV|ValidationVenv/, 'runner recipe belongs in references/helper-runtime.md');
+
   for (const helper of ['inspect_skill.py', 'validate_skill.py']) {
     assert.match(
-      skill,
-      new RegExp(`${documentedUv.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]{0,80}python -E[\\s\\S]{0,180}${helper.replace('.', '\\.')}`),
+      runtime,
+      new RegExp(`${documentedUv.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]{0,80}python -E -B[\\s\\S]{0,180}${helper.replace('.', '\\.')}`),
       `missing isolated uv command for ${helper}`,
     );
+    assert.match(runtime, new RegExp(`"\\$VALIDATION_VENV/bin/python" -E -B "[^"]*${helper.replace('.', '\\.')}"`));
+    assert.match(runtime, new RegExp(`\\$ValidationVenv\\\\Scripts\\\\python\\.exe" -E -B "[^"]*${helper.replace('.', '\\.')}"`));
   }
-  assert.match(skill, /python3 -E -m venv "\$VALIDATION_VENV"/);
-  assert.match(skill, /pip --isolated install --require-hashes --only-binary=:all:/);
+  assert.match(runtime, /python3 -E -m venv "\$VALIDATION_VENV"/);
+  assert.match(runtime, /pip --isolated install --require-hashes --only-binary=:all:/);
   assert.match(readFileSync(requirements, 'utf8'), /PyYAML==6\.0\.3[\s\\]+--hash=sha256:/i);
-  assert.match(skill, /\$ValidationVenv\\Scripts\\python\.exe" -E/);
-  assert.match(skill, /never install validation dependencies into the global Python environment/i);
-  assert.match(skill, /only after both isolated runner paths are unavailable or fail/i);
-  assert.match(skill, /Do not use `python -I`/);
-  assert.match(evals.execution, /run_uv\.py with run --isolated --no-project --no-build --no-config --with-requirements python -E/);
+  assert.match(runtime, /never install validation dependencies into the global Python environment/i);
+  assert.match(runtime, /only after both isolated runner paths are unavailable or fail/i);
+  assert.match(runtime, /Do not use `python -I`/);
+  assert.match(runtime, /ignores `PYTHONDONTWRITEBYTECODE`/);
+  assert.match(evals.execution, /run_uv\.py with run --isolated --no-project --no-build --no-config --with-requirements python -E -B/);
   assert.match(evals.execution, /pip --isolated/);
   assert.match(evals.execution, /Never install validation dependencies into global Python/);
   assert.match(evals.execution, /only after both supported isolated runners/);
@@ -117,7 +127,7 @@ test('skill-architect temporary venv runner ignores host pip and PYTHONPATH conf
   const poison = writePoisonYaml(parent);
   const venvPy = provisionVenv(parent);
 
-  const inspect = runCommand(venvPy, ['-E', inspectScript, skillDir], { env: { PYTHONPATH: poison } });
+  const inspect = runCommand(venvPy, ['-E', '-B', inspectScript, skillDir], { env: { PYTHONPATH: poison } });
   assert.equal(JSON.parse(inspect.stdout).name, 'fixture-skill');
   const poisoned = spawn(venvPy, ['-c', 'import yaml; print(yaml.__version__)'], { env: { PYTHONPATH: poison } });
   assert.equal(poisoned.status, 0, poisoned.stderr);
@@ -173,7 +183,7 @@ test('skill-architect uv isolated runner ignores host uv.toml, PYTHONPATH, and s
   assert.match(probe.stdout, /rich=ModuleNotFoundError/);
   assert.doesNotMatch(probe.stderr + probe.stdout, /Building probe-project|Built probe-project|Required uv version/);
 
-  const inspect = runCommand(python, ['-E', runUvScript, 'run', ...uvFlags, 'python', '-E', inspectScript, skillDir], {
+  const inspect = runCommand(python, ['-E', '-B', runUvScript, 'run', ...uvFlags, 'python', '-E', '-B', inspectScript, skillDir], {
     cwd: project,
     env: hostileUvEnv,
   });
@@ -187,10 +197,10 @@ test('skill-architect runners treat validator non-zero output as available findi
   writeSkill(skillDir, 'wrong-name', 'Loose summary only.');
   const venvPy = provisionVenv(parent);
 
-  const venvResult = spawn(venvPy, ['-E', validateScript, skillDir]);
+  const venvResult = spawn(venvPy, ['-E', '-B', validateScript, skillDir]);
   assertAvailableFindings(venvResult, 'venv validate');
 
-  const uvResult = spawn(python, ['-E', runUvScript, 'run', ...uvFlags, 'python', '-E', validateScript, skillDir], { cwd: parent });
+  const uvResult = spawn(python, ['-E', '-B', runUvScript, 'run', ...uvFlags, 'python', '-E', '-B', validateScript, skillDir], { cwd: parent });
   assertAvailableFindings(uvResult, 'uv validate');
 });
 
@@ -230,6 +240,10 @@ test('skill-architect scaffold, inspect, and validate helpers work against a fix
   const skillText = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
   assert.match(skillText, /^name: fixture-skill$/m);
   assert.match(skillText, /Use when asked to \\"review fixture workflows\\"/);
+  assert.doesNotMatch(skillText, /`plan`, `create`, `audit`|distill|reconcile|`teach`/,
+    'scaffold must not copy skill-architect\'s own mode list into new skills');
+  assert.match(skillText, /Classify the request into this skill's branches/);
+  assert.doesNotMatch(skillText, /^\s*author:/m, 'author is omitted unless --author is given');
 
   mkdirSync(join(skillDir, 'assets', 'scripts', '__pycache__'), { recursive: true });
   writeFileSync(join(skillDir, 'assets', 'scripts', '__pycache__', 'helper.cpython-314.pyc'), 'bytecode');
@@ -407,4 +421,38 @@ test('fixer retains missing-name insertion for a supported mapping without PyYAM
   runPython(['-S', `${scripts}/fix_skill.py`, dir, '--write']);
   runPython([`${scripts}/validate_skill.py`, dir]);
   assert.match(readFileSync(join(dir, 'SKILL.md'), 'utf8'), /^name: fixture$/m);
+});
+
+test('skill-architect scaffold writes --author and an optional Codex openai.yaml adapter', () => {
+  const root = mkdtempSync(join(tmpdir(), 'skill-architect-scaffold-'));
+  runPython([
+    `${scripts}/scaffold_skill.py`, 'Adapter Skill', '--path', root,
+    '--phrase', 'review adapter workflows', '--author', 'Jane "J" Doe', '--openai-yaml',
+  ]);
+  const skillDir = join(root, 'adapter-skill');
+  const skillText = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
+  assert.match(skillText, /^  author: "Jane \\"J\\" Doe"$/m);
+  const adapter = readFileSync(join(skillDir, 'agents', 'openai.yaml'), 'utf8');
+  assert.match(adapter, /^  display_name: "Adapter Skill"$/m);
+  const short = adapter.match(/^  short_description: "(.*)"$/m)[1];
+  assert.ok(short.length >= 25 && short.length <= 64, short);
+  assert.match(adapter, /^  default_prompt: "Use \$adapter-skill to review adapter workflows\."$/m);
+  assert.match(adapter, /^  allow_implicit_invocation: true$/m);
+
+  const validate = runPython([`${scripts}/validate_skill.py`, skillDir]);
+  assert.match(validate.stdout, /✓ skill validation passed/);
+});
+
+test('documented -E -B helper runs leave no __pycache__ in the skill scripts folder', () => {
+  const root = mkdtempSync(join(tmpdir(), 'skill-architect-nobytecode-'));
+  const copy = join(root, 'scripts');
+  mkdirSync(copy);
+  for (const name of ['inspect_skill.py', 'validate_skill.py']) {
+    writeFileSync(join(copy, name), readFileSync(resolve(scripts, name)));
+  }
+  const skillDir = join(root, 'fixture-skill');
+  writeSkill(skillDir, 'fixture-skill', 'Review bytecode hygiene. Use when editing SKILL.md files.');
+  // -E ignores PYTHONDONTWRITEBYTECODE, so only -B prevents the sibling-import cache.
+  runPython(['-E', '-B', join(copy, 'inspect_skill.py'), skillDir], { env: { ...env, PYTHONDONTWRITEBYTECODE: '' } });
+  assert.ok(!existsSync(join(copy, '__pycache__')), 'python -E -B must not write __pycache__');
 });

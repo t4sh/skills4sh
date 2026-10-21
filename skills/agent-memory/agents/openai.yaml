@@ -1,0 +1,6 @@
+interface:
+  display_name: "Agent Memory"
+  short_description: "Save and sync project memory in .agent-memory/"
+  default_prompt: "Use $agent-memory to save this session's project decisions to .agent-memory/."
+policy:
+  allow_implicit_invocation: true

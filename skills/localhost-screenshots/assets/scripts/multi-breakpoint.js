@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 // Multi-breakpoint screenshot set for a single localhost URL.
 //
-// Usage:
-//   node assets/scripts/multi-breakpoint.js [URL] [OUT_DIR] [BREAKPOINTS] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
+// Usage (run from the project root; relative OUT_DIR lands in that project's _screenshots/):
+//   node "<skill-dir>/assets/scripts/multi-breakpoint.js" [URL] [OUT_DIR] [BREAKPOINTS] [WAIT_UNTIL] [WAIT_FOR_SELECTOR]
 // Defaults:
 //   URL=http://localhost:3000
 //   OUT_DIR=_screenshots/home
 //   BREAKPOINTS='mobile:375x812,tablet:768x1024,desktop:1280x800'
 //
 // BREAKPOINTS is a comma-separated list of `name:WIDTHxHEIGHT` entries.
+// Playwright resolves from the current project first, then from beside this script.
 
 const fs = require('fs');
 const path = require('path');
@@ -95,10 +96,12 @@ validateLocalUrl(url);
 
 function loadChromium() {
   try {
-    return require('playwright').chromium;
+    // Resolve from the invoking project first so a globally installed skill uses the
+    // project's Playwright; fall back to a copy beside this script.
+    return require(require.resolve('playwright', { paths: [process.cwd(), __dirname] })).chromium;
   } catch (err) {
     if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Run npm install --save-dev playwright@1.62.0 in the project root before using this helper.');
+      console.error('Missing dependency: playwright. Install it in the project you run this command from (npm install --save-dev playwright@1.62.0), then rerun from that project root.');
       process.exit(1);
     }
     throw err;

@@ -35,7 +35,7 @@
 - **Expiring URLs** — Discord CDN attachment URLs contain authentication tokens that expire; download promptly after extraction
 - **Large files** — Discord attachment limits vary by account, server plan, and policy changes; do not hard-code a size assumption. `curl` handles large downloads but they may take time
 - **Duplicate content** — same image/link shared in multiple messages; deduplicate before downloading
-- **OG:image availability** — not all links have OpenGraph images; some sites block unfamiliar user agents
+- **OG:image availability** — only embed images Discord already supplied on an allowlisted CDN host are downloadable; record other links as having no downloaded image and never fetch the linked page to find one
 
 ### Staging & Flagged Content
 - **Staging summary shows flagged items** — `flag_suspicious()` matched injection patterns in a filename or embed title. These are warnings, not blocks. Review the flagged items and proceed if they look benign (e.g., a file genuinely named "important_notes.pdf"). The flag is recorded in `manifest.json` for audit.

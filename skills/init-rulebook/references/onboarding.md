@@ -8,7 +8,7 @@ Read this reference for `setup`, `fine-tune`, `link-dot-files`, or `update`. `lo
 2. Only for a missing, broken, or explicitly changed setup, inspect the host's effective instruction mechanism, skill availability, rulebook directory, existing index, and source-control state. Reuse the configured rulebook; otherwise default to `~/.agents/AGENTS.md`, or use a requested custom folder. Choose global or project scope from the user's intent, not the storage location. Skill installation alone does not establish startup invocation.
 3. Preserve an existing index. If one is missing and creation is requested, write a minimal `AGENTS.md` with its rule paths and applicability. A single-file index is valid; add `rules/` only when conditional loading would save work or clarify boundaries.
 4. Only when the requested pointer is absent or needs repair, add or minimally repair it in the active host's effective instructions for that scope. State when to invoke `init-rulebook` and which rulebook to load using that host's supported syntax; no literal invocation phrase is required. Preserve unrelated text and existing equivalent path spellings. If the runtime cannot persist instructions or invoke the skill, report that limitation and offer a manual load request.
-5. Run `status`, then verify discovery in a fresh session. A file existing on disk does not prove that the runtime loads it.
+5. Run `status` (pass criteria in `SKILL.md` **Status**), then verify discovery in a fresh session, or report it untested with the user's verification step. A file existing on disk does not prove that the runtime loads it.
 
 The index path may be anywhere readable: in dotfiles, a separate checkout, a synced directory, or a plain user folder. The index owns its relative rule links. Do not copy rules into the skill installation or hard-code the user's root in `SKILL.md`.
 
@@ -21,10 +21,10 @@ Start with the active host's instructions and invocation evidence, not a default
 
 #### Codex adapter — only when Codex is the active host
 
-Use this adapter only if discovery or repair is needed for Codex. Verified against official documentation on 2026-09-27; recheck for a different runtime version.
+Use this adapter only if discovery or repair is needed for Codex. Verified against official documentation on 2026-10-21; recheck for a different runtime version.
 
-- Global instructions come from `AGENTS.override.md`, otherwise `AGENTS.md`, in `CODEX_HOME` (default `~/.codex`). Inspect which file is effective before adding a missing pointer. Project instructions follow the repository-to-working-directory chain; use project scope for rules meant only for that project. See [OpenAI's AGENTS.md guide](https://developers.openai.com/codex/guides/agents-md).
-- Codex discovers user skills under `~/.agents/skills/` and project `.agents/skills/` locations. Skill discovery and startup invocation are separate mechanisms. See [OpenAI's skills guide](https://developers.openai.com/codex/skills).
+- Global instructions come from `AGENTS.override.md`, otherwise `AGENTS.md`, in `CODEX_HOME` (default `~/.codex`). Inspect which file is effective before adding a missing pointer. Project instructions follow the repository-to-working-directory chain; use project scope for rules meant only for that project. See [OpenAI's AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+- Codex discovers user skills under `~/.agents/skills/` and project `.agents/skills/` locations. Skill discovery and startup invocation are separate mechanisms. See [OpenAI's skills guide](https://learn.chatgpt.com/docs/build-skills).
 
 ### Verification
 
@@ -39,10 +39,10 @@ Read the index and all rule headings before edits. Map each rule to always-on, c
 ## `link-dot-files`: connect an existing source
 
 1. Identify the dotfiles checkout and the directory containing its `AGENTS.md`. Verify the source is readable and inspect its relative links.
-2. Choose either a **direct host pointer** to that index or a **user-requested symlink** from a stable path to the source directory. A symlink is optional when the index's own inventory and links resolve from the pointer path. When the index inventories `~/.agents/rules/*.md`, `~/.agents` is the tree: leave that sentence unchanged, and preserve or create the symlink that makes `~/.agents` the source `agents/` directory. Do not replace the inventory path with the checkout path.
+2. Choose either a **direct host pointer** to that index or a **user-requested symlink** from a stable path to the source directory. A symlink is optional when the index's own inventory and links resolve from the pointer path. When the inventory names a stable alias rather than the checkout, leave that sentence unchanged and preserve or create the symlink that makes the alias resolve to the source directory; do not replace the inventory path with the checkout path. The [public example](public-example.md) shows the `~/.agents` case.
 3. Before making a symlink, inspect the destination and resolve both ends. If the destination already reaches the same source, leave it alone. If it is another file, directory, or link, show what would be displaced and ask before replacing it. Avoid link loops. Never use a force option as a shortcut.
 4. Add or update the host startup pointer only after determining the correct host instruction file. Use the chosen path; keep existing unrelated instructions.
-5. Run `status` through the exact pointer the host will use and verify a fresh session. Report which part is managed by the dotfiles tool and which part is managed by the agent host.
+5. Run `status` through the exact pointer the host will use, then verify a fresh session or report it untested with the user's verification step. Report which part is managed by the dotfiles tool and which part is managed by the agent host.
 
 ## `update`: refresh one source
 
@@ -55,7 +55,3 @@ An unqualified `init-rulebook: update` refreshes the **installed skill** from it
 | Startup pointer or dotfiles link | Re-run `link-dot-files` for the changed source path, then `status`. |
 
 Use the installation's recorded GitHub repository and skill subdirectory or published package source. Verify the destination and preview the replacement through its installer. A skill update replaces only the installed skill folder; keep the rulebook and host pointer intact. Never run a broad dotfiles update to refresh this skill. Follow repository-level installation documentation for installer commands.
-
-## `status`: evidence to report
-
-Inspect the host pointer, resolved index path, readability, linked-file inventory where declared, selected always-on and matching conditional rules, deferred action gates, and any broken or duplicate references. State whether the pointer was tested in a fresh session. A read-only status check must not create folders, links, or files.

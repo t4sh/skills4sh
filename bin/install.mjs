@@ -409,7 +409,9 @@ async function installSkill(name, files) {
 
 // Walk skillDir and compute the same hash scheme the installer uses, so we can
 // compare against the just-downloaded content and short-circuit idempotent re-runs.
-// Returns null if skillDir doesn't exist or is empty.
+// Returns null if skillDir doesn't exist or is empty. Skips local runtime
+// artifacts (__pycache__/, *.pyc, .DS_Store) exactly as drift-check.mjs and
+// hash-check.mjs do, so running a bundled helper does not force a rewrite.
 async function hashExistingSkill(skillDir) {
   const files = [];
   async function walk(rel) {
@@ -421,8 +423,11 @@ async function hashExistingSkill(skillDir) {
     }
     for (const e of entries) {
       const childRel = rel ? `${rel}/${e.name}` : e.name;
-      if (e.isDirectory()) await walk(childRel);
-      else if (e.isFile()) {
+      if (e.isDirectory()) {
+        if (e.name === "__pycache__") continue;
+        await walk(childRel);
+      } else if (e.isFile()) {
+        if (e.name === ".DS_Store" || e.name.endsWith(".pyc")) continue;
         files.push({ rel: childRel, content: await readFile(join(skillDir, childRel)) });
       }
     }
@@ -809,6 +814,7 @@ export {
   assertSafeRelPath,
   computeSkillFolderHash,
   discoverSkills,
+  hashExistingSkill,
 };
 
 // CLI guard: runMain only fires when invoked as the entry script

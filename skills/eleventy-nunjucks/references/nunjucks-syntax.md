@@ -79,7 +79,7 @@ Nunjucks `if` uses JavaScript-style truthiness. Falsy values include `false`, `n
 {% endfor %}
 ```
 
-### Async iteration — Eleventy v3 / Mozilla Nunjucks 3
+### Async iteration — Eleventy v3 / Nunjucks 3
 
 ```nunjucks
 {# Use asyncEach / asyncAll only when the loop body contains async filters or extensions. #}
@@ -261,7 +261,7 @@ Common cases: code examples in documentation pages, embedded templates for downs
 
 ## Autoescaping
 
-Stock Mozilla Nunjucks 3.2.4 has no `{% autoescape %}` block tag. Configure autoescaping through the environment and use `safe` only for a reviewed, trusted HTML value:
+Stock Nunjucks 3 (Mozilla `3.2.4`, and `@11ty/nunjucks@3.3.0`, which Eleventy `3.1.7` aliases as `nunjucks`) has no `{% autoescape %}` block tag. Configure autoescaping through the environment and use `safe` only for a reviewed, trusted HTML value:
 
 ```nunjucks
 {{ "<b>x</b>" }}                  {# &lt;b&gt;x&lt;/b&gt; with autoescape enabled #}
@@ -321,7 +321,7 @@ eleventyConfig.addNunjucksAsyncFilter("titleFor", (url, titles = {}, callback) =
 
 Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFilter` only when the filter is intentionally Nunjucks-specific or needs Nunjucks callback-style behavior.
 
-**Eleventy v3 / Mozilla Nunjucks 3 constraints:**
+**Eleventy v3 / Nunjucks 3 constraints:**
 - Templates using async filters must be rendered through async render paths
 - Eleventy handles this automatically; standalone Nunjucks needs a callback for `env.render` / `env.renderString`; neither automatically returns a Promise. Wrap the callback explicitly when using `await`
 - An async filter in a `{% for %}` loop without `asyncEach`/`asyncAll` will fail
@@ -332,14 +332,14 @@ Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFil
 | Feature | Nunjucks | Jinja2 |
 |---|---|---|
 | `do` tag | Not built-in (add via extension) | Built-in |
-| Macro context | Doesn't auto-inherit | Inherits parent scope |
+| Imported macro context | `{% import %}` does not pass the caller's context unless `with context` is added | Same default: imports receive no context unless `with context`; `{% include %}` does receive it |
 | `groupby` return | Object shaped like `{ key: [items] }`; iterate `{% for k, items in x \| groupby("key") %}` | Group objects expose `grouper` / `list`-style attributes |
 | `truncate` default | `length=255, killwords=false, end="..."` | Same defaults |
 | Whitespace control | `{%- -%}`, `trimBlocks`, `lstripBlocks` | Same |
 | Async iteration | Stable v3: `asyncEach` / `asyncAll` for async filters; v4 prerelease differs | Not needed (sync engine) |
 | Empty collection truthiness | Empty arrays/objects are truthy in JavaScript semantics; check `.length` or use a helper when emptiness matters | Empty sequences/mappings are falsy |
 
-Most Jinja2 templates port to Nunjucks unchanged. The two areas that bite: macro context inheritance and `groupby` shape. In Nunjucks, do not destructure `groupby` as an array of `[key, items]` pairs; iterate it as an object.
+Most Jinja2 templates port to Nunjucks unchanged. The areas that bite are `groupby` shape, empty-collection truthiness, and async iteration. In Nunjucks, do not destructure `groupby` as an array of `[key, items]` pairs; iterate it as an object.
 
 ## Browser usage
 

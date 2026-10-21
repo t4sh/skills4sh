@@ -63,7 +63,7 @@ A strong description has two required parts: a concise capability clause and con
 1. Names exact request phrases.
 2. Names file paths, tools, APIs, or error messages.
 3. States contexts where the skill should load even if the phrase differs.
-4. Front-loads leading words that requests, docs, or the codebase already use.
+4. Front-loads leading words that requests, docs, or the codebase already use, keeping the capability clause and strongest trigger inside the first 120 characters because some runtimes truncate there ([vendor adapters](vendor-adapters.md#openai--codex)).
 5. Avoids becoming a workflow summary.
 
 Write the description for the agent that loads the skill. Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.

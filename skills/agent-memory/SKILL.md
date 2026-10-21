@@ -1,29 +1,17 @@
 ---
 name: agent-memory
-description: "Persist project decisions, conventions, and session handoffs as reviewable markdown in `.agent-memory/`. Use when asked to \"manage project memory\", \"initialize .agent-memory\", \"migrate memory\", \"build memory from docs\", \"save session learnings\", \"sync memory\", \"run memory maintenance\", \"check memory status\", or \"onboard a new developer\"; when `.agent-memory/` or `AGENTS.md` memory pointers are in play; when sharing project context with another developer or reviewing project memory in a pull request; or when context \"forgets between sessions\". Sync reconciles files already in the checkout. Not for memory leaks, RAM usage, or human memory."
+description: "Persist project decisions in reviewable `.agent-memory/` markdown. Use when asked to \"remember a project decision\", \"save session learnings\", \"initialize .agent-memory\", \"manage project memory\", \"migrate memory\", \"build memory from docs\", \"sync memory\", \"run memory maintenance\", \"check memory status\", or \"onboard a new developer\"; when `.agent-memory/` or `AGENTS.md` memory pointers are in play; when sharing project context, conventions, or session handoffs with another developer or reviewing project memory in a pull request; or when context \"forgets between sessions\". Sync reconciles files already in the checkout. Not for vendor auto-memory consolidation, personal agent rulebooks, memory leaks, RAM usage, or human memory."
 license: MIT
 compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
-  version: "2.7.8"
+  version: "2.8.0"
   tags: memory, context, cross-interface, agent, persistence, grok, openclaw
 ---
 
 # Agent Memory Skill
 
 Manage persistent project memory as reviewable markdown in the repository. Any file-reading agent can read and update the same `.agent-memory/` files across sessions.
-
-## Capabilities
-
-| Area | Outcome |
-|------|---------|
-| Initialize | Scaffold `.agent-memory/` with structure and entry points |
-| Migrate | Upgrade older formats (v1 flat files, `CURSOR.md`) to memory format v2.1 |
-| Build | Scan existing documentation and generate initial memory files |
-| Save | Distill session decisions, feedback, and context into durable memory files |
-| Maintain | Compact stale entries, resolve conflicts, clean orphaned files |
-| Sync | Reconcile `.agent-memory/` files already in the checkout, then save the session |
-| Status | Read-only health check — file counts, staleness, sync |
 
 ## Design Principles
 
@@ -34,16 +22,6 @@ Manage persistent project memory as reviewable markdown in the repository. Any f
 | Native-memory coexistence | Treat vendor auto-memory as machine-local scratch and `.agent-memory/` as the deliberate cross-agent, reviewable source; do not overwrite or duplicate native stores. |
 | Managed lifecycle | Use typed directories, `expires` metadata, `maintain`, and `sync` so memory stays current instead of accumulating noise. |
 | No secrets | Store project knowledge and decisions, never credentials, private keys, tokens, or sensitive personal data. |
-
----
-
-## Initial Assessment
-
-Before operating on memory, understand:
-
-1. **Current State** — Does `.agent-memory/` exist? What version/structure? Older formats needing migration?
-2. **Requested outcome** — First-time setup, saving learnings, or maintenance?
-3. **Project Context** — Project type, existing docs, how many people/agents contributing?
 
 ---
 
@@ -64,6 +42,18 @@ Infer the operation from a clear request; a literal command keyword is not requi
 For a developer handoff, read the index and relevant entries, summarize the current decisions and open questions, and cite their files. Preserve proposals as proposals. A newer timestamp alone does not resolve conflicting decisions; inspect their evidence and review status, then ask when the accepted direction is unknown. Record `supersedes` only when replacement is established.
 
 For cross-repository work, use accessible references to the owning project's decisions with a revision when relevant. Summarize only the context needed locally; identify unavailable sources rather than inventing their contents. A request concerning one repository does not authorize edits to another.
+
+Show memory files inline rather than in an external editor: markdown bodies without YAML frontmatter; YAML, JSON, and plain text in fenced code blocks.
+
+## Assessment Checklist
+
+Use these prompts to choose the operation, then proceed without collecting unnecessary information:
+
+1. Does `.agent-memory/` already exist, and what structure/version does it use?
+2. Which operation fits the request: `init`, `migrate`, `build`, `save`, `sync`, `maintain`, or `status`?
+3. Which instruction or pointer files already exist, do they point at `AGENTS.md`, and which vendor-native memory stores must be left untouched? See [references/agent-pointers.md](references/agent-pointers.md).
+4. Which project docs can seed memory without copying them verbatim?
+5. Is the memory local/private, or intended to be shared through git?
 
 ---
 
@@ -86,9 +76,9 @@ project/
 ### Steps
 
 1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `references/`, `sessions/` under `.agent-memory/`.
-2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), and `AGENTS.md` (canonical shared instructions). Create pointer files only for agents already in use, following [references/agent-pointers.md](references/agent-pointers.md).
-3. **Complete `AGENTS.md`:** replace every placeholder with the project's actual structure and rules. Done when no TODO or placeholder tokens remain.
-4. **Update `index.yaml`** and **report** what was created.
+2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty `[]` registry in the [index format](references/templates.md#index-registry)), and `AGENTS.md` (canonical shared instructions). Create pointer files only for agents already in use, following [references/agent-pointers.md](references/agent-pointers.md). Keep an existing compatible index format and its entries; do not reset it to `[]`.
+3. **Complete `AGENTS.md`:** replace every placeholder with the project's actual structure and rules. Include the [session-start loading instruction](references/agent-pointers.md#session-start-loading) so the next agent reads the index and relevant entries. Preserve substantive existing instructions under the overwrite guard; propose the addition rather than replacing them without approval. Done when no TODO or placeholder tokens remain and the loading instruction is present or its pending approval is reported.
+4. **Check the registry** and **report** what was created or kept. An empty `[]` index is correct until entries are saved or the separate Build operation is requested; do not invent project memories during Init. Done when a new registry parses as an empty list, or an existing registry retains its entries, and next-session discovery is configured or explicitly pending approval.
 
 ---
 
@@ -98,13 +88,13 @@ Detect and migrate older structures to memory format v2.1.
 
 | Old Structure | New Structure | Action |
 |---|---|---|
-| `CURSOR.md` at root | `.cursor/rules/index.mdc` | Content moved, old file renamed `.migrated` |
+| `CURSOR.md` at root | `AGENTS.md` + thin `.cursor/rules/index.mdc` pointer | Shared content merged into `AGENTS.md`; pointer per [agent-pointers.md](references/agent-pointers.md); old file kept as `CURSOR.md.migrated` |
 | `INDEX.yaml` (uppercase) | `index.yaml` (lowercase) | Renamed |
 | Flat `{type}--{topic}.md` | `{type}/{topic}.md` | Moved to directory |
 | `summary:` frontmatter | `description:` frontmatter | Field renamed |
 | `CLAUDE.md` with full instructions (no AGENTS.md) | `AGENTS.md` + a thin pointer file | Promoted; pointer recipe in [agent-pointers.md](references/agent-pointers.md) |
 
-**Steps:** Scan for each old structure listed above → preserve existing content → perform only confirmed migrations → move shared instructions into `AGENTS.md`, then rewrite leftover client files as thin pointers per [references/agent-pointers.md](references/agent-pointers.md) → reconcile `index.yaml` with filesystem → report what changed.
+**Steps:** Scan for each old structure listed above → preserve existing content → perform only confirmed migrations → move shared instructions into `AGENTS.md`, then rewrite leftover client files as thin pointers per [references/agent-pointers.md](references/agent-pointers.md) → reconcile `index.yaml` with filesystem → report what changed. Done when every confirmed migration has a backup or `.migrated` file, shared instructions live only in `AGENTS.md`, and index ↔ filesystem differences are empty.
 
 **Migration guard:** Renames, moves, and pointer rewrites are destructive. Before renaming `CURSOR.md`, `INDEX.yaml`, or replacing instruction files, show the planned source and destination paths and ask for confirmation unless the file is empty or already an exact generated pointer. Keep a backup or `.migrated` file whenever content is moved.
 
@@ -119,7 +109,7 @@ Scan project and auto-generate initial memory files from existing docs.
 3. **Rules:** Summarize don't copy. One topic per file. Reference source docs. Use standard frontmatter.
 4. **Migrate** old formats if found (flat files, old frontmatter fields)
 5. **Update `index.yaml`** — add entries for each new file, reconcile with filesystem
-6. **Report** with summary table
+6. **Report** with summary table. Done when every new file has standard frontmatter and an index entry, index ↔ filesystem differences are empty, and the report lists each created path with its source doc.
 
 ---
 
@@ -131,7 +121,7 @@ Capture learnings from the current conversation into memory.
 2. **For each piece:** update existing memory file or create new one in appropriate `{type}/` directory. Create session log in `sessions/` for significant sessions.
 3. **Source identifier:** record the writing runtime as a slug (`codex`, `claude-code`, `cursor`, `grok`, `openclaw`, `vscode`, `craft-agent`, or `other`)
 4. **Write files** using standard frontmatter format (see [references/templates.md](references/templates.md))
-5. **Update `index.yaml`** and **report** what was saved/updated
+5. **Update `index.yaml`** and **report** what was saved/updated. Done when the report lists each created or updated path with its `id`, and each path has an index entry.
 
 ---
 
@@ -144,6 +134,8 @@ Reconcile memory files **already present in the current checkout**, then save th
 **Phase 2 — Save:** Run the full Save operation (review, update/create, session log, index).
 
 **Phase 3 — Report:** Single combined report (see [references/templates.md](references/templates.md) for format).
+
+Done when the index ↔ filesystem difference is empty and every fact saved this session maps to an indexed file with standard frontmatter.
 
 ---
 
@@ -159,7 +151,7 @@ Full maintenance: compact, trim stale, fix index, clean old session logs.
    - **`supersedes` chain:** If file A has `supersedes: B`, and B still exists with `status: active`, flag B for archival.
 3. **Compaction:** Identify content overlap, suggest merges, promote session log patterns to `conventions/` or `decisions/`.
 4. **Session cleanup:** `type: session` with `updated` >60 days → extract valuable info elsewhere if needed, list deletion candidates, and ask for confirmation before deleting.
-5. **Report** with health summary (see [references/templates.md](references/templates.md) for format).
+5. **Report** with health summary (see [references/templates.md](references/templates.md) for format). Done when every flagged item has a user decision or is listed as pending, and nothing was deleted or archived without confirmation.
 
 ---
 
@@ -190,20 +182,7 @@ For frontmatter schema, memory types, and templates, see [references/templates.m
 |------|----------|
 | [references/templates.md](references/templates.md) | Session log template, sync/health report templates, frontmatter schema, memory types table |
 | [references/agent-pointers.md](references/agent-pointers.md) | Installer skill roots, thin pointer files, and native-memory scope and preservation boundaries |
-| [references/display-conventions.md](references/display-conventions.md) | How to render memory files inline (markdown, YAML, JSON, rich previews, guidelines) |
 | [references/troubleshooting.md](references/troubleshooting.md) | Common issues by project type (solo, multi-agent, team, monorepo), troubleshooting Q&A |
-
----
-
-## Assessment Checklist
-
-Use these prompts to choose the operation, then proceed without collecting unnecessary information:
-
-1. Does `.agent-memory/` already exist, and what structure/version does it use?
-2. Which operation fits the request: `init`, `migrate`, `build`, `save`, `sync`, `maintain`, or `status`?
-3. Which instruction or pointer files already exist, do they point at `AGENTS.md`, and which vendor-native memory stores must be left untouched? See [references/agent-pointers.md](references/agent-pointers.md).
-4. Which project docs can seed memory without copying them verbatim?
-5. Is the memory local/private, or intended to be shared through git?
 
 ---
 

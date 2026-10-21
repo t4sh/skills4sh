@@ -33,6 +33,7 @@ function tokenPath(name) {
   if (/^space-/.test(name))        return `spacing/${name.replace('space-', '')}`;
   if (/^text-/.test(name))         return `typography/scale/${name.replace('text-', '')}`;
   if (/^tracking-/.test(name))     return `typography/tracking/${name.replace('tracking-', '')}`;
+  if (/^font-weight-/.test(name))  return `typography/weight/${name.replace('font-weight-', '')}`;
   if (/^font-/.test(name))         return `typography/family/${name.replace('font-', '')}`;
   if (/^fs-/.test(name))           return `typography/scale/${name.replace('fs-', '')}`;
   return `semantic/${name}`;
@@ -119,6 +120,7 @@ function parseClassVarMap(css) {
 function buildUtilityMap(themeVars) {
   const map = {};
   for (const name of Object.keys(themeVars)) {
+    if (name.startsWith('font-weight-')) continue; // weights have no figma-export slot
     if (name.startsWith('font-'))
       map[`font-${name.slice(5)}`] = { property: 'font-family', var: name };
     else if (name.startsWith('text-'))
@@ -317,6 +319,8 @@ pnpm add -D node-html-parser   # or npm/yarn/bun equivalent
 
 Reads CSS custom properties and emits a DTCG Format 2025.10 token tree. The `tokenPath()` here must be identical to the one in the walker. DTCG types come from an explicit project taxonomy, never from guessing the CSS value; unsupported or ambiguous values fail closed instead of producing mislabeled tokens.
 
+Only base theme scopes are read: top-level `:root`/`:host` rules (including inside non-conditional `@layer` blocks), `@theme` blocks, and `@layer theme`. Mode overrides such as `.dark`, `[data-theme=…]`, `:root.dark`, and anything under `@media`/`@supports`/`@container` are skipped, so a dark redefinition never overwrites the light value the v1 plugin's `Light` mode expects. Conflicting base redefinitions of one property, or two properties mapping to the same token path, throw. Before writing, validate every alias chain: its target must exist in this export, have the same explicit type, and terminate without a cycle. Preserve valid aliases in the artifact rather than flattening them.
+
 ```js
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
@@ -334,6 +338,7 @@ function tokenPath(name) {
   if (/^space-/.test(name))        return `spacing/${name.replace('space-', '')}`;
   if (/^text-/.test(name))         return `typography/scale/${name.replace('text-', '')}`;
   if (/^tracking-/.test(name))     return `typography/tracking/${name.replace('tracking-', '')}`;
+  if (/^font-weight-/.test(name))  return `typography/weight/${name.replace('font-weight-', '')}`;
   if (/^font-/.test(name))         return `typography/family/${name.replace('font-', '')}`;
   if (/^fs-/.test(name))           return `typography/scale/${name.replace('fs-', '')}`;
   return `semantic/${name}`;
@@ -348,7 +353,8 @@ const SEMANTIC_TYPES = {
 function tokenType(name) {
   if (/^(beige|ink)-/.test(name)) return 'color';
   if (/^(space|text|tracking|fs)-/.test(name)) return 'dimension';
-  if (/^font-/.test(name)) return 'fontFamily';
+  if (/^font-weight-/.test(name)) return 'fontWeight';
+  if (/^font-(?!weight-)/.test(name)) return 'fontFamily';
   const type = SEMANTIC_TYPES[name];
   if (!type) throw new Error(`No explicit DTCG type mapping for --${name}`);
   return type;
@@ -373,6 +379,18 @@ function fontFamily(raw) {
   return families.length === 1 ? families[0] : families;
 }
 
+const FONT_WEIGHT_KEYWORDS = new Set([
+  'thin', 'hairline', 'extra-light', 'ultra-light', 'light', 'normal', 'regular', 'book',
+  'medium', 'semi-bold', 'demi-bold', 'bold', 'extra-bold', 'ultra-bold', 'black', 'heavy',
+  'extra-black', 'ultra-black',
+]);
+
+function fontWeight(raw, name) {
+  if (/^\d+$/.test(raw) && Number(raw) >= 1 && Number(raw) <= 1000) return Number(raw);
+  if (FONT_WEIGHT_KEYWORDS.has(raw)) return raw;
+  throw new Error(`Unsupported fontWeight value for --${name}: ${raw}`);
+}
+
 function dtcgValue(type, raw, name) {
   const alias = raw.match(/^var\(--([a-zA-Z0-9_-]+)\)$/);
   if (alias) return `{${tokenPath(alias[1]).replaceAll('/', '.')}}`;
@@ -388,22 +406,80 @@ function dtcgValue(type, raw, name) {
   }
   if (type === 'number' && /^-?(?:\d+|\d*\.\d+)$/.test(raw)) return Number(raw);
   if (type === 'fontFamily') return fontFamily(raw);
+  if (type === 'fontWeight') return fontWeight(raw, name);
   if (type === 'string') return raw;
 
   throw new Error(`Unsupported ${type} value for --${name}: ${raw}`);
 }
 
-// ── Extract --name: value pairs from CSS ──────────────────────────────────────
+// ── Collect declarations from base theme scopes only ──────────────────────────
+function findMatchingBrace(text, openIdx) {
+  let depth = 0;
+  for (let i = openIdx; i < text.length; i++) {
+    if (text[i] === '{') depth++;
+    else if (text[i] === '}' && --depth === 0) return i;
+  }
+  throw new Error('Unbalanced braces in token CSS');
+}
+
+function topLevelDeclarations(body) {
+  let out = '';
+  let depth = 0;
+  for (const ch of body) {
+    if (ch === '{') depth++;
+    else if (ch === '}') depth--;
+    else if (depth === 0) out += ch;
+  }
+  return out;
+}
+
+const ROOT_SELECTOR = /^(?::root|:host|:where\(\s*:(?:root|host)\s*\))$/;
+
+function baseThemeBodies(css) {
+  const bodies = [];
+  const stripped = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  let cursor = 0;
+  while (cursor < stripped.length) {
+    const open = stripped.indexOf('{', cursor);
+    if (open === -1) break;
+    const raw = stripped.slice(cursor, open).trim();
+    const selector = raw.slice(raw.lastIndexOf(';') + 1).trim();
+    const close = findMatchingBrace(stripped, open);
+    const body = stripped.slice(open + 1, close);
+    cursor = close + 1;
+
+    if (/^@theme\b/.test(selector)) bodies.push(topLevelDeclarations(body));
+    else if (/^@layer\b/.test(selector)) bodies.push(...baseThemeBodies(body)); // non-conditional
+    else if (selector.startsWith('@')) continue; // @media/@supports/@container/@keyframes…: overrides or non-tokens
+    else if (selector.split(',').every((part) => ROOT_SELECTOR.test(part.trim()))) {
+      bodies.push(topLevelDeclarations(body));
+    }
+    // Any other selector (.dark, [data-theme], :root.dark, …) is a mode override: skipped.
+  }
+  return bodies;
+}
+
+// ── Extract --name: value pairs from base theme scopes ────────────────────────
 function parseCustomProperties(css) {
   const tokens = [];
-  const re = /--([a-zA-Z0-9_-]+):\s*([^;]+);/g;
-  let m;
-  while ((m = re.exec(css)) !== null) {
-    const name  = m[1];
-    const value = m[2].trim();
-    if (name.startsWith('tw-') || name.startsWith('_')) continue; // skip internals
-    const type = tokenType(name);
-    tokens.push({ name, path: tokenPath(name), type, value: dtcgValue(type, value, name) });
+  const seen = new Map();
+  for (const body of baseThemeBodies(css)) {
+    const re = /--([a-zA-Z0-9_-]+):\s*([^;]+);?/g;
+    let m;
+    while ((m = re.exec(body)) !== null) {
+      const name  = m[1];
+      const value = m[2].trim();
+      if (name.startsWith('tw-') || name.startsWith('_')) continue; // skip internals
+      if (seen.has(name)) {
+        if (seen.get(name) !== value) {
+          throw new Error(`Conflicting base definitions for --${name}: ${seen.get(name)} vs ${value}`);
+        }
+        continue;
+      }
+      seen.set(name, value);
+      const type = tokenType(name);
+      tokens.push({ name, path: tokenPath(name), type, value: dtcgValue(type, value, name) });
+    }
   }
   return tokens;
 }
@@ -426,8 +502,32 @@ function buildDtcg(tokens) {
     if (cur[leaf] && cur[leaf].$value === undefined) {
       throw new Error(`Token path conflict: ${path} would overwrite namespace ${parts.join('/')}`);
     }
+    if (cur[leaf]?.$value !== undefined) {
+      throw new Error(`Token path conflict: ${path} is defined twice`);
+    }
     cur[leaf] = { $value: value, $type: type };
   }
+  // Validate after collecting all tokens so forward references are supported.
+  const byReference = new Map(tokens.map((token) => [token.path.replaceAll('/', '.'), token]));
+  const visiting = new Set();
+  const validated = new Set();
+  function validateAlias(token) {
+    if (validated.has(token.path)) return;
+    if (visiting.has(token.path)) throw new Error(`Circular token alias at ${token.path}`);
+    visiting.add(token.path);
+    const reference = typeof token.value === 'string' && token.value.match(/^\{([^{}]+)\}$/);
+    if (reference) {
+      const target = byReference.get(reference[1]);
+      if (!target) throw new Error(`Unknown token alias ${reference[1]} from ${token.path}`);
+      if (target.type !== token.type) {
+        throw new Error(`Token alias type mismatch: ${token.path} (${token.type}) -> ${target.path} (${target.type})`);
+      }
+      validateAlias(target);
+    }
+    visiting.delete(token.path);
+    validated.add(token.path);
+  }
+  for (const token of tokens) validateAlias(token);
   return tree;
 }
 

@@ -45,15 +45,16 @@ Then run:
 ```bash
 npm run check:skill-standard
 npm run check:drift
+npm run check:guardskills
 node bin/hash-check.mjs
 npm test
 ```
 
-Run guardskills when adding scripts, shell snippets, env references, network workflows, or security-sensitive guidance.
+This is the canonical `skills4sh` check list; `SKILL.md` links here instead of repeating it. `check:guardskills` matters most when changes add scripts, shell snippets, env references, network workflows, or security-sensitive guidance.
 
 ## Version policy
 
-New skills often start at `0.1.0` unless the local project, collection, or repository has another release convention. From `1.0.0`, breaking changes to triggers or scope require a major version. `skill-architect` is `1.0.0` and uses that contract. A `0.x` skill may still change incompatibly in a minor release; say so in the repository stability note. Keep the same version across every place the local context records skill versions, such as:
+New skills often start at `0.1.0` unless the local project, collection, or repository has another release convention. From `1.0.0`, breaking changes to triggers or scope require a major version. `skill-architect`, `init-rulebook`, and `eleventy-nunjucks` are past `1.0.0` and use that contract. A `0.x` skill may still change incompatibly in a minor release; say so in the repository stability note. Keep the same version across every place the local context records skill versions, such as:
 
 - `SKILL.md` `metadata.version`
 - `skills-lock.json`

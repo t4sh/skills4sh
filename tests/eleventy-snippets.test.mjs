@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, rmSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, dirname } from 'node:path';
+import { join, dirname, delimiter } from 'node:path';
 import { createRequire } from 'node:module';
 import { pathToFileURL } from 'node:url';
 import vm from 'node:vm';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 
 // Dependencies are locked separately from the published installer package.
 const require = createRequire(new URL('./fixtures/eleventy/package.json', import.meta.url));
@@ -153,4 +153,50 @@ test('Tailwind dark selector recipe compiles to class-driven utilities', async (
   const css = result.build(['dark:bg-black']);
   assert.match(css, /:where\(\.dark, \.dark \*\)/);
   assert.doesNotMatch(css, /prefers-color-scheme/);
+});
+
+test('inline-script audit flags | safe in any <script> tag but exempts jsonScript/jsonCompact', t => {
+  const text = doc('references/security-checklist.md');
+  const gate = firstAfter(text, 'No `| safe` expression inside `<script>`', 'bash');
+  const info = firstAfter(text, 'Informational: review unfiltered', 'bash');
+  const root = fixture(t);
+  file(root, 'src/dump.njk', '<script>window.d = {{ data | dump | safe }};</script>\n');
+  file(root, 'src/module.njk', '<script type="module">init({{ config | safe }})</script>\n');
+  file(root, 'src/ok.njk', '<script type="application/json">{{ data | jsonScript | safe }}</script>\n<script>{{ data | jsonCompact | safe }}</script>\n');
+  file(root, 'src/raw.njk', '<script>const id = "{{ page.url }}";</script>\n');
+  file(root, 'src/body.njk', '<main>{{ content | safe }}</main>\n');
+  const run = block => spawnSync('bash', ['-c', block], { cwd: root, encoding: 'utf8' });
+  const flagged = run(gate);
+  assert.equal(flagged.stderr, '');
+  assert.match(flagged.stdout, /dump\.njk:1:/);
+  assert.match(flagged.stdout, /module\.njk:1:/);
+  assert.doesNotMatch(flagged.stdout, /ok\.njk|raw\.njk|body\.njk/);
+  const review = run(info);
+  assert.match(review.stdout, /raw\.njk:1:/);
+  assert.doesNotMatch(review.stdout, /dump\.njk|module\.njk|ok\.njk|body\.njk/);
+  // The quick audit script must enforce the same gate pattern.
+  const pattern = gate.match(/grep -rnE '([^']+)'/)[1];
+  assert.ok(text.slice(text.indexOf('## Quick audit script')).includes(pattern));
+});
+
+test('quick audit uses configured Eleventy directories and fails clearly on missing paths', t => {
+  const root = fixture(t);
+  const script = file(root, 'security-audit.sh', firstAfter(doc('references/security-checklist.md'), '## Quick audit script', 'bash'));
+  const curl = file(root, 'bin/curl', '#!/bin/sh\nprintf "content-security-policy: default-src self\\nx-frame-options: DENY\\nstrict-transport-security: max-age=31536000\\n"\n');
+  chmodSync(curl, 0o755);
+  file(root, 'content/index.njk', '<h1>Home</h1>\n');
+  file(root, '_site/index.html', '<h1>Home</h1>\n');
+  const run = (input, output) => spawnSync('bash', [script, 'https://example.com', input, output], {
+    cwd: root, encoding: 'utf8', env: { ...process.env, PATH: `${join(root, 'bin')}${delimiter}${process.env.PATH}` },
+  });
+  const ok = run('content', '_site');
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.match(ok.stdout, /Audit complete/);
+  const missing = run('src', 'out');
+  assert.equal(missing.status, 1);
+  assert.match(missing.stderr, /Missing directory: src.*check Eleventy config/);
+  file(root, 'content/unsafe.njk', '<script>window.d = {{ data | dump | safe }};</script>\n');
+  const blocked = run('content', '_site');
+  assert.equal(blocked.status, 1);
+  assert.match(blocked.stdout, /content\/unsafe\.njk:1:/);
 });

@@ -4,7 +4,7 @@
 
 skill:
   name: code-to-figma
-  version: "0.2.1"
+  version: "0.3.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -15,11 +15,13 @@ integrity:
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/benchmarks.md: 921a8ce3601c518ecf7a746de7f2d1afe9d27ea89ff33284df78d7be00d90d46
-    references/ci-and-gist-setup.md: 23e18f12584a1f04d90916e520fad19ca5f996f7200f7033f8f37c3081c1ac54
+    references/ci-and-gist-setup.md: 06e2c9558441272a0c04ad2791912ca6086faebd1226b2218b184d316bbee348
     references/figma-export-contract.md: d30625fb0b943185da62bb3953702eafd1755a20ba4770570fab6c64cfc668f6
-    references/setup-scaffold.md: 0e9af03c3f089bc1c971e60f8a51f052ec64d1f583ab7221421e46bdc1008a92
-    references/walker-patterns.md: 5219dcd74ec251cca055deacd518a3343fb81eaad5dbfe45b0b882c5cb1f3718
-    SKILL.md: 3fd1e559c9889160df0c9e67866810bfd2f24f0ee3412694a4585af38525fbb2
+    references/setup-scaffold.md: 3584e8c18b34ed3c7318651f7fd4d4ec88ce6057bebc4d1eec623065673bde28
+    references/walker-patterns.md: e4e1386f560982dcd63ec7239991b45c039163c19872d909920fa24b9abde17a
+    SKILL.md: 163d6797f316b7cf5ebee88a82ccbd3d596eb9955956ba258a5a13077c657734
+    agents/openai.yaml: a97525ff97f74b54449987e537bc9f7860f809102cf59cdbe3e40125bf41d74d
+    assets/evals/scenarios.json: 3d64e7bf4473f2c9867c65b05b8ecd41dc7ff350fd404be0df3dabfd35e7d943
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; script generation, CLI calls, and Gist writes are all gated by user approval at runtime"
@@ -66,7 +68,7 @@ scanning:
       confidence: medium
       acknowledged: true
       file: references/walker-patterns.md
-      reason: "False positive. The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — this is the recommended way to source a token from the environment rather than hardcoding it. No secret file or credential store is read; the value is supplied by CI secrets at runtime, and the script is an adaptable template, not executed by the skill."
+      reason: "False positive. The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — this is the recommended way to source a token from the environment rather than hardcoding it. No secret file or credential store is read. The generated script is executed by /sync (step 5) and by CI; the token is env-sourced (CI secret or a secret-manager export, never typed on the command line) and sent only to the GitHub Gist API."
     - id: R008_ENV_ACCESS
       severity: low
       confidence: low

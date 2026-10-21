@@ -2,7 +2,7 @@
 
 Load this reference during `/code-to-figma setup` or `/code-to-figma update` after the project assessment identifies the framework, compiled HTML/CSS paths, token naming convention, and section structure.
 
-### 2 — Generate the scaffold
+### Generate the scaffold
 
 Produce the following files. Adapt all paths, class selectors, token prefix maps, and CSS file paths to the actual project.
 
@@ -71,7 +71,7 @@ Review the generated `<project>-tokens.w3c.json`, commit it with the scaffolded 
 
 CI workflow. See the full template in [`references/ci-and-gist-setup.md`](ci-and-gist-setup.md). Adapt the `paths:` trigger and build command to the project. Always use `node scripts/figma-export/walk-<site>.mjs` directly — never `pnpm figma:export` — so pnpm's script header does not contaminate the JSON written to the file.
 
-### 3 — Create the Gist, wire secrets, run first sync, and connect the plugin
+### Create the Gist, wire secrets, run first sync, and connect the plugin
 
 Use [`references/ci-and-gist-setup.md`](ci-and-gist-setup.md) as the single source of truth for:
 

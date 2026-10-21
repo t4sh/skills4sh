@@ -8,6 +8,37 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.7.0] — 2026-10-20
+
+### Security
+- Scope the SHA-256 Gitleaks exception to filename/hash matches in security manifests using a rule-level allowlist supported by CI's scanner; credential matches on the same line remain detectable.
+- `discord-harvest` 2.1.0: the download recipe no longer interpolates message-derived URLs or filenames into shell source (`download_asset` / `download_staged` take values as arguments or tab-separated records), and `validate_url` cuts the authority at `/?#` and rejects `@` or `\` in it, closing `?@` / `#@` allowlist bypasses. Bot tokens stay in environment variables or a mode-600 header file, never on the command line. MCP servers must authenticate as a bot application.
+- `eleventy-nunjucks` 1.0.0: the inline-`<script>` audit now flags `| safe` output, including `<script type="module">`, while exempting `jsonScript`.
+
+### Added
+- Codex adapters: every skill ships `agents/openai.yaml` with a display name, short description, and `$skill` default prompt. Descriptions front-load capability and the strongest trigger into the first 120 characters, which Codex keeps when its skills context budget truncates descriptions.
+- Eval catalogs for `figma-to-code` and `code-to-figma`; new routing near-misses and workflow cases across the other skills.
+- `skill-architect` 1.1.0: `references/helper-runtime.md`, `scaffold_skill.py --author` and `--openai-yaml`, dated Codex adapter facts, and done conditions for every operating-mode step.
+
+### Changed
+- Promoted `init-rulebook` to 1.0.0: breaking trigger or scope changes now require a major version. Complete rule text the host natively imports into the current context counts as read (not after compaction). Fresh-session discovery may be reported untested with the user's verification step. Status has one definition and reads selected rules completely while checking deferred rules by metadata only. Codex adapter facts re-verified 2026-10-21.
+- `agent-memory` 2.8.0: `CURSOR.md` migration merges shared content into `AGENTS.md`. Save, Sync, Build, Migrate, and Maintain have done conditions. The Codex global skill root is `~/.agents/skills/`.
+- `figma-to-code` 0.2.0 is now a repository-convention layer. When Figma's official `figma-design-to-code` skill is installed, it owns design context and implementation; this skill supplies the token map, component reuse rules, agent rules files, correction loop, and deviation report, and implements designs itself only when that skill is absent. `create_design_system_rules` is treated as a user-run MCP prompt, Code Connect writes use `add_code_connect_map` after approval, and routing uses current official skill names (checked 2026-10-21).
+- `code-to-figma` 0.3.0: the plugin docs no longer promise automatic variable-collection creation and state that the plugin is a development import binding to existing variables. Setup offers an optional one-time collection creation through Figma's `figma-use` skill, and one-off Figma writes route to `figma-use` or `figma-generate-design`. The DTCG converter reads only base theme scopes, throws on duplicate token paths, and types `--font-weight-*` as `fontWeight` under `typography/weight/`. Regenerate existing `.w3c.json` output.
+- `localhost-screenshots` 3.5.0 and `eleventy-nunjucks` 1.0.0 narrow their triggers to localhost and confirmed Eleventy context respectively.
+- Promoted `eleventy-nunjucks` to 1.0.0: breaking trigger or scope changes now require a major version. The stable Eleventy 3.x baseline and the separately gated Build Awesome v4 prerelease guide are part of that contract; a future v4 general release is a content update unless it changes triggers or scope.
+- README and AGENTS.md list `~/.agents/skills/` as the Codex global root.
+- Updated pinned CI actions: CodeQL 4.39.0, setup-node 7.1.0, setup-uv 10.3.0, and create-github-app-token 3.3.0 (folds Dependabot PR #54).
+- Bumped package and plugin metadata to 0.7.0.
+
+### Fixed
+- Agent Memory initialization defines the index registry and next-session loading instructions without inventing initial memories. Figma to Code records a provisional repository brief before retrieval and finalizes design mappings before implementation.
+- Code to Figma rejects missing, cyclic, and incompatible token aliases; recurring sync now distinguishes uploaded exports from verified Figma variable values and documents collection reconciliation.
+- Authenticated screenshot guidance preserves the live tab for sessionStorage logins instead of claiming storageState saves them. The Eleventy pre-deploy audit takes the build's inspected input and output directories explicitly.
+- `localhost-screenshots` helpers resolve Playwright from the working project first, then beside the script, so globally installed skills work without `NODE_PATH`.
+- `eleventy-nunjucks` baseline is Eleventy 3.1.7 with `@11ty/nunjucks` 3.3.0; the Build Awesome alpha is pinned instead of the `latest` stub, and troubleshooting, data-cascade, and build-pipeline examples were corrected. The config API reference now says Browsersync left core in v2, scopes `returnType: "html"` to the Image JS API (Image v7 needs Node 22+), and lists the `ndjson` output mode (checked 2026-10-21).
+- The installer ignores `__pycache__`, `*.pyc`, and `.DS_Store` when hashing an existing install, and helper commands run with `python -E -B`.
+
 ## [0.6.0] — 2026-09-28
 
 ### Added
@@ -401,7 +432,10 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.5.3...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.7.0...HEAD
+[0.7.0]: https://github.com/t4sh/skills4sh/compare/v0.6.0...v0.7.0
+[0.6.0]: https://github.com/t4sh/skills4sh/compare/v0.5.5...v0.6.0
+[0.5.5]: https://github.com/t4sh/skills4sh/compare/v0.5.4...v0.5.5
 [0.5.3]: https://github.com/t4sh/skills4sh/compare/v0.5.2...v0.5.3
 [0.5.1]: https://github.com/t4sh/skills4sh/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/t4sh/skills4sh/compare/v0.4.14...v0.5.0

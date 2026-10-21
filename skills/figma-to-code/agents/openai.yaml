@@ -1,0 +1,6 @@
+interface:
+  display_name: "Figma to Code"
+  short_description: "Apply repo tokens, components, and rules to Figma work"
+  default_prompt: "Use $figma-to-code to map this Figma design to our repo's tokens, components, and agent rules."
+policy:
+  allow_implicit_invocation: true

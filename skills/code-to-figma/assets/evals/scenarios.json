@@ -1,0 +1,91 @@
+{
+  "schema_version": 1,
+  "purpose": "Routing and isolated workflow catalog for code-to-figma; expected assertions are not executed results.",
+  "execution": "For routing cases, use only frontmatter and withhold labels. For workflow cases, materialize files in a fresh temporary directory, replace OUTPUT with its absolute path, use the skill body and needed references, and withhold assertions. Record observed actions and outcomes separately. Service readbacks are synthetic evidence; no real GitHub/Figma calls or writes are authorized. Do not use actual credentials.",
+  "cases": [
+    {
+      "id": "retrieval",
+      "kind": "description-only-routing",
+      "prompt": "Using only the code-to-figma frontmatter, label each supplied request load or skip. Do not inspect the body or execute workflows.",
+      "prompts": [
+        {
+          "text": "Set up a Figma sync pipeline that exports our design tokens on every push.",
+          "load": true
+        },
+        {
+          "text": "Sync code to Figma now; the scripts and figma-sync.config.json already exist.",
+          "load": true
+        },
+        {
+          "text": "Our token naming changed; update the page walker and DTCG converter.",
+          "load": true
+        },
+        {
+          "text": "Check the status of the figma-export.json Gist and the figma-sync CI run.",
+          "load": true
+        },
+        {
+          "text": "Wire up the tokens-sync-to-figma plugin to our Gist.",
+          "load": true
+        },
+        {
+          "text": "Implement this Figma design in our React app.",
+          "load": false
+        },
+        {
+          "text": "Generate this one landing page as a Figma design from our live site.",
+          "load": false
+        },
+        {
+          "text": "Extract Figma variables into our code tokens.",
+          "load": false
+        },
+        {
+          "text": "Using the Figma MCP, create a Design Tokens variable collection in my open Figma file from these color values.",
+          "load": false
+        },
+        {
+          "text": "Ask the agent to change the hero button fill in our Figma file to the brand blue variable.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "Withhold expected labels; record false positives and negatives separately.",
+        "Figma-to-code direction routes to figma-to-code; agent-driven, one-off Figma variable or node writes route to figma-use; one-off screen generation in Figma routes to figma-generate-design or the Figma MCP write tools."
+      ]
+    },
+    {
+      "id": "recurring-value-parity",
+      "prompt": "Sync the existing Code to Figma pipeline after the compiled CSS changed. Use the supplied simulated Gist response and Figma collection readback; no real network or Figma writes are allowed. Regenerate the DTCG artifact by adapting and running the skill converter, and deliver the pending work and completion status in OUTPUT/summary.md. Current app root font size is 20px. Preserve the existing Figma collection and variable identities.",
+      "files": {
+        "package.json": "{\"name\":\"sync-fixture\",\"scripts\":{\"build\":\"node -e \\\"process.exit(0)\\\"\"}}",
+        "figma-sync.config.json": "{\"walker\":\"scripts/figma-export/walk-site.mjs\",\"gistId\":\"fixture-only\"}",
+        "build/tokens.css": ":root { --ink-900: #222; --background: var(--ink-900); --text-xl: 1.25rem; }",
+        "scripts/figma-export/walk-site.mjs": "process.stdout.write(JSON.stringify({meta:{generated:\"2026-10-21T00:00:00Z\"},sections:[{id:\"hero\",nodes:[{tag:\"h1\",text:\"Hello\",fontSizeToken:\"typography/scale/xl\",colorToken:\"semantic/background\"}]}]}));",
+        "observations/gist-response.json": "{\"simulated\":true,\"status\":200,\"filename\":\"figma-export.json\",\"note\":\"Fixture upload would succeed; no live write happened.\"}",
+        "observations/figma-collection.json": "{\"simulated\":true,\"name\":\"Design Tokens\",\"mode\":\"Light\",\"variables\":[{\"id\":\"v1\",\"name\":\"palette/ink/900\",\"type\":\"COLOR\",\"value\":{\"r\":0.06666666666666667,\"g\":0.06666666666666667,\"b\":0.06666666666666667}},{\"id\":\"v2\",\"name\":\"semantic/background\",\"type\":\"COLOR\",\"alias\":\"v1\"},{\"id\":\"v3\",\"name\":\"typography/scale/xl\",\"type\":\"FLOAT\",\"value\":20}]}"
+      },
+      "assertions": [
+        "Converter executes and preserves validated background alias.",
+        "Reports unchanged-name color and size changes (new ink 34/255; size 25px from 1.25rem at 20px root) while preserving existing IDs.",
+        "Reports fixture export success separately from unverified real Figma parity; does not claim live service writes.",
+        "Requires value/alias readback and plugin verification before full completion."
+      ],
+      "kind": "workflow"
+    },
+    {
+      "id": "collection-name-and-font-alias-boundaries",
+      "prompt": "Assess whether this existing Figma sync can be verified complete using the supplied readbacks. Give the next actions and any blockers; no live tools or writes are authorized. Record your answer in OUTPUT/summary.md.",
+      "files": {
+        "figma-sync.config.json": "{\"gistId\":\"fixture-only\",\"walker\":\"scripts/walk.mjs\"}",
+        "observations/readback.json": "{\"simulated\":true,\"gistUpload\":{\"status\":200},\"exportedTokens\":[\"semantic/background\",\"typography/family/display\"],\"collections\":[{\"id\":\"main\",\"name\":\"Design Tokens\",\"mode\":\"Light\",\"variables\":[{\"id\":\"bg-main\",\"name\":\"semantic/background\",\"type\":\"COLOR\",\"value\":\"#222\"},{\"id\":\"font-base\",\"name\":\"typography/family/base\",\"type\":\"STRING\",\"value\":\"Example Sans\"},{\"id\":\"font-display\",\"name\":\"typography/family/display\",\"type\":\"STRING\",\"alias\":\"font-base\"}]},{\"id\":\"other\",\"name\":\"Brand Draft\",\"variables\":[{\"id\":\"bg-other\",\"name\":\"semantic/background\",\"type\":\"COLOR\",\"value\":\"#f00\"}]}]}"
+      },
+      "assertions": [
+        "Blocks plugin/parity completion on duplicate exported variable paths across collections; does not silently rename/delete variables.",
+        "Explains literal font-family requirement for current plugin; proposes resolving alias to Example Sans while retaining source alias.",
+        "Requires actual node binding IDs and rendered font validation after approved repairs; synthetic upload is not live verification."
+      ],
+      "kind": "workflow"
+    }
+  ]
+}

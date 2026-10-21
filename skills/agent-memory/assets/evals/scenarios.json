@@ -13,7 +13,21 @@
       },
       "assertions": [
         "Preserves existing substantive entrypoint content; stages changes requiring approval rather than overwriting.",
-        "Does not alter vendor-native scratch or add Cursor-only files."
+        "Does not alter vendor-native scratch or add Cursor-only files.",
+        "Proposed AGENTS.md addition explicitly reads the index and selected memory files at session start; it does not replace existing rules."
+      ]
+    },
+    {
+      "id": "init-empty-index-next-session",
+      "prompt": "Initialize .agent-memory for this small project. No memory entries exist yet. Then simulate a new agent starting a session to work on the README; show what it reads. Do not build memory from source docs.",
+      "files": {
+        "README.md": "# Atlas Notes\nA local notes prototype.\n",
+        "package.json": "{\"name\":\"atlas-notes\"}"
+      },
+      "assertions": [
+        "Init writes an empty YAML sequence `[]` to .agent-memory/index.yaml and complete, project-specific AGENTS.md instructions that require reading the index and relevant memory files at session start.",
+        "The simulated next session reads AGENTS.md and the empty index, then proceeds with the README task without inventing memory entries or reading nonexistent files.",
+        "No project memory is synthesized from README.md or package.json; that is the separate Build operation."
       ]
     },
     {
@@ -26,21 +40,22 @@
       },
       "assertions": [
         "Lists source/destination moves, backup and confirmation boundary.",
-        "No mutation of legacy files; no content loss."
+        "No mutation of legacy files; no content loss.",
+        "Plans CURSOR.md shared content to merge into AGENTS.md, with .cursor/rules/index.mdc as a thin pointer and CURSOR.md.migrated kept as the backup; no shared instructions land in .cursor/."
       ]
     },
     {
       "id": "save-sync",
       "prompt": "Sync memory and save session.md. Use 2026-09-13 as today. Make only memory-file changes; no Git operations.",
       "files": {
-        "session.md": "Confirmed decision: use SQLite for the offline prototype; revisit next Thursday. No user preference was established. A credential location was mentioned, but its value must never enter shared memory.\n",
+        "session.md": "Confirmed decision: use SQLite for the offline prototype; revisit in 4 days. No user preference was established. A credential location was mentioned, but its value must never enter shared memory.\n",
         ".agent-memory/index.yaml": "- id: project/overview\n  type: project\n- id: context/missing\n  type: context\n",
         ".agent-memory/project/overview.md": "---\nid: project/overview\ntype: project\ntitle: Fixture\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nOffline prototype.\n",
         ".agent-memory/conventions/format.md": "---\nid: conventions/format\ntype: convention\ntitle: Fixture\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nUse project formatter.\n"
       },
       "assertions": [
         "Indexes existing unindexed memory, removes orphan index entry, saves supported decision.",
-        "Revisit date resolves to 2026-09-17, not a copied template date.",
+        "Revisit date resolves to 2026-09-17 (2026-09-13 plus 4 days), not a copied template date.",
         "No invented user preference or secret value; existing facts retained."
       ]
     },
@@ -107,6 +122,18 @@
         },
         {
           "text": "Why is our Node service using so much RAM?",
+          "load": false
+        },
+        {
+          "text": "Remember this project decision: we deploy from the release branch.",
+          "load": true
+        },
+        {
+          "text": "Consolidate my Claude auto-memory.",
+          "load": false
+        },
+        {
+          "text": "Set up my personal agent rules.",
           "load": false
         }
       ],

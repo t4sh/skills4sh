@@ -1,0 +1,155 @@
+{
+  "schema_version": 1,
+  "purpose": "Behavioral fixture catalog for figma-to-code; expected assertions are not executed results.",
+  "execution": "Use isolated case directories. Materialize files, replace OUTPUT with the absolute case output directory, withhold assertions and routing labels, and record observed results separately. Files named mcp-* are synthetic Figma MCP payloads, not live tool results; never contact Figma or use real credentials. Routing cases use only the skill frontmatter.",
+  "cases": [
+    {
+      "id": "retrieval",
+      "kind": "description-only-routing",
+      "prompt": "Using only the figma-to-code frontmatter, label each supplied request load or skip. Do not inspect the body or execute workflows.",
+      "prompts": [
+        {
+          "text": "Implement this Figma design: https://www.figma.com/design/AbC123/App?node-id=42-15",
+          "load": true
+        },
+        {
+          "text": "Build the settings page from this Figma link in our Next.js repo.",
+          "load": true
+        },
+        {
+          "text": "Extract the Figma design tokens into our Tailwind theme.",
+          "load": true
+        },
+        {
+          "text": "Map our Figma variables onto the existing CSS custom properties by semantic role.",
+          "load": true
+        },
+        {
+          "text": "Create Figma design system rules for this repository.",
+          "load": true
+        },
+        {
+          "text": "Code connect this Button component.",
+          "load": true
+        },
+        {
+          "text": "Add a Figma section to our AGENTS.md so future agents reuse our components when building from Figma.",
+          "load": true
+        },
+        {
+          "text": "Set up CI that exports our CSS tokens to a Gist for the tokens-sync-to-figma plugin.",
+          "load": false
+        },
+        {
+          "text": "Generate a new screen inside Figma from this React page.",
+          "load": false
+        },
+        {
+          "text": "Draw a FigJam flow diagram of the checkout.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "Withhold expected labels; record false positives and negatives separately.",
+        "Implement requests load because no official figma-design-to-code skill is assumed in this case; token, rules, and Code Connect requests load as this skill's own surface.",
+        "Code-to-Figma export and Figma-side writes are skips; this checks description-only routing, not host discovery."
+      ]
+    },
+    {
+      "id": "official-skill-routing",
+      "kind": "description-only-routing",
+      "prompt": "Assume the host also lists official Figma skills figma-design-to-code, figma-code-connect, figma-use, figma-generate-design, and figma-generate-library. Using the figma-to-code Skill Boundaries section, label whether figma-to-code should be loaded for each request (load) or left out (skip).",
+      "prompts": [
+        {
+          "text": "Implement this Figma frame in our repo using our existing components.",
+          "load": true
+        },
+        {
+          "text": "Use only figma-design-to-code to build this frame; do not load other skills.",
+          "load": false
+        },
+        {
+          "text": "Map the Figma variables in this frame to our Tailwind theme tokens.",
+          "load": true
+        },
+        {
+          "text": "Author .figma.ts Code Connect templates and submit them.",
+          "load": false
+        },
+        {
+          "text": "Build a design system library inside Figma from our tokens.",
+          "load": false
+        },
+        {
+          "text": "Keep Figma updated from our codebase on every push via CI.",
+          "load": false
+        }
+      ],
+      "assertions": [
+        "With figma-design-to-code installed, an implement request still loads figma-to-code, but only for the conventions brief, correction loop, and deviation report; figma-design-to-code owns the implement procedure.",
+        "A user instruction to use only a named official skill wins over figma-to-code.",
+        "Token mapping stays with figma-to-code; .figma.ts authoring and submission route to figma-code-connect.",
+        "Code-to-Figma CI export routes to code-to-figma; Figma-side library or screen generation routes to figma-generate-library or figma-generate-design."
+      ]
+    },
+    {
+      "id": "implement-with-official-skill",
+      "kind": "workflow",
+      "prompt": "The host has the figma-design-to-code skill installed (its stub is at host-skills/figma-design-to-code/SKILL.md). Implement this Figma frame into src/components/PlanCard.tsx. The design context and screenshot that figma-design-to-code retrieved are mcp-design-context.json and mcp-screenshot.json. Write code under OUTPUT and a completion summary to OUTPUT/summary.md. No live Figma access is available; treat the mcp-* files as the tool results.",
+      "files": {
+        "package.json": "{\"name\":\"fixture-app\",\"dependencies\":{\"react\":\"18.3.1\",\"tailwindcss\":\"4.1.0\"}}",
+        "src/components/Card.tsx": "export function Card({ children }: { children: React.ReactNode }) {\n  return <div className=\"rounded-lg bg-surface p-4 gap-4 flex flex-col\">{children}</div>;\n}\n",
+        "src/styles/tokens.css": ":root { --surface: #ffffff; --ink: #111111; --space-6: 1.5rem; }\n",
+        "AGENTS.md": "# Agent rules\n\n- Build cards from `src/components/Card.tsx`; never add a new UI library.\n- Use tokens from `src/styles/tokens.css` instead of raw hex or px values.\n",
+        "host-skills/figma-design-to-code/SKILL.md": "---\nname: figma-design-to-code\ndescription: Stub of the official Figma implement skill for this fixture. Use when implementing a Figma design as code.\n---\n\n# Figma design to code (fixture stub)\n\nRetrieve design context and a screenshot, reuse project components and tokens, download assets, and verify the requested component.\n",
+        "mcp-design-context.json": "{\"node\":\"42:15\",\"name\":\"PlanCard\",\"layout\":{\"padding\":24,\"gap\":24,\"radius\":12},\"fills\":[\"var(--surface)\"],\"text\":[{\"content\":\"Pro\",\"fontSize\":20,\"fontWeight\":600,\"color\":\"var(--ink)\"}],\"font\":\"Inter Display\"}",
+        "mcp-screenshot.json": "{\"node\":\"42:15\",\"note\":\"Synthetic screenshot spec: 24px padding, 24px gap, 12px radius, Inter Display heading.\"}"
+      },
+      "assertions": [
+        "Drafts a provisional conventions brief from AGENTS.md and src/ before reading synthetic design context; finalizes token map (24px spacing to --space-6, fills to --surface, text to --ink) and Card reuse map after context retrieval but before code writes.",
+        "Defers the design-context, screenshot, asset, and implementation procedure to figma-design-to-code; does not run figma-to-code's fallback procedure or re-request design context or a screenshot.",
+        "Runs the correction loop against the supplied context and screenshot, including convention checks such as raw values replaced by tokens and Card reused.",
+        "Summary includes a deviation report (e.g. Inter Display font availability, no rendered visual check) and does not claim pixel parity."
+      ]
+    },
+    {
+      "id": "brief-order-with-unknown-design-items",
+      "kind": "workflow",
+      "prompt": "The host has figma-design-to-code installed. Implement the supplied Figma CheckoutBadge frame in src/components/CheckoutBadge.tsx. Repository files are available first; mcp-design-context.json and mcp-screenshot.json represent context that the official skill retrieves later. Write working notes to OUTPUT/brief.md before code and a completion summary to OUTPUT/summary.md. No live Figma access is available; treat mcp-* files as synthetic tool results.",
+      "files": {
+        "package.json": "{\"name\":\"checkout-fixture\",\"dependencies\":{\"react\":\"18.3.1\"}}",
+        "AGENTS.md": "# Project rules\nReuse existing components and semantic CSS tokens.\n",
+        "src/components/Badge.tsx": "export function Badge({ children }: { children: React.ReactNode }) { return <span className=\"badge\">{children}</span>; }\n",
+        "src/styles/tokens.css": ":root { --status-success: #16803c; --surface: #fff; }\n",
+        "host-skills/figma-design-to-code/SKILL.md": "---\nname: figma-design-to-code\ndescription: Implement Figma designs in code.\n---\nRetrieve context and screenshot, then implement.\n",
+        "mcp-design-context.json": "{\"node\":\"9:2\",\"name\":\"CheckoutBadge\",\"component\":\"Badge\",\"fills\":[{\"variable\":\"status/ready\",\"value\":\"#16803c\"},{\"variable\":\"accent/new\",\"value\":\"#a65cff\"}],\"text\":\"Ready\"}",
+        "mcp-screenshot.json": "{\"node\":\"9:2\",\"note\":\"Synthetic screenshot spec: green Ready badge with a purple accent.\"}"
+      },
+      "assertions": [
+        "Provisional brief names repository tokens and Badge as candidates but does not claim Figma variable or component mappings before the official retrieval result is available.",
+        "After retrieval and before code, final brief maps status/ready to --status-success and Badge to src/components/Badge.tsx; accent/new is either mapped to a narrowly added semantic token with rationale or reported unmapped with a reason.",
+        "Official skill owns the single design-context and screenshot retrieval; no duplicate fetch or fallback procedure is used.",
+        "Completion summary reports the unmapped accent and any visual verification limit."
+      ]
+    },
+    {
+      "id": "implement-fallback-correction-pass",
+      "kind": "workflow",
+      "prompt": "figma-design-to-code is not installed in this host. Implement the Figma card in mcp-design-context.json into src/components/PlanCard.tsx using the repo's existing primitives. The synthetic screenshot spec is mcp-screenshot.json. Write code under OUTPUT and a completion summary to OUTPUT/summary.md. No live Figma access is available; treat the mcp-* files as the tool results.",
+      "files": {
+        "package.json": "{\"name\":\"fixture-app\",\"dependencies\":{\"react\":\"18.3.1\",\"tailwindcss\":\"4.1.0\"}}",
+        "src/components/Card.tsx": "export function Card({ children }: { children: React.ReactNode }) {\n  return <div className=\"rounded-lg bg-surface p-4 gap-4 flex flex-col\">{children}</div>;\n}\n",
+        "src/styles/tokens.css": ":root { --surface: #ffffff; --ink: #111111; --space-6: 1.5rem; }\n",
+        "mcp-design-context.json": "{\"node\":\"42:15\",\"name\":\"PlanCard\",\"layout\":{\"padding\":24,\"gap\":24,\"radius\":12},\"fills\":[\"var(--surface)\"],\"text\":[{\"content\":\"Pro\",\"fontSize\":20,\"fontWeight\":600,\"color\":\"var(--ink)\"}],\"font\":\"Inter Display\"}",
+        "mcp-screenshot.json": "{\"node\":\"42:15\",\"note\":\"Synthetic screenshot spec: 24px padding, 24px gap, 12px radius, Inter Display heading.\"}"
+      },
+      "assertions": [
+        "Runs the figma-to-code fallback implement procedure because figma-design-to-code is absent.",
+        "Reuses the existing Card primitive and tokens instead of introducing a new UI library.",
+        "Runs at least one correction pass that lists specific mismatches (e.g. gap-4 = 16px vs Figma gap 24px; p-4 vs 24px padding) and fixes them; does not mark the task complete after a single pass.",
+        "Summary includes a deviation report naming intentional deviations or unverifiable items (e.g. Inter Display font availability, no rendered visual check).",
+        "Does not claim pixel parity without a rendered comparison."
+      ]
+    }
+  ]
+}

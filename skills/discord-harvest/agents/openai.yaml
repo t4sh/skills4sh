@@ -1,0 +1,6 @@
+interface:
+  display_name: "Discord Harvest"
+  short_description: "Archive Discord attachments, images, and links locally"
+  default_prompt: "Use $discord-harvest to archive the attachments and links from this Discord channel or export."
+policy:
+  allow_implicit_invocation: true

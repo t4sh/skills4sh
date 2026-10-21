@@ -6,7 +6,7 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
 
 1. Walk every section in order before a production deploy
 2. For each box: either tick it or write a one-line waiver explaining why it doesn't apply
-3. Adapt input/output/config paths before running the shell searches. They are triage hints: multiline templates and custom code can evade them. Verify rendered output and HTTP responses too.
+3. Inspect the project's Eleventy config, build command, and CLI overrides to identify its actual input and output directories. Replace the example `src/` and `out/` paths in the shell searches before running them. They are triage hints: multiline templates and custom code can evade them. Verify rendered output and HTTP responses too.
 
 ---
 
@@ -32,10 +32,20 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
   # Expected: zero results
   ```
 
-- [ ] **No raw `{{ var }}` inside `<script>` blocks.** Must use an escape filter.
+- [ ] **No `| safe` expression inside `<script>` unless it is `jsonScript | safe` or `jsonCompact | safe`.** Covers any `<script …>` opening tag, including `type="module"` and `type="application/ld+json"`.
   ```bash
-  grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ | grep -v -E "jsonScript|jsonCompact"
+  grep -rnE '<script[^>]*>.*[{][{][^}]*[|][[:space:]]*safe([^[:alnum:]_]|$)' src/ \
+    | grep -vE '[|][[:space:]]*json(Script|Compact)[[:space:]]*[|][[:space:]]*safe'
+  # Expected: zero results
   ```
+
+- [ ] **Informational: review unfiltered `{{ var }}` inside `<script>`.** Autoescaping makes these HTML-safe, not JavaScript-safe; prefer `jsonScript`/`jsonCompact` for data.
+  ```bash
+  grep -rnE '<script[^>]*>.*[{][{][^|}]*[}][}]' src/
+  # Review each result; not a blocking gate
+  ```
+
+  Both searches are line-based. A `{{ … }}` on a later line than `<script>` evades them, and a line that mixes an allowed JSON filter with another `| safe` is dropped by the exclusion; inspect multi-line scripts and rendered output.
 
 - [ ] **Markdown engine `html` is `false` for any source that's not 100% trusted authored content.**
   ```bash
@@ -122,7 +132,7 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
 - [ ] **`out/` does not contain SSH keys, credentials, or service-account JSONs.**
   ```bash
   grep -rE 'BEGIN (RSA|EC|OPENSSH|PGP) PRIVATE KEY' out/ 2>/dev/null
-  grep -rE 'AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}|ctx7sk-[a-f0-9]+' out/ 2>/dev/null
+  grep -rE 'AKIA[0-9A-Z]{16}|sk-[a-zA-Z0-9]{32,}' out/ 2>/dev/null
   # Expected: zero results
   ```
 
@@ -311,39 +321,44 @@ If the site has any forms (contact, signup, search):
 # scripts/security-audit.sh — run before deploy
 set -euo pipefail
 
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 https://example.com" >&2
+if [ "$#" -ne 3 ]; then
+  echo "Usage: $0 https://example.com INPUT_DIR OUTPUT_DIR" >&2
+  echo "Inspect Eleventy config and build/CLI overrides; pass the directories used by this build." >&2
   exit 64
 fi
 
 target_url="$1"
-output_dir="${OUTPUT_DIR:-out}"
+input_dir="$2"
+output_dir="$3"
 
-for required_dir in src "$output_dir"; do
+for required_dir in "$input_dir" "$output_dir"; do
   if [ ! -d "$required_dir" ]; then
-    echo "Missing required directory: $required_dir" >&2
+    echo "Missing directory: $required_dir (check Eleventy config, build/CLI overrides, and build completion)" >&2
     exit 1
   fi
 done
 
 echo "→ Checking | safe usage…"
-safe_count=$(grep -rnE "\|[[:space:]]*safe([[:space:]|}]|$)" src/ 2>/dev/null | wc -l | tr -d ' ' || true)
+safe_count=$(grep -rnE "\|[[:space:]]*safe([[:space:]|}]|$)" "$input_dir" 2>/dev/null | wc -l | tr -d ' ' || true)
 echo "  ${safe_count} occurrence(s); review each trust boundary"
 
 echo "→ Checking dump | safe (must be zero)…"
-if grep -rnE "\|[[:space:]]*dump[[:space:]]*\|[[:space:]]*safe([[:space:]|}]|$)" src/; then
+if grep -rnE "\|[[:space:]]*dump[[:space:]]*\|[[:space:]]*safe([[:space:]|}]|$)" "$input_dir"; then
   exit 1
 else
   echo "  ok"
 fi
 
-echo "→ Checking inline scripts without escape filter (must be zero)…"
-if grep -rnE "<script>[^<]*{{[^|]+}}[^<]*</script>" src/ \
-  | grep -v -E "jsonScript|jsonCompact"; then
+echo "→ Checking | safe inside <script> (must be zero)…"
+if grep -rnE '<script[^>]*>.*[{][{][^}]*[|][[:space:]]*safe([^[:alnum:]_]|$)' "$input_dir" \
+  | grep -vE '[|][[:space:]]*json(Script|Compact)[[:space:]]*[|][[:space:]]*safe'; then
   exit 1
 else
   echo "  ok"
 fi
+
+echo "→ Unfiltered {{ }} inside <script> (informational)…"
+grep -rnE '<script[^>]*>.*[{][{][^|}]*[}][}]' "$input_dir" || echo "  none"
 
 echo "→ Checking output for secret-shaped files (must be zero)…"
 if find "$output_dir" \( -name '.env*' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' \) -print -quit | grep -q .; then
@@ -371,4 +386,4 @@ done
 echo "✓ Audit complete"
 ```
 
-Run as: `bash scripts/security-audit.sh https://example.com`
+After a completed build, run with the input and output directories confirmed from that project's config and build command, for example: `bash scripts/security-audit.sh https://example.com content _site`.

@@ -1,11 +1,11 @@
 ---
 name: localhost-screenshots
-description: "Capture and compare localhost pages across viewports for visual regression. Use when asked to \"screenshot my site\", \"capture pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or capture a Portless app at a named .localhost URL."
+description: "Screenshot localhost/local dev-server pages across viewports and compare them for visual regression. Use when asked to \"screenshot my local site\", \"capture localhost pages\", \"visual diff\", \"compare screenshots\", \"responsive screenshots\", \"check breakpoints\", \"visual regression\", or capture a Portless app at a named .localhost URL. Not for public URLs or writing e2e tests."
 license: MIT
 compatibility: macOS, Linux, or Windows with Chrome or Playwright
 metadata:
   author: t4sh
-  version: "3.4.0"
+  version: "3.5.0"
   tags: screenshots, localhost, portless, visual-regression, responsive, breakpoints, playwright, chrome, browser-automation, pixel-diff, accessibility
 ---
 
@@ -16,7 +16,7 @@ This skill captures screenshots of locally running websites. It supports two pri
 - **Chrome MCP** — for quick debugging, single screenshots, and interactive verification
 - **Playwright** — for systematic multi-breakpoint screenshot sets and visual regression
 
-Playwright 1.62 also ships first-party CLI and MCP entry points. Use them when the host/project already exposes that workflow; keep the bundled scripts for explicit, reviewable localhost-only captures and deterministic CI. Do not install a second browser-control stack merely because the new entry points exist.
+When the host or project already exposes Playwright's own CLI/MCP entry points, see [playwright-patterns.md](references/playwright-patterns.md) § "Playwright 1.62 CLI/MCP entry points and supported OS images" before adding the bundled scripts.
 
 For niche scenarios (persistent sessions, AI snapshots, CI workflows), see the [Reference Files](#reference-files) section.
 
@@ -124,7 +124,7 @@ npm install --save-dev playwright@1.62.0
 npm exec -- playwright install chromium
 ```
 
-Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` when the project already pins a compatible Playwright version in its lockfile. Playwright 1.62 no longer supports Debian 11; use a supported OS image rather than forcing browser dependencies onto an unsupported runner. If Chromium reports missing OS libraries, surface them to the user and **ask them to install** — never run `sudo` from this skill. See [references/playwright-patterns.md](references/playwright-patterns.md) § "When Chromium reports missing OS libraries".
+Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` when the project already pins a compatible Playwright version in its lockfile. For unsupported runner images (Debian 11), see [references/playwright-patterns.md](references/playwright-patterns.md) § "Playwright 1.62 CLI/MCP entry points and supported OS images". If Chromium reports missing OS libraries, surface them to the user and **ask them to install** — never run `sudo` from this skill. See [references/playwright-patterns.md](references/playwright-patterns.md) § "When Chromium reports missing OS libraries".
 
 ### Quick workflow
 
@@ -157,7 +157,7 @@ Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), th
 - `chromium.launch()` — no arguments, uses Playwright's bundled Chromium
 - `waitUntil: 'load'` — safe default for SPAs with analytics/websockets; add `waitForSelector()` for the content that matters
 - `fullPage: true` — captures entire scrollable page
-- Create a **new page per breakpoint** — avoids leftover state
+- Create a **new page per breakpoint** for stateless captures. For sessionStorage-based authentication, retain the authenticated page and verify protected content at every size; see [persistent sessions](references/playwright-patterns.md#persistent-browser-sessions).
 - `page.setViewportSize()` — set before navigating for accurate responsive rendering
 
 ---
@@ -185,7 +185,7 @@ For advanced patterns (persistent sessions, pixel-diff, AI snapshots, CI workflo
 
 | File | Load when |
 |------|-----------|
-| [assets/scripts/quick.js](assets/scripts/quick.js) | One viewport capture via Playwright without writing a custom script |
+| [assets/scripts/quick.js](assets/scripts/quick.js) | One viewport capture via Playwright without writing a custom script; run helpers from the project root by skill path (see playwright-patterns.md § "Invocation" for argument order) |
 | [assets/scripts/multi-breakpoint.js](assets/scripts/multi-breakpoint.js) | Custom breakpoint list or a smaller scripted set before adopting the full 8-breakpoint pipeline |
 | [assets/scripts/screenshot-a11y.js](assets/scripts/screenshot-a11y.js) | Screenshot plus ARIA snapshot with optional `WIDTHxHEIGHT` viewport and `untrusted-page-content` JSON envelope for agent consumption |
 | [references/playwright-patterns.md](references/playwright-patterns.md) | Pre-flight checks, serving patterns, persistent sessions, breakpoint detection, canonical 8-breakpoint script templates |
