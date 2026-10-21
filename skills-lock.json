@@ -10,8 +10,8 @@
     "code-to-figma": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.3.1",
-      "computedHash": "5a31b82e17218635474d1cff2a21fbcaaed27c44611e90a96f330dc07baf6526"
+      "version": "0.3.0",
+      "computedHash": "0851bd4278cbf0d409cf83765bd4df81ca00ce3d4590e46b55a9ec8cdc26586e"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
@@ -28,8 +28,8 @@
     "figma-to-code": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.3.0",
-      "computedHash": "77904f2c6454c9fa43c17df8ad2cd900529a50bab729797b805a158decb4d26f"
+      "version": "0.2.0",
+      "computedHash": "da257a6ea559a6c84fd0ed6346125a68939afa97de090ed6dae1c91ea0a078ae"
     },
     "init-rulebook": {
       "source": "t4sh/skills4sh",

@@ -4,7 +4,7 @@
 
 skill:
   name: figma-to-code
-  version: "0.3.0"
+  version: "0.2.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -20,7 +20,7 @@ integrity:
     references/implementation-patterns.md: 7c22e1a42345bf6d04abb0575c0cff0a357282958fe0f3a2e24490dbf11b63e0
     references/troubleshooting.md: 653a6e7fa662b376a15a86046a6b9d307f8b7fcc2e864fbd96e378fa780f0d42
     references/verification-and-boundaries.md: f0f3b35a95fbce2a13c29896f43290ee577996cf5fa4c0e42bc11e2d11040339
-    SKILL.md: 3202c8d82f34dbca57dc4086e5178470671b689e26c997788b65425f0fb8075d
+    SKILL.md: 5d542b8432c604271873f6ce841605407e96c241be88bbf825463f4dfe3c87b1
     agents/openai.yaml: 2cb1518629abb29206eb3d64d6e2873d46d8ba53c2203202722ae0b939033a88
     assets/evals/scenarios.json: 182f009e397ece1b7a72e903485d5bdf1fd7a605e7c75b1df116d821ac325662
 permissions:

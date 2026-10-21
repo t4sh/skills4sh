@@ -4,7 +4,7 @@
 
 skill:
   name: code-to-figma
-  version: "0.3.1"
+  version: "0.3.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -19,7 +19,7 @@ integrity:
     references/figma-export-contract.md: d30625fb0b943185da62bb3953702eafd1755a20ba4770570fab6c64cfc668f6
     references/setup-scaffold.md: 3584e8c18b34ed3c7318651f7fd4d4ec88ce6057bebc4d1eec623065673bde28
     references/walker-patterns.md: e4e1386f560982dcd63ec7239991b45c039163c19872d909920fa24b9abde17a
-    SKILL.md: 1202f2692669dd7cb686442f336f5285727fdd62f8a27ae364af545fd97f5f7d
+    SKILL.md: 163d6797f316b7cf5ebee88a82ccbd3d596eb9955956ba258a5a13077c657734
     agents/openai.yaml: a97525ff97f74b54449987e537bc9f7860f809102cf59cdbe3e40125bf41d74d
     assets/evals/scenarios.json: 3d64e7bf4473f2c9867c65b05b8ecd41dc7ff350fd404be0df3dabfd35e7d943
 permissions:

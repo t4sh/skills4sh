@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Node.js, Git, `jq`, and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.3.1"
+  version: "0.3.0"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 
@@ -71,7 +71,7 @@ Setup is complete when the generated scripts run, the Gist contains the validate
 3. Validate: `jq -e '.sections | type == "array"' figma-export.tmp.json` must exit 0; stop on failure.
 4. Confirm `GIST_TOKEN` is already exported from a secret manager per [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md#4--verify-locally-before-relying-on-ci); never type the PAT on the command line.
 5. Push: `node scripts/tokens-to-figma/push-to-figma.mjs < figma-export.tmp.json`
-6. Reconcile added, renamed, removed, and changed token values with the existing Figma collection using [the reconciliation procedure](references/ci-and-gist-setup.md#reconcile-the-collection-on-every-token-change). Before plugin execution, check all local collections for duplicate exported names and check every `fontFamilyToken` variable for a literal STRING value; the current plugin cannot resolve a STRING alias. Treat either condition as pending repair, even if the alias is valid DTCG. Gist authorization alone does not authorize writes inside Figma. Without authorized Figma access or a manual readback, report **export uploaded; Figma token parity unverified**, with the pending changes.
+6. Reconcile token changes with the Figma collection using [the reconciliation procedure](references/ci-and-gist-setup.md#reconcile-the-collection-on-every-token-change). Gist authorization does not authorize writes inside Figma. Report **export uploaded** and **Figma token parity verified/unverified** as separate statuses; without authorized Figma access or a manual readback, parity is unverified and the pending deltas are listed.
 7. Delete `figma-export.tmp.json` when done, then report sections and nodes exported, the Gist URL, and the separate Figma verification status. Claim Figma parity only after collection values and the plugin result are verified.
 
 ---

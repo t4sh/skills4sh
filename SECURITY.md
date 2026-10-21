@@ -7,10 +7,10 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 | Skill | Version | Supported |
 |-------|---------|-----------|
 | agent-memory | 2.8.0 | Yes |
-| code-to-figma | 0.3.1 | Yes |
+| code-to-figma | 0.3.0 | Yes |
 | discord-harvest | 2.1.0 | Yes |
 | eleventy-nunjucks | 0.2.0 | Yes |
-| figma-to-code | 0.3.0 | Yes |
+| figma-to-code | 0.2.0 | Yes |
 | init-rulebook | 1.0.0 | Yes |
 | localhost-screenshots | 3.5.0 | Yes |
 | skill-architect | 1.1.0 | Yes |
@@ -172,14 +172,14 @@ The following findings are expected and documented:
 
 | Finding | Severity | File(s) | Explanation |
 |---------|----------|---------|-------------|
-| `R008_ENV_ACCESS` | LOW | `SKILL.md` | The temporary-venv fallback stores its generated path in a shell variable so every install and helper invocation stays inside the same isolated environment. |
-| `R009_FILE_STAGE` | LOW | `SKILL.md` | The documented fallback creates a temporary virtual environment for pinned validation dependencies; it does not stage user skill content or execute automatically. |
+| `R008_ENV_ACCESS` | LOW | `references/helper-runtime.md` | The temporary-venv fallback stores its generated path in a shell variable so every install and helper invocation stays inside the same isolated environment. |
+| `R009_FILE_STAGE` | LOW | `references/helper-runtime.md` | The documented fallback creates a temporary virtual environment for pinned validation dependencies; it does not stage user skill content or execute automatically. |
 
 ### code-to-figma
 
 | Finding | Severity | File(s) | Explanation |
 |---------|----------|---------|-------------|
-| `R005_SECRET_READ` | HIGH/medium | `references/walker-patterns.md` | False positive (acknowledged). The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — sourcing the token from the environment instead of hardcoding it is the secure pattern. No secret file or credential store is read; the script is an adaptable template, not executed by the skill. |
+| `R005_SECRET_READ` | HIGH/medium | `references/walker-patterns.md` | False positive (acknowledged). The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — sourcing the token from the environment instead of hardcoding it is the secure pattern. No secret file or credential store is read. The template is executed by `/code-to-figma sync` (step 5) and by CI, with the token sourced from the environment and sent only to the GitHub Gist API. |
 | `R008_ENV_ACCESS` | LOW | `references/ci-and-gist-setup.md`, `references/walker-patterns.md` | CI/template snippets reference `GIST_TOKEN` / `GIST_ID` via GitHub Actions secrets and `process.env`, while the local pusher may read `gistId` from config — the recommended pattern, shown as instructional examples. |
 | `R009_FILE_STAGE` | LOW | `SKILL.md`, `references/ci-and-gist-setup.md` | Instructional `/tmp/figma-export*.json` staging in the sync/verify and Gist-setup command examples — documentation, not skill-side file staging. |
 
@@ -188,6 +188,7 @@ The following findings are expected and documented:
 | Finding | Severity | File(s) | Explanation |
 |---------|----------|---------|-------------|
 | `R009_FILE_STAGE` | LOW | `references/code-examples.md` | Approved CDN downloads use `mktemp` for byte comparison before copying into the archive; no execution or exfiltration of staged content. |
+| `R008_ENV_ACCESS` | LOW | `references/code-examples.md` | `discord_api()` reads `DISCORD_BOT_TOKEN` from the environment and writes it only to a mode-600 `mktemp` header file for `curl -H @file`, then deletes it, so the token stays off command lines, output, manifests, and logs. |
 
 ### eleventy-nunjucks
 

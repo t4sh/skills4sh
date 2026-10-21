@@ -73,7 +73,7 @@ dependencies:
 scanning:
   guardskills: SAFE
   guardskills_risk_score: 100
-  guardskills_note: "guardskills scan-local reports R005_SECRET_READ (HIGH) on documentation lines that name `.env`, `process.env`, or `$GITHUB_OUTPUT`; none reads or transmits secret material. The skill ships no executable files, but references/security-checklist.md embeds a copyable scripts/security-audit.sh template that greps local src/ and output files and sends a HEAD request with curl to a user-supplied target URL; review it before running."
+  guardskills_note: "guardskills scan-local reports R005_SECRET_READ (HIGH) on documentation lines that name `.env`, `process.env`, or `$GITHUB_OUTPUT`; none reads or transmits secret material. The skill ships no executable files, but references/security-checklist.md embeds a copyable scripts/security-audit.sh template that takes the build's input and output directories as arguments (confirmed from the project's Eleventy config and build command), greps those local files, and sends a HEAD request with curl to a user-supplied target URL; review it before running."
   snyk: pass
   codeql: pass
   expected_findings:
