@@ -27,6 +27,7 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 - `code-to-figma` 0.3.0: the plugin docs no longer promise automatic variable-collection creation and state that the plugin is a development import binding to existing variables. Setup offers an optional one-time collection creation through Figma's `figma-use` skill, and one-off Figma writes route to `figma-use` or `figma-generate-design`. The DTCG converter reads only base theme scopes, throws on duplicate token paths, and types `--font-weight-*` as `fontWeight` under `typography/weight/`. Regenerate existing `.w3c.json` output.
 - `localhost-screenshots` 3.5.0 and `eleventy-nunjucks` 0.2.0 narrow their triggers to localhost and confirmed Eleventy context respectively.
 - README and AGENTS.md list `~/.agents/skills/` as the Codex global root.
+- Updated pinned CI actions: CodeQL 4.39.0, setup-node 7.1.0, setup-uv 10.3.0, and create-github-app-token 3.3.0 (folds Dependabot PR #54).
 - Bumped package and plugin metadata to 0.7.0.
 
 ### Fixed
