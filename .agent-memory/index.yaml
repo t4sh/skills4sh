@@ -34,7 +34,7 @@
 - id: context/next-package-release
   type: context
   title: "Next package release: rulebook, architect, and Portless support"
-  status: active
+  status: archived
 
 - id: sessions/20260613-skill-architect-release-planning
   type: session
@@ -59,4 +59,8 @@
 - id: conventions/skill-description-standard
   type: convention
   title: "Skill description format standard"
+  status: active
+- id: sessions/20261021-v070-release
+  type: session
+  title: "skills4sh 0.7.0 release: Codex adapters and two 1.0 skills"
   status: active
