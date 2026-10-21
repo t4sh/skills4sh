@@ -8,6 +8,8 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.7.1] — 2026-10-21
+
 ### Changed
 - `check:drift` semver monotonicity compares each skill's version against the released baseline (merge base with the default branch, else the latest `v*` tag, else `HEAD^`) instead of `HEAD^`, so lowering an unreleased draft bump on a branch no longer fails push-event validation. CI checks out full history for that baseline.
 
@@ -435,7 +437,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.7.1...HEAD
+[0.7.1]: https://github.com/t4sh/skills4sh/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/t4sh/skills4sh/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/t4sh/skills4sh/compare/v0.5.5...v0.6.0
 [0.5.5]: https://github.com/t4sh/skills4sh/compare/v0.5.4...v0.5.5
