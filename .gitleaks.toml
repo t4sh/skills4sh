@@ -4,9 +4,15 @@
 [extend]
 useDefault = true
 
-[[allowlists]]
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
 description = "Allow SHA-256 integrity hashes in AST10 manifests"
 condition = "AND"
-regexTarget = "secret"
+regexTarget = "match"
 paths = ['''^\.security/.*\.yaml$''']
-regexes = ['''^[a-f0-9]{64}$''']
+# The generic API-key rule can capture a suffix of a hash after an api-named
+# filename. Suppress only that filename/hash match, so a credential elsewhere
+# on the same line still produces its own finding.
+regexes = ['''[A-Za-z0-9_.-]+\.(md|yaml|json|mjs|js|py|txt): [a-f0-9]{64}''']

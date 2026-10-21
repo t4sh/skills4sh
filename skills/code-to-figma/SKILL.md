@@ -13,7 +13,7 @@ metadata:
 
 Generate a project-specific Figma export pipeline: a walker that reads compiled HTML and CSS, resolves class → token bindings, and pushes a structured JSON artifact to a GitHub Gist that the **`tokens-sync-to-figma`** Figma plugin consumes.
 
-The pipeline is intentionally one-directional and CI-anchored. During `setup`, assess the project once, generate scripts, and wire CI. After that, every push that touches tokens or templates automatically updates the Gist — no agent, no Figma API key, no per-sync friction.
+The pipeline is intentionally one-directional and CI-anchored. During `setup`, assess the project once, generate scripts, and wire CI. After that, every push that touches configured token or template paths automatically updates the Gist without a Figma API key. The bundled plugin rebuilds page structure using existing Figma variables; token-value changes require a separate collection update and readback before Figma parity can be claimed.
 
 ## Commands
 
@@ -24,7 +24,7 @@ The pipeline is intentionally one-directional and CI-anchored. During `setup`, a
 | `/code-to-figma update` | Stack or token naming changed significantly | Scripts regenerated, CI and config updated |
 | `/code-to-figma status` | Check pipeline health | Gist age, CI status, script presence, config validity |
 
-Default to `/code-to-figma setup` when no `figma-sync.config.json` or walker scripts are found.
+For an unqualified setup/sync request, default to `/code-to-figma setup` when no `figma-sync.config.json` or walker scripts are found. Preserve explicit read-only `status` requests: report a missing pipeline rather than creating one.
 
 ---
 
@@ -58,18 +58,21 @@ git status --short -- scripts/tokens-to-figma/*.w3c.json
 node scripts/figma-export/walk-<site>.mjs | jq -e '.sections | type == "array"'
 ```
 
-Keep the core boundary visible: CI produces `figma-export.json` and `<project>-tokens.w3c.json`; the `tokens-sync-to-figma` plugin consumes those artifacts inside the user-authorized Figma runtime. Do not require a Figma API key in CI.
+Keep the core boundary visible: CI produces `figma-export.json` and checks the committed `<project>-tokens.w3c.json`; the `tokens-sync-to-figma` plugin consumes only `figma-export.json`. Use the DTCG artifact separately to maintain Figma variables. Do not require a Figma API key in CI.
+
+Setup is complete when the generated scripts run, the Gist contains the validated export, CI is wired, and the user has verified the plugin connection and variable values through [collection reconciliation](references/ci-and-gist-setup.md#reconcile-the-collection-on-every-token-change). If Figma access or manual steps are pending, report pipeline setup separately from Figma verification.
 
 ---
 
 ## `/code-to-figma sync`
 
 1. Confirm `figma-sync.config.json` exists and the walker path is valid.
-2. Run: `node <walker> > figma-export.tmp.json`
+2. Build the current site with the project's build command, regenerate `node scripts/tokens-to-figma/convert-to-dtcg.mjs`, and review the `.w3c.json` diff, including changes to existing values and aliases. Then run `node <walker> > figma-export.tmp.json`.
 3. Validate: `jq -e '.sections | type == "array"' figma-export.tmp.json` must exit 0; stop on failure.
 4. Confirm `GIST_TOKEN` is already exported from a secret manager per [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md#4--verify-locally-before-relying-on-ci); never type the PAT on the command line.
 5. Push: `node scripts/tokens-to-figma/push-to-figma.mjs < figma-export.tmp.json`
-6. Delete `figma-export.tmp.json` when done, then report sections and nodes exported and the Gist URL.
+6. Reconcile added, renamed, removed, and changed token values with the existing Figma collection using [the reconciliation procedure](references/ci-and-gist-setup.md#reconcile-the-collection-on-every-token-change). Before plugin execution, check all local collections for duplicate exported names and check every `fontFamilyToken` variable for a literal STRING value; the current plugin cannot resolve a STRING alias. Treat either condition as pending repair, even if the alias is valid DTCG. Gist authorization alone does not authorize writes inside Figma. Without authorized Figma access or a manual readback, report **export uploaded; Figma token parity unverified**, with the pending changes.
+7. Delete `figma-export.tmp.json` when done, then report sections and nodes exported, the Gist URL, and the separate Figma verification status. Claim Figma parity only after collection values and the plugin result are verified.
 
 ---
 
@@ -81,7 +84,7 @@ Use this when the framework output, token naming convention, section selectors, 
 2. Update `walk-<site>.mjs`, `convert-to-dtcg.mjs`, `figma-sync.config.json`, and CI paths together so `tokenPath()`, explicit token types, and file paths stay aligned.
 3. Regenerate the DTCG token artifact: `node scripts/tokens-to-figma/convert-to-dtcg.mjs`.
 4. Validate the walker output: `node <walker> > figma-export.tmp.json && jq -e '.sections | type == "array"' figma-export.tmp.json`.
-5. Push through `/code-to-figma sync` or CI after reviewing the script and `.w3c.json` diffs.
+5. Push through `/code-to-figma sync` or CI after reviewing the script and `.w3c.json` diffs, then reconcile collection changes and report export and Figma parity separately.
 
 ---
 
@@ -96,6 +99,7 @@ Report:
 | CI wiring | Does `figma-sync.yml` exist? Does it have `workflow_dispatch`? |
 | Secrets | `gh secret list --repo <org>/<repo>` — confirm `GIST_TOKEN` and `FIGMA_EXPORT_GIST_ID` are present |
 | Last run | `gh run list --workflow=figma-sync.yml --limit=1` |
+| Figma token parity | Compare the current `.w3c.json` with an available collection readback; report unverified when Figma access/readback is unavailable. Gist freshness alone is insufficient. |
 
 ---
 
@@ -113,7 +117,7 @@ This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the
 
 ## Behavioral evals
 
-**Authors/reviewers only:** use the [routing catalog](assets/evals/scenarios.json) when explicitly evaluating this skill; skip it during normal task execution. It holds description-only routing prompts with labels withheld from the executing agent; it is not evidence of a passing run. Converter behavior is fixture-tested by `tests/walker-patterns-snippets.test.mjs`.
+**Authors/reviewers only:** use the [scenario catalog](assets/evals/scenarios.json) when explicitly evaluating this skill; skip it during normal task execution. It holds description-only routing prompts and isolated sync/readback fixtures; withhold labels and assertions from the executing agent. The catalog is not evidence of a passing run, and synthetic readbacks do not verify live Figma integration. Converter behavior is fixture-tested by `tests/walker-patterns-snippets.test.mjs`.
 
 ## Reference Files
 

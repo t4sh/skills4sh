@@ -6,7 +6,7 @@ Canonical XSS, CSP, passthrough, and secrets audit for Eleventy + Nunjucks sites
 
 1. Walk every section in order before a production deploy
 2. For each box: either tick it or write a one-line waiver explaining why it doesn't apply
-3. Adapt input/output/config paths before running the shell searches. They are triage hints: multiline templates and custom code can evade them. Verify rendered output and HTTP responses too.
+3. Inspect the project's Eleventy config, build command, and CLI overrides to identify its actual input and output directories. Replace the example `src/` and `out/` paths in the shell searches before running them. They are triage hints: multiline templates and custom code can evade them. Verify rendered output and HTTP responses too.
 
 ---
 
@@ -321,34 +321,36 @@ If the site has any forms (contact, signup, search):
 # scripts/security-audit.sh — run before deploy
 set -euo pipefail
 
-if [ "$#" -ne 1 ]; then
-  echo "Usage: $0 https://example.com" >&2
+if [ "$#" -ne 3 ]; then
+  echo "Usage: $0 https://example.com INPUT_DIR OUTPUT_DIR" >&2
+  echo "Inspect Eleventy config and build/CLI overrides; pass the directories used by this build." >&2
   exit 64
 fi
 
 target_url="$1"
-output_dir="${OUTPUT_DIR:-out}"
+input_dir="$2"
+output_dir="$3"
 
-for required_dir in src "$output_dir"; do
+for required_dir in "$input_dir" "$output_dir"; do
   if [ ! -d "$required_dir" ]; then
-    echo "Missing required directory: $required_dir" >&2
+    echo "Missing directory: $required_dir (check Eleventy config, build/CLI overrides, and build completion)" >&2
     exit 1
   fi
 done
 
 echo "→ Checking | safe usage…"
-safe_count=$(grep -rnE "\|[[:space:]]*safe([[:space:]|}]|$)" src/ 2>/dev/null | wc -l | tr -d ' ' || true)
+safe_count=$(grep -rnE "\|[[:space:]]*safe([[:space:]|}]|$)" "$input_dir" 2>/dev/null | wc -l | tr -d ' ' || true)
 echo "  ${safe_count} occurrence(s); review each trust boundary"
 
 echo "→ Checking dump | safe (must be zero)…"
-if grep -rnE "\|[[:space:]]*dump[[:space:]]*\|[[:space:]]*safe([[:space:]|}]|$)" src/; then
+if grep -rnE "\|[[:space:]]*dump[[:space:]]*\|[[:space:]]*safe([[:space:]|}]|$)" "$input_dir"; then
   exit 1
 else
   echo "  ok"
 fi
 
 echo "→ Checking | safe inside <script> (must be zero)…"
-if grep -rnE '<script[^>]*>.*[{][{][^}]*[|][[:space:]]*safe([^[:alnum:]_]|$)' src/ \
+if grep -rnE '<script[^>]*>.*[{][{][^}]*[|][[:space:]]*safe([^[:alnum:]_]|$)' "$input_dir" \
   | grep -vE '[|][[:space:]]*json(Script|Compact)[[:space:]]*[|][[:space:]]*safe'; then
   exit 1
 else
@@ -356,7 +358,7 @@ else
 fi
 
 echo "→ Unfiltered {{ }} inside <script> (informational)…"
-grep -rnE '<script[^>]*>.*[{][{][^|}]*[}][}]' src/ || echo "  none"
+grep -rnE '<script[^>]*>.*[{][{][^|}]*[}][}]' "$input_dir" || echo "  none"
 
 echo "→ Checking output for secret-shaped files (must be zero)…"
 if find "$output_dir" \( -name '.env*' -o -name '*.key' -o -name '*.pem' -o -name 'id_rsa*' \) -print -quit | grep -q .; then
@@ -384,4 +386,4 @@ done
 echo "✓ Audit complete"
 ```
 
-Run as: `bash scripts/security-audit.sh https://example.com`
+After a completed build, run with the input and output directories confirmed from that project's config and build command, for example: `bash scripts/security-audit.sh https://example.com content _site`.

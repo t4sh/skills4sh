@@ -17,12 +17,12 @@ integrity:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/benchmarks.md: 11086daa0ae615637493c56f1bdfe95707da18cd2c7421e74e7a5ed86ca9f288
     references/design-philosophy.md: 7c786c2605221627a04c61c7e2a8cf7da38d4ae46ace0bc3099bcf33e600e8cd
-    references/implementation-patterns.md: 994806eb13042f43325daa56b8882844864bba8d6aed56e7fad2b41fc44fb04c
+    references/implementation-patterns.md: 7c22e1a42345bf6d04abb0575c0cff0a357282958fe0f3a2e24490dbf11b63e0
     references/troubleshooting.md: 653a6e7fa662b376a15a86046a6b9d307f8b7fcc2e864fbd96e378fa780f0d42
     references/verification-and-boundaries.md: f0f3b35a95fbce2a13c29896f43290ee577996cf5fa4c0e42bc11e2d11040339
-    SKILL.md: 7d474e859d8ea383893db2dd20dfc43c11b83f49bc4eafc50820e4ac2287ecc8
+    SKILL.md: 3202c8d82f34dbca57dc4086e5178470671b689e26c997788b65425f0fb8075d
     agents/openai.yaml: 2cb1518629abb29206eb3d64d6e2873d46d8ba53c2203202722ae0b939033a88
-    assets/evals/scenarios.json: 911f7d8179d83a55260b3e3f2b0d754506c44a84b9226e7eea19408776ed3d99
+    assets/evals/scenarios.json: 182f009e397ece1b7a72e903485d5bdf1fd7a605e7c75b1df116d821ac325662
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

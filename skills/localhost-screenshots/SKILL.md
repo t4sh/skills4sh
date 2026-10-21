@@ -157,7 +157,7 @@ Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), th
 - `chromium.launch()` — no arguments, uses Playwright's bundled Chromium
 - `waitUntil: 'load'` — safe default for SPAs with analytics/websockets; add `waitForSelector()` for the content that matters
 - `fullPage: true` — captures entire scrollable page
-- Create a **new page per breakpoint** — avoids leftover state
+- Create a **new page per breakpoint** for stateless captures. For sessionStorage-based authentication, retain the authenticated page and verify protected content at every size; see [persistent sessions](references/playwright-patterns.md#persistent-browser-sessions).
 - `page.setViewportSize()` — set before navigating for accurate responsive rendering
 
 ---

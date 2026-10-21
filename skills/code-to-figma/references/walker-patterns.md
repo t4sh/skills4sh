@@ -319,7 +319,7 @@ pnpm add -D node-html-parser   # or npm/yarn/bun equivalent
 
 Reads CSS custom properties and emits a DTCG Format 2025.10 token tree. The `tokenPath()` here must be identical to the one in the walker. DTCG types come from an explicit project taxonomy, never from guessing the CSS value; unsupported or ambiguous values fail closed instead of producing mislabeled tokens.
 
-Only base theme scopes are read: top-level `:root`/`:host` rules (including inside non-conditional `@layer` blocks), `@theme` blocks, and `@layer theme`. Mode overrides such as `.dark`, `[data-theme=…]`, `:root.dark`, and anything under `@media`/`@supports`/`@container` are skipped, so a dark redefinition never overwrites the light value the v1 plugin's `Light` mode expects. Conflicting base redefinitions of one property, or two properties mapping to the same token path, throw.
+Only base theme scopes are read: top-level `:root`/`:host` rules (including inside non-conditional `@layer` blocks), `@theme` blocks, and `@layer theme`. Mode overrides such as `.dark`, `[data-theme=…]`, `:root.dark`, and anything under `@media`/`@supports`/`@container` are skipped, so a dark redefinition never overwrites the light value the v1 plugin's `Light` mode expects. Conflicting base redefinitions of one property, or two properties mapping to the same token path, throw. Before writing, validate every alias chain: its target must exist in this export, have the same explicit type, and terminate without a cycle. Preserve valid aliases in the artifact rather than flattening them.
 
 ```js
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -507,6 +507,27 @@ function buildDtcg(tokens) {
     }
     cur[leaf] = { $value: value, $type: type };
   }
+  // Validate after collecting all tokens so forward references are supported.
+  const byReference = new Map(tokens.map((token) => [token.path.replaceAll('/', '.'), token]));
+  const visiting = new Set();
+  const validated = new Set();
+  function validateAlias(token) {
+    if (validated.has(token.path)) return;
+    if (visiting.has(token.path)) throw new Error(`Circular token alias at ${token.path}`);
+    visiting.add(token.path);
+    const reference = typeof token.value === 'string' && token.value.match(/^\{([^{}]+)\}$/);
+    if (reference) {
+      const target = byReference.get(reference[1]);
+      if (!target) throw new Error(`Unknown token alias ${reference[1]} from ${token.path}`);
+      if (target.type !== token.type) {
+        throw new Error(`Token alias type mismatch: ${token.path} (${token.type}) -> ${target.path} (${target.type})`);
+      }
+      validateAlias(target);
+    }
+    visiting.delete(token.path);
+    validated.add(token.path);
+  }
+  for (const token of tokens) validateAlias(token);
   return tree;
 }
 

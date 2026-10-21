@@ -13,7 +13,7 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: c2d56da799c2593ca18587387103a0ea20841335f92da38db973c89317cbca95
+    assets/evals/scenarios.json: 2a0b4e53f2945e4a43649dd8a6621793eb895080e9c52b6a411c4396206aae71
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/build-awesome-v4.md: f51e76c98a4ba2557c4e13cf6fb4f6010a290a7b67b718d56f1a725d86e8c5b4
@@ -25,9 +25,9 @@ integrity:
     references/nunjucks-syntax.md: 351196a664a53a7e12ab5a3489e7bb4cdd29e6b26a2a79b5774b18e073a3deb2
     references/production-patterns.md: c1b571a167f54b2c372c2b7d5f6a4dec7fb9f885f5732a36d84f99037980850a
     references/review-shipping.md: 2ace12d6bd6daf808a085f444c311a53ea30b9d8f0cfb7910d4dcafcc7baa44c
-    references/security-checklist.md: 6bd717b077c83e5d3752be0b2d3ccf93d958aed5530d61ff8034149efead41f0
+    references/security-checklist.md: 7efdd187d867bb575ec23a80ef8494add162a2949ad2ae516336e10be5fcb987
     references/troubleshooting.md: a38752134048899a438456da63e171dad6a6f4a29639c33eaadd558b388c00fa
-    SKILL.md: 26fd01060c50145deae3cfbf6d75fef82213eef9fb288432ef54be7d4498112c
+    SKILL.md: 70963f2a0a0db4fa254eca5a434a6098fe56bb926a534bf31b303a1bd1848671
     agents/openai.yaml: 4f83f2cdeaf4b1d5487da069a35123aa50be0308943528596db80cd17a43c6c0
 permissions:
   alwaysAllow: []

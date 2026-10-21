@@ -14,17 +14,17 @@ Ask for confirmation before writing durable rule files or submitting mappings wh
 
 ## Conventions Brief
 
-Write the brief after repository inspection and before any implementation, in the working notes or the completion summary (not a committed file unless asked). Keep it to the target's scope.
+Record the provisional brief in working notes after repository inspection and before design-context retrieval, then update that note after retrieval and before implementation. Do not defer the provisional checkpoint to the completion summary. No committed brief file is needed unless asked. Keep it scoped to the target: the draft records repository candidates and marks Figma mappings pending; do not infer Figma variable names, values, or component instances from repository files alone.
 
 | Section | Contents |
 |---|---|
 | Stack | Language, framework, styling approach, import aliases, formatting conventions confirmed from the repository |
-| Token map | Figma variable or raw value → repository token, chosen by semantic role; unmapped entries with a reason |
-| Component reuse map | Figma component or instance → repository component import path and the props or variants that express it; existing Code Connect mappings from `get_code_connect_map` when available |
+| Token map | After retrieval: Figma variable or raw value → repository token, chosen by semantic role; unmapped entries with a reason |
+| Component reuse map | After retrieval: Figma component or instance → repository component import path and the props or variants that express it; existing Code Connect mappings from `get_code_connect_map` when available |
 | Rule constraints | Paths and "never do this" rules from the repository's agent rules files that apply to the target |
 | Asset policy | Where static assets live and how they are imported; icon source of truth |
 
-When `figma-design-to-code` runs the implementation, apply the brief as the project conventions it requires; do not restate or alter its procedure.
+When `figma-design-to-code` runs the implementation, apply the provisional repository conventions to its retrieval step, then finalize the mappings from the context it retrieved before code is written. Do not re-request context or screenshot; continue its procedure with the finalized brief.
 
 ## Targeting
 

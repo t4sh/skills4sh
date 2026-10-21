@@ -30,12 +30,22 @@ Write the smallest file that points at `AGENTS.md`. Preserve existing non-pointe
 
 | Runtime in use | Pointer file | Recipe |
 |---|---|---|
-| Any | `AGENTS.md` | Canonical shared instructions; mention `.agent-memory/` |
+| Any | `AGENTS.md` | Canonical shared instructions; include the session-start loading instruction below |
 | Claude Code | `CLAUDE.md` | Exact `@AGENTS.md` import. Optional Claude-only notes below that line. Do not replace the import with prose such as “read AGENTS.md”. |
 | Cursor | `.cursor/rules/index.mdc` | Always-on rule that references `AGENTS.md`. When Migrate promotes `CURSOR.md`, shared content goes into `AGENTS.md` and this file stays a thin pointer. Skip when `.cursor/` is absent and Cursor is not in use. |
 | Codex, Grok, OpenClaw, Copilot, generic | none extra | `AGENTS.md` is the pointer. Do not invent a vendor file. |
 
 Never put shared instructions inside `.claude/` or `.cursor/`. Those directories are vendor-local.
+
+### Session-start loading
+
+Add this instruction to a new `AGENTS.md`, adapted to the project's existing rules. For an existing substantive `AGENTS.md`, preserve its content and follow the Init overwrite guard before adding it:
+
+```markdown
+At session start, read `.agent-memory/index.yaml` when it exists. Use each entry's title, type, and status to select memories relevant to the current task, then read those memory files before acting. Recheck the index when the task changes. An empty `[]` index means there are no entries to load yet; continue normally.
+```
+
+The index is a discovery registry, not a substitute for reading selected memory files. Resolve an entry ID such as `decisions/storage` to `.agent-memory/decisions/storage.md`. Do not turn Init into Build by generating project facts from source documents merely to populate an empty registry.
 
 ### `CLAUDE.md` template
 

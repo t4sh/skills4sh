@@ -13,7 +13,21 @@
       },
       "assertions": [
         "Preserves existing substantive entrypoint content; stages changes requiring approval rather than overwriting.",
-        "Does not alter vendor-native scratch or add Cursor-only files."
+        "Does not alter vendor-native scratch or add Cursor-only files.",
+        "Proposed AGENTS.md addition explicitly reads the index and selected memory files at session start; it does not replace existing rules."
+      ]
+    },
+    {
+      "id": "init-empty-index-next-session",
+      "prompt": "Initialize .agent-memory for this small project. No memory entries exist yet. Then simulate a new agent starting a session to work on the README; show what it reads. Do not build memory from source docs.",
+      "files": {
+        "README.md": "# Atlas Notes\nA local notes prototype.\n",
+        "package.json": "{\"name\":\"atlas-notes\"}"
+      },
+      "assertions": [
+        "Init writes an empty YAML sequence `[]` to .agent-memory/index.yaml and complete, project-specific AGENTS.md instructions that require reading the index and relevant memory files at session start.",
+        "The simulated next session reads AGENTS.md and the empty index, then proceeds with the README task without inventing memory entries or reading nonexistent files.",
+        "No project memory is synthesized from README.md or package.json; that is the separate Build operation."
       ]
     },
     {

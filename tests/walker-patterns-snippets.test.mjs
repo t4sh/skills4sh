@@ -302,6 +302,29 @@ test('walker snippet does not map font-weight theme vars to font-family utilitie
   assert.deepEqual(map['font-display'], { property: 'font-family', var: 'font-display' });
 });
 
+test('DTCG converter rejects dangling, circular, and incompatible alias chains', () => {
+  const { parseCustomProperties, buildDtcg } = loadConvertHelpers();
+  for (const [css, error] of [
+    [':root { --background: var(--missing); }', /Unknown token alias/],
+    [':root { --background: var(--foreground); --foreground: var(--background); }', /Circular token alias/],
+    [':root { --background: var(--space-4); --space-4: 1rem; }', /Token alias type mismatch/],
+    [':root { --background: var(--foreground); --foreground: var(--space-4); --space-4: 1rem; }', /Token alias type mismatch/],
+    [':root { --background: var(--background); }', /Circular token alias/],
+  ]) {
+    assert.throws(() => buildDtcg(parseCustomProperties(css)), error, css);
+  }
+});
+
+test('DTCG converter preserves valid forward and chained aliases without flattening', () => {
+  const { parseCustomProperties, buildDtcg } = loadConvertHelpers();
+  const dtcg = buildDtcg(parseCustomProperties(`:root {
+    --background: var(--foreground); --foreground: var(--ink-900); --ink-900: #111;
+  }`));
+  assert.deepEqual(dtcg.semantic.background, { $type: 'color', $value: '{semantic.foreground}' });
+  assert.deepEqual(dtcg.semantic.foreground, { $type: 'color', $value: '{palette.ink.900}' });
+  assert.equal(dtcg.palette.ink['900'].$type, 'color');
+});
+
 test('push-to-figma snippet formats anonymous gist success URLs', () => {
   const { gistUpdatedUrl } = loadPushHelpers();
 

@@ -106,10 +106,30 @@
         "mcp-screenshot.json": "{\"node\":\"42:15\",\"note\":\"Synthetic screenshot spec: 24px padding, 24px gap, 12px radius, Inter Display heading.\"}"
       },
       "assertions": [
-        "Writes a conventions brief before implementation: token map (24px spacing to --space-6, fills to --surface, text to --ink) and component reuse map (Card primitive) grounded in AGENTS.md and src/.",
+        "Drafts a provisional conventions brief from AGENTS.md and src/ before reading synthetic design context; finalizes token map (24px spacing to --space-6, fills to --surface, text to --ink) and Card reuse map after context retrieval but before code writes.",
         "Defers the design-context, screenshot, asset, and implementation procedure to figma-design-to-code; does not run figma-to-code's fallback procedure or re-request design context or a screenshot.",
         "Runs the correction loop against the supplied context and screenshot, including convention checks such as raw values replaced by tokens and Card reused.",
         "Summary includes a deviation report (e.g. Inter Display font availability, no rendered visual check) and does not claim pixel parity."
+      ]
+    },
+    {
+      "id": "brief-order-with-unknown-design-items",
+      "kind": "workflow",
+      "prompt": "The host has figma-design-to-code installed. Implement the supplied Figma CheckoutBadge frame in src/components/CheckoutBadge.tsx. Repository files are available first; mcp-design-context.json and mcp-screenshot.json represent context that the official skill retrieves later. Write working notes to OUTPUT/brief.md before code and a completion summary to OUTPUT/summary.md. No live Figma access is available; treat mcp-* files as synthetic tool results.",
+      "files": {
+        "package.json": "{\"name\":\"checkout-fixture\",\"dependencies\":{\"react\":\"18.3.1\"}}",
+        "AGENTS.md": "# Project rules\nReuse existing components and semantic CSS tokens.\n",
+        "src/components/Badge.tsx": "export function Badge({ children }: { children: React.ReactNode }) { return <span className=\"badge\">{children}</span>; }\n",
+        "src/styles/tokens.css": ":root { --status-success: #16803c; --surface: #fff; }\n",
+        "host-skills/figma-design-to-code/SKILL.md": "---\nname: figma-design-to-code\ndescription: Implement Figma designs in code.\n---\nRetrieve context and screenshot, then implement.\n",
+        "mcp-design-context.json": "{\"node\":\"9:2\",\"name\":\"CheckoutBadge\",\"component\":\"Badge\",\"fills\":[{\"variable\":\"status/ready\",\"value\":\"#16803c\"},{\"variable\":\"accent/new\",\"value\":\"#a65cff\"}],\"text\":\"Ready\"}",
+        "mcp-screenshot.json": "{\"node\":\"9:2\",\"note\":\"Synthetic screenshot spec: green Ready badge with a purple accent.\"}"
+      },
+      "assertions": [
+        "Provisional brief names repository tokens and Badge as candidates but does not claim Figma variable or component mappings before the official retrieval result is available.",
+        "After retrieval and before code, final brief maps status/ready to --status-success and Badge to src/components/Badge.tsx; accent/new is either mapped to a narrowly added semantic token with rationale or reported unmapped with a reason.",
+        "Official skill owns the single design-context and screenshot retrieval; no duplicate fetch or fallback procedure is used.",
+        "Completion summary reports the unmapped accent and any visual verification limit."
       ]
     },
     {

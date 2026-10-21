@@ -76,9 +76,9 @@ project/
 ### Steps
 
 1. **Create directories:** `user/`, `feedback/`, `project/`, `decisions/`, `context/`, `conventions/`, `references/`, `sessions/` under `.agent-memory/`.
-2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty registry), and `AGENTS.md` (canonical shared instructions). Create pointer files only for agents already in use, following [references/agent-pointers.md](references/agent-pointers.md).
-3. **Complete `AGENTS.md`:** replace every placeholder with the project's actual structure and rules. Done when no TODO or placeholder tokens remain.
-4. **Update `index.yaml`** and **report** what was created.
+2. **Create files:** `.agent-memory/README.md` (system spec), `.agent-memory/index.yaml` (empty `[]` registry in the [index format](references/templates.md#index-registry)), and `AGENTS.md` (canonical shared instructions). Create pointer files only for agents already in use, following [references/agent-pointers.md](references/agent-pointers.md). Keep an existing compatible index format and its entries; do not reset it to `[]`.
+3. **Complete `AGENTS.md`:** replace every placeholder with the project's actual structure and rules. Include the [session-start loading instruction](references/agent-pointers.md#session-start-loading) so the next agent reads the index and relevant entries. Preserve substantive existing instructions under the overwrite guard; propose the addition rather than replacing them without approval. Done when no TODO or placeholder tokens remain and the loading instruction is present or its pending approval is reported.
+4. **Check the registry** and **report** what was created or kept. An empty `[]` index is correct until entries are saved or the separate Build operation is requested; do not invent project memories during Init. Done when a new registry parses as an empty list, or an existing registry retains its entries, and next-session discovery is configured or explicitly pending approval.
 
 ---
 

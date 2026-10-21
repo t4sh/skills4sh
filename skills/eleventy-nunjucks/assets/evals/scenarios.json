@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "purpose": "Six behavioral evaluations, separate from render-unit tests. Inputs and assertions are not observed pass evidence.",
+  "purpose": "Seven behavioral evaluations, separate from render-unit tests. Inputs and assertions are not observed pass evidence.",
   "execution": "Materialize each files map under an isolated directory. Keep assertions and routing load labels from the acting agent. Stable build cases use the dependencies locked in tests/fixtures/eleventy in the source repository, or provision the same pinned dependencies separately. Version inventory is synthetic/read-only. Record starting/final hashes, prompt, observed output, grading, runtime and limitations in an external run report. No mandatory repetitions or release mutation.",
   "cases": [
     {
@@ -93,6 +93,23 @@
         "Accepts the `jsonScript | safe` module script as the documented exception.",
         "Flags frame-ancestors in a CSP meta tag as ignored and moves it to an HTTP response header; flags script-src 'unsafe-inline'.",
         "Keeps layout `content | safe` out of the finding set and makes no file edits."
+      ]
+    },
+    {
+      "id": "security-audit-directory-selection",
+      "prompt": "Run the documented pre-deploy security audit on this built fixture and report its result. Inspect the project config and build command first; use a local fake header response rather than external network.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\"scripts\":{\"build\":\"eleventy --input=content --output=_site\"}}",
+        "eleventy.config.mjs": "export default function() { return { dir: { input: \"content\", output: \"_site\" } }; }\n",
+        "content/index.njk": "<h1>Home</h1>\n",
+        "_site/index.html": "<h1>Home</h1>\n",
+        "headers.txt": "content-security-policy: default-src 'self'\nx-frame-options: DENY\nstrict-transport-security: max-age=31536000\n"
+      },
+      "assertions": [
+        "Selects content and _site from inspected config and build command; does not assume src/out.",
+        "Runs or explains the documented three-argument audit with a fake curl/fixture header response and checks its observed exit status.",
+        "Reports missing input/output directories as actionable failures; does not claim live production header verification."
       ]
     },
     {

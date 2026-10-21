@@ -11,6 +11,7 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ## [0.7.0] — 2026-10-20
 
 ### Security
+- Scope the SHA-256 Gitleaks exception to filename/hash matches in security manifests using a rule-level allowlist supported by CI's scanner; credential matches on the same line remain detectable.
 - `discord-harvest` 2.1.0: the download recipe no longer interpolates message-derived URLs or filenames into shell source (`download_asset` / `download_staged` take values as arguments or tab-separated records), and `validate_url` cuts the authority at `/?#` and rejects `@` or `\` in it, closing `?@` / `#@` allowlist bypasses. Bot tokens stay in environment variables or a mode-600 header file, never on the command line. MCP servers must authenticate as a bot application.
 - `eleventy-nunjucks` 0.2.0: the inline-`<script>` audit now flags `| safe` output, including `<script type="module">`, while exempting `jsonScript`.
 
@@ -29,6 +30,9 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 - Bumped package and plugin metadata to 0.7.0.
 
 ### Fixed
+- Agent Memory initialization defines the index registry and next-session loading instructions without inventing initial memories. Figma to Code records a provisional repository brief before retrieval and finalizes design mappings before implementation.
+- Code to Figma rejects missing, cyclic, and incompatible token aliases; recurring sync now distinguishes uploaded exports from verified Figma variable values and documents collection reconciliation.
+- Authenticated screenshot guidance preserves the live tab for sessionStorage logins instead of claiming storageState saves them. The Eleventy pre-deploy audit takes the build's inspected input and output directories explicitly.
 - `localhost-screenshots` helpers resolve Playwright from the working project first, then beside the script, so globally installed skills work without `NODE_PATH`.
 - `eleventy-nunjucks` baseline is Eleventy 3.1.7 with `@11ty/nunjucks` 3.3.0; the Build Awesome alpha is pinned instead of the `latest` stub, and troubleshooting, data-cascade, and build-pipeline examples were corrected. The config API reference now says Browsersync left core in v2, scopes `returnType: "html"` to the Image JS API (Image v7 needs Node 22+), and lists the `ndjson` output mode (checked 2026-10-21).
 - The installer ignores `__pycache__`, `*.pyc`, and `.DS_Store` when hashing an existing install, and helper commands run with `python -E -B`.

@@ -183,7 +183,7 @@ const ROUTES = ['/'];
 - `waitUntil: 'load'` — safer default for SPAs with analytics/websockets; add explicit `waitForSelector()` for the content that matters. Use `networkidle` only for known-static pages.
 - `fullPage: true` — captures the entire scrollable page, not just the viewport
 - `page.setViewportSize()` — set before navigating for accurate responsive rendering
-- Create a **new page per breakpoint** — ensures clean rendering without leftover state
+- Create a **new page per breakpoint** for stateless or storage-state captures. For authentication held in `sessionStorage`, keep the same authenticated page and verify its protected state at every breakpoint.
 
 ## Persistent Browser Sessions
 
@@ -207,17 +207,19 @@ async function getOrCreateSession() {
 }
 
 async function saveSession(context) {
-  await context.storageState({ path: STATE_FILE }); // cookies + localStorage/sessionStorage origins
+  await context.storageState({ path: STATE_FILE }); // cookies + localStorage; not sessionStorage
 }
 ```
 
-**Security:** Playwright `storageState` is plaintext JSON containing cookies and origin storage. Keep it outside the repository, add any chosen project-local state path to `.gitignore`, never upload it as a CI artifact, and delete it when the capture task is complete.
+`storageState()` does not save `sessionStorage`. If authentication depends on it, keep the authenticated **page** open and resize that page for each breakpoint; `sessionStorage` belongs to the tab, so a new page or restored context needs a new login. Verify an authenticated page marker or protected content before every capture. If the live page cannot be retained and re-authentication is unavailable, report that the authenticated capture is unsupported instead of saving or claiming a reusable session.
+
+**Security:** Playwright `storageState` is plaintext JSON containing cookies and localStorage. Keep it outside the repository, add any chosen project-local state path to `.gitignore`, never upload it as a CI artifact, and delete it when the capture task is complete.
 
 | Scenario | Persistent? | Why |
 |----------|-------------|-----|
 | Public pages, no auth | No | Stateless is simpler |
-| Pages behind login | **Yes** | Avoids re-authenticating per breakpoint |
-| Multi-page workflow capture | **Yes** | Preserves navigation state |
+| Pages behind login | **Usually** | Cookies and localStorage can be restored; sessionStorage requires the same live page or a new login |
+| Multi-page workflow capture | **Usually** | Restores cookies and localStorage, not tab-scoped sessionStorage |
 | A/B test with specific cookies or localStorage | **Yes** | Full Playwright storage state must survive across captures |
 | Iterative debug-capture loop | **Yes** | Faster turnaround, no browser restart |
 

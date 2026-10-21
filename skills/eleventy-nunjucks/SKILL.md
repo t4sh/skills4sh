@@ -133,7 +133,7 @@ Full Nunjucks tag and macro rules: `references/nunjucks-syntax.md`.
 
 ## Behavioral evaluations
 
-**Authors/reviewers only:** use the [evaluation catalog](assets/evals/scenarios.json) when explicitly evaluating this skill; skip it during normal site work. It contains six cases covering version selection, layout debugging, Markdown trust, inline-script escaping review, project conventions and retrieval boundaries, with fixture inputs and grading criteria. Keep assertions hidden from the acting agent and record observed results separately. Existing render tests verify snippets; these scenarios check whether an agent applies the guidance appropriately. Synthetic version inventories do not certify v4 execution, and description-only routing does not measure host discovery.
+**Authors/reviewers only:** use the [evaluation catalog](assets/evals/scenarios.json) when explicitly evaluating this skill; skip it during normal site work. It contains seven cases covering version selection, layout debugging, Markdown trust, inline-script escaping review, project conventions, configured audit paths, and retrieval boundaries, with fixture inputs and grading criteria. Keep assertions hidden from the acting agent and record observed results separately. Existing render tests verify snippets; these scenarios check whether an agent applies the guidance appropriately. Synthetic version inventories do not certify v4 execution, and description-only routing does not measure host discovery.
 
 ---
 
