@@ -13,7 +13,7 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Security
 - Scope the SHA-256 Gitleaks exception to filename/hash matches in security manifests using a rule-level allowlist supported by CI's scanner; credential matches on the same line remain detectable.
 - `discord-harvest` 2.1.0: the download recipe no longer interpolates message-derived URLs or filenames into shell source (`download_asset` / `download_staged` take values as arguments or tab-separated records), and `validate_url` cuts the authority at `/?#` and rejects `@` or `\` in it, closing `?@` / `#@` allowlist bypasses. Bot tokens stay in environment variables or a mode-600 header file, never on the command line. MCP servers must authenticate as a bot application.
-- `eleventy-nunjucks` 0.2.0: the inline-`<script>` audit now flags `| safe` output, including `<script type="module">`, while exempting `jsonScript`.
+- `eleventy-nunjucks` 1.0.0: the inline-`<script>` audit now flags `| safe` output, including `<script type="module">`, while exempting `jsonScript`.
 
 ### Added
 - Codex adapters: every skill ships `agents/openai.yaml` with a display name, short description, and `$skill` default prompt. Descriptions front-load capability and the strongest trigger into the first 120 characters, which Codex keeps when its skills context budget truncates descriptions.
@@ -25,7 +25,8 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 - `agent-memory` 2.8.0: `CURSOR.md` migration merges shared content into `AGENTS.md`. Save, Sync, Build, Migrate, and Maintain have done conditions. The Codex global skill root is `~/.agents/skills/`.
 - `figma-to-code` 0.2.0 is now a repository-convention layer. When Figma's official `figma-design-to-code` skill is installed, it owns design context and implementation; this skill supplies the token map, component reuse rules, agent rules files, correction loop, and deviation report, and implements designs itself only when that skill is absent. `create_design_system_rules` is treated as a user-run MCP prompt, Code Connect writes use `add_code_connect_map` after approval, and routing uses current official skill names (checked 2026-10-21).
 - `code-to-figma` 0.3.0: the plugin docs no longer promise automatic variable-collection creation and state that the plugin is a development import binding to existing variables. Setup offers an optional one-time collection creation through Figma's `figma-use` skill, and one-off Figma writes route to `figma-use` or `figma-generate-design`. The DTCG converter reads only base theme scopes, throws on duplicate token paths, and types `--font-weight-*` as `fontWeight` under `typography/weight/`. Regenerate existing `.w3c.json` output.
-- `localhost-screenshots` 3.5.0 and `eleventy-nunjucks` 0.2.0 narrow their triggers to localhost and confirmed Eleventy context respectively.
+- `localhost-screenshots` 3.5.0 and `eleventy-nunjucks` 1.0.0 narrow their triggers to localhost and confirmed Eleventy context respectively.
+- Promoted `eleventy-nunjucks` to 1.0.0: breaking trigger or scope changes now require a major version. The stable Eleventy 3.x baseline and the separately gated Build Awesome v4 prerelease guide are part of that contract; a future v4 general release is a content update unless it changes triggers or scope.
 - README and AGENTS.md list `~/.agents/skills/` as the Codex global root.
 - Updated pinned CI actions: CodeQL 4.39.0, setup-node 7.1.0, setup-uv 10.3.0, and create-github-app-token 3.3.0 (folds Dependabot PR #54).
 - Bumped package and plugin metadata to 0.7.0.

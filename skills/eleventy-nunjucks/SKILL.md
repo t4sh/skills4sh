@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; Eleventy v3 supports Node >=18, but supported Node 22 or 24 LTS is recommended
 metadata:
   author: t4sh
-  version: "0.2.0"
+  version: "1.0.0"
   tags: 11ty, eleventy, eleventy-v3, build-awesome, build-awesome-v4, nunjucks, static-site, ssg, jamstack, tailwind, markdown-it, autoescape, xss-prevention, csp, design-tokens
 ---
 

@@ -4,7 +4,7 @@
 
 skill:
   name: eleventy-nunjucks
-  version: "0.2.0"
+  version: "1.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -27,7 +27,7 @@ integrity:
     references/review-shipping.md: 2ace12d6bd6daf808a085f444c311a53ea30b9d8f0cfb7910d4dcafcc7baa44c
     references/security-checklist.md: 7efdd187d867bb575ec23a80ef8494add162a2949ad2ae516336e10be5fcb987
     references/troubleshooting.md: a38752134048899a438456da63e171dad6a6f4a29639c33eaadd558b388c00fa
-    SKILL.md: 70963f2a0a0db4fa254eca5a434a6098fe56bb926a534bf31b303a1bd1848671
+    SKILL.md: 4f0a1bcf55361b512e7c46d2b6f4ca35b354c355c5fe074a5f7e306e38e72a0f
     agents/openai.yaml: 4f83f2cdeaf4b1d5487da069a35123aa50be0308943528596db80cd17a43c6c0
 permissions:
   alwaysAllow: []

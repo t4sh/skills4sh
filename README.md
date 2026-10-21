@@ -11,7 +11,7 @@ Each skill is an [Agent Skills](https://agentskills.io/specification) folder. Th
 | [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 2.8.0 |
 | [code-to-figma](skills/code-to-figma/) | Build a CI pipeline that exports design tokens and page structure for a Figma plugin to consume | 0.3.0 |
 | [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 2.1.0 |
-| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 0.2.0 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 1.0.0 |
 | [figma-to-code](skills/figma-to-code/) | Bring your repo's tokens, components, and agent rules to Figma work; pairs with Figma's official `figma-design-to-code` skill and implements designs itself when that skill is absent | 0.2.0 |
 | [init-rulebook](skills/init-rulebook/) ⭐ | Keep one personal rulebook that every agent loads: only the rules that apply, reloaded after compaction, with action gates read just in time | 1.0.0 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.5.0 |
@@ -214,7 +214,7 @@ See [SECURITY.md](SECURITY.md) for scan details, expected findings, and vulnerab
 
 Skill files do not execute themselves. Agents may follow their instructions and run optional helpers when the task and permissions allow.
 
-> **Stability:** `code-to-figma`, `eleventy-nunjucks`, and `figma-to-code` are pre-1.0: prompt content and triggers may change incompatibly between minor releases. `agent-memory`, `discord-harvest`, `init-rulebook`, `localhost-screenshots`, and `skill-architect` reserve breaking changes for major versions.
+> **Stability:** `code-to-figma` and `figma-to-code` are pre-1.0: prompt content and triggers may change incompatibly between minor releases. `agent-memory`, `discord-harvest`, `eleventy-nunjucks`, `init-rulebook`, `localhost-screenshots`, and `skill-architect` reserve breaking changes for major versions.
 
 ## License
 

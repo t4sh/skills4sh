@@ -22,8 +22,8 @@
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.2.0",
-      "computedHash": "f781e1fa8b3ebf506a2e5d6da2e728ac23d5a0bee45217da6c0c6bcc066b9ee5"
+      "version": "1.0.0",
+      "computedHash": "3234aa8ef4711dd2c9f1c777193db387cd1b68e4173169dedba503dfc44e0ea4"
     },
     "figma-to-code": {
       "source": "t4sh/skills4sh",
@@ -47,7 +47,7 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "1.1.0",
-      "computedHash": "78f8f8931529fe55fdbb78d4e996bdeac76c4d24b9cfd49b2bd4c67549189073"
+      "computedHash": "133dee1ef9f0e0caf3992bec63c7e1c3c9b465e78986819353c32dfd76a6479e"
     }
   }
 }
