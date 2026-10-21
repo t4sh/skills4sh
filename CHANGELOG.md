@@ -13,7 +13,7 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 ### Changed
 - `check:drift` semver monotonicity compares each skill's version against the released baseline (merge base with the default branch, else the latest `v*` tag, else `HEAD^`) instead of `HEAD^`, so lowering an unreleased draft bump on a branch no longer fails push-event validation. CI checks out full history for that baseline.
 
-## [0.7.0] — 2026-10-20
+## [0.7.0] — 2026-10-21
 
 ### Security
 - Scope the SHA-256 Gitleaks exception to filename/hash matches in security manifests using a rule-level allowlist supported by CI's scanner; credential matches on the same line remain detectable.

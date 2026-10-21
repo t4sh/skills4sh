@@ -8,10 +8,12 @@ description: >-
 tags: [release-planning, init-rulebook, skill-architect, localhost-screenshots, portless]
 source: codex
 created: 2026-09-27
-updated: 2026-09-28
-status: active
+updated: 2026-10-21
+status: archived
 expires: 2026-10-27
 ---
+
+> **Archived 2026-10-21.** The 0.6.0 release tracked here shipped on 2026-09-28. Superseded by [sessions/20261021-v070-release](../sessions/20261021-v070-release.md).
 
 ## Release status
 
