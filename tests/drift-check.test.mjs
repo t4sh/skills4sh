@@ -12,6 +12,7 @@
 //   - schema-invalid security manifest (bad enum value)
 //   - file inventory drift (file on disk not in manifest)
 //   - markdown-link validation (broken link, anchored link, external URL)
+//   - semver monotonicity against the released baseline (git history fixtures)
 //
 // Run: node --test tests/drift-check.test.mjs
 
@@ -19,6 +20,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { writeFile, mkdir } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -827,6 +829,145 @@ See [foo](references/foo.md#a-section) and [icon](assets/icon.svg).
         orphanErrors, [],
         `anchored link should count as linked:\n${orphanErrors.join("\n")}`,
       );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+// Runs git in a fixture repo with the user's global/system config ignored, so
+// signing, hooks, and default-branch settings cannot leak into the test.
+function gitIn(dir, ...args) {
+  return execFileSync("git", [
+    "-c", "user.name=test", "-c", "user.email=test@example.com",
+    "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false",
+    ...args,
+  ], {
+    cwd: dir,
+    env: { ...process.env, GIT_CONFIG_GLOBAL: "/dev/null", GIT_CONFIG_NOSYSTEM: "1" },
+    stdio: ["ignore", "pipe", "pipe"],
+  }).toString();
+}
+
+async function writeSkillVersion(dir, version) {
+  await writeFile(join(dir, "skills/demo/SKILL.md"), `---
+name: demo
+description: "A demo skill for tests"
+license: MIT
+compatibility: any
+metadata:
+  author: test
+  version: "${version}"
+  tags: demo, test
+---
+
+# Demo
+
+See [references/foo.md](references/foo.md) and [icon](assets/icon.svg).
+`);
+}
+
+async function commitVersion(dir, version) {
+  await writeSkillVersion(dir, version);
+  gitIn(dir, "add", "-A");
+  gitIn(dir, "commit", "-q", "-m", `demo ${version}`);
+}
+
+// Initializes a fixture repo whose first commit on `branch` has `version`.
+async function initRepo(dir, version, branch = "main") {
+  await buildFixture(dir);
+  gitIn(dir, "init", "-q", "-b", branch);
+  await commitVersion(dir, version);
+}
+
+const monotonicityErrors = (errors) => errors.filter((e) => e.includes("semver monotonicity"));
+
+describe("drift-check — semver monotonicity baseline", () => {
+  test("lowering an unreleased draft bump below HEAD^ but not below main passes", async () => {
+    const dir = setupTmp();
+    try {
+      await initRepo(dir, "1.0.0");
+      gitIn(dir, "switch", "-q", "-c", "feature");
+      await commitVersion(dir, "1.2.0");
+      await commitVersion(dir, "1.1.0");
+      const { errors } = await runDriftChecks(dir);
+      assert.deepEqual(monotonicityErrors(errors), []);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a version below the merge base with main is flagged", async () => {
+    const dir = setupTmp();
+    try {
+      await initRepo(dir, "1.2.0");
+      gitIn(dir, "switch", "-q", "-c", "feature");
+      await commitVersion(dir, "1.1.0");
+      const { errors } = await runDriftChecks(dir);
+      const found = monotonicityErrors(errors);
+      assert.equal(found.length, 1, `expected one monotonicity error, got:\n${errors.join("\n")}`);
+      assert.match(found[0], /1\.1\.0 is older than merge base with main \([0-9a-f]{8}\)'s 1\.2\.0/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("on the default branch, a version below the latest release tag is flagged", async () => {
+    const dir = setupTmp();
+    try {
+      await initRepo(dir, "1.2.0");
+      gitIn(dir, "tag", "v0.1.0");
+      await commitVersion(dir, "1.1.0");
+      const { errors } = await runDriftChecks(dir);
+      const found = monotonicityErrors(errors);
+      assert.equal(found.length, 1, `expected one monotonicity error, got:\n${errors.join("\n")}`);
+      assert.match(found[0], /1\.1\.0 is older than release tag v0\.1\.0's 1\.2\.0/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("without a default branch or tag, HEAD^ is the fallback baseline", async () => {
+    const dir = setupTmp();
+    try {
+      await initRepo(dir, "1.2.0", "topic");
+      await commitVersion(dir, "1.1.0");
+      const { errors } = await runDriftChecks(dir);
+      const found = monotonicityErrors(errors);
+      assert.equal(found.length, 1, `expected one monotonicity error, got:\n${errors.join("\n")}`);
+      assert.match(found[0], /older than previous commit's 1\.2\.0/);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("with no baseline available the check is skipped", async () => {
+    const dir = setupTmp();
+    try {
+      // Single commit on a non-default branch: no merge base, tag, or HEAD^.
+      await initRepo(dir, "0.0.1", "topic");
+      const { errors } = await runDriftChecks(dir);
+      assert.deepEqual(monotonicityErrors(errors), []);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a skill missing at the baseline is skipped", async () => {
+    const dir = setupTmp();
+    try {
+      await mkdir(join(dir, "seed"));
+      await writeFile(join(dir, "seed/README"), "seed\n");
+      gitIn(dir, "init", "-q", "-b", "main");
+      gitIn(dir, "add", "-A");
+      gitIn(dir, "commit", "-q", "-m", "seed");
+      gitIn(dir, "switch", "-q", "-c", "feature");
+      await buildFixture(dir);
+      await writeSkillVersion(dir, "0.0.1");
+      gitIn(dir, "add", "-A");
+      gitIn(dir, "commit", "-q", "-m", "add demo");
+      const { errors } = await runDriftChecks(dir);
+      assert.deepEqual(monotonicityErrors(errors), []);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

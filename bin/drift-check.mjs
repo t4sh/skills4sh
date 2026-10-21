@@ -33,6 +33,7 @@ export async function runDriftChecks(rootDir) {
   const readJson = async (path) => JSON.parse(await readText(path));
 
   const skills = await skillInventory(root);
+  const baseline = resolveVersionBaseline(root);
   const lock = await readJson("skills-lock.json");
   const readme = await readText("README.md");
   const agents = await readText("AGENTS.md");
@@ -51,15 +52,17 @@ export async function runDriftChecks(rootDir) {
     expect(Boolean(lockEntry), `${skill}: missing skills-lock.json entry`);
     expect(lockEntry?.version === fm.version, `${skill}: skills-lock version must match SKILL.md`);
 
-    // Semver monotonicity: SKILL.md version must not move backwards between commits.
-    // Skips silently when HEAD^ is unavailable (initial commit, shallow CI clone) or
-    // when the skill is new (no SKILL.md at HEAD^). Local + full-clone CI run this;
-    // shallow clones get the check via the pre-commit hook on the contributor's machine.
-    const previousVersion = readPreviousSkillVersion(root, skill);
-    if (previousVersion && fm.version) {
+    // Semver monotonicity: SKILL.md version must not move below the released
+    // baseline (see resolveVersionBaseline). Comparing against the release rather
+    // than HEAD^ lets a branch correct an unreleased draft bump downward, as the
+    // "Draft skill work" rule in AGENTS.md expects. Skips silently when no baseline
+    // is resolvable (shallow clone, no history) or the skill is new (no SKILL.md
+    // at the baseline).
+    const baselineVersion = baseline ? readSkillVersionAt(root, baseline.ref, skill) : null;
+    if (baselineVersion && fm.version) {
       expect(
-        compareSemver(fm.version, previousVersion) >= 0,
-        `${skill}: SKILL.md version ${fm.version} is older than previous commit's ${previousVersion} (semver monotonicity)`,
+        compareSemver(fm.version, baselineVersion) >= 0,
+        `${skill}: SKILL.md version ${fm.version} is older than ${baseline.label}'s ${baselineVersion} (semver monotonicity)`,
       );
     }
 
@@ -173,14 +176,50 @@ async function anySkillHasDir(root, skills, name) {
   return false;
 }
 
-function readPreviousSkillVersion(root, skill) {
-  const result = spawnSync("git", ["show", `HEAD^:skills/${skill}/SKILL.md`], {
+function git(root, args) {
+  const result = spawnSync("git", args, {
     cwd: root,
     encoding: "utf8",
     stdio: ["ignore", "pipe", "pipe"],
   });
-  if (result.status !== 0) return null;
-  return parseSkillFrontmatter(result.stdout).version ?? null;
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
+// Default-branch refs tried in order when looking for the merge base.
+const DEFAULT_BRANCH_REFS = ["refs/remotes/origin/HEAD", "refs/remotes/origin/main", "refs/heads/main"];
+
+// Picks the commit whose SKILL.md versions count as released. Returns
+// { ref, label } or null when nothing is resolvable.
+//   1. Merge base of HEAD with the default branch, unless it is HEAD itself
+//      (i.e. we are on the default branch, where the merge base says nothing).
+//   2. Latest `v*` release tag reachable from HEAD.
+//   3. HEAD^, so history without a default branch or tags keeps the old check.
+function resolveVersionBaseline(root) {
+  const head = git(root, ["rev-parse", "--verify", "--quiet", "HEAD^{commit}"]);
+  if (!head) return null;
+
+  for (const ref of DEFAULT_BRANCH_REFS) {
+    if (!git(root, ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`])) continue;
+    const mergeBase = git(root, ["merge-base", "HEAD", ref]);
+    if (mergeBase && mergeBase !== head) {
+      const name = ref.replace(/^refs\/(heads|remotes)\//, "");
+      return { ref: mergeBase, label: `merge base with ${name} (${mergeBase.slice(0, 8)})` };
+    }
+  }
+
+  const tag = git(root, ["describe", "--tags", "--abbrev=0", "--match", "v*", "HEAD"]);
+  if (tag) return { ref: `refs/tags/${tag}`, label: `release tag ${tag}` };
+
+  if (git(root, ["rev-parse", "--verify", "--quiet", "HEAD^"])) {
+    return { ref: "HEAD^", label: "previous commit" };
+  }
+  return null;
+}
+
+function readSkillVersionAt(root, ref, skill) {
+  const content = git(root, ["show", `${ref}:skills/${skill}/SKILL.md`]);
+  if (content === null) return null;
+  return parseSkillFrontmatter(content).version ?? null;
 }
 
 // Walks every .md file in a skill and finds markdown links that point at
