@@ -21,10 +21,10 @@ Start with the active host's instructions and invocation evidence, not a default
 
 #### Codex adapter — only when Codex is the active host
 
-Use this adapter only if discovery or repair is needed for Codex. Verified against official documentation on 2026-09-27; recheck for a different runtime version.
+Use this adapter only if discovery or repair is needed for Codex. Verified against official documentation on 2026-10-21; recheck for a different runtime version.
 
-- Global instructions come from `AGENTS.override.md`, otherwise `AGENTS.md`, in `CODEX_HOME` (default `~/.codex`). Inspect which file is effective before adding a missing pointer. Project instructions follow the repository-to-working-directory chain; use project scope for rules meant only for that project. See [OpenAI's AGENTS.md guide](https://developers.openai.com/codex/guides/agents-md).
-- Codex discovers user skills under `~/.agents/skills/` and project `.agents/skills/` locations. Skill discovery and startup invocation are separate mechanisms. See [OpenAI's skills guide](https://developers.openai.com/codex/skills).
+- Global instructions come from `AGENTS.override.md`, otherwise `AGENTS.md`, in `CODEX_HOME` (default `~/.codex`). Inspect which file is effective before adding a missing pointer. Project instructions follow the repository-to-working-directory chain; use project scope for rules meant only for that project. See [OpenAI's AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+- Codex discovers user skills under `~/.agents/skills/` and project `.agents/skills/` locations. Skill discovery and startup invocation are separate mechanisms. See [OpenAI's skills guide](https://learn.chatgpt.com/docs/build-skills).
 
 ### Verification
 

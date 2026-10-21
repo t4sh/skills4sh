@@ -113,7 +113,7 @@
     {
       "id": "load-native-import-current-context",
       "kind": "workflow",
-      "prompt": "init-rulebook: load. The host explicitly natively imports the complete current content of rules/core.md and provides it in this context: `# Core\nKeep edits within the requested task.\nEnd-of-file marker: CORE-NATIVE-COMPLETE.` Current task is API documentation; publishing is planned later. Report inventory and selected/deferred rules, and which files you actually read.",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. In this simulation, the host explicitly natively imports the complete current content of rules/core.md and provides it in this context: `# Core\nKeep edits within the requested task.\nEnd-of-file marker: CORE-NATIVE-COMPLETE.` Current task is API documentation; publishing is planned later. Report inventory and selected/deferred rules, and which files you actually read.",
       "files": {
         "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
         "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\nEnd-of-file marker: CORE-FILE-COMPLETE.\n",

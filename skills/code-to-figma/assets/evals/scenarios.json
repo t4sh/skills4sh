@@ -39,11 +39,19 @@
         {
           "text": "Extract Figma variables into our code tokens.",
           "load": false
+        },
+        {
+          "text": "Using the Figma MCP, create a Design Tokens variable collection in my open Figma file from these color values.",
+          "load": false
+        },
+        {
+          "text": "Ask the agent to change the hero button fill in our Figma file to the brand blue variable.",
+          "load": false
         }
       ],
       "assertions": [
         "Withhold expected labels; record false positives and negatives separately.",
-        "Figma-to-code direction routes to figma-to-code; one-off screen generation in Figma routes to the Figma MCP write tools or skills."
+        "Figma-to-code direction routes to figma-to-code; agent-driven, one-off Figma variable or node writes route to figma-use; one-off screen generation in Figma routes to figma-generate-design or the Figma MCP write tools."
       ]
     }
   ]

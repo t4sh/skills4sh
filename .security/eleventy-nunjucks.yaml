@@ -20,7 +20,7 @@ integrity:
     references/build-pipeline.md: efbba9d500ed66b34e803a548f83cbf24d00754ae27594e89420ee8c9502da55
     references/conventions.md: 993dbdb0cc5bd2091d241a7bd1cd050a6ffafaa67226ed43f091bf7d3bc8fb3c
     references/data-cascade.md: 4bea8e9141bfb4da740a62d41f7e42b377832c1263dc5b8facb8233810ed2f59
-    references/eleventy-config-api.md: 0980cdf4cad76332a941d116eebaba6e88bcec6ec19b8280006453cb4a93289f
+    references/eleventy-config-api.md: 33e7458fb996de1ca92d9051dd97ab41d69aab02f1b464de2d1d58b7a32d923a
     references/filters.md: 5b78a0ccfe89c2efdce70b1fa3f42e09c849c983e2918a1c24e9165c4a8d260f
     references/nunjucks-syntax.md: 351196a664a53a7e12ab5a3489e7bb4cdd29e6b26a2a79b5774b18e073a3deb2
     references/production-patterns.md: c1b571a167f54b2c372c2b7d5f6a4dec7fb9f885f5732a36d84f99037980850a

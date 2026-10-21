@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; requires file read access to the chosen rulebook and write access for setup or maintenance
 metadata:
   author: t4sh
-  version: "0.2.0"
+  version: "1.0.0"
   tags: agent-rules, AGENTS.md, rulebook, onboarding, dotfiles, setup, update
 ---
 
@@ -55,7 +55,7 @@ At session start and after context compaction, perform this load again. Treat re
 
 ## Status
 
-Apply the same applicability selection and content-read boundary as `load`, then report:
+Apply the same applicability selection and content-read boundary as `load`: read the selected always-on and matching conditional rules completely, and check deferred rules with filesystem metadata only. Then report:
 
 - host pointer and its source, and the resolved index path and readability;
 - inventory errors where declared: missing, orphaned, duplicated, unreadable, or broken references;

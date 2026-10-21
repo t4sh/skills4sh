@@ -4,7 +4,7 @@
 
 skill:
   name: code-to-figma
-  version: "0.3.0"
+  version: "0.3.1"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -15,13 +15,13 @@ integrity:
   files:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/benchmarks.md: 921a8ce3601c518ecf7a746de7f2d1afe9d27ea89ff33284df78d7be00d90d46
-    references/ci-and-gist-setup.md: 2adc3c0b2e6f0570c36d09672e5e50ca14f03e1b11cf05493711b040e9342cf2
+    references/ci-and-gist-setup.md: 2ae544c3890f6fa3d79aec1ab20eba67672054bec73cf5f1b17b18963495a14e
     references/figma-export-contract.md: d30625fb0b943185da62bb3953702eafd1755a20ba4770570fab6c64cfc668f6
     references/setup-scaffold.md: 3584e8c18b34ed3c7318651f7fd4d4ec88ce6057bebc4d1eec623065673bde28
     references/walker-patterns.md: b8e04bf4708c006474f1bfca5e664fa4eafa055afad3f106b8dc14497a50214a
-    SKILL.md: c4d219324d350891bc86df002e7ef3f9ccdb13369b36067c111821f752f26b91
+    SKILL.md: ce0123d24486ba31f3e679c604088219577e84a302eb0df1e66892a630c622ad
     agents/openai.yaml: a97525ff97f74b54449987e537bc9f7860f809102cf59cdbe3e40125bf41d74d
-    assets/evals/scenarios.json: ce9ca1d7573823f20935d2b3238bf283ddd8e5cbbabffa9cd8d1a03e84bd090c
+    assets/evals/scenarios.json: ac2e8efa982dd06e2db1dc99a7d0538ca55eab3ef382cec803d46fe5a4a0a1c0
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; script generation, CLI calls, and Gist writes are all gated by user approval at runtime"

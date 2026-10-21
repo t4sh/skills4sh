@@ -24,7 +24,7 @@ integrity:
     references/comparative-study.md: 5c0d20ea7d3500e16539d12c2264e5ce03377b8e83c2b165a3ea93a23908f404
     references/eval-methodology.md: 6f909f70d97933d71c610352ddeb6365e16e657d3fc0508e87dfe560baf9b73a
     references/house-rubric.md: 2a7d557ceaf7d1b863baf926d4373b5e60fea64328d3b2fdf82d96886068ff49
-    references/naming-and-packaging.md: bc84d181820638f7ffbb540619e7c3044ffa07b5fdcc68c5b0cd98535f0fa782
+    references/naming-and-packaging.md: 7dd90e89c0166f004df45149e76890404ec900daf3532a573069a0a32e436980
     references/vendor-adapters.md: feb7b2096411cdcd7988091ef298529442b5ccd215a63f7ebfbbe93802f74fc7
     SKILL.md: 9d01fe203ebad655b3752f5cd1d55692e40421f7dc5cf9151faa13dea9d371bb
     agents/openai.yaml: 00b90846faf64cdf42cde987a7c7634d8887b87e23beca6a7ec6001dab5e2526

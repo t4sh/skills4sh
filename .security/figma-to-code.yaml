@@ -4,7 +4,7 @@
 
 skill:
   name: figma-to-code
-  version: "0.2.0"
+  version: "0.3.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -15,14 +15,14 @@ integrity:
   files:
     assets/icon.svg: 729bf2cf1e6d95abcb8e3d7615ad2c5a234dc8c539685006f0df51b3f81241fe
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/benchmarks.md: a9695fdf800ab6d88f8d015c9afd3f1f6736d01bfbf779581e35cee3f0f07cad
+    references/benchmarks.md: 11086daa0ae615637493c56f1bdfe95707da18cd2c7421e74e7a5ed86ca9f288
     references/design-philosophy.md: 7c786c2605221627a04c61c7e2a8cf7da38d4ae46ace0bc3099bcf33e600e8cd
-    references/implementation-patterns.md: 2a19851801dd6d7d8d8a78a0f88f75077f68684d73728943f9ca8481e4e9c794
+    references/implementation-patterns.md: 994806eb13042f43325daa56b8882844864bba8d6aed56e7fad2b41fc44fb04c
     references/troubleshooting.md: 653a6e7fa662b376a15a86046a6b9d307f8b7fcc2e864fbd96e378fa780f0d42
     references/verification-and-boundaries.md: f0f3b35a95fbce2a13c29896f43290ee577996cf5fa4c0e42bc11e2d11040339
-    SKILL.md: 52c99164fec8eab0b405a8368c3eb060318802008713126fc7d171b78d3694ba
-    agents/openai.yaml: 12eedd2b4770000274e9487d042d0e14435a5c9fb0de8df9e6c2d298a0a1bb09
-    assets/evals/scenarios.json: 48794fff7b9866962598ba8a6418ee33625629e6cdc8a82ee18cdb2da75fd1d6
+    SKILL.md: 7d474e859d8ea383893db2dd20dfc43c11b83f49bc4eafc50820e4ac2287ecc8
+    agents/openai.yaml: 2cb1518629abb29206eb3d64d6e2873d46d8ba53c2203202722ae0b939033a88
+    assets/evals/scenarios.json: 911f7d8179d83a55260b3e3f2b0d754506c44a84b9226e7eea19408776ed3d99
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"

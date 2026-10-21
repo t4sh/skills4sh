@@ -5,13 +5,13 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "2.8.0",
-      "computedHash": "85fe4983be8cd944445ecef8a94ddbaac99dd1629f1a54a50668c451cebb8f16"
+      "computedHash": "8772fcdb2d145d449a9b66b41169884094975de421b02bb5b1fe73779a907e96"
     },
     "code-to-figma": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.3.0",
-      "computedHash": "0c084498eea8aca83ebba2ed0aa06cebabc9f68c019590da648f624614f2b457"
+      "version": "0.3.1",
+      "computedHash": "700cb78e6d7476180e59dbf4cd87ed60290e3df720b4beb80c1ce2ec4c9bee64"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
@@ -23,19 +23,19 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "0.2.0",
-      "computedHash": "f5e7eb09fa096f1ddcd68b2615f21260fe5f367c7d3282d7337d94c2dd3fdd26"
+      "computedHash": "740ec56eb4c3e0c6e12f30b363fe14f17500818ddfc9d01768c6bd25d64880d1"
     },
     "figma-to-code": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.2.0",
-      "computedHash": "8811cdd1014719fbbf9e6d084282f67f9e9e6020f19090b6655f6424933b6067"
+      "version": "0.3.0",
+      "computedHash": "5db790e59385f352216d4c71972ac98b0b2ef8ce14ca378bf8ce5d074f0dd6a6"
     },
     "init-rulebook": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "0.2.0",
-      "computedHash": "ac5e5f3f9d75747fab1ad7e8a1a8d1a5132c253be07ffccbb954917c8b6117cb"
+      "version": "1.0.0",
+      "computedHash": "a8875db4d68562f662a939573b7fcfe68be6b7c88d0327b289a94c434cbda021"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
@@ -47,7 +47,7 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "1.1.0",
-      "computedHash": "bbe10087b9eb7bb0bf1122987723302ede12cf0cb254883487d53ae59d3ace2e"
+      "computedHash": "78f8f8931529fe55fdbb78d4e996bdeac76c4d24b9cfd49b2bd4c67549189073"
     }
   }
 }

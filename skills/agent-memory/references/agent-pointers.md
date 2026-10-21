@@ -18,7 +18,7 @@ Use these paths to confirm the skill is installed where the active runtime reads
 | OpenClaw | `openclaw` | `skills/` (workspace) | `~/.openclaw/skills/` |
 | Generic / shared | `universal` or host default | `.agents/skills/` | `~/.agents/skills/` |
 
-Codex roots checked 2026-10-20 against the [Codex skills documentation](https://developers.openai.com/codex/skills): user `$HOME/.agents/skills`, repo `.agents/skills` from the working directory up to the repository root, and admin `/etc/codex/skills`. The `skills` CLI's global `codex` target installs into `~/.agents/skills/`.
+Codex roots checked 2026-10-20 against the [Codex skills documentation](https://learn.chatgpt.com/docs/build-skills): user `$HOME/.agents/skills`, repo `.agents/skills` from the working directory up to the repository root, and admin `/etc/codex/skills`. The `skills` CLI's global `codex` target installs into `~/.agents/skills/`.
 
 OpenClaw also reads `~/.agents/skills/` and project `.agents/skills/` with lower precedence than workspace `skills/`. Grok also reads `AGENTS.md` and may scan `~/.agents/skills/`.
 

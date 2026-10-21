@@ -20,17 +20,17 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 - `skill-architect` 1.1.0: `references/helper-runtime.md`, `scaffold_skill.py --author` and `--openai-yaml`, dated Codex adapter facts, and done conditions for every operating-mode step.
 
 ### Changed
-- `init-rulebook` 0.2.0: complete rule text the host natively imports into the current context counts as read (not after compaction). Fresh-session discovery may be reported untested with the user's verification step, and Status has one definition.
+- Promoted `init-rulebook` to 1.0.0: breaking trigger or scope changes now require a major version. Complete rule text the host natively imports into the current context counts as read (not after compaction). Fresh-session discovery may be reported untested with the user's verification step. Status has one definition and reads selected rules completely while checking deferred rules by metadata only. Codex adapter facts re-verified 2026-10-21.
 - `agent-memory` 2.8.0: `CURSOR.md` migration merges shared content into `AGENTS.md`. Save, Sync, Build, Migrate, and Maintain have done conditions. The Codex global skill root is `~/.agents/skills/`.
-- `figma-to-code` 0.2.0: `create_design_system_rules` is treated as a user-run MCP prompt, and Code Connect writes use `add_code_connect_map` after approval.
-- `code-to-figma` 0.3.0: the DTCG converter reads only base theme scopes, throws on duplicate token paths, and types `--font-weight-*` as `fontWeight` under `typography/weight/`. Regenerate existing `.w3c.json` output.
+- `figma-to-code` 0.3.0 is now a repository-convention layer. When Figma's official `figma-design-to-code` skill is installed, it owns design context and implementation; this skill supplies the token map, component reuse rules, agent rules files, correction loop, and deviation report, and implements designs itself only when that skill is absent. `create_design_system_rules` is treated as a user-run MCP prompt, Code Connect writes use `add_code_connect_map` after approval, and routing uses current official skill names (checked 2026-10-21).
+- `code-to-figma` 0.3.1: the plugin docs no longer promise automatic variable-collection creation and state that the plugin is a development import binding to existing variables. Setup offers an optional one-time collection creation through Figma's `figma-use` skill, and one-off Figma writes route to `figma-use` or `figma-generate-design`. The DTCG converter reads only base theme scopes, throws on duplicate token paths, and types `--font-weight-*` as `fontWeight` under `typography/weight/`. Regenerate existing `.w3c.json` output.
 - `localhost-screenshots` 3.5.0 and `eleventy-nunjucks` 0.2.0 narrow their triggers to localhost and confirmed Eleventy context respectively.
 - README and AGENTS.md list `~/.agents/skills/` as the Codex global root.
 - Bumped package and plugin metadata to 0.7.0.
 
 ### Fixed
 - `localhost-screenshots` helpers resolve Playwright from the working project first, then beside the script, so globally installed skills work without `NODE_PATH`.
-- `eleventy-nunjucks` baseline is Eleventy 3.1.7 with `@11ty/nunjucks` 3.3.0; the Build Awesome alpha is pinned instead of the `latest` stub, and troubleshooting, data-cascade, and build-pipeline examples were corrected.
+- `eleventy-nunjucks` baseline is Eleventy 3.1.7 with `@11ty/nunjucks` 3.3.0; the Build Awesome alpha is pinned instead of the `latest` stub, and troubleshooting, data-cascade, and build-pipeline examples were corrected. The config API reference now says Browsersync left core in v2, scopes `returnType: "html"` to the Image JS API (Image v7 needs Node 22+), and lists the `ndjson` output mode (checked 2026-10-21).
 - The installer ignores `__pycache__`, `*.pyc`, and `.DS_Store` when hashing an existing install, and helper commands run with `python -E -B`.
 
 ## [0.6.0] — 2026-09-28

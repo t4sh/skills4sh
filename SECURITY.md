@@ -7,11 +7,11 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 | Skill | Version | Supported |
 |-------|---------|-----------|
 | agent-memory | 2.8.0 | Yes |
-| code-to-figma | 0.3.0 | Yes |
+| code-to-figma | 0.3.1 | Yes |
 | discord-harvest | 2.1.0 | Yes |
 | eleventy-nunjucks | 0.2.0 | Yes |
-| figma-to-code | 0.2.0 | Yes |
-| init-rulebook | 0.2.0 | Yes |
+| figma-to-code | 0.3.0 | Yes |
+| init-rulebook | 1.0.0 | Yes |
 | localhost-screenshots | 3.5.0 | Yes |
 | skill-architect | 1.1.0 | Yes |
 

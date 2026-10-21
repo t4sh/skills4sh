@@ -144,7 +144,7 @@ unset GIST_TOKEN
 
 ## 5 — Connect the Figma plugin
 
-1. In Figma: **Plugins → Development → Import plugin from manifest** → select `plugins/tokens-sync-to-figma/manifest.json` from a local clone of [skills4sh](https://github.com/t4sh/skills4sh), **or** install from the Figma Community once published.
+1. In the Figma desktop app: **Plugins → Development → Import plugin from manifest** → select `plugins/tokens-sync-to-figma/manifest.json` from a local clone of [skills4sh](https://github.com/t4sh/skills4sh). The plugin is not published to the Figma Community; a development import from the repo clone is the only install path.
 2. Run **Tokens sync to Figma**.
 3. Paste the Gist raw URL and click **Sync from CI**.
 
@@ -155,11 +155,24 @@ https://gist.githubusercontent.com/<user>/<gist-id>/raw/figma-export.json
 
 The plugin remembers the URL after the first paste.
 
-### Prerequisite: `Design Tokens` variable collection (v1)
+### Prerequisite: Design Tokens variable collection
 
-In v1 the plugin requires a pre-existing Figma variable collection named **`Design Tokens`** with a **`Light`** mode. Variable names must match the `*Token` paths in `figma-export.json` exactly.
+The plugin does not create or update Figma variables. It fetches only `figma-export.json` (`meta` + `sections`) from the Gist, binds each `*Token` field to an existing local variable whose name matches the token path exactly, and resolves fallback values from the **`Light`** mode (or first mode) of a local collection named **`Design Tokens`**. Unmatched tokens fall back to neutral defaults (grey / Inter / 14px).
 
-Generate the collection from the same conforming `.w3c.json` source so both sides share one naming scheme. The bundled plugin currently consumes the existing section/variable contract; it does **not** yet create variables from the DTCG artifact. Treat direct DTCG-to-Figma-variable creation as unsupported until the plugin implements and tests that behavior—do not promise a future version or silently ignore the token tree.
+Creating that collection is therefore a one-time prerequisite. Repeat it only when tokens are added, renamed, or removed; the plugin will not pick those changes up on its own. Build the collection from the committed `<project>-tokens.w3c.json` so both sides share one naming scheme, and do not describe the plugin as importing or synchronizing the DTCG artifact.
+
+Token type mapping when creating variables: DTCG `color` → COLOR; `dimension`, `number`, `fontWeight`, `duration` → FLOAT (px or unitless value); `fontFamily` → STRING (first family in the stack). Use the slash-delimited token path as the variable name.
+
+**Manual path (always available).** In the target Figma file, open the Variables panel, create a collection named `Design Tokens`, rename its first mode to `Light`, and add one variable per token from the `.w3c.json` using the mapping above. A Variables import plugin the team already trusts is equivalent if it preserves the exact names.
+
+**Optional agent path (one-time, via the official Figma MCP).** When the user's agent session has the Figma MCP server connected and the `use_figma` tool is available to them, an agent can create the collection once from the `.w3c.json`. Figma documents `use_figma` as a remote-server tool for writing to Figma files, including variables ([Figma MCP tools and prompts](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/), checked 2026-10-21). Availability depends on the user's Figma plan, seat, and MCP client; this guide does not verify it, so check the tool list before offering this path.
+
+1. Load the official [`figma-use`](https://github.com/figma/mcp-server-guide/tree/main/skills/figma-use) skill before any `use_figma` call (checked 2026-10-21). For a reusable variable collection it directs agents to also load `figma-generate-library`.
+2. Run a read-only `use_figma` call that lists local variable collections. If `Design Tokens` already exists, stop and ask whether to update it; never create a duplicate collection.
+3. With the user's approval for the write, create `Design Tokens`, rename the default mode to `Light`, and create one variable per `.w3c.json` token with the mapping above and explicit `scopes` (`figma-use` requires setting them rather than keeping the default `ALL_SCOPES`). Return the collection ID, mode name, and variable count.
+4. Compare the returned count with the number of tokens in the `.w3c.json`, then run **Sync from CI** and confirm that no tokens fall back to grey.
+
+This agent step is setup only. CI, the Gist, and the recurring designer-run sync stay credential-free and agent-free.
 
 ---
 

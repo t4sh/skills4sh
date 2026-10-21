@@ -1,11 +1,11 @@
 ---
 name: code-to-figma
-description: "Sync code tokens and page structure to Figma via a CI + Gist pipeline. Use when asked to \"set up a Figma sync pipeline\", \"sync code to Figma\", \"export design tokens to Figma\", \"update the page walker\", or \"wire up the tokens-sync-to-figma plugin\"; when paths include `figma-sync.config.json`, `figma-export.json`, `scripts/tokens-to-figma/`, or `.github/workflows/figma-sync.yml`; or when checking figma-sync Gist or CI status. Not for one-off screen generation inside Figma."
+description: "Sync code tokens and page structure to Figma via a CI + Gist pipeline. Use when asked to \"set up a Figma sync pipeline\", \"sync code to Figma\", \"export design tokens to Figma\", \"update the page walker\", or \"wire up the tokens-sync-to-figma plugin\"; when paths include `figma-sync.config.json`, `figma-export.json`, `scripts/tokens-to-figma/`, or `.github/workflows/figma-sync.yml`; or when checking figma-sync Gist or CI status. Not for agent-driven, one-off Figma writes such as creating variables or editing nodes (use `figma-use`) or generating screens (use `figma-generate-design`)."
 license: MIT
 compatibility: macOS, Linux, or Windows with Node.js, Git, `jq`, and the GitHub CLI (`gh`)
 metadata:
   author: t4sh
-  version: "0.3.0"
+  version: "0.3.1"
   tags: figma, design-tokens, code-to-figma, figma-sync, token-export, w3c-dtcg, gist, ci, tailwind, css, design-system
 ---
 
@@ -105,11 +105,11 @@ Report:
 |---|---|
 | Export code tokens and page structure → Figma | This skill |
 | Import a Figma design → code | **`figma-to-code`** skill |
-| Edit Figma variables or components directly | The project's configured Figma write/design workflow (outside this skill) |
-| Generate a one-off screen or design in Figma from code, HTML, or a live page | Figma MCP write tools (`generate_figma_design`, `send_code_to_figma`, `html_to_figma`, `use_figma`) or official skills such as `figma-generate-design` ([Figma MCP tools](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/), checked 2026-10-20) — not this skill |
+| Agent-driven, one-off Figma write: create or edit variables, collections, nodes, or components in a file during an agent session | Official **`figma-use`** skill with the `use_figma` MCP tool (plus `figma-generate-library` for reusable variable/token collections) — not this skill |
+| Generate a one-off screen or design in Figma from code, HTML, or a live page | Official **`figma-generate-design`** skill or Figma MCP write tools (`generate_figma_design`, `html_to_figma`, `send_code_to_figma`) ([Figma MCP tools](https://developers.figma.com/docs/figma-mcp-server/tools-and-prompts/), checked 2026-10-21) — not this skill |
 | Sync an existing Gist manually | `/code-to-figma sync` |
 
-This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the Figma-side consumer — this skill produces the artifact it reads.
+This skill does not edit Figma files. The plugin (`tokens-sync-to-figma`) is the Figma-side consumer — this skill produces the artifact it reads. The plugin binds to an existing `Design Tokens` collection; creating that collection once is a prerequisite, and its optional agent path hands off to `figma-use` (see [references/ci-and-gist-setup.md](references/ci-and-gist-setup.md#prerequisite-design-tokens-variable-collection)).
 
 ## Behavioral evals
 

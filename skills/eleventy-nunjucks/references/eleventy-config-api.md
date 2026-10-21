@@ -9,8 +9,8 @@ Use this file when wiring or auditing `.eleventy.js` / `eleventy.config.js`, mig
 | **ESM and async config support** | v3 supports ESM and asynchronous callbacks. Match the project’s `package.json` `type` and existing extension; CJS remains supported. |
 | **ESM plugins from CJS config** | `const { HtmlBasePlugin } = await import("@11ty/eleventy")` |
 | **Async callback** | The exported configuration callback may be async; top-level `await` additionally requires an ESM config. |
-| **Browsersync removed** | Use `@11ty/eleventy-dev-server` via `setServerOptions({...})` |
-| **Image plugin v4+** | `eleventyImageTransformPlugin` from `@11ty/eleventy-img`; `returnType: "html"` + `htmlOptions.imgAttributes` |
+| **Browsersync not in core (since v2)** | Use the bundled `@11ty/eleventy-dev-server` via `setServerOptions({...})`; Browsersync is opt-in through `@11ty/eleventy-server-browsersync` |
+| **Image plugin v4+** | `eleventyImageTransformPlugin` from `@11ty/eleventy-img` + `htmlOptions.imgAttributes`; `returnType: "html"` (Image v6+) applies to the Image JS API/shortcodes. Image v7 is ESM-only and requires Node `>=22` (checked 2026-10-21) |
 | **WebC / Vue / JSX** | Separate plugins — not in core |
 | **Config discovery** | Eleventy checks `.eleventy.js`, `eleventy.config.js`, `eleventy.config.mjs`, then `eleventy.config.cjs`; the first file found wins and the rest are ignored. |
 | **Node runtime** | Eleventy v3 declares Node `>=18`, but Node 18 and 20 are EOL. Use a supported LTS (Node 24 preferred, Node 22 supported). JSON import attributes still require a compatible runtime. |
@@ -143,7 +143,7 @@ eleventyConfig.on("eleventy.after", async ({ directories, results, runMode, outp
 | Argument | Values |
 |---|---|
 | `runMode` | `"build"` / `"watch"` / `"serve"` |
-| `outputMode` | `"fs"` / `"json"` |
+| `outputMode` | `"fs"` / `"json"` / `"ndjson"` |
 
 ### Plugins (examples)
 
