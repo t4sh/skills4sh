@@ -146,7 +146,7 @@ Then open the target runtime and invoke a request that should match the skill's 
 5. Add a CHANGELOG entry under `[Unreleased]` describing the change.
 6. Run the full local check suite (next section) and open a PR.
 
-**Semver monotonicity is enforced.** `npm run check:drift` compares the current SKILL.md version against the previous commit's version (`HEAD^`) and fails if it went backwards. A rollback of content still needs a new version; a commit message cannot bypass this gate.
+**Semver monotonicity is enforced.** `npm run check:drift` compares the current SKILL.md version against the released baseline and fails if it went below it. The baseline is the merge base with the default branch (`origin/main`, or local `main`); on the default branch itself it is the latest `v*` tag, and only without either does it fall back to the previous commit (`HEAD^`). Lowering an unreleased draft bump on a branch therefore passes, as long as the version stays at or above the released one. The check skips when no baseline is reachable (for example a shallow clone) or the skill is new. A rollback of released content still needs a new version; a commit message cannot bypass this gate.
 
 ---
 
