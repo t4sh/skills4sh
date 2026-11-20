@@ -80,3 +80,7 @@
   type: session
   title: "November skills review and skills4sh 0.8.0 release"
   status: active
+- id: context/v080-post-release-audit-todo
+  type: context
+  title: "Pending repository work and deferred decisions after the 0.8.0 audit"
+  status: active
