@@ -376,11 +376,13 @@ function listDir(dir) {
 
 function collectMemoryFiles(memoryDir, review) {
   const files = [];
+  const skippedPaths = new Set();
   const walk = (dir, relParts) => {
     for (const entry of listDir(dir)) {
       const rel = [...relParts, entry.name];
       const shown = `${MEMORY_DIR}/${rel.join("/")}`;
       if (entry.isSymbolicLink()) {
+        skippedPaths.add(rel.join("/"));
         review.push({ code: "symlink-skipped", path: shown, message: "symbolic link not followed; check it by hand" });
       } else if (entry.isDirectory()) {
         walk(join(dir, entry.name), rel);
@@ -394,16 +396,19 @@ function collectMemoryFiles(memoryDir, review) {
     const shown = `${MEMORY_DIR}/${entry.name}`;
     if (entry.name === INDEX_FILE || entry.name === "README.md") continue;
     if (entry.isSymbolicLink()) {
+      skippedPaths.add(entry.name);
       review.push({ code: "symlink-skipped", path: shown, message: "symbolic link not followed; check it by hand" });
     } else if (entry.isDirectory() && Object.hasOwn(DIR_TO_TYPE, entry.name)) {
       walk(join(memoryDir, entry.name), [entry.name]);
     } else if (entry.isDirectory()) {
+      skippedPaths.add(entry.name);
       review.push({ code: "outside-type-directory", path: `${shown}/`, message: "directory is not a memory type directory; its contents were not checked" });
     } else if (entry.isFile() && entry.name.endsWith(".md")) {
+      skippedPaths.add(entry.name);
       review.push({ code: "outside-type-directory", path: shown, message: "markdown file is not in a type directory; a legacy flat file needs Migrate" });
     }
   }
-  return files;
+  return { files, skippedPaths };
 }
 
 function checkFile(file, errors) {
@@ -458,7 +463,7 @@ function checkMemory(memoryDir, today) {
   const review = [];
   const names = listDir(memoryDir).map((entry) => entry.name);
 
-  const files = collectMemoryFiles(memoryDir, review);
+  const { files, skippedPaths } = collectMemoryFiles(memoryDir, review);
   const parsed = new Map(); // id -> scalar frontmatter fields, or null when unreadable
   for (const file of files) parsed.set(file.id, checkFile(file, errors));
 
@@ -512,6 +517,8 @@ function checkMemory(memoryDir, today) {
       }
       indexedIds.add(values.id);
       if (!fileIds.has(values.id)) {
+        const indexedPath = `${values.id}.md`;
+        if ([...skippedPaths].some((path) => indexedPath === path || indexedPath.startsWith(`${path}/`))) continue;
         orphans += 1;
         errors.push({ code: "orphan-entry", id: values.id, ...where, message: `index entry has no file at ${MEMORY_DIR}/${values.id}.md` });
         continue;

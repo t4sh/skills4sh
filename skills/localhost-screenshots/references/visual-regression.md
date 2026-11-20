@@ -36,7 +36,7 @@ node "<skill-dir>/assets/scripts/compare.js" --before _screenshots/before --afte
 
 | Option | Meaning |
 |---|---|
-| `--before DIR`, `--after DIR` | The two capture directories. Required. Pass the top-level directories, not one route |
+| `--before DIR`, `--after DIR` | The two capture directories. Required. Pass the top-level directories, not one route. When `capture.json` is present, only files listed as successful in that completed run are considered. A prior PNG left by a failed rerun cannot stand in for the current result. |
 | `--out DIR` | Where the diff images and reports go. Required; must not be inside `--before` or `--after`. Nothing is written elsewhere |
 | `--threshold N` | Per-pixel colour sensitivity, 0 to 1; smaller is stricter. Default `0.05` |
 | `--max-diff-pixels N` | Differing pixels allowed in a pair before it counts as different. Default `0` |
@@ -47,17 +47,19 @@ node "<skill-dir>/assets/scripts/compare.js" --before _screenshots/before --afte
 
 | Exit code | Meaning |
 |---|---|
-| 0 | Every pair was compared and is within the allowance |
-| 1 | **Differences above the allowance**: a pair over it, a size change, an unreadable image, or an image present on one side only |
-| 2 | Nothing was compared: bad arguments, a missing dependency or directory, or no image exists on both sides. This is a failed run, never a pass |
+| 0 | Every expected pair was compared and is within the allowance |
+| 1 | A complete comparison found visual differences or a size change. The CI example reports these as warnings. |
+| 2 | The run is incomplete or could not run. This includes a failed capture, a missing or unreadable image, no readable pairs, a capture still in progress, invalid run metadata, bad arguments, or a missing dependency or directory. CI must fail this result. |
 
 What it writes into `--out`:
 
-- `report.json` — `totals` (`pairs`, `compared`, `same`, `different`, `sizeChanged`, `missing`, `unreadable`), the options and pixelmatch version used, and one entry per pair with `status`, `diffPixels`, `diffPercent`, both sizes, and file paths.
+- `report.json` — `totals` (`pairs`, `compared`, `same`, `different`, `sizeChanged`, `missing`, `unreadable`, `captureFailed`, `routeMismatches`), the options and pixelmatch version used, and one entry per pair with `status`, `diffPixels`, `diffPercent`, both sizes, and file paths. `capture-failed-before`, `capture-failed-after`, and `route-mismatch` identify incomplete capture sets.
 - `report.html` — before, after, and diff image for every pair, differing pairs first and open, matching pairs collapsed. It is a single offline file: inline CSS, no scripts, no remote resources, and every file name HTML-escaped. Images are linked by relative path, so keep the three directories together.
 - `<route>/diff-<breakpoint>.png` — one diff image for each pair with any differing pixel.
 
-Per-pair statuses: `same`, `different`, `size-changed` (the two images have different dimensions; they are compared on a canvas padded to the larger size and always count as a difference), `missing-before`, `missing-after`, `unreadable`.
+Per-pair statuses: `same`, `different`, `size-changed` (the two images have different dimensions; they are compared on a canvas padded to the larger size and always count as a difference), `missing-before`, `missing-after`, `unreadable`, `capture-failed-before`, `capture-failed-after`, `route-mismatch`.
+
+When a directory has `capture.json`, the comparator validates that its declared routes, breakpoints, counts, and result records agree. It reads only each successful result's path relative to the capture directory and ignores any unlisted PNGs from older runs. A failed result never falls back to a stale file at the same path. Complete manifests can move with their capture directories. Legacy manifests that only contain invocation-relative or absolute `file` paths are mapped from their route and breakpoint fields, so moving the set does not make those old paths authoritative. Directories without manifests retain recursive PNG pairing. A comparison may mix a manifest-backed set with a standalone PNG directory, using relative PNG paths to pair them.
 
 The comparison itself is one `pixelmatch` call per pair:
 
@@ -109,8 +111,8 @@ What the numbers decided:
 
 **Done when** all of these hold; otherwise report the comparison as failed or incomplete, not as "no differences":
 
-- `compare.js` exited 0 or 1 and `_screenshots/diff/report.json` exists. Exit 2 means nothing was compared.
-- `totals.pairs` equals routes × breakpoints and `totals.compared` equals it too. A lower `compared` means some pairs are `missing-before`, `missing-after`, or `unreadable`; name them.
+- `compare.js` exited 0 or 1 and `_screenshots/diff/report.json` exists. Exit 1 means the comparison completed and found a visual difference. Exit 2 means the result is incomplete or comparison setup failed.
+- `totals.pairs` and `totals.compared` both equal routes × breakpoints. If fewer pairs were compared, name each incomplete pair and its reported cause, including capture failures and route mismatches.
 - `_screenshots/diff/report.html` exists.
 - The reply states the `same`, `different`, `sizeChanged`, and `missing` counts, the threshold and allowance used, each differing or missing entry, where the baseline came from, and the paths of the report files. "No differences" may be reported only together with a non-zero `compared`.
 
@@ -128,7 +130,7 @@ The two captures differ in port. Keep routes, breakpoints, viewport sizes, and s
 
 Save as `.github/workflows/visual-regression.yml`. Do not write Playwright `storageState` files under `_screenshots/`; they contain plaintext cookies/localStorage and must not be uploaded as artifacts.
 
-Copy the skill's whole `assets/scripts/` folder into the repository as `scripts/visual/` (the scripts require `local-guard.js` from their own folder), and add `playwright`, `pixelmatch`, and `pngjs` at the pinned versions to the project's dev dependencies. Both branches need them: on the pull request that introduces the setup the baseline steps have nothing to run, so merge the setup first. The compare step warns on visual differences (exit 1) and fails the job when nothing could be compared (exit 2). Action majors and the Node.js line were checked on 2026-11-21: `actions/checkout` v7, `actions/setup-node` v7, `actions/upload-artifact` v7, `actions/github-script` v9, and Node.js 24 (LTS; Node.js 20 reached end of life on 2026-04-30, and Playwright 1.65 lists 22, 24, or 26). Pin each action to a commit SHA where the repository's policy requires it.
+Copy the skill's whole `assets/scripts/` folder into the repository as `scripts/visual/` (the scripts require `local-guard.js` from their own folder), and add `playwright`, `pixelmatch`, and `pngjs` at the pinned versions to the project's dev dependencies. Both branches need them: on the pull request that introduces the setup the baseline steps have nothing to run, so merge the setup first. The compare step warns on visual differences (exit 1) and fails the job on incomplete comparisons or setup errors (exit 2). Action majors and the Node.js line were checked on 2026-11-21: `actions/checkout` v7, `actions/setup-node` v7, `actions/upload-artifact` v7, `actions/github-script` v9, and Node.js 24 (LTS; Node.js 20 reached end of life on 2026-04-30, and Playwright 1.65 lists 22, 24, or 26). Pin each action to a commit SHA where the repository's policy requires it.
 
 ```yaml
 name: Visual Regression
@@ -205,6 +207,7 @@ jobs:
             echo "::warning::Visual differences found; see the visual-regression-report artifact"
             exit 0
           fi
+          # Exit 2 means the capture/comparison was incomplete and must fail CI.
           exit "$code"
 
       - name: Upload artifacts

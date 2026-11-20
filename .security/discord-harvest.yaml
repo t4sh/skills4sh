@@ -16,11 +16,11 @@ integrity:
     assets/evals/scenarios.json: 9e8fee20b28bd4f44945e20055146d4472504af978e8b19ef0e8dd46cedee176
     assets/icon.svg: 1a98cde7a434820fea4d55c74d99b2112fb3022d5cd18067ec1eb3d8c411becc
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/code-examples.md: ade00af2e60c89f7fb0056a22089621094ce1e149f6f6ed0e7ed6667fd955d99
+    references/code-examples.md: 5b65fa568a8250129faca2fb311e440564dd69a0d88c37ea1984da67ac7d0981
     references/design-philosophy.md: c6e525878d0c2dadaa8173de0235501a46552d115c6da879644cdb693c362d87
     references/folder-structure.md: 7aa7f9b1b2f2928da76f33911575b11c8f38d7bc1373a67f863e44bda7838a10
     references/troubleshooting.md: 6039108f225d93ca8c64220bdfb8877a2078d13018d041ec7e231262c9b45f39
-    SKILL.md: 14f9c232a8ee3a90c1ccbcbe72d4f7370f17190dd838778573430410c5f32a1a
+    SKILL.md: d0094b9310c33bf02f210fbf30c94a1fbc09c25c907f51ccb2cb329412e9001b
     agents/openai.yaml: 8c62aadd009cc471b080485cbe2a8c547c74f7f58516697e1aa87c4065602263
 permissions:
   alwaysAllow: []

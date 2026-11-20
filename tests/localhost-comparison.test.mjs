@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -49,6 +49,19 @@ function workspace(prefix) {
   return { root, before: join(root, 'shots', 'before'), after: join(root, 'shots', 'after'), out: join(root, 'shots', 'diff') };
 }
 
+function captureManifest(dir, { ok = true, file = 'home/desktop-800x600.png', out = dir } = {}) {
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(join(dir, 'capture.json'), JSON.stringify({
+    out,
+    routes: ['/'],
+    breakpoints: ['desktop:800x600'],
+    expected: 1,
+    saved: ok ? 1 : 0,
+    failed: ok ? 0 : 1,
+    results: [{ route: '/', breakpoint: 'desktop', width: 800, height: 600, file, ok, error: ok ? undefined : 'route failed' }],
+  }));
+}
+
 test('compare.js uses the pinned pixelmatch 8 from the fixture project', () => {
   assert.equal(require('pixelmatch/package.json').version, '8.0.0');
   assert.equal(require('pngjs/package.json').version, '7.0.0');
@@ -56,7 +69,7 @@ test('compare.js uses the pinned pixelmatch 8 from the fixture project', () => {
   assert.match(readFileSync(compareScript, 'utf8'), /const PINNED = 'pixelmatch@8\.0\.0 pngjs@7\.0\.0';/);
 });
 
-test('compare.js reports same, different, resized, missing and unreadable pairs and exits 1', () => {
+test('compare.js reports same, different, resized, missing and unreadable pairs and exits 2', () => {
   const { root, before, after, out } = workspace('compare-mixed-');
   try {
     for (const dir of [before, after]) png(dir, 'equal');
@@ -68,9 +81,9 @@ test('compare.js reports same, different, resized, missing and unreadable pairs 
     const untouched = [tree(before), tree(after)];
 
     const result = compare(['--before', before, '--after', after, '--out', out, '--json']);
-    assert.equal(result.status, 1, result.stderr);
+    assert.equal(result.status, 2, result.stderr);
     const report = JSON.parse(result.stdout);
-    assert.deepEqual(report.totals, { pairs: 7, compared: 4, same: 1, different: 2, sizeChanged: 1, missing: 2, unreadable: 1 });
+    assert.deepEqual(report.totals, { pairs: 7, compared: 4, same: 1, different: 2, sizeChanged: 1, missing: 2, unreadable: 1, captureFailed: 0, routeMismatches: 0 });
     assert.equal(report.pixelmatch, '8.0.0');
     assert.deepEqual(report.options, { threshold: 0.05, allowance: '0 px', includeAA: false });
     const by = Object.fromEntries(report.results.map(r => [r.name, r]));
@@ -99,7 +112,7 @@ test('compare.js reports same, different, resized, missing and unreadable pairs 
     assert.match(html, /src="\.\.\/before\/quoted%22%3Cname%3E%26\.png"/);
     assert.match(html, /src="\.\.\/before\/equal\.png"/); assert.match(html, /src="\.\.\/after\/changed\.png"/);
     assert.match(html, /src="diff-changed\.png"/);
-    assert.match(html, /6 of 7 differ/);
+    assert.match(html, /6 of 7 incomplete or different/);
     assert.equal((html.match(/<details open>/g) ?? []).length, 6);
     assert.equal((html.match(/<details>/g) ?? []).length, 1);
   } finally { rmSync(root, { recursive: true, force: true }); }
@@ -117,11 +130,11 @@ test('compare.js pairs the nested route/breakpoint layout and prints a text summ
     png(join(before, 'home'), 'desktop-1280x800'); png(join(after, 'home'), 'desktop-1280x800', { blocks: [[5, 5, 10, 10, BLACK]] });
     png(join(before, 'about'), 'desktop-1280x800');
     const result = compare(['--before', before, '--after', after, '--out', out]);
-    assert.equal(result.status, 1, result.stderr);
+    assert.equal(result.status, 2, result.stderr);
     assert.match(result.stdout, /^only in before +about\/desktop-1280x800 {2}only in before$/m);
     assert.match(result.stdout, /^same +about\/mobile-375x812 {2}0 px \(0%\)$/m);
     assert.match(result.stdout, /^different +home\/desktop-1280x800 {2}100 px \(6\.25%\)$/m);
-    assert.match(result.stdout, /^2 of 4 differ \(3 compared: 2 same, 1 different, 0 size changed; 1 on one side only; 0 unreadable\)$/m);
+    assert.match(result.stdout, /^1 of 4 differ \(3 compared: 2 same, 1 different, 0 size changed; 1 on one side only; 0 unreadable; 0 capture failed; 0 route mismatch\)$/m);
     assert.deepEqual(tree(out), ['home', 'home/diff-desktop-1280x800.png', 'report.html', 'report.json']);
     const html = readFileSync(join(out, 'report.html'), 'utf8');
     assert.match(html, /src="\.\.\/before\/home\/desktop-1280x800\.png"/);
@@ -155,6 +168,139 @@ test('compare.js exits 2 with a clear message when no image exists on both sides
     assert.equal(unpaired.stdout, '');
     assert.equal(existsSync(out), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('unreadable PNGs on both sides produce an incomplete report with no compared pairs', () => {
+  const { root, before, after, out } = workspace('compare-corrupt-');
+  try {
+    for (const dir of [before, after]) {
+      mkdirSync(dir, { recursive: true });
+      writeFileSync(join(dir, 'page.png'), 'truncated image');
+    }
+    const result = compare(['--before', before, '--after', after, '--out', out, '--json']);
+    assert.equal(result.status, 2, result.stderr);
+    const { totals } = JSON.parse(result.stdout);
+    assert.equal(totals.compared, 0);
+    assert.equal(totals.unreadable, 1);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('capture manifests ignore stale PNGs and resolve moved runs by relative capture path', () => {
+  const { root, before, after, out } = workspace('compare-manifest-moved-');
+  try {
+    png(join(before, 'home'), 'desktop-800x600');
+    png(join(after, 'home'), 'desktop-800x600');
+    png(join(after, 'stale'), 'desktop-800x600', { fill: BLACK });
+    captureManifest(after);
+    const mixed = compare(['--before', before, '--after', after, '--out', out, '--json']);
+    assert.equal(mixed.status, 0, mixed.stderr);
+    assert.equal(JSON.parse(mixed.stdout).totals.same, 1);
+    captureManifest(before);
+    const moved = join(root, 'moved');
+    mkdirSync(moved);
+    symlinkSync(join(fixtureProject, 'node_modules'), join(moved, 'node_modules'));
+    const result = compare(['--before', before, '--after', after, '--out', out, '--json'], { cwd: moved });
+    assert.equal(result.status, 0, result.stderr);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.totals.pairs, 1);
+    assert.equal(report.totals.same, 1);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('different requested routes that sanitize to one directory are incomplete', () => {
+  const { root, before, after, out } = workspace('compare-manifest-route-mismatch-');
+  try {
+    png(join(before, 'home'), 'desktop-800x600');
+    png(join(after, 'home'), 'desktop-800x600');
+    writeFileSync(join(before, 'capture.json'), JSON.stringify({
+      routes: ['/'], breakpoints: ['desktop:800x600'], expected: 1,
+      results: [{ route: '/', breakpoint: 'desktop', width: 800, height: 600, file: 'old/home/desktop-800x600.png', relativeFile: 'home/desktop-800x600.png', ok: true }],
+    }));
+    writeFileSync(join(after, 'capture.json'), JSON.stringify({
+      routes: ['/home'], breakpoints: ['desktop:800x600'], expected: 1,
+      results: [{ route: '/home', breakpoint: 'desktop', width: 800, height: 600, file: 'new/home/desktop-800x600.png', relativeFile: 'home/desktop-800x600.png', ok: true }],
+    }));
+    const result = compare(['--before', before, '--after', after, '--out', out, '--json']);
+    assert.equal(result.status, 2, result.stderr);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.totals.routeMismatches, 1);
+    assert.equal(report.results[0].status, 'route-mismatch');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('a failed rerun never compares its stale screenshot and makes the run incomplete', () => {
+  const { root, before, after, out } = workspace('compare-manifest-stale-');
+  try {
+    png(join(before, 'home'), 'desktop-800x600');
+    png(join(after, 'home'), 'desktop-800x600');
+    captureManifest(before);
+    captureManifest(after, { ok: false });
+    const result = compare(['--before', before, '--after', after, '--out', out, '--json']);
+    assert.equal(result.status, 2, result.stderr);
+    const report = JSON.parse(result.stdout);
+    assert.equal(report.totals.compared, 0);
+    assert.equal(report.totals.captureFailed, 1);
+    assert.equal(report.results[0].status, 'capture-failed-after');
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('incomplete or unreadable manifests cannot produce a successful comparison', () => {
+  const { root, before, after, out } = workspace('compare-manifest-incomplete-');
+  try {
+    captureManifest(before);
+    captureManifest(after);
+    const missing = compare(['--before', before, '--after', after, '--out', out, '--json']);
+    assert.equal(missing.status, 2, missing.stderr);
+    assert.equal(JSON.parse(missing.stdout).totals.unreadable, 1);
+
+    writeFileSync(join(before, 'capture.json'), '{');
+    const malformed = compare(['--before', before, '--after', after, '--out', join(root, 'bad')]);
+    assert.equal(malformed.status, 2);
+    assert.match(malformed.stderr, /Invalid capture manifest/);
+
+    writeFileSync(join(before, 'capture.json'), JSON.stringify({ routes: ['/'], breakpoints: ['desktop:800x600'], expected: 1, results: [] }));
+    const countMismatch = compare(['--before', before, '--after', after, '--out', join(root, 'bad-count')]);
+    assert.equal(countMismatch.status, 2);
+    assert.match(countMismatch.stderr, /result count does not match/);
+
+    writeFileSync(join(before, 'capture.json'), 'null');
+    const nullManifest = compare(['--before', before, '--after', after, '--out', join(root, 'null')]);
+    assert.equal(nullManifest.status, 2);
+    assert.match(nullManifest.stderr, /Invalid capture manifest/);
+
+    writeFileSync(join(before, 'capture.json'), JSON.stringify({
+      routes: ['/foo?x', '/foo-x'], breakpoints: ['desktop:800x600'], expected: 2,
+      results: [
+        { route: '/foo?x', breakpoint: 'desktop', width: 800, height: 600, file: 'foo-x/desktop-800x600.png', relativeFile: 'foo-x/desktop-800x600.png', ok: true },
+        { route: '/foo-x', breakpoint: 'desktop', width: 800, height: 600, file: 'foo-x/desktop-800x600.png', relativeFile: 'foo-x/desktop-800x600.png', ok: true },
+      ],
+    }));
+    const duplicateFile = compare(['--before', before, '--after', after, '--out', join(root, 'duplicate')]);
+    assert.equal(duplicateFile.status, 2);
+    assert.match(duplicateFile.stderr, /multiple results name the same output file/);
+
+    writeFileSync(join(after, 'capture.json'), JSON.stringify({ state: 'in-progress' }));
+    const inProgress = compare(['--before', after, '--after', before, '--out', join(root, 'running')]);
+    assert.equal(inProgress.status, 2);
+    assert.match(inProgress.stderr, /Capture is still in progress or incomplete/);
+  } finally { rmSync(root, { recursive: true, force: true }); }
+});
+
+test('legacy absolute and cwd-relative manifest file paths remain portable after moving sets', () => {
+  for (const fileMode of ['absolute', 'relative']) {
+    const { root, before, after, out } = workspace(`compare-manifest-${fileMode}-`);
+    try {
+      for (const dir of [before, after]) png(join(dir, 'home'), 'desktop-800x600');
+      const source = fileMode === 'absolute' ? '/old/worktree/shots/current/home/desktop-800x600.png'
+        : 'shots/current/home/desktop-800x600.png';
+      for (const dir of [before, after]) captureManifest(dir, { file: source, out: fileMode === 'absolute' ? '/old/worktree/shots/current' : 'shots/current' });
+      const moved = join(root, 'new-checkout'); mkdirSync(moved);
+      symlinkSync(join(fixtureProject, 'node_modules'), join(moved, 'node_modules'));
+      const result = compare(['--before', before, '--after', after, '--out', out, '--json'], { cwd: moved });
+      assert.equal(result.status, 0, result.stderr);
+      assert.equal(JSON.parse(result.stdout).totals.same, 1);
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
 });
 
 test('compare.js rejects bad arguments with exit 2 and writes nothing', () => {

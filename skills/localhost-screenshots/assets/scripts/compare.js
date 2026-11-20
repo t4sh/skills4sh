@@ -11,7 +11,8 @@ const { pathToFileURL } = require('url');
 const HELP = `Usage: node compare.js --before DIR --after DIR --out DIR [options]
 
 Pairs PNG files by their path relative to --before and --after (subdirectories included),
-counts differing pixels per pair, and writes into --out only:
+counts differing pixels per pair, and writes into --out only. When capture.json exists,
+it is authoritative: only successful captures from that run are compared.
   report.json   every pair and the totals
   report.html   before / after / diff for every pair; opens offline, loads nothing remote
   <subdir>/diff-<name>.png   one diff image per pair that differs
@@ -29,10 +30,9 @@ counts differing pixels per pair, and writes into --out only:
 
 Exit codes:
   0  every pair was compared and is within the allowance
-  1  differences found: a pair above the allowance, a size change, an unreadable image,
-     or an image present on one side only
-  2  nothing was compared: bad arguments, a missing dependency or directory,
-     or no image exists on both sides`;
+  1  a complete comparison found visual differences
+  2  incomplete comparison or setup error: a capture failed, an image is missing or unreadable,
+     no readable pair exists, bad arguments, or a missing dependency or directory`;
 
 const PINNED = 'pixelmatch@8.0.0 pngjs@7.0.0';
 
@@ -100,6 +100,86 @@ function listPngs(dir) {
     .filter((entry) => entry.toLowerCase().endsWith('.png'));
 }
 
+function routeDirectory(route) {
+  const name = route.replace(/^\/+/, '').replace(/[^A-Za-z0-9._-]+/g, '-').replace(/^[-.]+|[-.]+$/g, '');
+  return name || 'home';
+}
+
+function readCaptureManifest(dir) {
+  const manifestPath = path.join(dir, 'capture.json');
+  if (!fs.existsSync(manifestPath)) return null;
+
+  let manifest;
+  try {
+    manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  } catch (err) {
+    fail(`Invalid capture manifest ${manifestPath}: ${err.message}`);
+  }
+  if (manifest?.state !== undefined && manifest.state !== 'complete') {
+    fail(`Capture is still in progress or incomplete in ${manifestPath}; wait for it to finish and rerun the comparison.`);
+  }
+  if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.routes) || !Array.isArray(manifest.breakpoints)
+    || !Array.isArray(manifest.results) || !Number.isInteger(manifest.expected)) {
+    fail(`Invalid capture manifest ${manifestPath}: routes, breakpoints, expected and results are required.`);
+  }
+  if (manifest.routes.length === 0 || manifest.breakpoints.length === 0
+    || manifest.routes.some((route) => typeof route !== 'string' || !route.startsWith('/'))
+    || new Set(manifest.routes).size !== manifest.routes.length
+    || manifest.breakpoints.some((breakpoint) => typeof breakpoint !== 'string' || !/^[a-z0-9][a-z0-9-]*:\d+x\d+$/.test(breakpoint))
+    || new Set(manifest.breakpoints).size !== manifest.breakpoints.length) {
+    fail(`Invalid capture manifest ${manifestPath}: routes or breakpoints are malformed.`);
+  }
+  if (manifest.expected !== manifest.routes.length * manifest.breakpoints.length
+    || manifest.results.length !== manifest.expected) {
+    fail(`Invalid capture manifest ${manifestPath}: result count does not match routes × breakpoints.`);
+  }
+  const successCount = manifest.results.filter((result) => result?.ok === true).length;
+  const failureCount = manifest.results.filter((result) => result?.ok === false).length;
+  if ((manifest.saved !== undefined || manifest.failed !== undefined)
+    && (!Number.isInteger(manifest.saved) || !Number.isInteger(manifest.failed)
+      || manifest.saved !== successCount || manifest.failed !== failureCount)) {
+    fail(`Invalid capture manifest ${manifestPath}: saved/failed counts do not match the results.`);
+  }
+
+  const remaining = new Set();
+  for (const route of manifest.routes) {
+    for (const breakpoint of manifest.breakpoints) remaining.add(`${route}\0${breakpoint}`);
+  }
+  const files = new Map();
+  for (const result of manifest.results) {
+    if (!result || typeof result.ok !== 'boolean' || typeof result.file !== 'string'
+      || typeof result.route !== 'string' || typeof result.breakpoint !== 'string'
+      || !Number.isInteger(result.width) || !Number.isInteger(result.height)) {
+      fail(`Invalid capture manifest ${manifestPath}: a result is missing required fields.`);
+    }
+    const dimensions = `${result.width}x${result.height}`;
+    const key = `${result.route}\0${result.breakpoint}:${dimensions}`;
+    if (!remaining.delete(key)) {
+      fail(`Invalid capture manifest ${manifestPath}: unexpected or duplicate result for ${result.route} at ${result.breakpoint}.`);
+    }
+    const name = `${routeDirectory(result.route)}/${result.breakpoint}-${dimensions}.png`;
+    // Legacy file paths include the original --out prefix. Resolve only the
+    // known route/breakpoint suffix against the directory supplied today.
+    const legacyFile = result.file.replace(/\\/g, '/');
+    const matches = result.relativeFile !== undefined ? result.relativeFile === name
+      : legacyFile === name || legacyFile.endsWith(`/${name}`);
+    if (!matches) fail(`Invalid capture manifest ${manifestPath}: result file does not match its route and breakpoint.`);
+    if (files.has(name)) fail(`Invalid capture manifest ${manifestPath}: multiple results name the same output file.`);
+    const file = path.join(dir, name);
+    const entry = { capture: result };
+    if (result.ok) {
+      if (fs.statSync(file, { throwIfNoEntry: false })?.isFile()) entry.file = file;
+      else entry.error = 'successful capture file is missing';
+    }
+    files.set(name, entry);
+  }
+  return files;
+}
+
+function standaloneFiles(dir) {
+  return new Map(listPngs(dir).map((file) => [file, { file: path.join(dir, file) }]));
+}
+
 function isInside(child, parent) {
   const relative = path.relative(parent, child);
   return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative));
@@ -127,10 +207,15 @@ const LABELS = {
   'missing-before': 'only in after',
   'missing-after': 'only in before',
   unreadable: 'unreadable',
+  'capture-failed-before': 'capture failed before',
+  'capture-failed-after': 'capture failed after',
+  'route-mismatch': 'route mismatch',
 };
 
 function describe(result) {
-  if (result.status === 'missing-before' || result.status === 'missing-after') return LABELS[result.status];
+  if (result.status === 'missing-before' || result.status === 'missing-after'
+    || result.status === 'capture-failed-before' || result.status === 'capture-failed-after'
+    || result.status === 'route-mismatch') return result.error || LABELS[result.status];
   if (result.status === 'unreadable') return result.error;
   const pixels = `${result.diffPixels.toLocaleString('en-US')} px${result.windowSize ? ` in the densest ${result.windowSize}x${result.windowSize} square` : ` (${result.diffPercent}%)`}`;
   if (result.status === 'size-changed') return `${result.before.width}x${result.before.height} -> ${result.after.width}x${result.after.height}, ${pixels}`;
@@ -174,7 +259,7 @@ function renderHtml(report, outDir) {
   }
 </style></head><body>
 <h1>Visual comparison</h1>
-<p class="meta">${t.different + t.sizeChanged + t.missing + t.unreadable} of ${t.pairs} differ: ${t.same} same, ${t.different} different, ${t.sizeChanged} size changed, ${t.missing} on one side only, ${t.unreadable} unreadable. ${t.compared} compared.<br>
+<p class="meta">${t.different + t.sizeChanged + t.missing + t.unreadable + t.captureFailed + t.routeMismatches} of ${t.pairs} incomplete or different: ${t.same} same, ${t.different} different, ${t.sizeChanged} size changed, ${t.missing} on one side only, ${t.unreadable} unreadable, ${t.captureFailed} capture failed, ${t.routeMismatches} route mismatch. ${t.compared} compared.<br>
 Before <code>${escapeHtml(report.before)}</code> · After <code>${escapeHtml(report.after)}</code><br>
 Per-pixel threshold ${escapeHtml(report.options.threshold)}, allowance ${escapeHtml(report.options.allowance)}${report.options.windowSize ? `, window ${escapeHtml(report.options.windowSize)}` : ''}, pixelmatch ${escapeHtml(report.pixelmatch)} · ${escapeHtml(report.generated)}</p>
 ${report.results.filter((r) => r.status !== 'same').map(pair).join('\n')}
@@ -207,11 +292,14 @@ for (const [name, dir] of [['before', beforeDir], ['after', afterDir]]) {
 if (beforeDir === afterDir) fail('--before and --after are the same directory; a capture compared with itself proves nothing.');
 if (isInside(outDir, beforeDir) || isInside(outDir, afterDir)) fail('--out must not be inside --before or --after.');
 
-const beforeFiles = listPngs(beforeDir);
-const afterFiles = new Set(listPngs(afterDir));
-const names = [...new Set([...beforeFiles, ...afterFiles])].sort();
-const paired = beforeFiles.filter((name) => afterFiles.has(name)).length;
-if (paired === 0) {
+const beforeCapture = readCaptureManifest(beforeDir);
+const afterCapture = readCaptureManifest(afterDir);
+const captureMode = Boolean(beforeCapture || afterCapture);
+const beforeFiles = beforeCapture ?? standaloneFiles(beforeDir);
+const afterFiles = afterCapture ?? standaloneFiles(afterDir);
+const names = [...new Set([...beforeFiles.keys(), ...afterFiles.keys()])].sort();
+const paired = names.filter((name) => beforeFiles.get(name)?.file && afterFiles.get(name)?.file).length;
+if (paired === 0 && !captureMode) {
   fail(`Nothing to compare: ${names.length} PNG file(s) found, none present under both ${options.before} and ${options.after}. `
     + 'Pass the two top-level capture directories, and check that both captures ran with the same routes and breakpoints.');
 }
@@ -229,11 +317,45 @@ if (paired === 0) {
 
   const results = [];
   for (const name of names) {
+    const beforeEntry = beforeFiles.get(name);
+    const afterEntry = afterFiles.get(name);
+    const beforeResult = beforeEntry?.capture;
+    const afterResult = afterEntry?.capture;
     const label = name.replace(/\.png$/i, '');
-    const beforeFile = path.join(beforeDir, name);
-    const afterFile = path.join(afterDir, name);
-    const hasBefore = beforeFiles.includes(name);
-    const hasAfter = afterFiles.has(name);
+    const beforeFile = beforeEntry?.file ?? null;
+    const afterFile = afterEntry?.file ?? null;
+    const hasBefore = Boolean(beforeEntry?.file);
+    const hasAfter = Boolean(afterEntry?.file);
+    if (beforeResult && afterResult && beforeResult.route !== afterResult.route) {
+      results.push({
+        name: label,
+        status: 'route-mismatch',
+        error: `different requested routes share ${name}: ${beforeResult.route} and ${afterResult.route}`,
+        beforeFile: beforeResult.ok ? beforeFile : null,
+        afterFile: afterResult.ok ? afterFile : null,
+        diffFile: null,
+      });
+      continue;
+    }
+    if (beforeResult && !beforeResult.ok) {
+      results.push({ name: label, status: 'capture-failed-before', error: beforeResult.error || 'capture failed', beforeFile: null, afterFile: hasAfter ? afterFile : null, diffFile: null });
+      continue;
+    }
+    if (afterResult && !afterResult.ok) {
+      results.push({ name: label, status: 'capture-failed-after', error: afterResult.error || 'capture failed', beforeFile: hasBefore ? beforeFile : null, afterFile: null, diffFile: null });
+      continue;
+    }
+    if (beforeEntry?.error || afterEntry?.error) {
+      results.push({
+        name: label,
+        status: 'unreadable',
+        error: beforeEntry?.error || afterEntry?.error,
+        beforeFile: beforeEntry?.file || null,
+        afterFile: afterEntry?.file || null,
+        diffFile: null,
+      });
+      continue;
+    }
     if (!hasBefore || !hasAfter) {
       results.push({
         name: label, status: hasBefore ? 'missing-after' : 'missing-before',
@@ -297,6 +419,8 @@ if (paired === 0) {
       sizeChanged: count('size-changed'),
       missing: count('missing-before', 'missing-after'),
       unreadable: count('unreadable'),
+      captureFailed: count('capture-failed-before', 'capture-failed-after'),
+      routeMismatches: count('route-mismatch'),
     },
     results,
   };
@@ -312,15 +436,16 @@ if (paired === 0) {
   fs.writeFileSync(path.join(outDir, 'report.json'), `${JSON.stringify(portable, null, 2)}\n`);
 
   const t = report.totals;
-  const differing = t.different + t.sizeChanged + t.missing + t.unreadable;
+  const incomplete = paired === 0 || t.missing > 0 || t.unreadable > 0 || t.captureFailed > 0 || t.routeMismatches > 0;
+  const differing = t.different + t.sizeChanged;
   if (options.json) {
     console.log(JSON.stringify(portable, null, 2));
   } else {
     for (const r of results) console.log(`${LABELS[r.status].padEnd(14)} ${r.name}  ${describe(r)}`);
-    console.log(`${differing} of ${t.pairs} differ (${t.compared} compared: ${t.same} same, ${t.different} different, ${t.sizeChanged} size changed; ${t.missing} on one side only; ${t.unreadable} unreadable)`);
+    console.log(`${differing} of ${t.pairs} differ (${t.compared} compared: ${t.same} same, ${t.different} different, ${t.sizeChanged} size changed; ${t.missing} on one side only; ${t.unreadable} unreadable; ${t.captureFailed} capture failed; ${t.routeMismatches} route mismatch)`);
     console.log(`report: ${path.join(options.out, 'report.html')} and ${path.join(options.out, 'report.json')}`);
   }
-  process.exit(differing ? 1 : 0);
+  process.exit(incomplete ? 2 : differing ? 1 : 0);
 })().catch((err) => {
   console.error(String((err && err.stack) || err));
   process.exit(2);

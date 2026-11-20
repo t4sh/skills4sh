@@ -206,13 +206,15 @@ const MONTHS_FULL = ["January","February","March","April","May","June",
 // {{ "2026-05-11" | formatFullDate }} → "May 11, 2026"
 // {{ page.date    | formatFullDate }} → Date objects and ISO datetime strings work too
 eleventyConfig.addFilter("formatFullDate", (value) => {
-  if (!value) return "";
-  if (value instanceof Date && Number.isNaN(value.getTime())) return "";
-  // Date → its UTC calendar day; string → the YYYY-MM-DD it starts with.
-  const iso = value instanceof Date ? value.toISOString() : String(value);
-  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  const month = match && MONTHS_FULL[Number(match[2]) - 1];
-  return month ? `${month} ${Number(match[3])}, ${match[1]}` : "";
+  if (value instanceof Date && !Number.isNaN(value.getTime())) value = value.toISOString();
+  if (typeof value !== "string") return "";
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/.exec(value);
+  if (!match || Number.isNaN(Date.parse(value))) return "";
+  // Date.parse can roll February 29 into March. Check the written calendar day
+  // independently of the time and offset, so a valid offset never shifts it.
+  const day = new Date(match[1] + "T00:00:00Z");
+  if (day.toISOString().slice(0, 10) !== match[1]) return "";
+  return `${MONTHS_FULL[day.getUTCMonth()]} ${day.getUTCDate()}, ${match[1].slice(0, 4)}`;
 });
 ```
 

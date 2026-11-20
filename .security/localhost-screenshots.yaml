@@ -13,24 +13,24 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 5860bfdff4ca6548e1c2e125393a2428a0573bf52cc1ba5fb7f905b5ec39edf0
+    assets/evals/scenarios.json: 642102867ec18213e0096bf9cd3f9f8de5383204431aab380a91c0f7d09d42c6
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
-    assets/scripts/multi-breakpoint.js: 785aea4a2e7911e3955a0fd77b36b5bcf0e5aed07589b63a9ef2b34aafea0e39
+    assets/scripts/multi-breakpoint.js: 747c5294c61cdd1815a6412a73a0c8b53b49d7f82904f0237ad0c7ef5f2371d2
     assets/scripts/package.json: 8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a
-    assets/scripts/quick.js: 58dfda5ed240593ac67336e098096a7d959eb2ba1df90027931bfcf28289e0a5
-    assets/scripts/screenshot-a11y.js: 6d56537455401f674eff83f4da16e509e55c080a3c44b3372aac605be2026cb5
+    assets/scripts/quick.js: 1bc8fc17cf3b10d2ce928f76db458e6882b08f57d51eb3c4cb13e5a6c9a63a2b
+    assets/scripts/screenshot-a11y.js: f61b72366dadc72e509315b9bda742b60915e676064be0f90398bec7c61df034
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/ai-snapshots.md: 6c60de439c4f582031d10fe9bb3a0783f612ca7579a0bd872cc307c6b47787df
-    references/interaction-templates.md: 12bac427985f4c743424fb73f7e14b437ee091cd48643c20f22a3c3e0e8c9506
+    references/ai-snapshots.md: 1fcb3e36896bc9a6ea43bad419a446880196f9564a49eb98747224abd002560a
+    references/interaction-templates.md: 20957db40efee06534a4cf403e5b47fb4458a4b325e16f3b15574804cb30c9cf
     references/portless.md: f5f5617b4bf79a6f18fe7c1c7cdb5a0f9d3129b2952b0f4472198ea6b176e838
-    references/playwright-patterns.md: 8ea0353a820de7376f06f71bc40a2e0145ee019d4b5f1be3ad24001caa6f3649
-    references/troubleshooting.md: 9ae9d2471879ee07d150f75ca550548d64c69ba226be564bfb8cece1d2caa6c7
-    references/visual-regression.md: 9d0e6bd88b326c899f0048a791d067f16c46ca4165ca7b778f9a645250cdf1c0
-    SKILL.md: 4fa8e715081f62543d0b24de3cfbf951a320fd4202540178da05ccc982992c0e
+    references/playwright-patterns.md: 309c06253da25183625b6362b150d617db431d268dbce0083cc4d9a059df4393
+    references/troubleshooting.md: 51cbbc04cc52930be00a1fa2983bf8d058e48f059569ce4769a1376971f8a1ef
+    references/visual-regression.md: f025c884f4adc8ae847023697911d5c3b4b5dee307984c0f4ce2f9a0ff291602
+    SKILL.md: eae3a93cbca4b01c91e9ac1c3fdb94a475da0845e3989721f827fe7c083da3f4
     agents/openai.yaml: 50aa67bc14ce868565b67096bc113a38ecb4c62b6638e7280f275630be017869
-    assets/scripts/capture.js: 8a821b34a7304a0883ace08d5843bbae5e51e6243354533d122bcba72fbc8a1e
-    assets/scripts/compare.js: 9230f4be33038c29b17504e998b1522191d396ee3a5639ab65cfb51d930e4f65
-    assets/scripts/local-guard.js: 9881f8c60bfd71e5846cc89aef1eb11869e41f62970bc7a2786fe62917a5cab7
+    assets/scripts/capture.js: d94017dda53a94087d9279400565bcaa1b551a693f47e7c7db870eb9ac69268c
+    assets/scripts/compare.js: 31c570ac548032852f3155ced77a2dcca171ca4d68065bc70924bf87c8517057
+    assets/scripts/local-guard.js: ebd06471cf93fa62cc5537a24bc26e105cdcdcc5fbb44a2ca253db95e0b3523b
     references/host-browser.md: 5d4e1d463fe5078469c3ab77707346a0e0ead5d4ae227291028778deeba119ef
 permissions:
   alwaysAllow: []
@@ -66,7 +66,7 @@ mitigations:
     note: "Removed `sudo npx playwright install-deps` and replaced `node -e \"…\"` checks with an explicit `playwright@1.62.0` install before browser setup. Stdin-friendly templates moved to versioned `assets/scripts/*.js` files."
   - id: PROMPT_INJECTION
     addressed_in: "3.3.0"
-    note: "SKILL.md policy rule 3 treats page content, including text visible in a screenshot, as untrusted data. ARIA, DOM, and interactive-map captures are written wrapped in an `{ boundary: 'untrusted-page-content', source, … }` envelope; the bundled `assets/scripts/screenshot-a11y.js` enforces the envelope. `capture.js` returns no page text and repeats only the origin of a URL the page chose."
+    note: "SKILL.md policy rule 3 treats page content, including text visible in a screenshot, as untrusted data. ARIA, DOM, and interactive-map captures are written wrapped in an `{ boundary: 'untrusted-page-content', source, … }` envelope; the bundled `assets/scripts/screenshot-a11y.js` enforces the envelope. `capture.js` records the verified local document URL, status and viewport. For a refused non-local navigation, its diagnostic reports only the origin."
   - id: SUPPLY_CHAIN
     addressed_in: "3.3.0"
     note: "Documented `npm ci` + lockfile pinning or explicit version installs, never `@latest` or unversioned installs. An existing project Playwright is used as is and never overridden. `compare.js` accepts only pixelmatch 8 or later and names the exact pins (`pixelmatch@8.0.0`, `pngjs@7.0.0`). `ignoreHTTPSErrors` is gated to localhost-only hostnames."

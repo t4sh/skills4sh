@@ -37,6 +37,6 @@ The browser-binary items apply to the bundled Playwright scripts. A host browser
 - Do not check for `CHROME_PATH` or `PUPPETEER_EXECUTABLE_PATH` environment variables
 - Do not install Chrome via apt, snap, or any package manager
 - Do not stop at one viewport when the request is a systematic multi-breakpoint set or visual regression; capture every breakpoint in that set. For a quick or unsized capture, follow SKILL.md § "Policy" rules 4 and 5 (retain and report the observed viewport).
-- **Do not open HTTP-dependent pages via `file://` paths** — CSS/JS paths, modules, service workers, and fetches often fail without an HTTP server. Self-contained static HTML with inline/relative assets is the only exception.
+- **Local HTML files:** serve the containing directory over loopback HTTP. Both backends use the local HTTP(S) URL, including for a single self-contained file.
 - Do not assume the user's host `localhost` is reachable from a sandboxed VM — always verify connectivity first
 - **Do not waste time on Puppeteer workarounds** when a host browser tool is already connected

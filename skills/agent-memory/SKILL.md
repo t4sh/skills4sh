@@ -124,7 +124,7 @@ project/
 
 Reconcile memory files **already present in the current checkout**, then save the session. Sync does not fetch, pull, merge, commit, push, or synchronize another repository or a vendor-native memory store. Git operations require their own task authorization and repository workflow.
 
-**Phase 1 — Ingest:** Index unindexed memory files in the type directories → remove orphan index entries → refresh entries that differ from their file's frontmatter; only these count as updated externally. With Node.js and a shell, run the [index checker](references/checker.md); otherwise compare by hand.
+**Phase 1 — Ingest:** Index unindexed memory files in the type directories → remove entries confirmed absent (retain and report skipped paths) → refresh entries that differ from their file's frontmatter; only these count as updated externally. With Node.js and a shell, run the [index checker](references/checker.md); otherwise compare by hand.
 
 **Phase 2 — Save:** Run the full Save operation.
 

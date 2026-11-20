@@ -39,7 +39,9 @@ Use this split:
 
 ## Step 5: Review before patching
 
-Prepare a compact audit packet before making non-trivial edits:
+For Create, record the applicable checks, their source in the requirements or standard, and the fixtures that will exercise them before writing the first file. Leave draft-specific evidence pending until step 7.
+
+For existing skills, prepare the audit packet below before making non-trivial edits:
 
 | Check | Evidence | Decision |
 |---|---|---|
@@ -81,6 +83,8 @@ skills/<skill-name>/
 Add `assets/` or helper scripts only when they materially improve repeatability. Treat scripts as inert skill assets unless the local project or runtime explicitly allows executable helpers; document, link, hash, and security-scan them according to local conventions when available.
 
 ## Step 7: Verify mechanically
+
+For a new skill, compare the draft against the step 5 checklist, fill in its file and line evidence, and execute its fixtures. Record the observed results and correct failed checks before handoff.
 
 Run repo checks or the closest local equivalent before handing back. Run the narrowest meaningful checks for the current working context. Prefer documented validation commands, CI gates, evals, fixture tests, hash checks, and security scans when present. In `skills4sh`, run the [packaging check list](naming-and-packaging.md#packaging-checklist).
 

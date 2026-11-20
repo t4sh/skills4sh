@@ -21,7 +21,7 @@ integrity:
     references/conventions.md: 143efbe6f24ab132c6a5e4a3b73bdc091f8104cc63e2522be2a214156a5f0501
     references/data-cascade.md: 739d519fdf92f506b6170f7215d3fb86a5c10410b4b1a736e660731711922de9
     references/eleventy-config-api.md: d5c725bbb2f8240f093b861e7112a7c7b7186727b2a26729e65d77c69f137849
-    references/filters.md: bc26fb7ff5ad952d449e1813e97fdd08a1824dff1661b7e6ad7f6bad4eb8400a
+    references/filters.md: 469f4da02fa271abc0c0dc2606d04f8f262f4800cf5f2816ddf2ed8fec4096a2
     references/nunjucks-syntax.md: d431155dd3b2200ae17bb02535d597e8207b8ce2342ff2ddb911b82ec923a238
     references/production-patterns.md: 8a3aaa0ee43c85e3a9190f5ce65504eed202003cb89b151fbb696c311e7b3a7a
     references/review-shipping.md: 6389e1f39767d1f76e6c821353b8c7c23f1c7ef345d67c5c7ee95f62aeb3754b

@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const {
-  localUrlProblem, gotoLocal, assertLocalPage, loadChromium, PLAYWRIGHT_MISSING,
+  localUrlProblem, gotoLocal, assertLocalPage, captureVerifiedPng, loadChromium, PLAYWRIGHT_MISSING,
 } = require('./local-guard.js');
 
 const HELP = `Usage: node capture.js --base-url URL --out DIR [options]
@@ -24,6 +24,7 @@ then pass both to compare.js.
                        Default: the eight standard breakpoints, 320 to 1920 wide.
   --wait-until EVENT   load, domcontentloaded, networkidle or commit. Default: load
   --wait-for SELECTOR  Wait for this selector on every route before capturing.
+  --expected-status N  Expected HTTP status for every route (for example 404 for error-page captures).
   --viewport-only      Capture the viewport instead of the full scrollable page.
   --json               Print the summary as JSON instead of text.
   --help               Show this text.
@@ -46,7 +47,7 @@ function usageError(message) {
 
 function parseArgs(argv) {
   const options = { routes: '/', breakpoints: STANDARD_BREAKPOINTS, 'wait-until': 'load' };
-  const valued = ['base-url', 'out', 'routes', 'breakpoints', 'wait-until', 'wait-for'];
+  const valued = ['base-url', 'out', 'routes', 'breakpoints', 'wait-until', 'wait-for', 'expected-status'];
   const flags = ['viewport-only', 'json', 'help'];
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
@@ -121,6 +122,10 @@ if (options.help) {
 }
 if (!options['base-url']) usageError('Missing --base-url');
 if (!options.out) usageError('Missing --out');
+const expectedStatus = options['expected-status'] === undefined ? null : Number(options['expected-status']);
+if (expectedStatus !== null && (!Number.isInteger(expectedStatus) || expectedStatus < 100 || expectedStatus > 599)) {
+  usageError('--expected-status must be an HTTP status from 100 to 599');
+}
 const urlProblem = localUrlProblem(options['base-url']);
 if (urlProblem) usageError(urlProblem);
 if (!WAIT_UNTIL.includes(options['wait-until'])) usageError(`--wait-until must be one of: ${WAIT_UNTIL.join(', ')}`);
@@ -134,11 +139,19 @@ try {
   usageError(`Invalid --breakpoints or --routes: ${err.message}`);
 }
 
+const outDir = path.resolve(options.out);
+fs.mkdirSync(outDir, { recursive: true });
+const manifestPath = path.join(outDir, 'capture.json');
+const writeManifest = (summary) => {
+  const temporary = path.join(outDir, `capture.json.tmp-${process.pid}`);
+  fs.writeFileSync(temporary, `${JSON.stringify(summary, null, 2)}\n`);
+  fs.renameSync(temporary, manifestPath);
+};
+writeManifest({ state: 'in-progress', baseUrl: options['base-url'], out: options.out });
 const chromium = loadChromium();
 if (!chromium) usageError(PLAYWRIGHT_MISSING);
 
 (async () => {
-  const outDir = path.resolve(options.out);
   const results = [];
   let browser;
   try {
@@ -151,12 +164,19 @@ if (!chromium) usageError(PLAYWRIGHT_MISSING);
   try {
     for (const { route, url, directory } of routes) {
       for (const bp of breakpoints) {
+        const relativeFile = path.posix.join(directory, bp.file);
         const file = path.join(outDir, directory, bp.file);
-        const result = { route, breakpoint: bp.name, width: bp.width, height: bp.height, file: path.join(options.out, directory, bp.file) };
+        const result = {
+          route, breakpoint: bp.name, width: bp.width, height: bp.height,
+          file: path.join(options.out, directory, bp.file), relativeFile,
+        };
         const page = await browser.newPage();
         try {
           await page.setViewportSize({ width: bp.width, height: bp.height });
-          await gotoLocal(page, url, { waitUntil: options['wait-until'] });
+          const response = await gotoLocal(page, url, { waitUntil: options['wait-until'] });
+          result.status = response && response.status();
+          result.finalUrl = page.url();
+          result.viewport = await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
           if (options['wait-for']) {
             // A blocked navigation is the real cause when the wait fails on a browser error page.
             await page.waitForSelector(options['wait-for'], { timeout: 10000 }).catch((err) => {
@@ -164,10 +184,14 @@ if (!chromium) usageError(PLAYWRIGHT_MISSING);
               throw err;
             });
           }
-          const png = await page.screenshot({ fullPage: !options['viewport-only'], animations: 'disabled' });
-          assertLocalPage(page);
+          const captured = await captureVerifiedPng(page, { width: bp.width, height: bp.height }, {
+            fullPage: !options['viewport-only'], animations: 'disabled',
+          }, expectedStatus);
+          result.status = captured.responseStatus;
+          result.finalUrl = captured.finalUrl;
+          result.viewport = captured.viewport;
           fs.mkdirSync(path.dirname(file), { recursive: true });
-          fs.writeFileSync(file, png);
+          fs.writeFileSync(file, captured.png);
           result.ok = true;
         } catch (err) {
           result.ok = false;
@@ -184,6 +208,7 @@ if (!chromium) usageError(PLAYWRIGHT_MISSING);
 
   const failed = results.filter((r) => !r.ok);
   const summary = {
+    state: 'complete',
     baseUrl: options['base-url'],
     out: options.out,
     routes: routes.map((r) => r.route),
@@ -193,8 +218,7 @@ if (!chromium) usageError(PLAYWRIGHT_MISSING);
     failed: failed.length,
     results,
   };
-  fs.mkdirSync(outDir, { recursive: true });
-  fs.writeFileSync(path.join(outDir, 'capture.json'), `${JSON.stringify(summary, null, 2)}\n`);
+  writeManifest(summary);
   if (options.json) {
     console.log(JSON.stringify(summary, null, 2));
   } else {

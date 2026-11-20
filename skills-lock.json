@@ -5,19 +5,19 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "2.8.0",
-      "computedHash": "8717b20d1f6da3b447f8aee03a64bbcfced7ead96e5d134da54a0a51d9d233b5"
+      "computedHash": "39ceb3ce15b802fb0bc5e5d4ac14073fafb376d583c96b51e34eee09ae995176"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "2.1.0",
-      "computedHash": "91ce2fcb679c334e22b715dd246b101c4ecc7c199febdbfc4fd40d2e5d434bfc"
+      "computedHash": "4cc5a312a9ea6de5d7c51dd485a9e87f5e15623a61fdd8143e6f16f5d17e44d7"
     },
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "1.0.0",
-      "computedHash": "2904b76ad11f9cdb26ea63d6175ede2db0ad2bd2291bc18b6e437492a7b46ab1"
+      "computedHash": "3b7854bb293e684ad6bc4ddc3bf984fd853598294f895649e65323e5983f5544"
     },
     "init-rulebook": {
       "source": "t4sh/skills4sh",
@@ -29,13 +29,13 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "3.5.0",
-      "computedHash": "af6289195323c3143c16341f3aaf1de870de5bc2483a51334cb88614784d22d8"
+      "computedHash": "2483d3ae9998179fb68ab0d90763360675c1c1f7c1cc26ba43aa8636fa3e1297"
     },
     "skill-architect": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "1.1.0",
-      "computedHash": "34c2ddc52b3e8ab1efdbe539bd6a08a562d364d986f5a8ccce47284c96b873d9"
+      "computedHash": "e65779f5c36128a54505a76808c5270bdadd4c293f21464389da135b078c04f0"
     }
   }
 }

@@ -244,18 +244,23 @@ discord_api() {
   # Prints the response body on HTTP 200 only. Any other status prints nothing on stdout,
   # reports "discord_api: HTTP <status>" on stderr (plus the Retry-After seconds on 429),
   # and returns 1. Apply the status table below before any retry.
-  local route="$1" header_file response_headers body_file code retry_after status=1
+  local route="$1" header_file response_headers body_file code retry_after curl_status=0 status=1
   [[ -n "${DISCORD_BOT_TOKEN:-}" ]] || { echo "DISCORD_BOT_TOKEN is not set" >&2; return 1; }
   # mktemp creates each file with mode 600
   header_file=$(mktemp) && response_headers=$(mktemp) && body_file=$(mktemp) || {
     rm -f "$header_file" "$response_headers"
     return 1
   }
-  printf 'Authorization: Bot %s\n' "$DISCORD_BOT_TOKEN" > "$header_file"
-  code=$(curl --disable --proto '=https' --globoff -H @"$header_file" --dump-header "$response_headers" -o "$body_file" -w '%{http_code}' "https://discord.com/api/v10$route")
-  if [[ "$code" == "200" ]]; then
-    cat "$body_file"
-    status=0
+  if ! printf 'Authorization: Bot %s\n' "$DISCORD_BOT_TOKEN" > "$header_file"; then
+    echo "discord_api: could not write the private authorization header" >&2
+    rm -f "$header_file" "$response_headers" "$body_file"
+    return 1
+  fi
+  code=$(curl --disable --proto '=https' --globoff -H @"$header_file" --dump-header "$response_headers" -o "$body_file" -w '%{http_code}' "https://discord.com/api/v10$route") || curl_status=$?
+  if [[ "$curl_status" -ne 0 ]]; then
+    echo "discord_api: curl transport failure (exit $curl_status); no response body was accepted" >&2
+  elif [[ "$code" == "200" ]]; then
+    if cat "$body_file"; then status=0; fi
   else
     echo "discord_api: HTTP ${code:-000}" >&2
     if [[ "$code" == "429" ]]; then
@@ -277,7 +282,7 @@ Act on the reported status; never work around it:
 | 403 | The token lacks permission to the resource | Stop that route and report the missing permission (`VIEW_CHANNEL`, `READ_MESSAGE_HISTORY`); do not retry it |
 | 404 | The resource does not exist at that location | Treat the ID as wrong or stale: discard it from `resolvedIds`, re-resolve, or ask the user for the ID |
 | 429 | Rate limited | Wait the reported Retry-After seconds, then repeat the same request once; if it is limited again, stop and report |
-| 5xx or `000` | Server error, or no HTTP response | Retry once after a short wait, then report the failure |
+| 5xx, `000`, or curl transport failure | Server error, or no complete HTTP response | Retry once after a short wait, then report the failure. Never parse a body from a failed curl transfer, even when `-w` printed `200` |
 
 401, 403, and 429 responses count toward Discord's invalid-request limit, so repeating them unchanged can get the IP temporarily restricted. Sources: [API Sources](troubleshooting.md#api-sources).
 

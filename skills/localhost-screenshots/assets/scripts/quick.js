@@ -14,7 +14,7 @@
 const fs = require('fs');
 const path = require('path');
 const {
-  localUrlProblem, gotoLocal, assertLocalPage, loadChromium, PLAYWRIGHT_MISSING,
+  localUrlProblem, gotoLocal, assertLocalPage, captureVerifiedPng, loadChromium, PLAYWRIGHT_MISSING,
 } = require('./local-guard.js');
 
 const url = process.argv[2] || 'http://localhost:3000';
@@ -52,8 +52,7 @@ if (urlProblem) {
         throw err;
       });
     }
-    const png = await page.screenshot({ fullPage: true });
-    assertLocalPage(page);
+    const { png } = await captureVerifiedPng(page, { width: w, height: h }, { fullPage: true });
     fs.writeFileSync(out, png);
     await page.close();
     console.log(`saved ${out}`);

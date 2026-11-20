@@ -371,6 +371,7 @@ test('files outside the type directories are review items and README.md is ignor
     '.agent-memory/notes/idea.md': 'Loose note.\n',
     '.agent-memory/decisions/.gitkeep': '',
   });
+  files['.agent-memory/index.yaml'] += indexEntry('project--overview') + indexEntry('notes/idea');
   withProject(files, (root) => {
     const { status, report } = runJson(root);
     assert.equal(status, 0);
@@ -382,7 +383,9 @@ test('files outside the type directories are review items and README.md is ignor
 });
 
 test('symbolic links are reported and never followed', (t) => {
-  withProject(cleanProject({ 'outside/secret.md': memoryFile('decisions/secret') }), (root) => {
+  const linkedIndex = cleanProject({ 'outside/secret.md': memoryFile('decisions/secret') });
+  linkedIndex['.agent-memory/index.yaml'] += indexEntry('decisions/secret') + indexEntry('references/secret');
+  withProject(linkedIndex, (root) => {
     try {
       symlinkSync(join(root, 'outside', 'secret.md'), join(root, '.agent-memory', 'decisions', 'secret.md'));
       symlinkSync(join(root, 'outside'), join(root, '.agent-memory', 'references'));
@@ -393,6 +396,7 @@ test('symbolic links are reported and never followed', (t) => {
     const { status, report } = runJson(root);
     assert.equal(status, 0);
     assert.equal(report.summary.files, 2);
+    assert.deepEqual(report.errors, [], 'an indexed file covered by a skipped symlink is unresolved, not confirmed missing');
     assert.deepEqual(report.review.map((item) => [item.code, item.path]).sort(), [
       ['symlink-skipped', '.agent-memory/decisions/secret.md'],
       ['symlink-skipped', '.agent-memory/references'],

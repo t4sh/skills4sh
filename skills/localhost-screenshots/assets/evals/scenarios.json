@@ -162,7 +162,7 @@
       "id": "compare-exit-codes",
       "prompt": "Three compare.js runs finished with the results in runs.json. For each, say in one or two sentences what you tell the user. Do not run anything.",
       "files": {
-        "runs.json": "[{\"run\": \"a\", \"exit_code\": 0, \"totals\": {\"pairs\": 16, \"compared\": 16, \"same\": 16, \"different\": 0, \"sizeChanged\": 0, \"missing\": 0, \"unreadable\": 0}, \"expected_pairs\": 16}, {\"run\": \"b\", \"exit_code\": 1, \"totals\": {\"pairs\": 16, \"compared\": 14, \"same\": 11, \"different\": 2, \"sizeChanged\": 1, \"missing\": 2, \"unreadable\": 0}, \"expected_pairs\": 16}, {\"run\": \"c\", \"exit_code\": 0, \"totals\": {\"pairs\": 8, \"compared\": 8, \"same\": 8, \"different\": 0, \"sizeChanged\": 0, \"missing\": 0, \"unreadable\": 0}, \"expected_pairs\": 16}]"
+        "runs.json": "[{\"run\": \"a\", \"exit_code\": 0, \"totals\": {\"pairs\": 16, \"compared\": 16, \"same\": 16, \"different\": 0, \"sizeChanged\": 0, \"missing\": 0, \"unreadable\": 0}, \"expected_pairs\": 16}, {\"run\": \"b\", \"exit_code\": 2, \"totals\": {\"pairs\": 16, \"compared\": 14, \"same\": 11, \"different\": 2, \"sizeChanged\": 1, \"missing\": 2, \"unreadable\": 0}, \"expected_pairs\": 16}, {\"run\": \"c\", \"exit_code\": 0, \"totals\": {\"pairs\": 8, \"compared\": 8, \"same\": 8, \"different\": 0, \"sizeChanged\": 0, \"missing\": 0, \"unreadable\": 0}, \"expected_pairs\": 16}]"
       },
       "assertions": [
         "Run a: reports no differences across all 16 compared pairs.",

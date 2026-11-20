@@ -2,7 +2,7 @@
 
 ## Rules
 
-[SKILL.md § Policy](../SKILL.md#policy--every-backend) owns the local-target, URL re-check, untrusted-content, viewport, and artifact rules; [SKILL.md § Resolve the local target](../SKILL.md#resolve-the-local-target) owns origin scheme and `file://`. The patterns below assume them. The bundled scripts launch Playwright's own Chromium: do not point them at a system browser binary, Puppeteer, or Selenium, and do not probe for installed browsers.
+[SKILL.md § Policy](../SKILL.md#policy--every-backend) owns the local-target, URL re-check, untrusted-content, viewport, and artifact rules; [SKILL.md § Resolve the local target](../SKILL.md#resolve-the-local-target) owns origin scheme and serving static files. The patterns below assume them. The bundled scripts launch Playwright's own Chromium: do not point them at a system browser binary, Puppeteer, or Selenium, and do not probe for installed browsers.
 
 ## Setup (only when the project has no Playwright)
 
@@ -164,11 +164,12 @@ The guard lives in one file, [`assets/scripts/local-guard.js`](../assets/scripts
 
 ```js
 // <skill-dir> is the folder that contains this skill's SKILL.md.
-const { gotoLocal, assertLocalPage } = require('<skill-dir>/assets/scripts/local-guard.js');
+const { gotoLocal, captureVerifiedPng } = require('<skill-dir>/assets/scripts/local-guard.js');
 
-const response = await gotoLocal(page, 'http://localhost:3000/', { waitUntil: 'load' });
-const png = await page.screenshot({ fullPage: true });
-assertLocalPage(page); // before writing the file
+const viewport = { width: 1280, height: 800 };
+await page.setViewportSize(viewport);
+await gotoLocal(page, 'http://localhost:3000/', { waitUntil: 'load' });
+const { png } = await captureVerifiedPng(page, viewport, { fullPage: true });
 fs.writeFileSync('_screenshots/home.png', png);
 ```
 
@@ -189,7 +190,7 @@ What it does and does not do:
 
 - **Stops the request.** An HTTP redirect to a non-local host — including a local → external → local bounce — is failed before the external request is sent, and `gotoLocal` throws. A `page.route` handler cannot do this: Playwright calls it once, for the original request, and the browser follows redirects on its own ([Playwright network docs § Redirects](https://playwright.dev/docs/network#redirects)).
 - **Checks again.** After navigation `gotoLocal` walks the completed redirect chain and the final URL, independently of the pause handler.
-- **Stays installed.** Later main-frame navigations on the same page (clicks, form posts, `location =`, meta refresh) pass the same check. A blocked one leaves a browser error page, so call `assertLocalPage(page)` after capturing and before writing the file.
+- **Stays installed.** Later main-frame navigations on the same page (clicks, form posts, `location =`, meta refresh) pass the same check. A blocked one leaves a browser error page, so use `captureVerifiedPng` to verify the document and viewport before saving its returned bytes.
 - **Leaves the page's own content alone.** Images, scripts, fonts, and iframes from other hosts still load.
 - **Works beside `page.route`.** API mocks registered with `page.route` keep working; the guard only pauses document requests.
 - **Chromium only.** Playwright documents CDP sessions as Chromium-only. `gotoLocal` reaches `page.goto` only after the guard is installed, so it cannot navigate unguarded in another browser.
@@ -214,6 +215,7 @@ node "<skill-dir>/assets/scripts/capture.js" --base-url http://localhost:3000 --
 | `--routes LIST` | Comma-separated paths on that origin. Default `/`. A route that resolves to another origin is a usage error |
 | `--breakpoints LIST` | Comma-separated `name:WIDTHxHEIGHT`. Default: the eight standard breakpoints |
 | `--wait-until EVENT` | `load` (default), `domcontentloaded`, `networkidle`, or `commit` |
+| `--expected-status CODE` | Require this exact HTTP status on each route, for example 404 for an intentional error-page capture. Omit for normal 2xx pages |
 | `--wait-for SELECTOR` | Wait for this selector on every route before capturing |
 | `--viewport-only` | Capture the viewport instead of the full scrollable page |
 | `--json` | Print the summary as JSON instead of text |
@@ -238,7 +240,7 @@ _screenshots/current/
 | 1 | At least one capture failed; `capture.json` and the output name each one. The rest are saved |
 | 2 | Usage or setup error (bad option, non-local URL, Playwright or Chromium missing). Nothing was captured |
 
-Each capture uses a new page, the navigation guard, and `animations: 'disabled'`. On the measurement fixture, five runs of an unchanged page produced pixel-identical files ([visual-regression.md § How the defaults were chosen](visual-regression.md#how-the-defaults-were-chosen)). A run does not delete files from an earlier run: use a fresh directory when the route or breakpoint list changes, or stale images will show up in a comparison as "only in before".
+Each capture uses a new page, the navigation guard, and `animations: 'disabled'`. On the measurement fixture, five runs of an unchanged page produced pixel-identical files ([visual-regression.md § How the defaults were chosen](visual-regression.md#how-the-defaults-were-chosen)). Give concurrent captures separate output directories. Compare a set after its capture process finishes. The manifest records each successful capture’s final URL, HTTP status, and observed viewport. Older PNGs can remain on disk. Keep the manifest with its set when copying or comparing captures; it identifies the current run.
 
 **Done when** the exit code is 0 and `capture.json` has `saved` equal to `expected` (routes × breakpoints). Report the output directory, the count, and every failed entry; a `refused: the page left the local host` entry is a failed capture, not a retry prompt.
 

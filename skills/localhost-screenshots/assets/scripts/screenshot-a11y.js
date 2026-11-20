@@ -20,7 +20,8 @@
 const fs = require('fs');
 const path = require('path');
 const {
-  localUrlProblem, gotoLocal, assertLocalPage, loadChromium, PLAYWRIGHT_MISSING,
+  localUrlProblem, gotoLocal, assertLocalPage, captureVerifiedPng, assertCaptureStillCurrent,
+  loadChromium, PLAYWRIGHT_MISSING,
 } = require('./local-guard.js');
 
 const url = process.argv[2] || 'http://localhost:3000';
@@ -58,14 +59,14 @@ if (urlProblem) {
         throw err;
       });
     }
-    const png = await page.screenshot({ fullPage: true });
+    const capture = await captureVerifiedPng(page, { width: w, height: h }, { fullPage: true });
     const ariaSnapshot = await page.locator('body').ariaSnapshot();
-    assertLocalPage(page);
-    fs.writeFileSync(`${outBase}.png`, png);
+    await assertCaptureStillCurrent(page, capture, { width: w, height: h });
+    fs.writeFileSync(`${outBase}.png`, capture.png);
 
     const envelope = {
       boundary: 'untrusted-page-content',
-      source: url,
+      source: capture.finalUrl,
       capturedAt: new Date().toISOString(),
       ariaSnapshot,
     };

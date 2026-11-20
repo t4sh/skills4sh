@@ -30,8 +30,9 @@ const DOUBLE = `
   const scenario = JSON.parse(process.env.PLAYWRIGHT_DOUBLE_SCENARIO || '{}');
   const sent = [];
   function makePage() {
-    const frame = {}; const listeners = {}; const pending = new Map();
+    const frame = {}; const listeners = {}; const pageListeners = {}; const pending = new Map();
     let fetchEnabled = false; let current = 'about:blank'; let routeHandler = null; let serial = 0;
+    let viewport = { width: 1280, height: 720 };
     const cdp = {
       on: (event, handler) => { listeners[event] = handler; },
       send: async (method, params) => {
@@ -66,16 +67,21 @@ const DOUBLE = `
         if (!allowed) { current = 'chrome-error://chromewebdata/'; throw new Error('net::ERR_BLOCKED_BY_CLIENT at ' + hops[0]); }
         sent.push(hops[i]);
         const previous = request;
-        request = { url: () => hops[i], redirectedFrom: () => previous };
+        request = { url: () => hops[i], redirectedFrom: () => previous, isNavigationRequest: () => true, frame: () => frame };
+        const response = { request: () => request, status: () => scenario.statuses?.[hops[i]] ?? scenario.status ?? 200 };
+        for (const handler of pageListeners.response || []) handler(response);
       }
       current = hops[hops.length - 1];
-      return { request: () => request };
+      return { request: () => request, status: () => scenario.statuses?.[hops[hops.length - 1]] ?? scenario.status ?? 200 };
     };
     return {
       context: () => ({ newCDPSession: async () => cdp }),
+      on: (event, handler) => { pageListeners[event] ||= []; pageListeners[event].push(handler); },
       route: async (_pattern, handler) => { routeHandler = handler; },
       mainFrame: () => frame,
-      setViewportSize: async () => {},
+      setViewportSize: async (size) => { viewport = { ...size }; if (scenario.viewportMismatch) viewport.width -= 1; },
+      viewportSize: () => ({ ...viewport }),
+      evaluate: async () => ({ ...viewport }),
       goto: (url) => navigate([url, ...((scenario.redirectsFor && scenario.redirectsFor[url]) || scenario.redirects || [])]),
       url: () => current,
       waitForSelector: async () => {},
@@ -186,6 +192,14 @@ for (const script of scripts) {
     assert.deepEqual(result.sent, ['http://localhost:3000/', 'http://localhost:3000/login']);
   });
 
+  test(`${script} rejects an unsuccessful HTTP response without writing a capture`, () => {
+    const result = runWithDouble(script, 'http://localhost:3000/', { status: 404 });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Navigation returned HTTP 404/);
+    assert.equal(result.png, null);
+    assert.equal(result.envelope, null);
+  });
+
   test(`${script} fails a redirect hop to an external host before it is sent`, () => {
     const result = runWithDouble(script, 'http://localhost:3000/', { redirects: [EXTERNAL] });
     assert.notEqual(result.status, 0);
@@ -222,6 +236,13 @@ for (const script of scripts) {
     assert.deepEqual(result.sent, ['http://localhost:3000/']);
     assert.equal(result.png, null);
     assert.equal(result.envelope, null);
+  });
+
+  test(`${script} discards a capture if the main frame changes to another local page during capture`, () => {
+    const result = runWithDouble(script, 'http://localhost:3000/', { afterLoad: 'http://localhost:3000/changed' });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /main-frame page changed during capture/);
+    assert.equal(result.png, null);
   });
 }
 
@@ -262,7 +283,13 @@ test('capture.js saves every route at every breakpoint under --out and nowhere e
   ]);
   assert.equal(result.read('shots/before/home/mobile-375x812.png'), MARKER);
   const summary = JSON.parse(result.read('shots/before/capture.json'));
+  assert.equal(summary.state, 'complete');
   assert.equal(summary.expected, 4); assert.equal(summary.saved, 4); assert.equal(summary.failed, 0);
+  assert.equal(summary.results[0].status, 200);
+  assert.equal(summary.results[0].finalUrl, 'http://localhost:3000/');
+  assert.deepEqual(summary.results[0].viewport, { width: 375, height: 812 });
+  assert.equal(summary.results[0].file, 'shots/before/home/mobile-375x812.png');
+  assert.equal(summary.results[0].relativeFile, 'home/mobile-375x812.png');
   assert.deepEqual(summary.routes, ['/', '/docs/intro?tab=api']);
   assert.deepEqual(result.sent, ['http://localhost:3000/', 'http://localhost:3000/', 'http://localhost:3000/docs/intro?tab=api', 'http://localhost:3000/docs/intro?tab=api']);
   assert.match(result.stdout, /4 of 4 captures saved to shots\/before\//);
@@ -299,6 +326,41 @@ test('capture.js writes no image when the page leaves the local host after load'
   assert.equal(result.status, 1);
   assert.deepEqual(result.files, ['out', 'out/capture.json']);
   assert.deepEqual(result.sent, ['http://localhost:3000/']);
+});
+
+test('capture.js rejects non-success HTTP status and records it without writing a PNG', () => {
+  const result = runCapture(['--base-url', 'http://localhost:3000', '--out', 'out', '--routes', '/pricing', '--breakpoints', 'desktop:1280x800'], {
+    status: 404,
+  });
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.files.filter(f => f.endsWith('.png')), []);
+  const summary = JSON.parse(result.read('out/capture.json'));
+  assert.equal(summary.results[0].ok, false);
+  assert.equal(summary.results[0].status, 404);
+  assert.equal(summary.results[0].finalUrl, 'http://localhost:3000/pricing');
+  assert.deepEqual(summary.results[0].viewport, { width: 1280, height: 800 });
+  assert.match(summary.results[0].error, /HTTP 404/);
+});
+
+test('capture.js can capture an explicitly expected error status', () => {
+  const result = runCapture(['--base-url', 'http://localhost:3000', '--out', 'out', '--routes', '/pricing', '--breakpoints', 'desktop:1280x800', '--expected-status', '404'], {
+    status: 404,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const summary = JSON.parse(result.read('out/capture.json'));
+  assert.equal(summary.results[0].ok, true);
+  assert.equal(summary.results[0].status, 404);
+  assert.equal(summary.saved, 1);
+  assert.deepEqual(result.files.filter(f => f.endsWith('.png')), ['out/pricing/desktop-1280x800.png']);
+});
+
+test('capture.js fails when the browser reports a viewport different from the request', () => {
+  const result = runCapture(['--base-url', 'http://localhost:3000', '--out', 'out', '--breakpoints', 'desktop:1280x800'], {
+    viewportMismatch: true,
+  });
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.files.filter(f => f.endsWith('.png')), []);
+  assert.match(JSON.parse(result.read('out/capture.json')).results[0].error, /Browser viewport is 1279x800/);
 });
 
 for (const [label, args, message] of [
@@ -342,11 +404,17 @@ test('capture.js reports a missing Playwright as a setup error', () => {
     const dir = join(project, 'copied-scripts');
     mkdirSync(dir);
     for (const file of ['capture.js', 'local-guard.js', 'package.json']) copyFileSync(join('skills/localhost-screenshots/assets/scripts', file), join(dir, file));
+    mkdirSync(join(project, 'out'));
+    writeFileSync(join(project, 'out', 'capture.json'), JSON.stringify({ state: 'complete', saved: 1 }));
+    writeFileSync(join(project, 'out', 'old.png'), 'stale output');
     const env = { ...process.env }; delete env.NODE_PATH;
     const result = spawnSync(process.execPath, [join(dir, 'capture.js'), '--base-url', 'http://localhost:3000', '--out', 'out'], { cwd: project, encoding: 'utf8', env });
     assert.equal(result.status, 2);
     assert.match(result.stderr, /Missing dependency: playwright\./);
-    assert.equal(existsSync(join(project, 'out')), false);
+    assert.equal(readFileSync(join(project, 'out', 'old.png'), 'utf8'), 'stale output');
+    assert.deepEqual(JSON.parse(readFileSync(join(project, 'out', 'capture.json'), 'utf8')), {
+      state: 'in-progress', baseUrl: 'http://localhost:3000', out: 'out',
+    });
   } finally { rmSync(project, { recursive: true, force: true }); }
 });
 
@@ -388,8 +456,11 @@ for (const script of browserScripts) {
     assert.match(source, /require\('\.\/local-guard\.js'\)/);
     assert.doesNotMatch(source, /\.goto\(|newCDPSession|page\.route\(/);
     assert.match(source, /await gotoLocal\(page, /);
-    // Every screenshot is followed by the local check before anything is written.
-    assert.match(source, /await page\.screenshot\([^)]*\);\n(?:\s+const ariaSnapshot = [^\n]+\n)?\s+assertLocalPage\(page\);\n(?:\s+fs\.mkdirSync[^\n]+\n)?\s+fs\.writeFileSync\(/);
+    // The shared helper checks status, local URL, and observed viewport before returning PNG bytes.
+    assert.match(source, /await captureVerifiedPng\(page,/);
+    assert.doesNotMatch(source, /page\.screenshot\(/);
+    const captureIndex = source.indexOf('await captureVerifiedPng(page,');
+    assert.ok(source.indexOf('writeFileSync(', captureIndex) > captureIndex);
   });
 }
 
@@ -492,15 +563,17 @@ test('bundled helpers keep a real browser on the local host', { skip: realPlaywr
     const child = spawn(process.execPath, [resolve(captureScript), '--base-url', `http://localhost:${app.address().port}`,
       '--out', out, '--routes', routes, '--breakpoints', 'mobile:375x812,desktop:1280x800', '--json', ...extra], { cwd: fixture });
     let stdout = '';
+    let stderr = '';
     child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.stderr.on('data', (chunk) => { stderr += chunk; });
     child.on('close', status => done({
-      status, summary: JSON.parse(stdout || '{}'), external: [...externalRequests],
+      status, stderr, summary: JSON.parse(stdout || '{}'), external: [...externalRequests],
       pngs: existsSync(out) ? readdirSync(out, { recursive: true }).map(String).filter(f => f.endsWith('.png')).sort() : [],
     }));
   });
   try {
     const set = await capture('/,/subresources');
-    assert.equal(set.status, 0, JSON.stringify(set.summary));
+    assert.equal(set.status, 0, `${set.stderr}\n${JSON.stringify(set.summary)}`);
     assert.deepEqual(set.pngs.map(f => f.split('\\').join('/')), ['home/desktop-1280x800.png', 'home/mobile-375x812.png', 'subresources/desktop-1280x800.png', 'subresources/mobile-375x812.png']);
     assert.deepEqual([...new Set(set.external)].sort(), ['/app.js', '/frame']);
     for (const route of ['/to-external', '/bounce']) {

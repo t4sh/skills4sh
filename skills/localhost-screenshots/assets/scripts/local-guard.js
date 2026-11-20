@@ -48,6 +48,60 @@ function refusal(message, url) {
   return Object.assign(new Error(`${message}: ${url}`), { code: 'NON_LOCAL_NAVIGATION', url });
 }
 
+function assertSuccessfulResponse(response, expectedStatus = null) {
+  const status = response && response.status();
+  if (!Number.isInteger(status)) {
+    throw new Error('Navigation did not return an HTTP response');
+  }
+  if (expectedStatus !== null ? status !== expectedStatus : status < 200 || status >= 300) {
+    const expectation = expectedStatus === null ? 'a successful 2xx response' : `HTTP ${expectedStatus}`;
+    throw new Error(`Navigation returned HTTP ${status}; expected ${expectation}`);
+  }
+  return status;
+}
+
+async function assertViewport(page, expected) {
+  let actual;
+  try {
+    actual = await page.evaluate(() => ({ width: window.innerWidth, height: window.innerHeight }));
+  } catch {
+    assertLocalPage(page);
+    throw new Error('Could not verify the browser-reported CSS viewport during navigation');
+  }
+  if (!expected) throw new Error('A CSS viewport is required for capture verification');
+  if (!actual || actual.width !== expected.width || actual.height !== expected.height) {
+    const found = actual ? `${actual.width}x${actual.height}` : 'unknown';
+    throw new Error(`Browser viewport is ${found}; expected ${expected.width}x${expected.height}`);
+  }
+  return actual;
+}
+
+async function captureVerifiedPng(page, expectedViewport, screenshotOptions = {}, expectedStatus = null) {
+  const guard = localGuards.get(page);
+  if (!guard || !guard.response) throw new Error('No main-frame navigation response is available for this page');
+  if (Object.hasOwn(screenshotOptions, 'path')) {
+    throw new Error('Do not pass screenshotOptions.path; write the returned PNG only after the checks succeed');
+  }
+  assertLocalPage(page);
+  const finalUrl = page.url();
+  const response = guard.response;
+  const responseStatus = assertSuccessfulResponse(response, expectedStatus);
+  const viewport = await assertViewport(page, expectedViewport);
+  const png = await page.screenshot(screenshotOptions);
+  const capture = { png, responseStatus, finalUrl, viewport, response };
+  await assertCaptureStillCurrent(page, capture, expectedViewport);
+  return capture;
+}
+
+async function assertCaptureStillCurrent(page, capture, expectedViewport = capture.viewport) {
+  const guard = localGuards.get(page);
+  await assertViewport(page, expectedViewport);
+  assertLocalPage(page);
+  if (page.url() !== capture.finalUrl || !guard || guard.response !== capture.response) {
+    throw new Error('The main-frame page changed during capture; discard the screenshot and retry');
+  }
+}
+
 // Main-frame navigation guard. Playwright route handlers are called once per request and
 // never for redirect hops, so the guard pauses document requests through a CDP Fetch session
 // instead: a main-frame request to a non-local host is failed before it is sent, on every hop
@@ -59,8 +113,16 @@ async function gotoLocal(page, value, options) {
   if (!isLocalUrl(value)) throw refusal('Refusing non-localhost URL', value);
   let guard = localGuards.get(page);
   if (!guard) {
-    guard = { blockedUrl: '' };
+    guard = { blockedUrl: '', response: null };
     localGuards.set(page, guard);
+    page.on('response', (response) => {
+      try {
+        const request = response.request();
+        if (request.isNavigationRequest() && request.frame() === page.mainFrame()) guard.response = response;
+      } catch {
+        // A response without a frame is not a main-frame document response.
+      }
+    });
     const cdp = await page.context().newCDPSession(page);
     // Read the main frame id once, up front: the renderer does not answer while a paused
     // navigation is pending, so the handler must not ask it anything.
@@ -84,6 +146,7 @@ async function gotoLocal(page, value, options) {
     if (guard.blockedUrl) throw refusal('Refusing non-localhost main-frame redirect', guard.blockedUrl);
     throw err;
   }
+  if (!guard.response) guard.response = response;
   // Second check, independent of the guard: no hop of the completed chain may be external.
   for (let request = response && response.request(); request; request = request.redirectedFrom()) {
     if (!isLocalUrl(request.url())) throw refusal('Refusing non-localhost main-frame redirect', request.url());
@@ -119,5 +182,7 @@ function loadChromium() {
 }
 
 module.exports = {
-  isLocalUrl, localUrlHint, localUrlProblem, gotoLocal, assertLocalPage, loadChromium, PLAYWRIGHT_MISSING,
+  isLocalUrl, localUrlHint, localUrlProblem, gotoLocal, assertLocalPage,
+  assertSuccessfulResponse, assertViewport, captureVerifiedPng, assertCaptureStillCurrent,
+  loadChromium, PLAYWRIGHT_MISSING,
 };

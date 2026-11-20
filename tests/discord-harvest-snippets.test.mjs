@@ -369,5 +369,26 @@ test('discord_api reports status and Retry-After, and always sends the Bot schem
     assert.equal(requests.length, shells.length * 6);
     assert.ok(requests.every(r => r.host === 'discord.com' && r.scheme === 'Bot'), 'a request left the Bot scheme or host');
     assert.equal(requests.filter(r => r.path === '/api/v10/ok').length, shells.length, 'an API redirect was followed');
+
+    const temp = join(root, 'curl-temp'); mkdirSync(temp);
+    const interruptedBin = join(root, 'interrupted-bin'); mkdirSync(interruptedBin);
+    const interruptedCurl = join(interruptedBin, 'curl');
+    writeFileSync(interruptedCurl, '#!/bin/sh\n"$BASE_CURL" "$@"\nstatus=$?\n[ "$status" -eq 0 ] && exit 18\nexit "$status"\n');
+    chmodSync(interruptedCurl, 0o755);
+    for (const shell of shells) {
+      const envWithInterruptedCurl = {
+        ...env,
+        PATH: `${interruptedBin}:${env.PATH}`,
+        BASE_CURL: join(root, 'bin', 'curl'),
+        TMPDIR: temp,
+        DISCORD_BOT_TOKEN: token,
+      };
+      const before = readdirSync(temp);
+      const partial = runIn(shell, 'discord_api "$1"', ['/ok'], { cwd: root, env: envWithInterruptedCurl });
+      assert.equal(partial.status, 1, 'curl exit 18 must fail even after it reports HTTP 200');
+      assert.equal(partial.stdout, '', 'a partial response body must never be parsed');
+      assert.match(partial.stderr, /curl transport failure \(exit 18\)/);
+      assert.deepEqual(readdirSync(temp), before, 'all private API temporary files must be removed');
+    }
   });
 });

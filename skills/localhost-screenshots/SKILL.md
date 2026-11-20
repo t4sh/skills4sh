@@ -27,7 +27,7 @@ A policy and verification layer for looking at a locally running site. The polic
 
 Use the user's exact app URL. When the project uses Portless, inspect its existing setup and active routes before choosing a target; follow [Portless](references/portless.md). Preserve the proxy hostname, scheme, port, and worktree subdomain throughout capture. Verify the expected app is ready before capturing; a route entry alone does not prove the server is running.
 
-`file://` is acceptable only for self-contained static HTML: no `fetch`/XHR to sibling files, no `<script type="module">`, no service workers, no absolute `/asset` paths. When starting a server and no HTTPS origin is already in use, serve over HTTP.
+For a local HTML file, serve its containing directory over loopback HTTP and navigate to that URL, including for self-contained pages. Reuse an existing local HTTP or HTTPS server when available.
 
 ## Choose a backend
 
@@ -107,6 +107,8 @@ node "<skill-dir>/assets/scripts/capture.js" --base-url http://localhost:3000 --
 
 Default is the eight standard breakpoints (320–1920 px); check the project's CSS or Tailwind config for its own first and pass `--breakpoints`. Verify the server responds before capturing ([playwright-patterns.md](references/playwright-patterns.md) § "Verifying the Server" and "Serving the Site").
 
+Each successful record includes the main document’s HTTP status, final URL, and observed CSS viewport. By default the document must return 2xx. To capture an error page deliberately, run its route separately with an exact status such as `--expected-status 404`.
+
 **Done when** the script exits 0 and `capture.json` shows `saved` equal to routes × breakpoints. Exit 1 means some captures failed and are named; a `refused` entry is a failed capture, not a retry prompt.
 
 ### Before/after comparison
@@ -118,7 +120,7 @@ node "<skill-dir>/assets/scripts/capture.js" --base-url http://localhost:3000 --
 node "<skill-dir>/assets/scripts/compare.js" --before _screenshots/before --after _screenshots/after --out _screenshots/diff
 ```
 
-Use the same routes and breakpoints for both captures. If the change is already made, get the baseline as rule 7 directs. `compare.js` exits 0 when every pair matches, 1 when any pair differs, changed size, is unreadable, or exists on one side only, and 2 when nothing was compared. Exit 2 is a failed run, never "no differences". Defaults, options, and how the default threshold was measured: [visual-regression.md](references/visual-regression.md).
+Use the same routes and breakpoints for both captures. Keep each set’s `capture.json` beside its images so the comparison can distinguish the current run from older files. If the change is already made, get the baseline as rule 7 directs. `compare.js` exits 0 for a complete match, 1 for a complete comparison with visual differences, and 2 for an incomplete comparison or a setup error. Report any missing, unreadable, failed, or mismatched captures. Defaults, options, and how the default threshold was measured: [visual-regression.md](references/visual-regression.md).
 
 **Done when** `report.json` shows `compared` equal to routes × breakpoints and `report.html` exists.
 
@@ -136,7 +138,7 @@ Never report a capture that did not happen or a pass when nothing was compared.
 
 ## What not to do
 
-No JSDOM, no Puppeteer or Selenium workarounds, no `sudo`, no `file://` for pages that need HTTP semantics. Full list: [troubleshooting.md](references/troubleshooting.md) § "What NOT to Do".
+No JSDOM, no Puppeteer or Selenium workarounds, no `sudo`, no direct `file://` captures. Full list: [troubleshooting.md](references/troubleshooting.md) § "What NOT to Do".
 
 ## Reference files
 

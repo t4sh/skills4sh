@@ -28,14 +28,19 @@ function writeStub(root, label, name = 'playwright') {
   writeFileSync(join(moduleDir, 'index.js'), `
     const page = {
       current: '',
+      viewport: { width: 1280, height: 720 },
+      on: () => {},
       context: () => ({ newCDPSession: async () => ({
         on: () => {},
         send: async (method) => (method === 'Page.getFrameTree' ? { frameTree: { frame: { id: 'main-frame' } } } : {}),
       }) }),
-      setViewportSize: async () => {},
+      setViewportSize: async (size) => { page.viewport = { ...size }; },
+      viewportSize: () => ({ ...page.viewport }),
+      evaluate: async () => ({ ...page.viewport }),
       goto: async (url) => {
         page.current = url;
-        return { request: () => ({ url: () => url, redirectedFrom: () => null }) };
+        const frame = {};
+        return { status: () => 200, request: () => ({ url: () => url, redirectedFrom: () => null, isNavigationRequest: () => true, frame: () => frame }) };
       },
       url: () => page.current,
       screenshot: async () => Buffer.from(${JSON.stringify(label)}),

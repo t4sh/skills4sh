@@ -200,7 +200,11 @@ test('formatFullDate accepts Date, YYYY-MM-DD, and ISO datetime input without a 
     assert.equal(format('2026-05-11T00:00:00.000Z'), 'May 11, 2026', zone);
     assert.equal(format('2026-12-31T23:59:59-08:00'), 'December 31, 2026', zone);
   }
-  for (const invalid of [null, undefined, '', 'not a date', '2026-13-01', new Date(NaN)]) assert.equal(format(invalid), '');
+  assert.equal(format('2024-02-29'), 'February 29, 2024');
+  for (const invalid of [null, undefined, '', 'not a date', '2026-13-01', '2026-02-29',
+    '2024-04-31T10:00:00Z', '2026-12-01draft', '2026-12-01T12:65:00Z', new Date(NaN)]) {
+    assert.equal(format(invalid), '', String(invalid));
+  }
 });
 
 test('paired shortcode recipe escapes arguments interpolated into markup', () => {

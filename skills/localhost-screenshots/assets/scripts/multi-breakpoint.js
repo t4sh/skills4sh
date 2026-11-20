@@ -15,7 +15,7 @@
 const fs = require('fs');
 const path = require('path');
 const {
-  localUrlProblem, gotoLocal, assertLocalPage, loadChromium, PLAYWRIGHT_MISSING,
+  localUrlProblem, gotoLocal, assertLocalPage, captureVerifiedPng, loadChromium, PLAYWRIGHT_MISSING,
 } = require('./local-guard.js');
 
 const DEFAULT_BREAKPOINTS = 'mobile:375x812,tablet:768x1024,desktop:1280x800';
@@ -79,8 +79,7 @@ if (urlProblem) {
         });
       }
       const file = path.join(outDir, `${bp.name}-${bp.width}x${bp.height}.png`);
-      const png = await page.screenshot({ fullPage: true });
-      assertLocalPage(page);
+      const { png } = await captureVerifiedPng(page, { width: bp.width, height: bp.height }, { fullPage: true });
       fs.writeFileSync(file, png);
       await page.close();
       console.log(`saved ${file}`);
