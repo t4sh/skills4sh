@@ -1,6 +1,6 @@
 # Branch Protection Contract
 
-Protect `main` and require pull requests to pass these **19 checks** before merge:
+Protect `main` and require pull requests to pass these **15 checks** before merge:
 
 - `Validate Skills / validate (22)`
 - `Validate Skills / validate (24)`
