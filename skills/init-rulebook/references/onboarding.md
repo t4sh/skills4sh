@@ -18,17 +18,60 @@ Start with the active host's instructions and invocation evidence, not a default
 
 - **Existing pointer, any host:** locate the instruction that invokes this skill, whether a user rule, global instruction, or project instruction. A session started by it proves that a pointer exists; inspect its target and scope before considering edits. Preserve a working pointer and any existing `~/.agents` symlink. A Cursor rule need not resemble a Codex file or use a prescribed phrase.
 - **Missing or broken pointer:** inspect the active host's supported persistent-instruction mechanism and skill availability. Configure only that host. `~/.agents/AGENTS.md` is this skill's rulebook convention, not universal native host discovery.
+- **Hook-gated host:** a hook that blocks tools until the rulebook load is acknowledged is the user's host configuration. Do not create, edit, disable, or bypass it during setup or status; follow `SKILL.md` **Load and rehydrate**, and report a hook that names a different rulebook or requirement than the pointer and index.
+
+The adapters below cover Codex, Claude Code, and Cursor. Use only the active host's adapter, and only if discovery or repair is needed. In each, the pointer is an instruction sentence that names the skill, the index path, and when to invoke it. Host facts were verified against each host's official documentation on 2026-11-21; recheck for a different runtime version. For any other host, confirm the mechanism in its own documentation instead of borrowing an adapter.
 
 #### Codex adapter — only when Codex is the active host
 
-Use this adapter only if discovery or repair is needed for Codex. Verified against official documentation on 2026-10-21; recheck for a different runtime version.
-
-- Global instructions come from `AGENTS.override.md`, otherwise `AGENTS.md`, in `CODEX_HOME` (default `~/.codex`). Inspect which file is effective before adding a missing pointer. Project instructions follow the repository-to-working-directory chain; use project scope for rules meant only for that project. See [OpenAI's AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
+- Global instructions come from `AGENTS.override.md`, otherwise `AGENTS.md`, in `CODEX_HOME` (default `~/.codex`); Codex uses only the first non-empty file there. Inspect which file is effective before adding a missing pointer. Project instructions follow the repository-to-working-directory chain; use project scope for rules meant only for that project. Codex stops adding files once the combined size reaches `project_doc_max_bytes` (32 KiB by default). The guide documents no import syntax, so write the pointer sentence into the effective file. See [OpenAI's AGENTS.md guide](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
 - Codex discovers user skills under `~/.agents/skills/` and project `.agents/skills/` locations. Skill discovery and startup invocation are separate mechanisms. See [OpenAI's skills guide](https://learn.chatgpt.com/docs/build-skills).
+- Fresh-session check: the guide's `codex --ask-for-approval never "Summarize the current instructions."` should quote the pointer from the effective file.
+
+#### Claude Code adapter — only when Claude Code is the active host
+
+- User instructions come from `~/.claude/CLAUDE.md` and load in every project. Project instructions come from `./CLAUDE.md` or `./.claude/CLAUDE.md`, with `./CLAUDE.local.md` alongside. Claude Code v2.1.277 or later reads a project `AGENTS.md` natively only when no `CLAUDE.md`, `.claude/CLAUDE.md`, or `CLAUDE.local.md` exists in the working directory or above it. That is project discovery: it never reaches `~/.agents/AGENTS.md`, so the user-level pointer is still required. See [Anthropic's memory guide](https://code.claude.com/docs/en/memory).
+- Besides the pointer sentence, a `CLAUDE.md` can import files: an `@path/to/file` reference outside code spans and fenced code blocks expands that file into context with the importing file. Relative paths resolve against the importing file, `@~/` paths reach the home directory, and imports nest at most four hops. Imports load unconditionally, so import at most the index and always-on rules and keep the pointer sentence for conditional rules, action gates, and compaction. In a project file, an import that resolves outside the working directory loads only after the user approves external imports for that project. Cowork desktop sessions skip a user-level import that resolves outside the session's working directory, and a `~/.claude/CLAUDE.md` that is itself a symlink. Judge every import by the native-import test in `SKILL.md`, not by the presence of an `@path` line.
+- Personal skills load from `~/.claude/skills/<skill-name>/SKILL.md`, project skills from `.claude/skills/`. See [Anthropic's skills guide](https://code.claude.com/docs/en/skills).
+- Fresh-session check: `/context all` lists the instruction files loaded at launch under **Memory files**; the file holding the pointer must appear there.
+
+#### Cursor adapter — only when Cursor is the active host
+
+- User-level instructions are User Rules, set in **Customize → Rules** and applied across all projects. They are not stored on the file system: do not search for or write a file. Give the user the exact pointer text to paste there, and report the pointer unverified until they confirm it. See [Cursor's rules guide](https://cursor.com/docs/context/rules).
+- For project scope, Cursor reads `AGENTS.md` in the project root and subdirectories, and project rules stored as `.mdc` files in `.cursor/rules`. It documents no user-level `AGENTS.md`, so `~/.agents/AGENTS.md` needs the pointer.
+- A file mention such as `@file` inside a rule is not inlined; the agent reads that file with its tools when needed. It is a pointer, never a native import.
+- Cursor loads user skills from `~/.agents/skills/` and `~/.cursor/skills/`, project skills from `.agents/skills/` and `.cursor/skills/`, and for compatibility also from `.claude/skills/`, `.codex/skills/`, `~/.claude/skills/`, and `~/.codex/skills/`. See [Cursor's skills guide](https://cursor.com/docs/context/skills).
+- Fresh-session check: **Customize** shows rules and their status, and **Customize → Skills** lists discovered skills.
+
+#### Optional compaction-reload hook
+
+A pointer sentence depends on the model noticing it again after compaction. Where the host runs a hook after compaction, the user may add one that prints the pointer sentence so the reload instruction re-enters context every time. Offer it; add it only on request, show the exact change first, and merge it into the existing hook configuration without replacing other hooks. The hook only prints text: the load itself still follows `SKILL.md`. Host facts verified against official documentation on 2026-11-21.
+
+- **Claude Code:** a `SessionStart` hook with the `compact` matcher runs after compaction, and plain text its command writes to stdout is added to context. Add it to `~/.claude/settings.json` (user) or `.claude/settings.json` (project); `/hooks` lists registered hooks. See [Anthropic's hooks guide](https://code.claude.com/docs/en/hooks-guide#re-inject-context-after-compaction).
+
+  ```json
+  {
+    "hooks": {
+      "SessionStart": [
+        {
+          "matcher": "compact",
+          "hooks": [
+            {
+              "type": "command",
+              "command": "echo 'Context was compacted. Invoke init-rulebook to reload the rulebook before continuing.'"
+            }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+- **Codex:** hooks are enabled by default and read from `hooks.json` in `CODEX_HOME` (default `~/.codex/hooks.json`), a trusted project's `.codex/hooks.json`, or `[hooks]` in `config.toml`. After Codex compacts a root session, `SessionStart` hooks that match source `compact` run before the next model request, and plain text on stdout is added as developer context. Use the same JSON shape with `"matcher": "^compact$"`. A non-managed hook must be reviewed and trusted before it runs. See [OpenAI's hooks guide](https://learn.chatgpt.com/codex/hooks).
 
 ### Verification
 
-For a new or changed pointer, test a fresh session: read an always-on rule and a matching conditional; leave a nonmatching conditional and a future action gate unread. Use only classes the index actually defines. Confirm complete reads and precedence. Report an untested startup or compaction path as untested, even if a manual load succeeds.
+For a new or changed pointer, test a fresh session: read an always-on rule and a matching conditional; leave a nonmatching conditional and a future action gate unread. Use only classes the index actually defines. Confirm complete reads and precedence. Report an untested startup or compaction path as untested, even if a manual load succeeds. The user's verification step is the active adapter's fresh-session check, where one exists, followed by an `init-rulebook: status` request in that new session.
 
 Keep personal files and credentials outside the distributed skill. Before writing, inspect existing files and links; preserve unrelated content and obtain the user's informed choice before replacing a directory or link target.
 

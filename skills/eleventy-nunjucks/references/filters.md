@@ -6,6 +6,8 @@ Opt-in filter recipes for an existing Eleventy configuration. Match the project'
 
 The compatibility recipes named `slice` and `dump` override Nunjucks built-ins. Preserve existing semantics unless the project deliberately adopts these replacements and tests affected templates. Prefer distinct names for new helpers when a built-in already exists.
 
+The block below is CommonJS. In an ESM project (`"type": "module"` or an `.mjs` config), replace the `require` line with `import markdownIt from "markdown-it";` and `module.exports = function` with `export default function`; the filter bodies are unchanged.
+
 ```js
 // .eleventy.js / eleventy.config.js
 const markdownIt = require("markdown-it");
@@ -80,6 +82,8 @@ module.exports = function (eleventyConfig) {
 ```
 
 ## Path filter — `normalize_path`
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 Required for any project deploying behind nginx with `try_files $uri $uri.html`. Strips `.html`, `index.html`, trailing slash, query, and hash so active-nav matching and canonical URLs agree.
 
@@ -186,11 +190,13 @@ eleventyConfig.addFilter("localeString", (n) =>
 const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 // {{ "2026-05" | formatDate }} → "May 2026"
 // {{ null     | formatDate }} → "Present"
+// Unreadable input (no leading YYYY-MM, or a month outside 01–12) → ""
 eleventyConfig.addFilter("formatDate", (value) => {
   if (!value) return "Present";
-  const iso = value instanceof Date ? value.toISOString() : String(value);
-  const [year, month] = iso.split("-").map(Number);
-  return `${MONTHS_SHORT[month - 1]} ${year}`;
+  const iso = value instanceof Date && !Number.isNaN(value.getTime()) ? value.toISOString() : String(value);
+  const match = /^(\d{4})-(\d{2})(?!\d)/.exec(iso);
+  const month = match && MONTHS_SHORT[Number(match[2]) - 1];
+  return month ? `${month} ${match[1]}` : "";
 });
 ```
 
@@ -200,13 +206,21 @@ eleventyConfig.addFilter("formatDate", (value) => {
 const MONTHS_FULL = ["January","February","March","April","May","June",
                      "July","August","September","October","November","December"];
 // {{ "2026-05-11" | formatFullDate }} → "May 11, 2026"
+// {{ page.date    | formatFullDate }} → Date objects and ISO datetime strings work too
 eleventyConfig.addFilter("formatFullDate", (value) => {
-  if (!value) return "";
-  const iso = value instanceof Date ? value.toISOString() : String(value);
-  const [year, month, day] = iso.split("-").map(Number);
-  return `${MONTHS_FULL[month - 1]} ${day}, ${year}`;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) value = value.toISOString();
+  if (typeof value !== "string") return "";
+  const match = /^(\d{4}-\d{2}-\d{2})(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?)?$/.exec(value);
+  if (!match || Number.isNaN(Date.parse(value))) return "";
+  // Date.parse can roll February 29 into March. Check the written calendar day
+  // independently of the time and offset, so a valid offset never shifts it.
+  const day = new Date(match[1] + "T00:00:00Z");
+  if (day.toISOString().slice(0, 10) !== match[1]) return "";
+  return `${MONTHS_FULL[day.getUTCMonth()]} ${day.getUTCDate()}, ${match[1].slice(0, 4)}`;
 });
 ```
+
+Accepts a `Date` (`page.date`, YAML front-matter dates), a `YYYY-MM-DD` string, or an ISO datetime string; anything else returns `""`. Eleventy front-matter and filename dates are midnight UTC, so the filter reads the UTC day and never calls local-time getters such as `getDate()`, which print the previous day on machines west of UTC. See [Eleventy content dates](https://www.11ty.dev/docs/dates/).
 
 ### `sitemapDate` — Date/string → ISO day
 
@@ -219,19 +233,27 @@ eleventyConfig.addFilter("sitemapDate", (value) => {
 });
 ```
 
-Use this for `page.date` in `sitemap.xml`. Do not pass a format argument to the month/year `formatDate` filter above; it intentionally accepts only one `YYYY-MM` string.
+Use this for `page.date` in `sitemap.xml`. Do not pass a format argument to the month/year `formatDate` filter above; it reads only a leading `YYYY-MM` and returns an empty string for anything else.
 
 ### `duration` — months between two dates → "X yrs Y mos"
 
 ```js
 // {{ "2022-03" | duration("2024-06") }} → "2 yrs 3 mos"
 // {{ "2025-01" | duration(null)      }} → uses current month for end
+// A Date is read as its UTC month; unreadable input → ""
 eleventyConfig.addFilter("duration", (startDate, endDate) => {
-  if (!startDate) return "";
-  const [sy, sm] = startDate.split("-").map(Number);
-  let ey, em;
-  if (endDate) { [ey, em] = endDate.split("-").map(Number); }
-  else { const now = new Date(); ey = now.getFullYear(); em = now.getMonth() + 1; }
+  const yearMonth = (value) => {
+    const iso = value instanceof Date && !Number.isNaN(value.getTime()) ? value.toISOString() : String(value);
+    const match = /^(\d{4})-(\d{2})(?!\d)/.exec(iso);
+    const month = match ? Number(match[2]) : 0;
+    return month >= 1 && month <= 12 ? [Number(match[1]), month] : null;
+  };
+  const start = startDate ? yearMonth(startDate) : null;
+  if (!start) return "";
+  let end;
+  if (endDate) { end = yearMonth(endDate); if (!end) return ""; }
+  else { const now = new Date(); end = [now.getFullYear(), now.getMonth() + 1]; }
+  const [sy, sm] = start, [ey, em] = end;
   let total = (ey - sy) * 12 + (em - sm);
   if (total < 0) total = 0;
   const years  = Math.floor(total / 12);
@@ -266,7 +288,7 @@ Generic `findBy` is preferable; per-collection wrappers add maintenance burden f
 
 Before adding a filter, walk this list:
 
-- [ ] **Does it exist already?** Grep the project's `.eleventy.js` and the Nunjucks built-ins. Existing filter conventions: `md`, `dump`, `slice`, `limit`, `where`, `sort_by`, `json`, `keys`, `values`, `safe`, `escape`, `length`, `join`, `default`, `groupby`, `dictsort`, `batch`. Nunjucks `groupby` returns an object (`{ key: [items] }`), so iterate it with `{% for k, items in x | groupby("key") %}` rather than documenting custom pair arrays.
+- [ ] **Does it exist already?** Grep the project's active config file, the Nunjucks built-ins, and Eleventy's universal filters (`url`, `slugify`, `log`, `inputPathToUrl`, `getPreviousCollectionItem` / `getNextCollectionItem` / `getCollectionItemIndex`; see [Eleventy filters](https://www.11ty.dev/docs/filters/)). Existing filter conventions: `md`, `dump`, `slice`, `limit`, `where`, `sort_by`, `json`, `keys`, `values`, `safe`, `escape`, `length`, `join`, `default`, `groupby`, `dictsort`, `batch`. Nunjucks `groupby` returns an object (`{ key: [items] }`), so iterate it with `{% for k, items in x | groupby("key") %}` rather than documenting custom pair arrays.
 - [ ] **Null-safe input.** Define malformed-input behavior explicitly. The array recipes preserve non-array input; `where` skips null members and `sort_by` puts missing keys last. Serialization errors should fail the build rather than emit invalid script data.
 - [ ] **No side effects.** Filters render during build, including on retries — no fetches, no writes, no random.
 - [ ] **Deterministic.** Same input → same output. `Math.random()` breaks incremental builds and visual diffs.
@@ -307,12 +329,20 @@ eleventyConfig.addFilter("uppercase", (s) => s.toUpperCase());
 eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`);
 // © {% year %}             → © 2026
 
+// Shortcode return values are written to the page as-is; autoescape never sees them.
+// Escape every argument that is interpolated into markup.
+const escapeHtml = (value) =>
+  String(value ?? "").replace(/[&<>"']/g, (ch) =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+
 // Paired shortcode — wraps content.
 // Nunjucks keyword args arrive as an object, so normalize positional and keyword forms.
 eleventyConfig.addPairedShortcode("callout", (content, options = "info") => {
   const type = typeof options === "string" ? options : options?.type || "info";
-  return `<aside class="callout callout-${type}">${content}</aside>`;
+  return `<aside class="callout callout-${escapeHtml(type)}">${content}</aside>`;
 });
 // {% callout "warn" %}Heads up{% endcallout %}
 // {% callout type="warn" %}Heads up{% endcallout %}
 ```
+
+**Shortcode output bypasses autoescape.** Eleventy marks every shortcode return value as safe HTML, so `{% badge user.name %}` emits `user.name` unescaped unless the shortcode escapes it (filter return values are still autoescaped). Escape each interpolated argument as above, and keep attribute values quoted. The paired `content` argument is the already-rendered body: `{{ value }}` inside it was autoescaped, and authored HTML passes through by design, so do not escape it again. Verified on Eleventy 3.1.8, 2026-11-21.

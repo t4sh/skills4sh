@@ -10,14 +10,16 @@ Use this file when wiring or auditing `.eleventy.js` / `eleventy.config.js`, mig
 | **ESM plugins from CJS config** | `const { HtmlBasePlugin } = await import("@11ty/eleventy")` |
 | **Async callback** | The exported configuration callback may be async; top-level `await` additionally requires an ESM config. |
 | **Browsersync not in core (since v2)** | Use the bundled `@11ty/eleventy-dev-server` via `setServerOptions({...})`; Browsersync is opt-in through `@11ty/eleventy-server-browsersync` |
-| **Image plugin v4+** | `eleventyImageTransformPlugin` from `@11ty/eleventy-img` + `htmlOptions.imgAttributes`; `returnType: "html"` (Image v6+) applies to the Image JS API/shortcodes. Image v7 is ESM-only and requires Node `>=22` (checked 2026-10-21) |
+| **Image plugin v4+** | `eleventyImageTransformPlugin` from `@11ty/eleventy-img`; `htmlOptions.imgAttributes` and `returnType: "html"` need Image v6+ (`returnType` applies to the Image JS API/shortcodes). Image v7 is ESM-only and requires Node `>=22` (checked 2026-10-21) |
 | **WebC / Vue / JSX** | Separate plugins — not in core |
-| **Config discovery** | Eleventy checks `.eleventy.js`, `eleventy.config.js`, `eleventy.config.mjs`, then `eleventy.config.cjs`; the first file found wins and the rest are ignored. |
-| **Node runtime** | Eleventy v3 declares Node `>=18`, but Node 18 and 20 are EOL. Use a supported LTS (Node 24 preferred, Node 22 supported). JSON import attributes still require a compatible runtime. |
+| **Config discovery** | Eleventy v3 checks `.eleventy.js`, `eleventy.config.js`, `eleventy.config.mjs`, then `eleventy.config.cjs`; the first file found wins and the rest are ignored. The v4 prerelease checks `buildawesome.config.*` first; see `build-awesome-v4.md`. |
+| **Node runtime** | Eleventy v3 declares Node `>=18`, but Node 18 and 20 are EOL. Use a supported LTS (Node 26 Active LTS preferred; Node 24 and 22 are maintenance LTS; schedule checked 2026-11-21). JSON import attributes still require a compatible runtime. |
 
 Upgrade path: identify the config file Eleventy actually resolves → remove duplicate configs and Browsersync assumptions → fix sync-only filter assumptions where async is required → update plugin imports.
 
 ## Canonical config skeletons
+
+The `dir` values and passthrough maps in both skeletons come from the example deployment profile; keep the project's own directories.
 
 ### CJS (existing CommonJS project profile)
 
@@ -160,6 +162,53 @@ eleventyConfig.addPlugin(eleventyImageTransformPlugin, {
 });
 ```
 
+### First-party plugins bundled with v3 core
+
+These ship inside `@11ty/eleventy` 3.x and need no extra install; each is opt-in. Built and inspected on Eleventy 3.1.8, 2026-11-21; details in the [plugin docs](https://www.11ty.dev/docs/plugins/).
+
+```js
+// eleventy.config.js — ESM. From a CommonJS config use:
+//   const { RenderPlugin } = await import("@11ty/eleventy");  (inside an async config function)
+import {
+  HtmlBasePlugin,
+  I18nPlugin,
+  IdAttributePlugin,
+  InputPathToUrlTransformPlugin,
+  RenderPlugin,
+} from "@11ty/eleventy";
+
+export default function (eleventyConfig) {
+  eleventyConfig.addPlugin(HtmlBasePlugin);                 // prefixes URLs when built with --pathprefix
+  eleventyConfig.addPlugin(InputPathToUrlTransformPlugin);  // href="about.njk" becomes that page's output URL
+  eleventyConfig.addPlugin(IdAttributePlugin);              // adds id attributes to <h1>–<h6>
+  eleventyConfig.addPlugin(RenderPlugin);                   // renderTemplate / renderFile shortcodes, renderContent filter
+  eleventyConfig.addPlugin(I18nPlugin, { defaultLanguage: "en" }); // locale_url and locale_links filters
+
+  // Bundle plugin: declare each bundle, fill it with {% css %}…{% endcss %}, emit it with {% getBundle "css" %}.
+  eleventyConfig.addBundle("css");
+
+  // Virtual template: the path is relative to the input directory and selects the template language.
+  eleventyConfig.addTemplate("virtual.njk", "<p>{{ label }}</p>", { label: "Virtual", permalink: "/virtual/" });
+
+  // Preprocessor: return false to skip a template, a string to replace its raw content, nothing to leave it unchanged.
+  eleventyConfig.addPreprocessor("drafts", "njk,md", (data) => {
+    if (data.draft && process.env.ELEVENTY_RUN_MODE === "build") return false;
+  });
+}
+```
+
+| Feature | Template usage | Docs |
+|---|---|---|
+| InputPath to URL | `<a href="about.njk">` (transform) or `{{ "about.njk" \| inputPathToUrl }}` (universal filter, no plugin needed) | [inputpath-to-url](https://www.11ty.dev/docs/plugins/inputpath-to-url/) |
+| Id Attribute | Automatic; existing `id` attributes are left alone | [id-attribute](https://www.11ty.dev/docs/plugins/id-attribute/) |
+| Render | `{% renderTemplate "md" %}…{% endrenderTemplate %}`, `{% renderFile "./_includes/post.md" %}` | [render](https://www.11ty.dev/docs/plugins/render/) |
+| i18n | `{{ "/about/" \| locale_url }}`, `{% for link in page.url \| locale_links %}`; content lives in language-code folders such as `en/` and `es/` | [i18n](https://www.11ty.dev/docs/plugins/i18n/) |
+| Bundle | `{% css %}h1 { color: red; }{% endcss %}` in any template, `<style>{% getBundle "css" %}</style>` in the layout | [bundle](https://www.11ty.dev/docs/plugins/bundle/) |
+| Virtual templates | Rendered like files; data comes from the third argument or front matter in the string | [virtual-templates](https://www.11ty.dev/docs/virtual-templates/) |
+| Preprocessors | Run on template files, not layouts, before rendering | [config-preprocessors](https://www.11ty.dev/docs/config-preprocessors/) |
+
+Render-plugin shortcodes are asynchronous and their output bypasses autoescape like any shortcode; render only trusted template source (see `SKILL.md` § Markdown trust).
+
 ### Collections
 
 ```js
@@ -181,6 +230,8 @@ Templates: `collections.all`, `collections.<name>`, `api.getAll()`, `api.getAllS
 | `eleventyComputed` | Runs last; sees full merged cascade |
 
 ## Permalinks and `normalize_path`
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 For nginx `try_files $uri $uri.html`, flat permalinks often use `permalink: /path.html`. Then `page.url` includes `.html`, which breaks naive nav matching. Add the `normalize_path` filter from `filters.md` and compare nav hrefs to `page.url | normalize_path`.
 

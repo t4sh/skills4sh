@@ -1,6 +1,6 @@
 {
   "name": "skills4sh",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "description": "Portable agent skills for any Agent Skills-compatible runtime.",
   "type": "module",
   "packageManager": "npm@12.0.2",
@@ -16,6 +16,7 @@
     "check:pr-skill-audit": "node bin/pr-skill-audit-check.mjs",
     "check:pack": "node bin/pack-check.mjs",
     "check:release": "node bin/release-check.mjs",
+    "check:upstream": "node bin/upstream-check.mjs",
     "setup:hooks": "bash bin/setup-hooks.sh",
     "prepack": "node bin/clean-package-for-publish.mjs prepack",
     "postpack": "node bin/clean-package-for-publish.mjs postpack",

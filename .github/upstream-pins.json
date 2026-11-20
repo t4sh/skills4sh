@@ -1,0 +1,102 @@
+{
+  "_": "Versions the skills and repo tooling pin to upstream releases. bin/upstream-check.mjs checks that each pinned string still appears in the listed files and compares it with the registry tag it tracks (npm dist-tag, default latest; or the PyPI release). Update a pin and its files together. Links under an \"unverifiableLinks\" prefix are cited by the skills but are not requested, because the host refuses automated clients; check them by hand when the skill that cites them changes.",
+  "pins": [
+    {
+      "name": "@11ty/eleventy",
+      "registry": "npm",
+      "pinned": "3.1.8",
+      "files": [
+        "skills/eleventy-nunjucks/SKILL.md",
+        "skills/eleventy-nunjucks/references/build-awesome-v4.md",
+        "tests/fixtures/eleventy/package.json",
+        "CONTRIBUTING.md"
+      ]
+    },
+    {
+      "name": "@awesome.me/buildawesome",
+      "registry": "npm",
+      "tag": "alpha",
+      "pinned": "4.0.0-alpha.12",
+      "files": [
+        "skills/eleventy-nunjucks/SKILL.md",
+        "skills/eleventy-nunjucks/references/build-awesome-v4.md",
+        ".security/eleventy-nunjucks.yaml"
+      ]
+    },
+    {
+      "name": "playwright",
+      "registry": "npm",
+      "pinned": "1.65.1",
+      "files": [
+        "skills/localhost-screenshots/SKILL.md",
+        "skills/localhost-screenshots/references/playwright-patterns.md",
+        "skills/localhost-screenshots/assets/scripts/local-guard.js",
+        ".security/localhost-screenshots.yaml"
+      ]
+    },
+    {
+      "name": "pixelmatch",
+      "registry": "npm",
+      "pinned": "8.0.0",
+      "files": [
+        "skills/localhost-screenshots/SKILL.md",
+        "skills/localhost-screenshots/references/visual-regression.md",
+        "skills/localhost-screenshots/assets/scripts/compare.js",
+        ".security/localhost-screenshots.yaml",
+        "tests/fixtures/visual/package.json"
+      ]
+    },
+    {
+      "name": "pngjs",
+      "registry": "npm",
+      "pinned": "7.0.0",
+      "files": [
+        "skills/localhost-screenshots/SKILL.md",
+        "skills/localhost-screenshots/references/visual-regression.md",
+        ".security/localhost-screenshots.yaml",
+        "tests/fixtures/visual/package.json"
+      ]
+    },
+    {
+      "name": "portless",
+      "registry": "npm",
+      "pinned": "0.18.1",
+      "files": [
+        "skills/localhost-screenshots/references/portless.md"
+      ]
+    },
+    {
+      "name": "@openai/codex",
+      "registry": "npm",
+      "pinned": "0.171.0",
+      "files": [
+        "skills/skill-architect/references/vendor-adapters.md"
+      ]
+    },
+    {
+      "name": "PyYAML",
+      "registry": "pypi",
+      "pinned": "6.0.3",
+      "files": [
+        "skills/skill-architect/assets/scripts/requirements.txt",
+        "skills/skill-architect/SKILL.md",
+        ".security/skill-architect.yaml"
+      ]
+    },
+    {
+      "name": "guardskills",
+      "registry": "npm",
+      "pinned": "1.6.0",
+      "files": [
+        "bin/guardskills-check.mjs",
+        "SECURITY.md"
+      ]
+    }
+  ],
+  "unverifiableLinks": [
+    {
+      "url": "https://support.discord.com/hc/",
+      "reason": "Discord's Help Center answers HTTP 403 to automated clients (observed 2026-11-21)"
+    }
+  ]
+}

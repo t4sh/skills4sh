@@ -9,6 +9,7 @@ references under progressive disclosure.
 from __future__ import annotations
 
 import argparse
+import os
 import posixpath
 import re
 from pathlib import Path
@@ -189,6 +190,9 @@ def progressive_disclosure_warnings(skill_dir: Path, skill_text: str, files: set
 
 def validate(skill_dir: Path) -> list[str]:
     errors: list[str] = []
+    # "." has an empty Path.name; abspath restores the folder name without
+    # following symlinks, so a linked folder keeps its own name.
+    skill_dir = Path(os.path.abspath(skill_dir))
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.exists():
         return ["missing SKILL.md"]
@@ -221,6 +225,8 @@ def validate(skill_dir: Path) -> list[str]:
         errors.append("description should include concrete trigger/use conditions, e.g. 'Capability. Use when ...' or 'Use when ...'")
     elif not has_concrete_trigger_detail(description):
         errors.append("description trigger/use conditions are too generic; include a quoted request phrase, path/file cue, tool cue, named situation, or multi-clause trigger")
+    if isinstance(description, str) and ("<" in description or ">" in description):
+        errors.append("description must not contain angle brackets (< or >); first-party skill validators reject them and some runtimes escape them")
 
     for field, limit in (("compatibility", 500), ("license", None), ("allowed-tools", None)):
         if field in frontmatter:

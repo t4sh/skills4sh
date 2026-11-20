@@ -31,7 +31,7 @@ if (probe.error) {
     what: `Python interpreter not runnable: ${python}`,
     why: probe.error.message,
     fix: [
-      "Install Python 3.10+ and make it available as `python3`, or point at an existing one:",
+      "Install Python 3.10–3.14 and make it available as `python3`, or point at an existing one:",
       "  export SKILL_TEST_PYTHON=/path/to/python3",
     ],
   });
@@ -43,7 +43,8 @@ if (probe.error) {
       : `Python probe failed for ${python}`,
     why: (probe.stderr || probe.stdout || "").trim().split("\n").slice(-1)[0] || "unknown error",
     fix: [
-      "Create the isolated environment the helpers expect:",
+      "Create the isolated environment the helpers expect, with Python 3.10–3.14",
+      "(the pinned PyYAML has no wheel for 3.15; use e.g. `python3.14 -m venv` when `python3` is newer):",
       "  python3 -m venv /tmp/skills4sh-python",
       "  /tmp/skills4sh-python/bin/python -m pip --isolated install --require-hashes --only-binary=:all: -r skills/skill-architect/assets/scripts/requirements.txt",
       "  export SKILL_TEST_PYTHON=/tmp/skills4sh-python/bin/python",

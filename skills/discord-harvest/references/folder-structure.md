@@ -109,6 +109,21 @@ Other people's content: archive only what the user may keep, record authors only
 }
 ```
 
+## Completion Check
+
+Run before the summary report. The harvest is done only when every item holds; otherwise report what is missing instead of claiming completion.
+
+- Every staged asset has exactly one outcome: copied, skipped (byte-identical), or failed. Failures (a status other than 200, a rejected redirect, an expired URL) are listed with redacted URLs.
+- Every `downloads.images[]` and `downloads.files[]` entry names a file that exists in `images/` or `files/`, and every file there has a manifest entry.
+- `links.md` and `manifest.json` hold no message text and no Discord CDN URL with a query string. This command lists offending files and must print nothing (`-l` keeps the signed URLs out of the transcript):
+
+  ```bash
+  grep -lE 'discordapp\.(com|net)/[^[:space:]"]*\?' /absolute/path/to/harvest-folder/links.md /absolute/path/to/harvest-folder/manifest.json
+  ```
+
+- The staged list and any saved API responses are deleted; they hold full signed URLs and message bodies.
+- The report states the scope actually covered (messages and threads scanned) and what was not: private archived threads without `MANAGE_THREADS`, channels the bot cannot view, or received DM content absent from a Data Package.
+
 ## Summary Report Format
 
 Use a portable markdown table in the final report (not an app-specific rich block):

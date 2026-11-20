@@ -8,12 +8,12 @@ Each skill is an [Agent Skills](https://agentskills.io/specification) folder. Th
 
 | Skill | What it helps you do | Version |
 |-------|---------------------|---------|
-| [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 2.8.0 |
-| [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 2.1.0 |
-| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 1.0.0 |
-| [init-rulebook](skills/init-rulebook/) ⭐ | Keep one personal rulebook that every agent loads: only the rules that apply, reloaded after compaction, with action gates read just in time | 1.0.0 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.5.0 |
-| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 1.1.0 |
+| [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 3.0.0 |
+| [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 3.0.0 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 1.1.0 |
+| [init-rulebook](skills/init-rulebook/) ⭐ | Keep one personal rulebook that every agent loads: only the rules that apply, reloaded after compaction, with action gates read just in time | 2.0.0 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 4.0.0 |
+| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 2.0.0 |
 
 ## Start here: init-rulebook
 
@@ -98,7 +98,7 @@ npx skills@latest add 't4sh/skills4sh#<branch>' --skill agent-memory --copy -g -
 
 Use the `#ref` form for branch names that contain `/`, such as `fix/my-change`; a `github.com/.../tree/<branch>` URL treats everything after the first `/` as a path. Reinstall from `t4sh/skills4sh` without a ref to return to released content after the branch merges.
 
-Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`, `openclaw`, or `github-copilot`. The [skills CLI supported-agents table](https://github.com/vercel-labs/skills#supported-agents) lists current `--agent` values and paths. Reload or restart as required by the host.
+Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`, `openclaw`, or `github-copilot`. The [skills CLI supported-agents catalog](https://github.com/vercel-labs/skills/blob/main/docs/agents.md) lists current `--agent` values and paths. Reload or restart as required by the host.
 
 | Runtime | `--agent` | Project root | Global root |
 |---|---|---|---|
@@ -108,7 +108,7 @@ Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`,
 | GitHub Copilot | `github-copilot` | `.agents/skills/` | `~/.copilot/skills/` |
 | Grok | `grok` | `.grok/skills/` | `~/.grok/skills/` |
 | OpenClaw | `openclaw` | `skills/` | `~/.openclaw/skills/` |
-| Generic / shared | host default | `.agents/skills/` | `~/.agents/skills/` |
+| Generic / shared | `universal` | `.agents/skills/` | `~/.config/agents/skills/` |
 
 Codex scans project `.agents/skills/` from the working directory up to the repository root and user `~/.agents/skills/`, and reads each skill's optional `agents/openai.yaml` for its `/skills` display name, short description, and default prompt (checked 2026-10-20 against the [Codex skills guide](https://learn.chatgpt.com/docs/build-skills)).
 

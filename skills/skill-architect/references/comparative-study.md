@@ -9,9 +9,9 @@ Use this reference when comparing skill-development, skill-authoring, skill-edit
 | Source | What it optimizes | Patterns to reuse | Boundary |
 |---|---|---|---|
 | [Agent Skills open specification](https://agentskills.io/specification) | Portable interoperable syntax and folder contract | canonical frontmatter fields, progressive-disclosure directories, validation baseline | Experimental fields such as `allowed-tools` still require runtime and repository support |
-| [Anthropic `Skill Development`](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) (`anthropics/claude-code`) | Claude Code plugin skill structure | trigger-rich descriptions, progressive disclosure, validation checklist, imperative style | Keep Claude plugin paths, commands, and packaging assumptions in adapters |
+| [Anthropic `Skill Development`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev/skills/skill-development) (`anthropics/claude-plugins-official`) | Claude Code plugin skill structure | trigger-rich descriptions, progressive disclosure, validation checklist, imperative style | Keep Claude plugin paths, commands, and packaging assumptions in adapters |
 | [Anthropic `skill-creator`](https://github.com/anthropics/skills/tree/main/skills/skill-creator) (`anthropics/skills`) | skill creation plus iterative evaluation | eval loops, baseline comparisons, trigger optimization, blind comparison, review discipline | Use the quality harness selectively instead of making every skill use a heavyweight process |
-| [OpenAI `skill-creator`](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) (`openai/skills`) | Codex/OpenAI skill creation and interface metadata | concise scaffold guidance, `agents/openai.yaml`, OpenAI UI metadata fields | Keep Codex-specific metadata in adapters and preserve local frontmatter rules |
+| [OpenAI `skill-creator`](https://github.com/openai/codex/tree/main/codex-rs/skills/src/assets/samples/skill-creator) (`openai/codex`) | Codex/OpenAI skill creation and interface metadata | concise scaffold guidance, `agents/openai.yaml`, OpenAI UI metadata fields | Keep Codex-specific metadata in adapters and preserve local frontmatter rules |
 
 The synthesis model is: **open specification for syntax, portable rubric for quality, eval harness for evidence, vendor adapters for runtime details, and local CWD/project/repository conventions for binding distribution rules**.
 
@@ -61,9 +61,9 @@ Before promoting a rule into the portable rubric:
 
 ## Current synthesis
 
-- [Anthropic `Skill Development`](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) is the structural baseline.
+- [Anthropic `Skill Development`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev/skills/skill-development) is the structural baseline.
 - [Anthropic `skill-creator`](https://github.com/anthropics/skills/tree/main/skills/skill-creator) is the evaluation baseline.
-- [OpenAI `skill-creator`](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) is the vendor-adapter baseline and illustrates same-slug collision risk.
+- [OpenAI `skill-creator`](https://github.com/openai/codex/tree/main/codex-rs/skills/src/assets/samples/skill-creator) is the vendor-adapter baseline and illustrates same-slug collision risk.
 - [Matt Pocock `write-a-skill`](https://github.com/mattpocock/skills/blob/383b6a06d59c4ce0ffcb14112bfd91265a86cf91/skills/write-a-skill/SKILL.md) is the lightweight authoring-flow benchmark.
 - [Obra `writing-skills`](https://github.com/obra/superpowers/blob/main/skills/writing-skills/SKILL.md) is the behavior-evidence benchmark.
 - [Obra `writing-plans`](https://github.com/obra/superpowers/blob/main/skills/writing-plans/SKILL.md) and [Matt Pocock `handoff`](https://github.com/mattpocock/skills/blob/main/skills/productivity/handoff/SKILL.md) guide durable handoff artifacts for `plan`, `distill`, and `reconcile` modes.
@@ -74,6 +74,11 @@ Before promoting a rule into the portable rubric:
 ## Source freshness and historical inputs
 
 Rechecked September 13, 2026. These are inspected source revisions, not automatic adoption approvals. A newer repository release does not establish that an individual skill changed. Compare against the local decision history before calling an upstream pattern new.
+
+Location changes found on 2026-11-21; the pinned revisions below still resolve, and the content at the new locations was located, not re-inspected:
+
+- `anthropics/claude-code` no longer contains `plugins/plugin-dev`; its `plugins/README.md` points to [`anthropics/claude-plugins-official`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev/skills/skill-development), where Skill Development now lives.
+- The `openai/skills` README states "This repository is deprecated"; the `skill-creator` bundled with Codex is in [`openai/codex`](https://github.com/openai/codex/tree/main/codex-rs/skills/src/assets/samples/skill-creator).
 
 | Inspected source | Pinned revision |
 |---|---|
@@ -88,4 +93,4 @@ Rechecked September 13, 2026. These are inspected source revisions, not automati
 | `vercel-labs/skills/skills/find-skills/SKILL.md` | [773fb2c7 docs(find-skills): remove redundant check command](https://github.com/vercel-labs/skills/blob/773fb2c7bbf16781670a3520affc4abd0c6151ae/skills/find-skills/SKILL.md) |
 | `microsoft/azure-skills/skills/azure-ai/SKILL.md` | [9cd2049b Sync plugin files from GitHub-Copilot-for-Azure (#177)](https://github.com/microsoft/azure-skills/blob/9cd2049b35a580e5cd6e6a8288aff5c81e34b4d8/skills/azure-ai/SKILL.md) |
 
-Matt Pocock's `write-a-skill` remains a historical input, not a currently maintained dependency. Its pinned source above is from `383b6a06 Moved to ./skills directory`; the current tree no longer contains that skill. Preserve useful lightweight authoring principles without importing its inconsistent line thresholds (100 versus 500) over the local rubric. Antigravity has no concrete inspected source in this comparison: treat it as an adapter category, not evidence for a new rule. References to Obra or standalone Skill Development identify source patterns; they do not require installing or invoking overlapping workflows.
+Matt Pocock's `write-a-skill` remains a historical input, not a currently maintained dependency. Its pinned source above is from `383b6a06 Moved to ./skills directory`; the current tree no longer contains that skill. Preserve useful lightweight authoring principles without importing its inconsistent line thresholds (100 versus 500) over the local rubric. Antigravity has no inspected authoring source in this comparison; its official skills docs were read on 2026-11-21 for discovery roots only ([vendor adapters](vendor-adapters.md#antigravity)). Treat it as an adapter category, not evidence for a new rule. References to Obra or standalone Skill Development identify source patterns; they do not require installing or invoking overlapping workflows.

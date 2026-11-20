@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, mkdtempSync, mkdirSync, writeFileSync, readdirSync, symlinkSync, rmSync, chmodSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import test from 'node:test';
 
 const doc = readFileSync('skills/discord-harvest/references/code-examples.md', 'utf8');
@@ -31,6 +31,15 @@ test('redaction strips query and fragment without changing asset path', () => {
 test('sanitizer handles traversal, Windows names and truncation boundaries', () => {
   for (const [input, expected] of [['../../photo.png', 'photo.png'], ['C:\\dir\\CON.png', '_CON.png'], ['...','unnamed'], ['photo.png...', 'photo.png'], ['a'.repeat(199) + '.suffix', 'a'.repeat(199)]]) {
     assert.equal(run('sanitize_filename "$1"', input).stdout.trim(), expected);
+  }
+});
+test('sanitizer returns names that look like echo options', () => {
+  for (const shell of shells) {
+    for (const name of ['-n', '-e', '-E', '-neE']) {
+      const r = runIn(shell, 'sanitize_filename "$1"', [name]);
+      assert.equal(r.stdout, `${name}\n`, `${shell} lost ${name}`);
+    }
+    assert.equal(runIn(shell, 'sanitize_filename "$1"', ['../../-n']).stdout, '-n\n');
   }
 });
 test('same-size different bytes survive collisions; reruns skip the suffixed asset', () => {
@@ -87,20 +96,61 @@ test('flag_suspicious matches role-hijack words, not substrings', () => {
   }
 });
 
+test('flag_suspicious flags every filename SKILL.md says it detects', () => {
+  const skill = readFileSync('skills/discord-harvest/SKILL.md', 'utf8');
+  const claim = skill.split('\n').find(line => line.includes('Social-engineering filenames'));
+  assert.ok(claim && /flag_suspicious\(\)/.test(claim), 'SKILL.md no longer states the detection claim');
+  const examples = [...claim.split('`flag_suspicious()`')[0].matchAll(/`([^`]+)`/g)].map(m => m[1]);
+  assert.deepEqual(examples, ['override-claude.exe', 'system-prompt.txt', 'ignore-previous-instructions.png']);
+  for (const shell of shells) {
+    for (const name of examples) {
+      const r = runIn(shell, 'flag_suspicious "$1"', [name]);
+      assert.equal(r.status, 0, `${shell} did not flag ${name}`);
+      assert.match(r.stdout, /^(injection|suspicious):[a-z-]+\n$/);
+    }
+  }
+});
+
+test('flag_suspicious flags executable extensions by final extension only', () => {
+  for (const shell of shells) {
+    for (const name of ['override-claude.exe', 'photo.png.EXE', 'setup.msi. ', 'invoice.pdf.scr', 'install.sh', 'update.ps1']) {
+      assert.equal(runIn(shell, 'flag_suspicious "$1"', [name]).stdout, 'suspicious:executable\n', `${shell}: ${name}`);
+    }
+    // Final extension decides; link-preview titles ending in .com/.js/.app stay unflagged.
+    for (const name of ['notes.exe.txt', 'report.pdf', 'example.com', 'Node.js', 'photo.png', 'shell-tips.md']) {
+      assert.equal(runIn(shell, 'flag_suspicious "$1"', [name]).status, 1, `${shell} flagged ${name}`);
+    }
+    // An earlier, more specific flag keeps priority over the extension flag.
+    assert.equal(runIn(shell, 'flag_suspicious "$1"', ['IMPORTANT_run_this.exe']).stdout, 'suspicious:attention-hijack\n');
+  }
+});
+
+// BSD mktemp (macOS) ignores TMPDIR when called without a template, so tests that inspect
+// the helpers' temp files route the real mktemp to a directory they own.
+function writeMktempShim(bin, directory) {
+  const real = spawnSync('sh', ['-c', 'command -v mktemp'], { encoding: 'utf8' }).stdout.trim();
+  writeFileSync(join(bin, 'mktemp'), `#!/bin/sh\nexec "${real}" "${directory}/tmp.XXXXXXXXXX"\n`);
+  chmodSync(join(bin, 'mktemp'), 0o755);
+}
+
 function withStubCurl(fn) {
   const root = mkdtempSync(join(tmpdir(), 'discord-download-'));
   try {
     const bin = join(root, 'bin'); mkdirSync(bin);
     const log = join(root, 'curl-args.log');
-    // Stub curl: log each argument on its own line, write fixed bytes to the -o target.
+    // Stub curl: log each argument on its own line, write fixed bytes to the -o target, and
+    // answer -w as an HTTP 200 with no redirect. It is a stand-in for argument-handling tests
+    // only; status handling is tested against real curl in the local-HTTPS tests below.
     writeFileSync(join(bin, 'curl'), `#!/bin/sh
 out=""
+fmt=""
 for a in "$@"; do printf '%s\\n' "$a" >> "$CURL_LOG"; done
 while [ $# -gt 0 ]; do
-  case "$1" in -o) out="$2"; shift ;; -H) case "$2" in @*) cat "\${2#@}" >> "$CURL_LOG.headers" ;; esac; shift ;; esac
+  case "$1" in -o) out="$2"; shift ;; -w) fmt="$2"; shift ;; -D|--dump-header) shift ;; -H) case "$2" in @*) cat "\${2#@}" >> "$CURL_LOG.headers" ;; esac; shift ;; esac
   shift
 done
 [ -n "$out" ] && printf 'stub-bytes' > "$out"
+[ -n "$fmt" ] && printf '%s' "$fmt" | sed -e 's/%{http_code}/200/' -e 's/%{redirect_url}//'
 exit 0
 `);
     chmodSync(join(bin, 'curl'), 0o755);
@@ -151,5 +201,256 @@ test('bot API helper keeps the token off the command line', () => {
       const missing = runIn(shell, 'discord_api "$1"', ['/x'], { cwd: work, env: { ...env, DISCORD_BOT_TOKEN: '' } });
       assert.equal(missing.status, 1);
     });
+  }
+});
+
+// --- Status handling against real curl -------------------------------------------------
+// A throwaway local HTTPS server answers with fixed statuses. A PATH shim runs the real curl
+// binary with every connection pinned to that server and its one-off certificate, so the
+// helpers see genuine curl exit codes, -w output, and redirect reporting. Nothing here
+// contacts Discord, and it proves nothing about Discord's own responses.
+const stubServerSource = `
+import https from 'node:https';
+import { readFileSync, appendFileSync } from 'node:fs';
+const [,, keyPath, certPath, logPath] = process.argv;
+const routes = {
+  '/ok.png': [200, {}, 'REAL-BYTES'],
+  '/to-media': [302, { location: 'https://media.discordapp.net/ok.png?ex=aa&hm=SIGNED' }, ''],
+  '/to-relative': [307, { location: '/ok.png' }, ''],
+  '/to-evil': [302, { location: 'https://evil.example/ok.png' }, ''],
+  '/to-evil-with-body': [302, { location: 'https://evil.example/ok.png' }, 'REDIRECT-BODY'],
+  '/to-http': [301, { location: 'http://cdn.discordapp.com/ok.png' }, ''],
+  '/to-private': [302, { location: 'https://127.0.0.1/ok.png' }, ''],
+  '/to-redirect': [302, { location: 'https://cdn.discordapp.com/to-media' }, ''],
+  '/missing.png': [404, {}, 'not found'],
+  '/limited.png': [429, { 'retry-after': '2' }, 'slow down'],
+  '/no-content': [204, {}, ''],
+  '/api/v10/ok': [200, {}, '[{"id":"1"}]'],
+  '/api/v10/unauthorized': [401, {}, '{"message":"401: Unauthorized","code":0}'],
+  '/api/v10/forbidden': [403, {}, '{"message":"Missing Access","code":50001}'],
+  '/api/v10/unknown': [404, {}, '{"message":"Unknown Channel","code":10003}'],
+  '/api/v10/limited': [429, { 'Retry-After': '7' }, '{"message":"You are being rate limited.","retry_after":6.57,"global":false}'],
+  '/api/v10/moved': [302, { location: 'https://discord.com/api/v10/ok' }, ''],
+};
+const server = https.createServer({ key: readFileSync(keyPath), cert: readFileSync(certPath) }, (req, res) => {
+  const path = req.url.split('?')[0];
+  const scheme = (req.headers.authorization || '').split(' ')[0];
+  appendFileSync(logPath, JSON.stringify({ host: req.headers.host, path, scheme, userAgent: req.headers['user-agent'] }) + '\\n');
+  const [status, headers, body] = routes[path] || [404, {}, 'no route'];
+  res.writeHead(status, headers);
+  res.end(body);
+});
+server.listen(0, '127.0.0.1', () => console.log(server.address().port));
+`;
+
+function which(command) {
+  const r = spawnSync('sh', ['-c', 'command -v "$1"', 'sh', command], { encoding: 'utf8' });
+  return r.status === 0 ? r.stdout.trim() : null;
+}
+
+async function withLocalHttps(t, fn) {
+  const realCurl = which('curl');
+  const openssl = which('openssl');
+  if (!realCurl || !openssl) return t.skip('needs curl and openssl on PATH');
+  const root = mkdtempSync(join(tmpdir(), 'discord-https-'));
+  let server;
+  try {
+    const key = join(root, 'key.pem'); const cert = join(root, 'cert.pem'); const config = join(root, 'openssl.cnf');
+    writeFileSync(config, '[req]\ndistinguished_name=dn\nx509_extensions=ext\nprompt=no\n[dn]\nCN=discord-harvest-test-stub\n[ext]\nbasicConstraints=CA:TRUE\nsubjectAltName=DNS:cdn.discordapp.com,DNS:media.discordapp.net,DNS:discord.com\n');
+    const made = spawnSync(openssl, ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '2', '-config', config, '-keyout', key, '-out', cert], { encoding: 'utf8' });
+    if (made.status !== 0) return t.skip('openssl could not create a test certificate');
+    const requests = join(root, 'requests.log'); writeFileSync(requests, '');
+    writeFileSync(join(root, 'server.mjs'), stubServerSource);
+    server = spawn(process.execPath, [join(root, 'server.mjs'), key, cert, requests], { stdio: ['ignore', 'pipe', 'inherit'] });
+    const port = await new Promise((resolve, reject) => {
+      server.stdout.once('data', chunk => resolve(String(chunk).trim()));
+      server.once('exit', code => reject(new Error(`stub server exited early (${code})`)));
+    });
+    const bin = join(root, 'bin'); mkdirSync(bin);
+    const argv = join(root, 'curl-args.log'); writeFileSync(argv, '');
+    // Shim: the real curl, pinned to the stub. The helpers always pass --disable first.
+    writeFileSync(join(bin, 'curl'), `#!/bin/sh
+first="$1"; shift
+for a in "$first" "$@"; do printf '%s\\n' "$a" >> "$CURL_LOG"; done
+exec "$REAL_CURL" "$first" --noproxy '*' --connect-to "::127.0.0.1:$STUB_PORT" --cacert "$STUB_CA" "$@"
+`);
+    chmodSync(join(bin, 'curl'), 0o755);
+    const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, REAL_CURL: realCurl, STUB_PORT: port, STUB_CA: cert, CURL_LOG: argv };
+    for (const name of ['HTTPS_PROXY', 'https_proxy', 'ALL_PROXY', 'all_proxy']) delete env[name];
+    const seen = () => readFileSync(requests, 'utf8').split('\n').filter(Boolean).map(line => JSON.parse(line));
+    await fn({ root, env, argv, seen });
+  } finally {
+    if (server) server.kill();
+    rmSync(root, { recursive: true, force: true });
+  }
+}
+
+test('download_asset archives only an HTTP 200 body (real curl, local HTTPS stub)', async (t) => {
+  await withLocalHttps(t, async ({ root, env, seen }) => {
+    for (const [index, shell] of shells.entries()) {
+      const out = join(root, `images-${index}`); mkdirSync(out);
+      const download = (path, name) => runIn(shell, 'download_asset "$1" "$2" "$3"', [`https://cdn.discordapp.com${path}`, out, name], { cwd: root, env });
+      const before = seen().length;
+
+      const ok = download('/ok.png', 'ok.png');
+      assert.equal(ok.status, 0, ok.stderr);
+      assert.equal(readFileSync(join(out, 'ok.png'), 'utf8'), 'REAL-BYTES');
+
+      // Non-200 responses, including bodiless and bodied redirects, archive nothing.
+      for (const [path, name, reason] of [
+        ['/to-evil', 'evil.png', /SKIP: untrusted URL domain/],
+        ['/to-evil-with-body', 'evil-body.png', /SKIP: untrusted URL domain/],
+        ['/to-http', 'http.png', /SKIP: non-HTTPS URL blocked/],
+        ['/to-private', 'private.png', /SKIP: private\/local URL blocked/],
+        ['/to-redirect', 'twice.png', /HTTP 302, not 200/],
+        ['/missing.png', 'missing.png', /HTTP 404, not 200/],
+        ['/limited.png', 'limited.png', /HTTP 429, not 200/],
+        ['/no-content', 'empty.png', /HTTP 204, not 200/],
+      ]) {
+        const r = download(path, name);
+        assert.equal(r.status, 1, `${shell} treated ${path} as a successful download`);
+        assert.match(r.stderr, reason, `${shell} ${path}`);
+        assert.equal(r.stdout, '', `${shell} reported a copy for ${path}`);
+      }
+
+      // A redirect to an allowlisted host is re-validated, then fetched once.
+      const media = download('/to-media', 'media.png');
+      assert.equal(media.status, 0, media.stderr);
+      assert.equal(readFileSync(join(out, 'media.png'), 'utf8'), 'REAL-BYTES');
+      assert.doesNotMatch(media.stdout + media.stderr, /SIGNED|hm=/, 'redirect target query leaked');
+      const relative = download('/to-relative', 'relative.png');
+      assert.equal(relative.status, 0, relative.stderr);
+
+      assert.deepEqual(readdirSync(out).sort(), ['media.png', 'ok.png', 'relative.png']);
+      const requests = seen().slice(before);
+      // Rejected redirect targets are never requested; a second redirect is never followed.
+      assert.deepEqual(requests.filter(r => !['cdn.discordapp.com', 'media.discordapp.net'].includes(r.host)), []);
+      assert.equal(requests.filter(r => r.path === '/ok.png' && r.host === 'media.discordapp.net').length, 1);
+      assert.equal(requests.filter(r => r.path === '/to-media').length, 2, 'one direct hit and one as the unfollowed second hop');
+    }
+  });
+});
+
+test('download_staged reports non-200 assets as failures without leaking signed queries', async (t) => {
+  await withLocalHttps(t, async ({ root, env }) => {
+    for (const [index, shell] of shells.entries()) {
+      const harvest = join(root, `harvest-${index}`); mkdirSync(join(harvest, 'images'), { recursive: true });
+      const list = join(root, `staged-${index}.tsv`);
+      writeFileSync(list, [
+        'images\thttps://cdn.discordapp.com/ok.png?ex=aa&hm=SIGNED\tgood.png',
+        'images\thttps://cdn.discordapp.com/to-evil?ex=aa&hm=SIGNED\tredirected.png',
+        'images\thttps://cdn.discordapp.com/missing.png?ex=aa&hm=SIGNED\tgone.png',
+      ].join('\n') + '\n');
+      const r = runIn(shell, 'download_staged "$1" "$2"', [list, harvest], { cwd: root, env });
+      assert.equal(r.status, 1);
+      assert.deepEqual(readdirSync(join(harvest, 'images')), ['good.png']);
+      assert.match(r.stderr, /FAILED: https:\/\/cdn\.discordapp\.com\/to-evil\n/);
+      assert.match(r.stderr, /FAILED: https:\/\/cdn\.discordapp\.com\/missing\.png\n/);
+      assert.doesNotMatch(r.stdout + r.stderr, /SIGNED|hm=|ex=/);
+    }
+  });
+});
+
+test('discord_api reports status and Retry-After, and always sends the Bot scheme (real curl, local HTTPS stub)', async (t) => {
+  await withLocalHttps(t, async ({ root, env, argv, seen }) => {
+    const token = 'SYNTHETIC_BOT_TOKEN_NOT_REAL';
+    for (const shell of shells) {
+      const api = route => runIn(shell, 'discord_api "$1"', [route], { cwd: root, env: { ...env, DISCORD_BOT_TOKEN: token } });
+      const ok = api('/ok');
+      assert.equal(ok.status, 0, ok.stderr);
+      assert.equal(ok.stdout, '[{"id":"1"}]');
+      for (const [route, status] of [['/unauthorized', 401], ['/forbidden', 403], ['/unknown', 404], ['/moved', 302]]) {
+        const r = api(route);
+        assert.equal(r.status, 1, `${shell} ${route}`);
+        assert.equal(r.stdout, '', `${shell} printed a non-200 body for ${route}`);
+        assert.match(r.stderr, new RegExp(`discord_api: HTTP ${status}\\n`));
+        assert.doesNotMatch(r.stderr, /retry after/);
+      }
+      const limited = api('/limited');
+      assert.equal(limited.status, 1);
+      assert.equal(limited.stdout, '');
+      assert.match(limited.stderr, /discord_api: HTTP 429\ndiscord_api: retry after 7 seconds\n/);
+      assert.doesNotMatch([ok, limited].map(r => r.stdout + r.stderr).join(''), new RegExp(token));
+    }
+    assert.doesNotMatch(readFileSync(argv, 'utf8'), new RegExp(token), 'token reached the curl command line');
+    const requests = seen();
+    assert.equal(requests.length, shells.length * 6);
+    assert.ok(requests.every(r => r.host === 'discord.com' && r.scheme === 'Bot'), 'a request left the Bot scheme or host');
+    // Discord's reference requires this form; a request without it may be blocked.
+    assert.ok(requests.every(r => /^DiscordBot \(https:\/\/\S+, \S+\)$/.test(r.userAgent)), 'an API request lacked the DiscordBot User-Agent');
+    const custom = runIn(shells[0], 'discord_api "$1"', ['/ok'], { cwd: root, env: { ...env, DISCORD_BOT_TOKEN: token, DISCORD_USER_AGENT: 'DiscordBot (https://example.test/my-bot, 3.2)' } });
+    assert.equal(custom.status, 0, custom.stderr);
+    assert.equal(seen().at(-1).userAgent, 'DiscordBot (https://example.test/my-bot, 3.2)');
+    assert.equal(requests.filter(r => r.path === '/api/v10/ok').length, shells.length, 'an API redirect was followed');
+
+    const temp = join(root, 'curl-temp'); mkdirSync(temp);
+    const interruptedBin = join(root, 'interrupted-bin'); mkdirSync(interruptedBin);
+    const interruptedCurl = join(interruptedBin, 'curl');
+    writeFileSync(interruptedCurl, '#!/bin/sh\n"$BASE_CURL" "$@"\nstatus=$?\n[ "$status" -eq 0 ] && exit 18\nexit "$status"\n');
+    chmodSync(interruptedCurl, 0o755);
+    writeMktempShim(interruptedBin, temp);
+    for (const shell of shells) {
+      const envWithInterruptedCurl = {
+        ...env,
+        PATH: `${interruptedBin}:${env.PATH}`,
+        BASE_CURL: join(root, 'bin', 'curl'),
+        TMPDIR: temp,
+        DISCORD_BOT_TOKEN: token,
+      };
+      const before = readdirSync(temp);
+      assert.equal(runIn(shell, 'mktemp', [], { cwd: root, env: envWithInterruptedCurl }).stdout.startsWith(temp), true, 'the temp-file guard is not watching the directory mktemp writes to');
+      for (const name of readdirSync(temp)) rmSync(join(temp, name));
+      const partial = runIn(shell, 'discord_api "$1"', ['/ok'], { cwd: root, env: envWithInterruptedCurl });
+      assert.equal(partial.status, 1, 'curl exit 18 must fail even after it reports HTTP 200');
+      assert.equal(partial.stdout, '', 'a partial response body must never be parsed');
+      assert.match(partial.stderr, /curl transport failure \(exit 18\)/);
+      assert.deepEqual(readdirSync(temp), before, 'all private API temporary files must be removed');
+    }
+  });
+});
+
+// An interrupted request must not leave the private header file, which holds the bot token,
+// in the temp directory. The stand-in curl only blocks until it is signalled; the signal goes
+// to the whole process group, as Ctrl-C or a harness timeout would send it.
+test('discord_api removes its private temp files when interrupted', async () => {
+  const token = 'SYNTHETIC_BOT_TOKEN_NOT_REAL';
+  for (const shell of shells) {
+    for (const signal of ['SIGINT', 'SIGTERM']) {
+      const root = mkdtempSync(join(tmpdir(), 'discord-interrupt-'));
+      try {
+        const bin = join(root, 'bin'); mkdirSync(bin);
+        const temp = join(root, 'temp'); mkdirSync(temp);
+        const started = join(root, 'curl-started');
+        writeFileSync(join(bin, 'curl'), `#!/bin/sh\n: > "$CURL_STARTED"\nexec sleep 30\n`);
+        chmodSync(join(bin, 'curl'), 0o755);
+        writeMktempShim(bin, temp);
+        const child = spawn(shell, ['-c', `${functions}\ndiscord_api "$1"`, 'fixture', '/slow'], {
+          cwd: root, detached: true, stdio: 'ignore',
+          env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, TMPDIR: temp, CURL_STARTED: started, DISCORD_BOT_TOKEN: token },
+        });
+        const exited = new Promise((resolve) => child.on('exit', (code, sig) => resolve({ code, sig })));
+        const deadline = Date.now() + 10000;
+        while (!existsSync(started)) {
+          assert.ok(Date.now() < deadline, `${shell}: the stand-in curl never started`);
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        // Guard: the token file really is on disk while the request is in flight.
+        const inFlight = readdirSync(temp);
+        assert.equal(inFlight.length, 3, `${shell}: expected three private temp files in flight`);
+        assert.ok(inFlight.some((name) => readFileSync(join(temp, name), 'utf8') === `Authorization: Bot ${token}\n`));
+        process.kill(-child.pid, signal);
+        const { code, sig } = await exited;
+        // The outer shell is in the signalled group too, so it may report the helper's exit
+        // status or die by the signal itself; either way it must not report success.
+        assert.ok(code !== 0 || sig !== null, `${shell} ${signal}: the interrupted request reported success`);
+        // The helper's subshell runs its cleanup trap as it exits, which can be just after
+        // the outer shell is gone: wait for the directory to empty rather than assuming order.
+        const cleanupDeadline = Date.now() + 5000;
+        while (readdirSync(temp).length > 0 && Date.now() < cleanupDeadline) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        assert.deepEqual(readdirSync(temp), [], `${shell} ${signal}: private temp files survived the interrupt`);
+      } finally { rmSync(root, { recursive: true, force: true }); }
+    }
   }
 });

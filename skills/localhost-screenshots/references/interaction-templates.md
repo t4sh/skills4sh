@@ -1,5 +1,20 @@
 # Interaction Templates — Full Reference
 
+Use this common setup with each template. Open the first URL with `gotoLocal` so the navigation guard remains active through clicks, form submissions, and reloads. Pass the requested viewport when taking a sized capture.
+
+```js
+const { chromium } = require('playwright');
+const fs = require('node:fs');
+const path = require('node:path');
+const { gotoLocal, captureVerifiedPng } = require('<skill-dir>/assets/scripts/local-guard.js');
+
+async function saveScreenshot(page, file, viewport = page.viewportSize()) {
+  const { png } = await captureVerifiedPng(page, viewport, { fullPage: true });
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, png);
+}
+```
+
 ## Core Interaction Primitives
 
 ```js
@@ -21,7 +36,7 @@ await page.uncheck('#newsletter');
 
 // Hover (for tooltips, dropdowns)
 await page.hover('.user-avatar');
-await page.screenshot({ path: '_screenshots/tooltip-visible.png' });
+await saveScreenshot(page, '_screenshots/tooltip-visible.png');
 
 // Scroll to element before capture
 await page.locator('.footer-section').scrollIntoViewIfNeeded();
@@ -38,9 +53,6 @@ await page.waitForURL('**/dashboard');
 ## Template 1: Auth → Dashboard → Screenshot
 
 ```js
-const { chromium } = require('playwright');
-const fs = require('fs');
-
 (async () => {
   const browser = await chromium.launch();
   try {
@@ -49,7 +61,7 @@ const fs = require('fs');
 
     // Step 1: Login — credentials come from the environment, never hardcoded.
     // Set DEMO_USER / DEMO_PASS before running, or wire to a secrets manager.
-    await page.goto('http://localhost:3000/login');
+    await gotoLocal(page, 'http://localhost:3000/login');
     await page.fill('#email',    process.env.DEMO_USER || 'demo@example.com');
     await page.fill('#password', process.env.DEMO_PASS || '');
     await page.click('button[type="submit"]');
@@ -65,16 +77,11 @@ const fs = require('fs');
       { name: 'desktop', width: 1280, height: 800 },
     ];
 
-    fs.mkdirSync('_screenshots/settings', { recursive: true });
     // Exception to the canonical "new page per breakpoint" rule: this flow keeps one
     // authenticated page so login/session state survives across breakpoint captures.
     for (const bp of BREAKPOINTS) {
       await page.setViewportSize({ width: bp.width, height: bp.height });
-      await new Promise((r) => setTimeout(r, 300)); // let layout reflow
-      await page.screenshot({
-        path: `_screenshots/settings/${bp.name}-${bp.width}x${bp.height}.png`,
-        fullPage: true,
-      });
+      await saveScreenshot(page, `_screenshots/settings/${bp.name}-${bp.width}x${bp.height}.png`, bp);
     }
   } finally {
     await browser.close();
@@ -89,29 +96,27 @@ const fs = require('fs');
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    const fs = require('fs');
 
-    fs.mkdirSync('_screenshots/checkout-flow', { recursive: true });
 
     // Browse products
-    await page.goto('http://localhost:3000/products');
+    await gotoLocal(page, 'http://localhost:3000/products');
     await page.waitForSelector('.product-card');
-    await page.screenshot({ path: '_screenshots/checkout-flow/01-products.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/checkout-flow/01-products.png');
 
     // Add to cart
     await page.click('.product-card:first-child button.add-to-cart');
     await page.waitForSelector('.cart-badge');
-    await page.screenshot({ path: '_screenshots/checkout-flow/02-added-to-cart.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/checkout-flow/02-added-to-cart.png');
 
     // Open cart
     await page.click('.cart-icon');
     await page.waitForSelector('.cart-drawer');
-    await page.screenshot({ path: '_screenshots/checkout-flow/03-cart-open.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/checkout-flow/03-cart-open.png');
 
     // Proceed to checkout
     await page.click('button.checkout');
     await page.waitForURL('**/checkout');
-    await page.screenshot({ path: '_screenshots/checkout-flow/04-checkout.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/checkout-flow/04-checkout.png');
   } finally {
     await browser.close();
   }
@@ -125,16 +130,14 @@ const fs = require('fs');
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    const fs = require('fs');
 
-    fs.mkdirSync('_screenshots/states', { recursive: true });
 
-    await page.goto('http://localhost:3000/dashboard');
+    await gotoLocal(page, 'http://localhost:3000/dashboard');
 
     // Empty state
     await page.evaluate(() => localStorage.setItem('tasks', '[]'));
     await page.reload({ waitUntil: 'load' });
-    await page.screenshot({ path: '_screenshots/states/empty.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/states/empty.png');
 
     // Populated state
     await page.evaluate(() => {
@@ -144,7 +147,7 @@ const fs = require('fs');
       ]));
     });
     await page.reload({ waitUntil: 'load' });
-    await page.screenshot({ path: '_screenshots/states/populated.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/states/populated.png');
 
     // Error state — intercept API.
     // Route interception is a screenshotting/test tool. Use it to capture rare states;
@@ -153,7 +156,7 @@ const fs = require('fs');
       route.fulfill({ status: 500, body: 'Internal Server Error' })
     );
     await page.reload({ waitUntil: 'load' });
-    await page.screenshot({ path: '_screenshots/states/error.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/states/error.png');
   } finally {
     await browser.close();
   }
@@ -165,27 +168,25 @@ const fs = require('fs');
 Keep the browser alive for iterative debugging:
 
 ```js
-const { chromium } = require('playwright');
-
 (async () => {
   const browser = await chromium.launch({ headless: false }); // visible browser
   try {
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    await page.goto('http://localhost:3000');
+    await gotoLocal(page, 'http://localhost:3000');
     console.log('Browser ready. Page:', page.url());
 
     // Inspect
     const title = await page.title();
-    console.log('Title:', title);
+    console.log(JSON.stringify({ boundary: 'untrusted-page-content', source: page.url(), title }));
 
     // Interact
     await page.click('nav a:first-child');
     await page.waitForLoadState('load');
 
     // Capture
-    await page.screenshot({ path: '_screenshots/interactive-01.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/interactive-01.png');
 
     // Inspect again
     const ariaSnapshot = await page.locator('body').ariaSnapshot();
@@ -201,7 +202,7 @@ const { chromium } = require('playwright');
     await page.waitForSelector('.search-results');
 
     // Capture the result
-    await page.screenshot({ path: '_screenshots/interactive-02.png', fullPage: true });
+    await saveScreenshot(page, '_screenshots/interactive-02.png');
   } finally {
     await browser.close();
   }

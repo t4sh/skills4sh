@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { runPrSkillAuditCheck } from '../bin/pr-skill-audit-check.mjs';
 
 const env = { ...process.env, PYTHONDONTWRITEBYTECODE: '1' };
 const scripts = 'skills/skill-architect/assets/scripts';
@@ -109,6 +110,14 @@ test('skill-architect documents the portable isolated validation runner ladder',
   assert.match(runtime, /only after both isolated runner paths are unavailable or fail/i);
   assert.match(runtime, /Do not use `python -I`/);
   assert.match(runtime, /ignores `PYTHONDONTWRITEBYTECODE`/);
+  // Text check only: the pinned PyYAML has no wheel above CPython 3.14, so an
+  // unbounded ">=3.10" claim for validation/inspection is false.
+  for (const [label, text] of [['SKILL.md', skill], ['helper-runtime.md', runtime], ['scenarios.json execution', evals.execution]]) {
+    assert.match(text, /3\.10[–-]3\.14/, `${label} must state the supported interpreter range`);
+    assert.doesNotMatch(text, /(?:Validation and inspection|validator\/inspector)[^.]*>=3\.10/, `${label} must not claim an unbounded range for validation`);
+  }
+  assert.match(runtime, /run --python 3\.14 --isolated --no-project --no-build --no-config/);
+  assert.match(runtime, /python3\.14 -E -m venv "\$VALIDATION_VENV"/);
   assert.match(evals.execution, /run_uv\.py with run --isolated --no-project --no-build --no-config --with-requirements python -E -B/);
   assert.match(evals.execution, /pip --isolated/);
   assert.match(evals.execution, /Never install validation dependencies into global Python/);
@@ -118,6 +127,41 @@ test('skill-architect documents the portable isolated validation runner ladder',
     evals.cases.find((c) => c.id === 'create').prompt,
     /Do not install project or global dependencies/,
   );
+});
+
+test('skill-architect entrypoint keeps its contract: guard rails first, one procedure, per-mode steps, done conditions', () => {
+  const skill = readFileSync('skills/skill-architect/SKILL.md', 'utf8');
+  const body = skill.replace(/^---\n[\s\S]*?\n---\n/, '');
+  const rubric = readFileSync('skills/skill-architect/references/house-rubric.md', 'utf8');
+  const modes = ['plan', 'create', 'audit', 'fix', 'refactor', 'compare', 'distill', 'reconcile', 'teach'];
+
+  // Non-negotiables and the reference table come first so they survive hosts
+  // that keep only the start of a skill after compaction.
+  const headings = [...body.matchAll(/^## (.+)$/gm)].map((m) => m[1]);
+  assert.deepEqual(headings, ['Non-negotiables', 'Reference files', 'Command modes', 'Procedure', 'Helper scripts']);
+  const words = (body.trim().match(/\b\S+\b/g) ?? []).length;
+  assert.ok(words <= 2000, `SKILL.md body has ${words} words; the normal workflow band ends at 2,000`);
+
+  const steps = [...body.matchAll(/^\| (\d) \| ([^|]+) \| (.+) \| ([^|]+) \|$/gm)];
+  assert.deepEqual(steps.map((m) => Number(m[1])), [1, 2, 3, 4, 5, 6, 7, 8]);
+  for (const [, number, , , done] of steps) assert.ok(done.trim().length > 20, `step ${number} needs a done condition`);
+
+  for (const mode of modes) {
+    const row = body.match(new RegExp(`^\\| \`skill-architect: ${mode}\` \\| [^|]+ \\| ([^|]+) \\|`, 'm'));
+    assert.ok(row, `mode table is missing ${mode}`);
+    const listed = row[1].split(',').flatMap((part) => {
+      const [from, to = from] = part.trim().split('-').map(Number);
+      return Array.from({ length: to - from + 1 }, (_, i) => from + i);
+    });
+    assert.ok(listed.length > 0 && listed.every((n) => n >= 1 && n <= 8), `${mode} lists steps outside 1-8: ${row[1]}`);
+    assert.equal(listed[0], 1, `${mode} must start by classifying the request`);
+    // Mode rules and done conditions live once, in the rubric the mode table links.
+    const rubricRows = rubric.match(new RegExp(`^\\| \`${mode}\` \\|.+\\|$`, 'gm')) ?? [];
+    assert.equal(rubricRows.length, 2, `${mode} needs one rule row and one done-condition row in house-rubric.md`);
+  }
+  assert.match(body, /\(references\/house-rubric\.md#command-mode-rubric\)/);
+  assert.match(body, /\(references\/house-rubric\.md#done-conditions\)/);
+  assert.doesNotMatch(rubric, /\| Workflow step \| Done when \|/, 'step done conditions belong to the procedure table in SKILL.md only');
 });
 
 test('skill-architect temporary venv runner ignores host pip and PYTHONPATH config', () => {
@@ -324,6 +368,7 @@ for (const [label, slug, frontmatter, expected] of [
   ['malformed YAML', 'fixture', `name: fixture\n${validDescription}\nmetadata: [unclosed`, /invalid YAML/],
   ['duplicate key', 'fixture', `name: fixture\n${validDescription}\nname: fixture`, /duplicate YAML key/],
   ['typed description', 'fixture', 'name: fixture\ndescription: [review, files]', /description must be a non-empty string/],
+  ['angle-bracket description', 'fixture', 'name: fixture\ndescription: \'Use when paths include "skills/<name>/SKILL.md".\'', /description must not contain angle brackets/],
   ['long description', 'fixture', `name: fixture\ndescription: ${'a'.repeat(1025)}`, /at most 1024/],
   ['long compatibility', 'fixture', `name: fixture\n${validDescription}\ncompatibility: ${'x'.repeat(501)}`, /at most 500/],
   ['typed metadata', 'fixture', `name: fixture\n${validDescription}\nmetadata:\n  version: 1`, /metadata must map/],
@@ -441,6 +486,59 @@ test('skill-architect scaffold writes --author and an optional Codex openai.yaml
 
   const validate = runPython([`${scripts}/validate_skill.py`, skillDir]);
   assert.match(validate.stdout, /✓ skill validation passed/);
+});
+
+test('validator and fixer derive the skill name from "." instead of an empty path name', () => {
+  const root = mkdtempSync(join(tmpdir(), 'skill-architect-dot-'));
+  const skillDir = join(root, 'dot-skill');
+  writeSkill(skillDir, 'dot-skill', 'Review dot paths. Use when editing SKILL.md files.');
+  const original = readFileSync(join(skillDir, 'SKILL.md'), 'utf8');
+  const fixScript = resolve(scripts, 'fix_skill.py');
+
+  const validate = runPython([validateScript, '.'], { cwd: skillDir });
+  assert.match(validate.stdout, /✓ skill validation passed/);
+  for (const flags of [[], ['--write']]) {
+    const fix = runPython([fixScript, '.', ...flags], { cwd: skillDir });
+    assert.match(fix.stdout, /✓ no deterministic fixes available/);
+    assert.equal(readFileSync(join(skillDir, 'SKILL.md'), 'utf8'), original);
+  }
+
+  writeSkill(skillDir, 'Dot Skill', 'Review dot paths. Use when editing SKILL.md files.');
+  const write = runPython([fixScript, '.', '--write'], { cwd: skillDir });
+  assert.match(write.stdout, /normalize frontmatter name 'Dot Skill' -> 'dot-skill'/);
+  assert.match(readFileSync(join(skillDir, 'SKILL.md'), 'utf8'), /^name: dot-skill$/m);
+});
+
+test('scaffold quotes --tags so YAML-significant characters survive as one string', () => {
+  const root = mkdtempSync(join(tmpdir(), 'skill-architect-tags-'));
+  const tags = 'ops: deploy, c#, on-call #urgent, "quoted"';
+  runPython([`${scripts}/scaffold_skill.py`, 'Tag Skill', '--path', root, '--tags', tags]);
+  const skillDir = join(root, 'tag-skill');
+  const validate = runPython([validateScript, skillDir]);
+  assert.match(validate.stdout, /✓ skill validation passed/);
+  const parsed = runPython(['-c', [
+    'import sys, yaml',
+    'text = open(sys.argv[1], encoding="utf-8").read()',
+    'print(yaml.safe_load(text.split("---")[1])["metadata"]["tags"])',
+  ].join('\n'), join(skillDir, 'SKILL.md')]);
+  assert.equal(parsed.stdout.trim(), tags);
+});
+
+test('review packet template yields a PR body the skill-audit check accepts', () => {
+  const methodology = readFileSync('skills/skill-architect/references/eval-methodology.md', 'utf8');
+  const template = methodology.match(/## Review packet template[\s\S]*?```markdown\n([\s\S]*?)```/)[1];
+  const changedFiles = ['skills/demo/SKILL.md'];
+
+  const unchecked = runPrSkillAuditCheck({ body: template, changedFiles });
+  assert.equal(unchecked.required, true);
+  assert.deepEqual(unchecked.errors, [
+    'missing checked attestation: standard-derived checklist before patch',
+    'missing checked attestation: evidence table before edits',
+    'missing checked attestation: mechanical grep/checks for objective rules',
+  ]);
+
+  const filled = runPrSkillAuditCheck({ body: template.replaceAll('- [ ]', '- [x]'), changedFiles });
+  assert.deepEqual(filled.errors, []);
 });
 
 test('documented -E -B helper runs leave no __pycache__ in the skill scripts folder', () => {

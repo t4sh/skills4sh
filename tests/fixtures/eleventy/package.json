@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@11ty/eleventy": "3.1.6",
+    "@11ty/eleventy": "3.1.8",
     "nunjucks": "3.2.4",
     "markdown-it": "14.1.0",
     "tailwindcss": "4.3.3"

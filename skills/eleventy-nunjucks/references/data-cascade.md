@@ -14,9 +14,11 @@ Worked examples of Eleventy's seven-source cascade. Read when a variable is miss
 | 4 | Directory data files | `<dir>/<dir>.json` or `<dir>.11tydata.js`, then ascending parents | Templates below each directory |
 | 5 | Layout frontmatter | Frontmatter in an Eleventy `layout:` file | Templates using the layout |
 | 6 | Config global data | `eleventyConfig.addGlobalData(key, fn)` | All templates |
-| 7 | Global data files | `src/_data/*.{json,js,cjs}` | All templates |
+| 7 | Global data files | `src/_data/*.{json,js,cjs,mjs}` | All templates |
 
 Eleventy-supplied data such as `page`, `collections`, `eleventy`, and `pkg` is available to templates, but is not an additional priority row in this seven-source list.
+
+**Module format:** the JavaScript data-file samples below are CommonJS. In an ESM project (`"type": "module"` or `.mjs` data files) write `export default { … }` or `export default function () { … }` instead of `module.exports = …`, and replace `require("./x.json")` with `import x from "./x.json" with { type: "json" };`. Verified on Eleventy 3.1.8 with Node 22, 2026-11-21.
 
 ## Worked example 1 — building a per-page `canonicalUrl`
 
@@ -222,15 +224,15 @@ pagination:
   data: collections.post
   size: 1
   alias: post
-permalink: "/blog/{{ post.slug }}/"
+permalink: "/blog/{{ post.fileSlug }}/"
 ---
 <article>
-  <h1>{{ post.title }}</h1>
+  <h1>{{ post.data.title }}</h1>
   {{ post.content | safe }}
 </article>
 ```
 
-Generates one output file per item in the collection. Useful for detail pages from a JSON source.
+Generates one output file per item in the collection. Collection items expose `url`, `fileSlug`, `date`, `content`, and `data`; front-matter keys such as `title` live under `post.data`, so `post.title` and `post.slug` are undefined: every page then targets `/blog/` and the build stops with an output conflict. Each item's own template still writes its own page, so give the fan-out a different URL from the items' own permalinks. For detail pages from a JSON source, paginate the data file as shown next.
 
 ### Paginating over data files
 
@@ -275,3 +277,5 @@ For specific levels:
 | `eleventyComputed` value is `[object Object]` | Returning an object from a string-typed Nunjucks expression | Use a JS function: `eleventyComputed: { x: (data) => ({…}) }` |
 | Directory data not applying | File named `<dir>-data.json` instead of `<dir>.json` | Match the dir basename exactly: `blog/blog.json` |
 | `layout:` frontmatter not honored | A higher-priority template or directory data source overrides layout frontmatter/global data | Trace each source in the official priority order |
+| Layout shows the wrong `title` (or other key) | Template front matter beats layout front matter; among chained layouts, the layout closest to the content wins over its parents | Check the page front matter, then each layout from the page outward; set the value at the highest-priority source that should own it |
+| Value set with `{% set title = … %}` in a page is missing in its layout | The page body renders first and its template variables are not data; only `content` is passed up to the layout | Move the value to front matter, a data file, or `eleventyComputed` |

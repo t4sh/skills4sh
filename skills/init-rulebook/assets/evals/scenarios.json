@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "purpose": "Reusable init-rulebook behavioral fixtures for all six modes, path and inventory failures, action timing, and simulated compaction. Assertions are expected behavior, not passing run evidence.",
-  "execution": "Use a fresh isolated case directory and agent context for each case. Materialize files exactly as supplied and provide the absolute case directory as the fixture working directory. home/ is a virtual home only when the case says so: do not change HOME, CODEX_HOME, or any real host configuration. host.json, installation.json, and prior-context.json are synthetic evidence, not live runtime state. Supply only the skill, relevant fixture inputs, and prompt to the executor; withhold assertions and retrieval labels. Allow writes only where the prompt explicitly authorizes fixture paths. No live credentials, external network, Git mutations, installs, publication, or real startup/compaction actions. Record file reads, before/after bytes, result, and untested capabilities separately. For routing, expose only frontmatter and prompt texts. Grade each case against all assertions; catalogs and schema/materialization checks alone do not prove behavior.",
+  "purpose": "Reusable init-rulebook behavioral fixtures for all six modes, path and inventory failures, read completeness, hook gates, action timing, and simulated compaction. Assertions are expected behavior, not passing run evidence.",
+  "execution": "Use a fresh isolated case directory and agent context for each case. Materialize files exactly as supplied and provide the absolute case directory as the fixture working directory. home/ is a virtual home only when the case says so: do not change HOME, CODEX_HOME, or any real host configuration. host.json, installation.json, session.json, prior-context.json, and release/state.json are synthetic evidence, not live runtime state. Supply only the skill, relevant fixture inputs, and prompt to the executor; withhold assertions and retrieval labels. Allow writes only where the prompt explicitly authorizes fixture paths. No live credentials, external network, Git mutations, installs, publication, or real startup/compaction actions. Record file reads, before/after bytes, result, and untested capabilities separately. For routing, expose only frontmatter and prompt texts. Grade each case against all assertions; catalogs and schema/materialization checks alone do not prove behavior.",
   "cases": [
     {
       "id": "setup-default",
@@ -124,10 +124,126 @@
       },
       "assertions": [
         "Resolves ruleset/AGENTS.md and inventories all four indexed rule paths.",
-        "Treats the complete core text explicitly supplied by the host in current context as loaded without rereading ruleset/rules/core.md; this does not apply after compaction.",
+        "Treats the complete core text explicitly supplied by the host in current context as loaded without rereading ruleset/rules/core.md; after compaction only text the host re-supplies in full counts, never this earlier import or a summary of it.",
         "Reads docs.md completely because its conditional trigger matches; leaves ops.md and publish.md contents unread.",
         "Cites the core marker CORE-NATIVE-COMPLETE from the supplied text; reporting CORE-FILE-COMPLETE indicates an unnecessary reread of ruleset/rules/core.md.",
         "Reports native-context use as simulated fixture behavior, not a live host-import verification."
+      ]
+    },
+    {
+      "id": "load-truncated-read",
+      "kind": "workflow",
+      "prompt": "Earlier in this uncompacted session, init-rulebook began loading ruleset/AGENTS.md for an API documentation task; session.json records what each read returned. Publishing is planned later. Finish the load, then report which files now count as read completely and why. Inspect only this fixture.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nAsk before deleting files.\n\nEnd-of-file marker: CORE-TAIL-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nDefine every parameter.\n\nEnd-of-file marker: DOCS-TAIL-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "session.json": "{\n  \"compacted\": false,\n  \"selected_index\": \"ruleset/AGENTS.md\",\n  \"task\": \"API documentation\",\n  \"reads_in_current_context\": [\n    {\n      \"path\": \"ruleset/AGENTS.md\",\n      \"returned\": \"entire file\",\n      \"truncation_notice\": false\n    },\n    {\n      \"path\": \"ruleset/rules/core.md\",\n      \"returned\": \"first page only, lines 1-2\",\n      \"truncation_notice\": true\n    },\n    {\n      \"path\": \"ruleset/rules/docs.md\",\n      \"returned\": \"search matches for the word examples\",\n      \"truncation_notice\": false\n    }\n  ]\n}\n"
+      },
+      "assertions": [
+        "Treats the first-page read of ruleset/rules/core.md as incomplete; reads the file through its last line and cites CORE-TAIL-COMPLETE.",
+        "Does not count the search-result view of ruleset/rules/docs.md as a read; reads the whole file and cites DOCS-TAIL-COMPLETE.",
+        "Does not report a complete load on the strength of session.json alone; reading ruleset/AGENTS.md again is permitted.",
+        "Leaves ops.md and publish.md content unread, changes no fixture byte, and reports the read log as simulated evidence, not a live host truncation test."
+      ]
+    },
+    {
+      "id": "load-native-import-unexpanded",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. In this simulation, the host's startup instruction file contains the lines `@ruleset/rules/core.md` and `@ruleset/rules/docs.md`. The host did not expand the first line: no core text is in this context. For the second it supplied only this, labeled ruleset/rules/docs.md: `# Documentation\nUse runnable examples when requested.\n[import truncated]`. Current task is API documentation; publishing is planned later. Report inventory, selected and deferred rules, and which files you actually read.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\nEnd-of-file marker: CORE-FILE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\nDefine every parameter.\nEnd-of-file marker: DOCS-FILE-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\"runtime\":\"generic-agent\",\"unexpanded_import_lines\":[\"@ruleset/rules/core.md\"],\"truncated_imports\":[\"ruleset/rules/docs.md\"],\"complete_text_supplied\":false}\n"
+      },
+      "assertions": [
+        "Resolves ruleset/AGENTS.md and inventories all four indexed rule paths.",
+        "Does not count the unexpanded @ruleset/rules/core.md line as a native import; reads ruleset/rules/core.md completely and cites CORE-FILE-COMPLETE.",
+        "Does not count the truncated docs import; reads ruleset/rules/docs.md completely and cites DOCS-FILE-COMPLETE.",
+        "Leaves ops.md and publish.md contents unread and changes no fixture byte.",
+        "Reports the import state as simulated fixture behavior, not a live host-import verification."
+      ]
+    },
+    {
+      "id": "load-native-import-index",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. In this simulation, the host explicitly natively imports the complete current content of ruleset/AGENTS.md, labeled with that path, and provides it in this context between the markers.\n--- ruleset/AGENTS.md ---\n# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n\nEnd-of-file marker: INDEX-NATIVE-COMPLETE.\n--- end ---\nNo rule text was imported. Current task is API documentation; publishing is planned later. Report inventory and selected/deferred rules, and which files you actually read.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n\nEnd-of-file marker: INDEX-FILE-COMPLETE.\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\"runtime\":\"generic-agent\",\"native_imports_current_context\":[\"ruleset/AGENTS.md\"],\"complete_text_supplied\":true}\n"
+      },
+      "assertions": [
+        "Counts the complete, path-labeled index text supplied in current context as read without rereading ruleset/AGENTS.md, by the same completeness test as a rule.",
+        "Cites the index marker INDEX-NATIVE-COMPLETE from the supplied text; reporting INDEX-FILE-COMPLETE indicates an unnecessary reread of ruleset/AGENTS.md.",
+        "Still inventories all four indexed rule paths by listing, and reads core.md and docs.md from disk completely because no rule text was supplied.",
+        "Leaves ops.md and publish.md contents unread; reports native-context use as simulated fixture behavior, not a live host-import verification."
+      ]
+    },
+    {
+      "id": "load-hook-gated-host",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. host.json describes this host's rulebook-loading hook: it blocks every tool except file reads until the load is acknowledged with the command it supplies. This is a simulation: do not execute the acknowledgement command; state the exact command you would run and the point at which you would run it. Current task is API documentation; publishing is planned later. Report the files you read.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\n  \"runtime\": \"generic-agent\",\n  \"load_gate\": {\n    \"blocks\": \"every tool except file reads\",\n    \"until\": \"the load is acknowledged\",\n    \"acknowledge_command\": \"host-rulebook-ack --session fixture-session\",\n    \"requires\": \"complete tool reads of the index and of every rule the index selects for the current task\"\n  }\n}\n"
+      },
+      "assertions": [
+        "Reads ruleset/AGENTS.md, core.md and docs.md completely, citing CORE-COMPLETE and DOCS-COMPLETE, before stating that the acknowledgement would run.",
+        "Quotes the host-supplied command exactly as host.json writes it; invents no alternative acknowledgement, flag, or shortcut, and attempts no gated tool or workaround first.",
+        "Leaves ops.md and publish.md content unread; the hook and the index agree on what is required, so no disagreement is reported.",
+        "Changes no fixture byte and reports the hook as simulated, not a live host gate test."
+      ]
+    },
+    {
+      "id": "load-hook-gate-early-read",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. host.json describes this host's rulebook-loading hook: it blocks every tool except file reads until the load is acknowledged with the command it supplies, and it lists the reads it requires. This is a simulation: do not execute the acknowledgement command; state the exact command you would run and the point at which you would run it. Current task is API documentation; publishing is planned later. Report the files you read.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "host.json": "{\n  \"runtime\": \"generic-agent\",\n  \"load_gate\": {\n    \"blocks\": \"every tool except file reads\",\n    \"until\": \"the load is acknowledged\",\n    \"acknowledge_command\": \"host-rulebook-ack --session fixture-session\",\n    \"required_reads\": [\n      \"ruleset/AGENTS.md\",\n      \"ruleset/rules/core.md\",\n      \"ruleset/rules/docs.md\",\n      \"ruleset/rules/publish.md\"\n    ]\n  }\n}\n"
+      },
+      "assertions": [
+        "Reads ruleset/AGENTS.md, core.md, docs.md and publish.md completely before stating that the acknowledgement would run: the gate's required reads win for reading.",
+        "States that publish.md, read early for the gate, is not in force until the publishing operation begins, and would be reread before publishing only if the context is compacted in between.",
+        "Does not refuse the gate or treat the early read as a blocking disagreement; quotes the host-supplied acknowledgement command exactly as host.json writes it.",
+        "Leaves ops.md content unread, changes no fixture byte, and reports the hook as simulated, not a live host gate test."
+      ]
+    },
+    {
+      "id": "load-hook-gate-disagreement",
+      "kind": "workflow",
+      "prompt": "init-rulebook: load with index ruleset/AGENTS.md. host.json describes this host's rulebook-loading hook: it blocks every tool except file reads until the load is acknowledged with the command it supplies, and it names the rulebook it expects. This is a simulation: do not execute the acknowledgement command; state the exact command you would run and the point at which you would run it. Current task is API documentation; publishing is planned later. Report the files you read.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\n",
+        "legacy/AGENTS.md": "# Legacy rules\nRetired rulebook. Use tabs for indentation.\n",
+        "host.json": "{\n  \"runtime\": \"generic-agent\",\n  \"load_gate\": {\n    \"blocks\": \"every tool except file reads\",\n    \"until\": \"the load is acknowledged\",\n    \"acknowledge_command\": \"host-rulebook-ack --session fixture-session\",\n    \"rulebook_index\": \"legacy/AGENTS.md\",\n    \"required_reads\": [\n      \"legacy/AGENTS.md\"\n    ]\n  }\n}\n"
+      },
+      "assertions": [
+        "Reports that the hook names legacy/AGENTS.md as the rulebook while the selected index is ruleset/AGENTS.md: a disagreement beyond read timing.",
+        "Loads ruleset/AGENTS.md, core.md and docs.md completely as the selected rulebook; reading legacy/AGENTS.md because the gate requires it is permitted, but applying it as the rulebook or silently switching the selected index is not.",
+        "Does not fabricate an acknowledgement or present the gate as satisfied without reporting the disagreement; edits no fixture file.",
+        "Leaves ops.md and publish.md content unread and reports the hook as simulated, not a live host gate test."
       ]
     },
     {
@@ -260,6 +376,28 @@
         "Keeps publishing deferred and avoids old-path fallback.",
         "Reports a simulated recovery only, not a real host compaction integration test.",
         "Does not read ruleset/rules/ops.md or ruleset/rules/publish.md content: production operations do not match this task and publishing is a future gate. Enumerating their paths for inventory is permitted."
+      ]
+    },
+    {
+      "id": "compaction-mid-operation",
+      "kind": "workflow",
+      "prompt": "Context was compacted while the publishing operation was in progress. Rehydrate using host/startup.md. prior-context.json is the pre-compaction summary, not current rule content; release/state.json is the current on-disk state of the operation. Report the files freshly read and the next step you would take. Do not actually publish, upload, announce, or run Git commands.",
+      "files": {
+        "ruleset/AGENTS.md": "# Personal rules\n\nEnumerate every top-level rules/*.md beside this index and compare those files with the links below. Read complete selected files.\n\n## Always on\n- [Core](rules/core.md)\n\n## Activate for documentation work\n- [Docs](rules/docs.md)\n\n## Activate for production operations\n- [Ops](rules/ops.md)\n\n## Action-gated: immediately before publishing\n- [Publish](rules/publish.md)\n",
+        "ruleset/rules/core.md": "# Core\nKeep edits within the requested task.\n\nEnd-of-file marker: CORE-COMPLETE.\n",
+        "ruleset/rules/docs.md": "# Documentation\nUse runnable examples when requested.\n\nEnd-of-file marker: DOCS-COMPLETE.\n",
+        "ruleset/rules/ops.md": "# Production operations\nVerify the deployment target before production work.\n",
+        "ruleset/rules/publish.md": "# Publishing\nBefore publishing, verify the approved release artifact.\nUpload each artifact once; never upload it again.\n\nEnd-of-file marker: PUBLISH-COMPLETE.\n",
+        "host/startup.md": "Invoke init-rulebook with index ../ruleset/AGENTS.md at session start and after compaction.\n",
+        "prior-context.json": "{\n  \"resolved_index\": \"ruleset/AGENTS.md\",\n  \"operation_in_progress\": \"publishing\",\n  \"summary\": \"The publish rule was read before compaction; its marker was PUBLISH-OLD. The artifact was verified. Next step: upload the artifact, then announce the release.\"\n}\n",
+        "release/state.json": "{\n  \"artifact_verified\": true,\n  \"artifact_uploaded\": true,\n  \"announcement_sent\": false\n}\n"
+      },
+      "assertions": [
+        "Re-resolves the active pointer and rereads the index and core.md completely instead of relying on the summary.",
+        "Rereads ruleset/rules/publish.md completely before continuing the in-progress publishing operation and cites PUBLISH-COMPLETE, not the stale PUBLISH-OLD.",
+        "Uses release/state.json to establish that verification and upload are complete; names the announcement as the only remaining step and does not repeat the upload the stale summary lists as next.",
+        "Leaves docs.md and ops.md content unread; performs no publication, upload, announcement, Git operation, or fixture edit.",
+        "Reports a simulated recovery only, not a real host compaction integration test."
       ]
     },
     {
@@ -513,6 +651,18 @@
           "load": true
         },
         {
+          "text": "Point my agent at the rulebook I keep in my dotfiles repo.",
+          "load": true
+        },
+        {
+          "text": "Make my global instructions and user rules load in every agent I use.",
+          "load": true
+        },
+        {
+          "text": "Keep a rulebook in this project's policies folder and load it at session start for this project only.",
+          "load": true
+        },
+        {
           "text": "Fine-tune a language model on training data.",
           "load": false
         },
@@ -530,6 +680,22 @@
         },
         {
           "text": "Add a CLAUDE.md pointer for this repo.",
+          "load": false
+        },
+        {
+          "text": "Symlink my zsh and git config from my dotfiles repo.",
+          "load": false
+        },
+        {
+          "text": "Write an AGENTS.md for this repository describing its build and test commands.",
+          "load": false
+        },
+        {
+          "text": "Add a Cursor rule to this repo for our React conventions.",
+          "load": false
+        },
+        {
+          "text": "Edit this project's CLAUDE.md to document the release process.",
           "load": false
         }
       ],

@@ -118,14 +118,51 @@ test('documented escaping snippet uses stock Nunjucks and escapes untrusted valu
   assert.match(output, /<p>Authored<\/p>/);
 });
 
-test('async callback rendering completes with asyncEach', async () => {
+test('async callback rendering completes in a plain for loop and with asyncEach', async () => {
   const env = new nunjucks.Environment();
   env.addFilter('titleFor', (url, titles, callback) => setImmediate(() => callback(null, titles[url])), true);
-  const template = firstAfter(doc('references/nunjucks-syntax.md'), '### Async iteration', 'nunjucks');
-  const html = await new Promise((resolve, reject) => env.renderString(template,
-    { items: [{url:'a'}, {url:'b'}], titleCache: {a:'Alpha', b:'Beta'} },
-    (error, result) => error ? reject(error) : resolve(result)));
-  assert.match(html, /Alpha[\s\S]*Beta/);
+  const text = doc('references/nunjucks-syntax.md');
+  const [plainLoop, asyncLoop] = blocks(text.slice(text.indexOf('### Async iteration')), 'nunjucks');
+  assert.match(plainLoop, /\{% for item in items %\}/);
+  assert.match(asyncLoop, /\{% asyncEach item in items %\}/);
+  for (const template of [plainLoop, asyncLoop]) {
+    const html = await new Promise((resolve, reject) => env.renderString(template,
+      { items: [{url:'a'}, {url:'b'}], titleCache: {a:'Alpha', b:'Beta'} },
+      (error, result) => error ? reject(error) : resolve(result)));
+    assert.match(html, /Alpha[\s\S]*Beta/);
+  }
+});
+
+test('Eleventy renders async filters in a plain loop and captures them with setAsync', async t => {
+  const text = doc('references/nunjucks-syntax.md');
+  const loop = firstAfter(text, '### Async iteration', 'nunjucks');
+  const capture = firstAfter(text, '### Async capture', 'nunjucks');
+  assert.match(capture, /\{% setAsync "/);
+  const [output] = await render(t, {
+    'index.njk': `---\nitems: [{url: a}, {url: b}]\ntitleCache: {a: Alpha, b: Beta}\n---\n${loop}\n${capture}`,
+  }, `c.addAsyncFilter('titleFor', async (url, titles = {}) => { await new Promise(done => setImmediate(done)); return titles[url] ?? url; });`);
+  assert.match(output.content, /<li>Alpha<\/li>\s*<li>Beta<\/li>/);
+  assert.match(output.content, /<h1>Alpha<\/h1>/);
+  assert.doesNotMatch(output.content, /\[object/);
+});
+
+test('block set and macro bodies do not render async filter output on Nunjucks 3', () => {
+  // Child processes: the block-set case also raises an uncaught TypeError after rendering.
+  const run = template => spawnSync(process.execPath, ['-e', `
+    const nunjucks = require(${JSON.stringify(require.resolve('nunjucks'))});
+    const env = new nunjucks.Environment();
+    env.addFilter('titleFor', (url, titles, callback) => setImmediate(() => callback(null, titles[url])), true);
+    env.renderString(${JSON.stringify(template)}, { titleCache: { a: 'Alpha' } },
+      (error, result) => process.stdout.write(error ? 'ERROR' : result));
+  `], { encoding: 'utf8' });
+  const inline = run('{% set t = "a" | titleFor(titleCache) %}[{{ t }}]');
+  assert.equal(inline.status, 0, inline.stderr);
+  assert.equal(inline.stdout, '[Alpha]');
+  const block = run('{% set t %}{{ "a" | titleFor(titleCache) }}{% endset %}[{{ t }}]');
+  assert.doesNotMatch(block.stdout, /Alpha/);
+  assert.notEqual(block.status, 0);
+  const macro = run('{% macro m(u) %}{{ u | titleFor(titleCache) }}{% endmacro %}[{{ m("a") }}]');
+  assert.equal(macro.stdout, '[]');
 });
 
 test('filter recipes retain equal-key order, handle null members, and preserve input', () => {
@@ -144,6 +181,178 @@ test('script JSON recipes prevent HTML breakout and preserve data', () => {
     assert.equal(filters.get(name)(undefined),'null');
     assert.throws(()=>filters.get(name)(1n));
   }
+});
+
+test('formatFullDate accepts Date, YYYY-MM-DD, and ISO datetime input without a time-zone day shift', t => {
+  const filters = new Map();
+  // Share the host Date so `instanceof Date` inside the snippet sees host-realm dates.
+  vm.runInNewContext(firstAfter(doc('references/filters.md'), '### `formatFullDate`', 'js'),
+    { Date, eleventyConfig: { addFilter(name, fn) { filters.set(name, fn); } } });
+  const format = filters.get('formatFullDate');
+  const originalZone = process.env.TZ;
+  t.after(() => { if (originalZone === undefined) delete process.env.TZ; else process.env.TZ = originalZone; });
+  for (const zone of ['UTC', 'America/Los_Angeles', 'Pacific/Kiritimati']) {
+    process.env.TZ = zone;
+    // Guard: the zone switch must be live, or the loop proves nothing.
+    assert.equal(new Date('2026-05-11T00:00:00.000Z').getDate(), zone === 'America/Los_Angeles' ? 10 : 11, zone);
+    assert.equal(format(new Date('2026-05-11T00:00:00.000Z')), 'May 11, 2026', zone); // Eleventy front-matter date
+    assert.equal(format('2026-05-11'), 'May 11, 2026', zone);
+    assert.equal(format('2026-05-11T00:00:00.000Z'), 'May 11, 2026', zone);
+    assert.equal(format('2026-12-31T23:59:59-08:00'), 'December 31, 2026', zone);
+  }
+  assert.equal(format('2024-02-29'), 'February 29, 2024');
+  for (const invalid of [null, undefined, '', 'not a date', '2026-13-01', '2026-02-29',
+    '2024-04-31T10:00:00Z', '2026-12-01draft', '2026-12-01T12:65:00Z', new Date(NaN)]) {
+    assert.equal(format(invalid), '', String(invalid));
+  }
+});
+
+test('formatDate and duration read Date and YYYY-MM input and return an empty string for unreadable input', () => {
+  const filters = new Map();
+  const context = { Date, eleventyConfig: { addFilter(name, fn) { filters.set(name, fn); } } };
+  vm.runInNewContext(firstAfter(doc('references/filters.md'), '### `formatDate`', 'js'), context);
+  vm.runInNewContext(firstAfter(doc('references/filters.md'), '### `duration`', 'js'), context);
+  const formatDate = filters.get('formatDate'), duration = filters.get('duration');
+
+  assert.equal(formatDate('2026-05'), 'May 2026');
+  assert.equal(formatDate('2026-05-11'), 'May 2026');
+  assert.equal(formatDate(new Date('2026-05-11T00:00:00.000Z')), 'May 2026');
+  for (const absent of [null, undefined, '']) assert.equal(formatDate(absent), 'Present');
+  for (const unreadable of ['not a date', '2026-13', '2026-00', '2026', '202605', new Date(NaN), 7]) {
+    assert.equal(formatDate(unreadable), '', String(unreadable));
+  }
+
+  assert.equal(duration('2022-03', '2024-06'), '2 yrs 3 mos');
+  assert.equal(duration('2024-01', '2024-01'), '< 1 mo');
+  assert.equal(duration('2024-06', '2022-03'), '< 1 mo');
+  assert.equal(duration(new Date('2022-03-15T00:00:00.000Z'), new Date('2024-06-01T00:00:00.000Z')), '2 yrs 3 mos');
+  assert.match(duration('2000-01', null), /^\d+ yrs?( \d+ mos?)?$/);
+  for (const [start, end] of [[null, '2024-06'], ['not a date', '2024-06'], ['2022-03', 'soon'], ['2022-13', '2024-06'], [new Date(NaN), '2024-06']]) {
+    assert.equal(duration(start, end), '', `${String(start)} to ${String(end)}`);
+  }
+});
+
+test('paired shortcode recipe escapes arguments interpolated into markup', () => {
+  const shortcodes = new Map();
+  const add = (name, fn) => shortcodes.set(name, fn);
+  vm.runInNewContext(firstAfter(doc('references/filters.md'), '## Shortcodes vs filters', 'js'),
+    { eleventyConfig: { addFilter() {}, addShortcode: add, addPairedShortcode: add } });
+  const callout = shortcodes.get('callout');
+  assert.equal(callout('Heads up', 'warn'), '<aside class="callout callout-warn">Heads up</aside>');
+  assert.equal(callout('Heads up', { type: 'warn' }), '<aside class="callout callout-warn">Heads up</aside>');
+  const injected = callout('text', 'x" onclick="alert(1)');
+  assert.doesNotMatch(injected, /" onclick="/);
+  assert.match(injected, /^<aside class="[^"]*">text<\/aside>$/);
+});
+
+test('fan-out pagination sample writes one distinct page per collection item', async t => {
+  const outputs = await render(t, {
+    'fan.njk': firstAfter(doc('references/data-cascade.md'), '### One template per item', 'yaml'),
+    'posts/first.md': '---\ntitle: First Post\ntags: post\n---\nBody one\n',
+    'posts/second.md': '---\ntitle: Second Post\ntags: post\n---\nBody two\n',
+  });
+  const pages = outputs.filter(output => output.inputPath.endsWith('fan.njk'));
+  assert.deepEqual(pages.map(page => page.url).sort(), ['/blog/first/', '/blog/second/']);
+  assert.match(pages.find(page => page.url === '/blog/first/').content, /<h1>First Post<\/h1>[\s\S]*Body one/);
+});
+
+test('sitemap sample skips permalink:false items instead of repeating the root URL', async t => {
+  const filters = doc('references/filters.md');
+  const outputs = await render(t, {
+    'sitemap.xml.njk': firstAfter(doc('references/production-patterns.md'), '### sitemap.xml', 'nunjucks'),
+    '_data/site.json': '{"baseUrl":"https://example.com"}',
+    'index.njk': '---\ndate: 2026-05-11\n---\nHome',
+    'about.njk': '---\ndate: 2026-05-12\n---\nAbout',
+    'hidden.njk': '---\npermalink: false\ndate: 2026-05-13\n---\nData only',
+  }, `const eleventyConfig = c;
+    ${firstAfter(filters, '## Path filter', 'js')}
+    ${firstAfter(filters, '### \`sitemapDate\`', 'js')}`);
+  const sitemap = outputs.find(output => output.url === '/sitemap.xml').content;
+  assert.deepEqual([...sitemap.matchAll(/<loc>([^<]*)<\/loc>/g)].map(match => match[1]).sort(),
+    ['https://example.com/', 'https://example.com/about']);
+  assert.match(sitemap, /<lastmod>2026-05-11<\/lastmod>/);
+});
+
+test('agent-facing Markdown recipe writes Markdown, not layout-wrapped HTML', async t => {
+  const outputs = await render(t, {
+    'products.md': firstAfter(doc('references/review-shipping.md'), '### Agent-facing `.md` page', 'markdown'),
+    '_includes/layouts/base.njk': '<html><body>{{ content | safe }}</body></html>',
+  }, `c.addShortcode('year', () => '2026');`);
+  const page = outputs.find(output => output.url === '/products.md');
+  assert.match(page.content, /^# Products$/m);
+  assert.match(page.content, /2026/);
+  assert.doesNotMatch(page.content, /<h1|<html|<p>/);
+});
+
+test('template XSS triage greps flag unquoted attributes, URL attributes, and inline handlers only', t => {
+  const text = doc('references/security-checklist.md');
+  const unquoted = firstAfter(text, 'No unquoted attribute values', 'bash');
+  const urls = firstAfter(text, 'URL attributes carry only vetted schemes', 'bash');
+  const handlers = firstAfter(text, 'No template output inside inline event handlers', 'bash');
+  const environments = firstAfter(text, '**Autoescape is on.**', 'bash').replace('.eleventy.js eleventy.config.*', 'eleventy.config.mjs');
+  const root = fixture(t);
+  file(root, 'src/attr-loose.njk', '<div class={{ kind }}>x</div>\n<span class=badge-{{ kind }}>y</span>\n');
+  file(root, 'src/attr-quoted.njk', '<div class="{{ kind }}">x</div>\n<p>{{ a }} = {{ b }}</p>\n{{ ui.button("Go", variant="ghost") }}\n');
+  file(root, 'src/url-dynamic.njk', '<a href="{{ link.href }}">x</a>\n<img src=\'{{ photo }}\' alt="">\n');
+  file(root, 'src/url-static.njk', '<a href="/pricing/">{{ label }}</a>\n');
+  file(root, 'src/handler.njk', '<button type="button" onclick="go(\'{{ slug }}\')">Go</button>\n');
+  file(root, 'eleventy.config.mjs', 'export default c => { c.setLibrary("njk", new nunjucks.Environment(loader, { autoescape: false })); };\n');
+  const run = block => spawnSync('bash', ['-c', block], { cwd: root, encoding: 'utf8' });
+  const loose = run(unquoted);
+  assert.equal(loose.stderr, '');
+  assert.match(loose.stdout, /attr-loose\.njk:1:/);
+  assert.match(loose.stdout, /attr-loose\.njk:2:/);
+  assert.doesNotMatch(loose.stdout, /attr-quoted\.njk|url-dynamic\.njk|url-static\.njk|handler\.njk/);
+  const dynamic = run(urls);
+  assert.equal(dynamic.stderr, '');
+  assert.match(dynamic.stdout, /url-dynamic\.njk:1:/);
+  assert.match(dynamic.stdout, /url-dynamic\.njk:2:/);
+  assert.doesNotMatch(dynamic.stdout, /url-static\.njk|attr-quoted\.njk|attr-loose\.njk|handler\.njk/);
+  const inline = run(handlers);
+  assert.equal(inline.stderr, '');
+  assert.match(inline.stdout, /handler\.njk:1:/);
+  assert.doesNotMatch(inline.stdout, /url-|attr-/);
+  const custom = run(environments);
+  assert.equal(custom.stderr, '');
+  assert.match(custom.stdout, /^1:.*setLibrary\("njk"/);
+});
+
+test('example deployment profile is bannered and not routed from the core table or rules', () => {
+  const skill = doc('SKILL.md');
+  const core = skill.slice(skill.indexOf('### Core references'), skill.indexOf('### Example deployment profile'));
+  const profile = skill.slice(skill.indexOf('### Example deployment profile'), skill.indexOf('## Behavioral evaluations'));
+  const rules = skill.slice(skill.indexOf('## Non-negotiable rules'), skill.indexOf('## Data cascade'));
+  const procedure = skill.slice(skill.indexOf('## Operating procedure'), skill.indexOf('## Mental model'));
+  for (const name of ['build-pipeline.md', 'production-patterns.md']) {
+    assert.ok(!core.includes(name) && !procedure.includes(name), `${name} routed by default`);
+    assert.ok(profile.includes(`(references/${name})`), `${name} missing from profile table`);
+    assert.match(doc(`references/${name}`), /^# [^\n]+\n\n> \*\*Example deployment profile\.\*\* This file /);
+  }
+  assert.doesNotMatch(rules + procedure + skill.slice(skill.indexOf('## Mental model'), skill.indexOf('## Non-negotiable rules')),
+    /nginx|\*\*CSP:\*\*|Tailwind|`out\/`|profile/i);
+  assert.match(profile, /only when the user asks for this kind of deployment work or the project already uses the pattern/);
+  assert.match(profile, /\*\*Flat permalinks \+ nginx/);
+  assert.match(profile, /\*\*CSP:\*\*/);
+  const banner = /^> \*\*Example deployment profile\.\*\* This (file|section) describes one project's deployment setup, not Eleventy or Nunjucks guidance\. Load it only when the user asks for this kind of deployment work or the project already uses this pattern\.$/;
+  const sections = {
+    'references/conventions.md': ['## Project layout — full anatomy', '## Two example `dir` configurations', '## Opinionated production-profile patterns', '## Scripts shape', '## File-naming conventions'],
+    'references/review-shipping.md': ['### Hardcoded hex / px in templates', '### Missing `permalink` where flat-HTML convention applies', '### Pipeline', '### Marketing `.njk` page'],
+    'references/troubleshooting.md': ['## Tailwind / asset issues', '### Pages 404 in production despite being in `out/`', '### Soft-nav swap breaks page-specific scripts', '### `version-banner.js` fires constantly', '### Tailwind dev rebuild is slow'],
+    'references/eleventy-config-api.md': ['## Permalinks and `normalize_path`'],
+    'references/filters.md': ['## Path filter — `normalize_path`'],
+    'references/security-checklist.md': ['## 5. Custom soft-navigation / DOM swap'],
+  };
+  for (const [name, headings] of Object.entries(sections)) {
+    const lines = doc(name).split('\n');
+    for (const heading of headings) {
+      const at = lines.indexOf(heading);
+      assert.notEqual(at, -1, `${name}: ${heading}`);
+      assert.match(lines[at + 2], banner, `${name}: ${heading}`);
+    }
+  }
+  const checklist = doc('references/security-checklist.md');
+  const scoped = [...checklist.matchAll(/^## (\d+)\. [^\n]+\n\n(\*\*Scope:\*\* [^\n]+|> \*\*Example deployment profile\.\*\*)/gm)].map(match => Number(match[1]));
+  assert.deepEqual(scoped, [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
 });
 
 test('Tailwind dark selector recipe compiles to class-driven utilities', async () => {

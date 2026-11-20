@@ -1,5 +1,7 @@
 # Production patterns reference
 
+> **Example deployment profile.** This file describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
+
 Optional deployment recipes for projects that explicitly select them: CSP, View Transitions, theme system, after-build hooks, OG image generation, JSON-LD inlining, sitemap/robots, and the nginx serving model.
 
 These recipes are not Eleventy defaults. Use only the sections matching the existing hosting, routing, CSS, and theme contracts. Custom router events, numbered variants, and theme expiry require explicit project ownership.
@@ -263,6 +265,8 @@ A separate check script (`scripts/check-og-images.mjs`) walks `out/`, confirms e
 
 Inline schema.org payloads as `<script type="application/ld+json">`. The script type is **not** executable, so CSP `script-src` rules don't apply.
 
+The data-file samples below are CommonJS; for an ESM project convert them as described in `data-cascade.md` (Module format).
+
 ### Pattern 1 — static payload per page type
 
 ```js
@@ -335,7 +339,7 @@ eleventyExcludeFromCollections: true
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 {% for item in collections.all %}
-  {% if not item.data.sitemap_exclude %}
+  {% if item.url and not item.data.sitemap_exclude %}
   <url>
     <loc>{{ site.baseUrl }}{{ item.url | normalize_path }}</loc>
     <lastmod>{{ item.date | sitemapDate }}</lastmod>
@@ -345,7 +349,7 @@ eleventyExcludeFromCollections: true
 </urlset>
 ```
 
-Name the loop variable something other than `page`. Reusing `page` shadows Eleventy's global `page` object for the whole loop body. Pages already excluded from collections are absent from `collections.all`, so only a project-specific opt-out key such as `sitemap_exclude` needs checking.
+Name the loop variable something other than `page`. Reusing `page` shadows Eleventy's global `page` object for the whole loop body. Pages already excluded from collections are absent from `collections.all`. Pages with `permalink: false` stay in the collection with `url` set to `false`, which `normalize_path` would turn into a duplicate root entry, so the `item.url` test skips them; a project-specific opt-out key such as `sitemap_exclude` covers the rest.
 
 ### robots.txt — passthrough
 
@@ -367,7 +371,8 @@ eleventyConfig.addPassthroughCopy({ "src/robots.txt": "robots.txt" });
 
 ```nginx
 server {
-  listen 443 ssl http2;
+  listen 443 ssl;
+  http2 on;                    # nginx 1.25.1+; the `http2` parameter of `listen` is deprecated
   server_name example.com;
   root /opt/example/out/main;
   index index.html;

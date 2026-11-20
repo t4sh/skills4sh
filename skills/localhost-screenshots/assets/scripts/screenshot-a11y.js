@@ -7,6 +7,7 @@
 // Defaults:
 //   URL=http://localhost:3000  OUT_BASE=_screenshots/page  VIEWPORT=1280x800
 // Playwright resolves from the current project first, then from beside this script.
+// Requires local-guard.js from the same folder (URL policy and the navigation guard).
 //
 // Writes:
 //   <OUT_BASE>.png         visual screenshot
@@ -18,6 +19,10 @@
 
 const fs = require('fs');
 const path = require('path');
+const {
+  localUrlProblem, gotoLocal, assertLocalPage, captureVerifiedPng, assertCaptureStillCurrent,
+  loadChromium, PLAYWRIGHT_MISSING,
+} = require('./local-guard.js');
 
 const url = process.argv[2] || 'http://localhost:3000';
 const outBase = process.argv[3] || '_screenshots/page';
@@ -25,85 +30,43 @@ const [w, h] = (process.argv[4] || '1280x800').split('x').map(Number);
 const waitUntil = process.argv[5] || 'load';
 const waitForSelector = process.argv[6] || '';
 
-function isLocalUrl(value) {
-  try {
-    const parsed = new URL(value);
-    const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
-    return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
-      && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost'));
-  } catch {
-    return false;
-  }
-}
-
-function validateLocalUrl(value) {
-  try {
-    new URL(value);
-  } catch {
-    console.error(`Invalid URL: ${value}`);
-    process.exit(1);
-  }
-  if (!isLocalUrl(value)) {
-    console.error('Refusing non-localhost URL. Use http(s)://localhost, 127.0.0.1, [::1], or *.localhost.');
-    process.exit(1);
-  }
-}
-
-async function gotoLocal(page, value, options) {
-  let blockedUrl = '';
-  await page.route('**/*', async (route) => {
-    const request = route.request();
-    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && !isLocalUrl(request.url())) {
-      blockedUrl = request.url();
-      await route.abort('blockedbyclient');
-      return;
-    }
-    await route.continue();
-  });
-  try {
-    await page.goto(value, options);
-  } catch (err) {
-    if (blockedUrl) throw new Error(`Refusing non-localhost main-frame redirect: ${blockedUrl}`);
-    throw err;
-  }
-  if (!isLocalUrl(page.url())) throw new Error(`Refusing non-localhost final URL: ${page.url()}`);
-}
-
 if (!Number.isInteger(w) || !Number.isInteger(h) || w < 200 || h < 200 || w > 3840 || h > 2160) {
   console.error('Invalid viewport. Expected WIDTHxHEIGHT within 200–3840 by 200–2160.');
   process.exit(1);
 }
-validateLocalUrl(url);
-
-function loadChromium() {
-  try {
-    // Resolve from the invoking project first so a globally installed skill uses the
-    // project's Playwright; fall back to a copy beside this script.
-    return require(require.resolve('playwright', { paths: [process.cwd(), __dirname] })).chromium;
-  } catch (err) {
-    if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Install it in the project you run this command from (npm install --save-dev playwright@1.62.0), then rerun from that project root.');
-      process.exit(1);
-    }
-    throw err;
-  }
+const urlProblem = localUrlProblem(url);
+if (urlProblem) {
+  console.error(urlProblem);
+  process.exit(1);
 }
 
 (async () => {
   fs.mkdirSync(path.dirname(outBase), { recursive: true });
   const chromium = loadChromium();
+  if (!chromium) {
+    console.error(PLAYWRIGHT_MISSING);
+    process.exit(1);
+  }
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
     await page.setViewportSize({ width: w, height: h });
     await gotoLocal(page, url, { waitUntil });
-    if (waitForSelector) await page.waitForSelector(waitForSelector, { timeout: 10000 });
-    await page.screenshot({ path: `${outBase}.png`, fullPage: true });
-
+    if (waitForSelector) {
+      // A blocked navigation is the real cause when the wait fails on a browser error page.
+      await page.waitForSelector(waitForSelector, { timeout: 10000 }).catch((err) => {
+        assertLocalPage(page);
+        throw err;
+      });
+    }
+    const capture = await captureVerifiedPng(page, { width: w, height: h }, { fullPage: true });
     const ariaSnapshot = await page.locator('body').ariaSnapshot();
+    await assertCaptureStillCurrent(page, capture, { width: w, height: h });
+    fs.writeFileSync(`${outBase}.png`, capture.png);
+
     const envelope = {
       boundary: 'untrusted-page-content',
-      source: url,
+      source: capture.finalUrl,
       capturedAt: new Date().toISOString(),
       ariaSnapshot,
     };

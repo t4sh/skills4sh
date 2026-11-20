@@ -4,38 +4,38 @@
     "agent-memory": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.8.0",
-      "computedHash": "0b1cbb559a71ce032a57437260acdd1b7b8223a6624d135da1f9ccbea76b5f63"
+      "version": "3.0.0",
+      "computedHash": "5d6058cd170b8fcbcd26d48c7634d84976ceef3abad7d773a4040057ec3414ef"
     },
     "discord-harvest": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "2.1.0",
-      "computedHash": "0d75db2e354c7374876a6639d40bd452896650b599cd30f1e64095916ee94478"
+      "version": "3.0.0",
+      "computedHash": "6785aff58369fe59e29575770ba0cc6f39f3d39a50ae5da534c207c999ca7f24"
     },
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.0.0",
-      "computedHash": "3234aa8ef4711dd2c9f1c777193db387cd1b68e4173169dedba503dfc44e0ea4"
+      "version": "1.1.0",
+      "computedHash": "062d5cb1867688d128bc6aab00e8fec1e7a1921283fb9ae4f54e3e4c42915cb0"
     },
     "init-rulebook": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.0.0",
-      "computedHash": "a8875db4d68562f662a939573b7fcfe68be6b7c88d0327b289a94c434cbda021"
+      "version": "2.0.0",
+      "computedHash": "7ea19c877ed2f20a2773f1c528e77d08f6e0a6464a1ce87cf609df728eb66802"
     },
     "localhost-screenshots": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "3.5.0",
-      "computedHash": "12029933420843ac7e5ecc8e136c841728cc2e8662701b3a11232d2a96254e44"
+      "version": "4.0.0",
+      "computedHash": "c33ca1e53967ce9944490b55424aeff7d5e981fe03e78149a1264370a48d7d0e"
     },
     "skill-architect": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
-      "version": "1.1.0",
-      "computedHash": "133dee1ef9f0e0caf3992bec63c7e1c3c9b465e78986819353c32dfd76a6479e"
+      "version": "2.0.0",
+      "computedHash": "afc895e160de5ffb8d41b0fd0252bca2df34d65d551c38619f60cdc4969b6c76"
     }
   }
 }

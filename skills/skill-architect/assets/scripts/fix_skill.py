@@ -10,6 +10,7 @@ anchors.
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
 from dataclasses import dataclass
@@ -87,6 +88,9 @@ def ensure_reference_links(body: str, missing_refs: list[str]) -> tuple[str, lis
 
 
 def fix_skill(skill_dir: Path) -> tuple[str, list[Edit]]:
+    # "." has an empty Path.name; abspath restores the folder name without
+    # following symlinks, so a linked folder keeps its own name.
+    skill_dir = Path(os.path.abspath(skill_dir))
     skill_md = skill_dir / "SKILL.md"
     if not skill_md.exists():
         raise SystemExit(f"missing SKILL.md: {skill_md}")

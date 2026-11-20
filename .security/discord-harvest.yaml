@@ -4,7 +4,7 @@
 
 skill:
   name: discord-harvest
-  version: "2.1.0"
+  version: "3.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,14 +13,14 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 4979eb35b1080f881a9fd8ea75a2d6a9e01d8a67ee50cb1cf1cf63e1fefd59f8
+    assets/evals/scenarios.json: 9e8fee20b28bd4f44945e20055146d4472504af978e8b19ef0e8dd46cedee176
     assets/icon.svg: 1a98cde7a434820fea4d55c74d99b2112fb3022d5cd18067ec1eb3d8c411becc
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/code-examples.md: 1b68452d00ffe80b4ef2470e2eafeeb0506f2f9f7970f023044558760260af26
-    references/design-philosophy.md: 0192dda8e8299401636253fe3ba2c6741f01c3db56f246379156811c61000385
-    references/folder-structure.md: c426d4638437f1a64f566e0c4f04fcb6e35f73e3103e322dad4a9e7545b96722
-    references/troubleshooting.md: c3f8436e65fa8faad8a3a85ac43fd6732c844bf92df16f838dcce3d8a33ffa65
-    SKILL.md: e33a3cf302b1afd3001358f36b6b3c9018c13ee9837186a1384307b4614e82fe
+    references/code-examples.md: 26197bca8f7d9e8f8cb933f8b8cbbde721ae43343f3c2809d485507579bd4ae0
+    references/design-philosophy.md: c6e525878d0c2dadaa8173de0235501a46552d115c6da879644cdb693c362d87
+    references/folder-structure.md: 7aa7f9b1b2f2928da76f33911575b11c8f38d7bc1373a67f863e44bda7838a10
+    references/troubleshooting.md: 72df037dcb455781b20ec7a95eb85a64b6d2cb40990c4eda3e9a30b937438465
+    SKILL.md: 7870f2155d6446d0575b88cef062f73c1b2d49fca6e2920ca88da41e2fd28017
     agents/openai.yaml: 8c62aadd009cc471b080485cbe2a8c547c74f7f58516697e1aa87c4065602263
 permissions:
   alwaysAllow: []
@@ -30,7 +30,7 @@ execution_context:
   sandbox: host-agent
   network: outbound-only
   filesystem: read-write
-  shell: none
+  shell: limited
   risk_tier: medium
 
 dependencies:

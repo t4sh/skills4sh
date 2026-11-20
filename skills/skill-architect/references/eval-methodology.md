@@ -145,15 +145,20 @@ A forward test packet should include:
 ```markdown
 ## Skill authoring audit
 
-- Checklist derived before patch: yes/no
-- Evidence table completed before patch: yes/no
-- Mechanical checks run: list commands
-- Fixture or forward test: prompt / skipped reason
+- [ ] Standard-derived checklist was completed before patching.
+- [ ] Evidence table was prepared before edits.
+- [ ] Mechanical grep/checks were run for every objective rule touched.
 
-| Check | Evidence | Result | Patch decision |
-|---|---|---|---|
-| Trigger specificity | `skills/name/SKILL.md:2` | pass/fail | keep/patch |
+| Standard-derived check | Evidence gathered before edits | Mechanical command or grep | Result | Patch/decision |
+|---|---|---|---|---|
+| Trigger specificity | `skills/name/SKILL.md:3` | `npm run check:skill-standard` | pass/fail | keep/patch |
+
+Fixture or forward test: prompt and observed result, or skipped reason with remaining risk.
 ```
+
+Tick a box only after the step it names is done, and fill every cell of at least one row. In `skills4sh`, `npm run check:pr-skill-audit` matches the section heading, the three sentences word for word, and the five column headers in this order, and treats an unticked box or an empty row as missing; keep the wording and add any extra column, such as severity, to the right. In another repository, follow its own pull-request template.
+
+Done when the pasted section has all three boxes ticked truthfully and one row per objective rule or judgment claim touched.
 
 ## When not to run heavy evals
 
@@ -164,3 +169,7 @@ Skip baseline/blind/benchmark loops when:
 - the cost exceeds the value and the limitation is reported
 
 Still run static validation and cite what was skipped.
+
+## Evaluating Skill Architect itself
+
+**Authors/reviewers evaluating Skill Architect itself only:** skip this catalog when using Skill Architect for another task. The [mode scenario catalog](../assets/evals/scenarios.json) supplies self-contained fixture files for all nine modes, isolation instructions, grading criteria, and description-only routing prompts. Materialize a fresh case directory and withhold grading from the executor; the catalog is test input, not evidence that those modes passed.

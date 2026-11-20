@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.5.0"
+  version: "4.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -13,42 +13,52 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 9b62c50d8a687b5a8b1bb30f8f0082c0fdd71b69891d89e27ce7525b9b288219
+    assets/evals/scenarios.json: 260fb00c7cc2ee6f182604b875fb14af0812de44eb77a68fa469f1bd321d59bd
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
-    assets/scripts/multi-breakpoint.js: 5376f4c11727cc75096e32096d798a3395a3554805238677a14dbb10b8267c6f
+    assets/scripts/multi-breakpoint.js: 747c5294c61cdd1815a6412a73a0c8b53b49d7f82904f0237ad0c7ef5f2371d2
     assets/scripts/package.json: 8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a
-    assets/scripts/quick.js: d758e967fe742cf5c7662b609d3079e1fdb92ddf68dfaae88e5b5844c00389a6
-    assets/scripts/screenshot-a11y.js: 036e03d4818c4c1a363e0ceb84f9539aaac5c05e451e38b076670e28e5517039
+    assets/scripts/quick.js: 1bc8fc17cf3b10d2ce928f76db458e6882b08f57d51eb3c4cb13e5a6c9a63a2b
+    assets/scripts/screenshot-a11y.js: f61b72366dadc72e509315b9bda742b60915e676064be0f90398bec7c61df034
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/ai-snapshots.md: c16b31c99fb65d008e711582aea882a40f8d9a2d8201d2aedd40bfc07ecbf0e8
-    references/interaction-templates.md: 9c38e9674960d66e871ac74e83e93fb9523674f5f9cc2db8eac9443ae6d24fb0
-    references/portless.md: 387dc8660061900430c39b4f600fc44aca60570fbe5242e92fc26900d8cd2e80
-    references/playwright-patterns.md: 38b22631188b880bb5adc12c42cc05b1767e01cb94d6e816da61767c3921a4b9
-    references/troubleshooting.md: af8884c242df2d10a36f25c6bd33df08373c4be784a89dd0a1dd9d22275dc18d
-    references/visual-regression.md: 56df83bde0b15e37ae3dba02b9b796e969bcaac1ac3ce52acac0f241ff7324da
-    SKILL.md: 7744564a5c8436b50122aad70789d699a480151ebaeade4861c04de9b995ccdc
-    agents/openai.yaml: 2c506a1bf080e4405778e829623dd771b4bdf9fc692987b1694dba9c6e9be76f
+    references/ai-snapshots.md: 1fcb3e36896bc9a6ea43bad419a446880196f9564a49eb98747224abd002560a
+    references/interaction-templates.md: 20957db40efee06534a4cf403e5b47fb4458a4b325e16f3b15574804cb30c9cf
+    references/portless.md: f5f5617b4bf79a6f18fe7c1c7cdb5a0f9d3129b2952b0f4472198ea6b176e838
+    references/playwright-patterns.md: 23dfdbb9632bf71101519b97fbd9bf1da063a36634abb790e12d18fa6436dd93
+    references/troubleshooting.md: 51cbbc04cc52930be00a1fa2983bf8d058e48f059569ce4769a1376971f8a1ef
+    references/visual-regression.md: f025c884f4adc8ae847023697911d5c3b4b5dee307984c0f4ce2f9a0ff291602
+    SKILL.md: 4426729b8d666a9c537265f2c73cdb9f92542d3af554a6ef157793690d8b1c20
+    agents/openai.yaml: 50aa67bc14ce868565b67096bc113a38ecb4c62b6638e7280f275630be017869
+    assets/scripts/capture.js: d94017dda53a94087d9279400565bcaa1b551a693f47e7c7db870eb9ac69268c
+    assets/scripts/compare.js: 0eedcb4a75954bc890763c694629cedb90862a838415163887e0f5f8cff795cf
+    assets/scripts/local-guard.js: ebd06471cf93fa62cc5537a24bc26e105cdcdcc5fbb44a2ca253db95e0b3523b
+    references/host-browser.md: 5d4e1d463fe5078469c3ab77707346a0e0ead5d4ae227291028778deeba119ef
 permissions:
   alwaysAllow: []
   rationale: "No always-allowed permissions; all tool use is gated by user approval at runtime"
 
 execution_context:
   sandbox: host-agent
-  network: localhost-only
+  network: outbound-only
   filesystem: read-write
-  shell: none
-  risk_tier: low
+  shell: limited
+  risk_tier: medium
 
 dependencies:
   - name: playwright
     type: npm
     optional: true
-    version: "1.62.0"
-    reason: "Required for systematic multi-breakpoint captures and visual regression; Chrome MCP path has no dependencies. Pin this tested version in the consuming project's lockfile; never install with @latest or an unversioned npm install."
+    version: "1.65.1"
+    reason: "Required only for the bundled capture scripts (capture.js, quick.js, multi-breakpoint.js, screenshot-a11y.js); the host browser path has no dependencies. The scripts use the project's own playwright or @playwright/test when one resolves and never change its version; this pin is installed only when neither resolves. Never install with @latest or an unversioned npm install."
   - name: pixelmatch
     type: npm
     optional: true
-    reason: "Required only for pixel-diff visual regression comparisons"
+    version: "8.0.0"
+    reason: "Required only by compare.js for before/after comparisons. compare.js refuses pixelmatch 7 and earlier, whose diff counts use a different colour metric."
+  - name: pngjs
+    type: npm
+    optional: true
+    version: "7.0.0"
+    reason: "Required only by compare.js to read captures and write diff images."
 
 mitigations:
   - id: COMMAND_EXECUTION
@@ -56,13 +66,13 @@ mitigations:
     note: "Removed `sudo npx playwright install-deps` and replaced `node -e \"…\"` checks with an explicit `playwright@1.62.0` install before browser setup. Stdin-friendly templates moved to versioned `assets/scripts/*.js` files."
   - id: PROMPT_INJECTION
     addressed_in: "3.3.0"
-    note: "Added `Untrusted Content Boundary` section in SKILL.md. ARIA, DOM, and interactive-map captures are now written wrapped in an `{ boundary: 'untrusted-page-content', source, … }` envelope. The bundled `assets/scripts/screenshot-a11y.js` enforces the envelope."
+    note: "SKILL.md policy rule 3 treats page content, including text visible in a screenshot, as untrusted data. ARIA, DOM, and interactive-map captures are written wrapped in an `{ boundary: 'untrusted-page-content', source, … }` envelope; the bundled `assets/scripts/screenshot-a11y.js` enforces the envelope. `capture.js` records the verified local document URL, status and viewport. For a refused non-local navigation, its diagnostic reports only the origin."
   - id: SUPPLY_CHAIN
     addressed_in: "3.3.0"
-    note: "Documented `npm ci` + lockfile pinning or explicit version installs, never `@latest` or unversioned installs. `ignoreHTTPSErrors` is gated to localhost-only hostnames."
+    note: "Documented `npm ci` + lockfile pinning or explicit version installs, never `@latest` or unversioned installs. An existing project Playwright is used as is and never overridden. `compare.js` accepts only pixelmatch 8 or later and names the exact pins (`pixelmatch@8.0.0`, `pngjs@7.0.0`). `ignoreHTTPSErrors` is gated to localhost-only hostnames."
   - id: NETWORK_SCOPE
-    addressed_in: "3.3.7"
-    note: "Bundled helpers validate the requested localhost URL and abort any main-frame redirect or final navigation to a non-local hostname before capture."
+    addressed_in: "4.0.0"
+    note: "3.3.7 added the requested-URL and final-URL checks, but its route handler never saw HTTP redirect hops, so a redirect to an external host was loaded before being rejected and a local-external-local bounce passed. From 4.0.0 the bundled helpers pause main-frame document requests through a Chromium CDP Fetch session and fail any request to a non-local hostname before it is sent: every redirect hop and every later page-initiated navigation. They also re-check the completed redirect chain and the final URL, and write no capture when a navigation was blocked. Subframes and other subresources are not intercepted. Observed with Playwright 1.62.0 and 1.65.1 driving Chrome 158 on 2026-11-21. The guard is one shared module, `assets/scripts/local-guard.js`, required by `capture.js`, `quick.js`, `multi-breakpoint.js`, and `screenshot-a11y.js`. A browser the agent only drives through host tools cannot install it: on that path the skill requires checking the URL before and after navigation and before each capture and discarding the capture on a mismatch (detect and discard, not block)."
 
 scanning:
   guardskills: SAFE
@@ -87,10 +97,6 @@ scanning:
       severity: low
       file: references/playwright-patterns.md
       reason: "Code examples reference process.env.HOME/USERPROFILE for the optional persistent-session profile directory."
-    - id: R008_ENV_ACCESS
-      severity: low
-      file: references/visual-regression.md
-      reason: "Code examples reference environment variables for CI configuration."
     - id: R008_ENV_ACCESS
       severity: low
       file: references/interaction-templates.md

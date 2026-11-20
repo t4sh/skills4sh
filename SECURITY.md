@@ -6,12 +6,12 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 
 | Skill | Version | Supported |
 |-------|---------|-----------|
-| agent-memory | 2.8.0 | Yes |
-| discord-harvest | 2.1.0 | Yes |
-| eleventy-nunjucks | 1.0.0 | Yes |
-| init-rulebook | 1.0.0 | Yes |
-| localhost-screenshots | 3.5.0 | Yes |
-| skill-architect | 1.1.0 | Yes |
+| agent-memory | 3.0.0 | Yes |
+| discord-harvest | 3.0.0 | Yes |
+| eleventy-nunjucks | 1.1.0 | Yes |
+| init-rulebook | 2.0.0 | Yes |
+| localhost-screenshots | 4.0.0 | Yes |
+| skill-architect | 2.0.0 | Yes |
 
 ## Reporting a Vulnerability
 
@@ -90,10 +90,12 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 |-------|-------------|-----------|
 | agent-memory | None (all gated) | Low |
 | discord-harvest | None (all gated) | Medium |
-| eleventy-nunjucks | None (all gated) | Low |
+| eleventy-nunjucks | None (all gated) | Medium |
 | init-rulebook | None (all gated) | Low |
-| localhost-screenshots | None (all gated) | Low |
+| localhost-screenshots | None (all gated) | Medium |
 | skill-architect | None (all gated) | Low |
+
+Risk tiers: **Low** — local file work and a bounded set of local commands. **Medium** — the skill also handles a credential, installs and runs third-party packages in the user's project, or drives a browser. No skill is High or Critical. `eleventy-nunjucks` and `localhost-screenshots` moved from Low to Medium on 2026-11-21, when the manifests were corrected to describe what the skills direct rather than only what they bundle.
 
 ### AST04 — Insecure Metadata
 
@@ -115,10 +117,18 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 
 | Control | Implementation |
 |---------|----------------|
-| Execution context declared | `.security/<name>.yaml` execution_context specifies sandbox, network, and filesystem scope |
-| Network restrictions | agent-memory: none, localhost-screenshots: localhost-only, discord-harvest: outbound-only |
+| Execution context declared | `.security/<name>.yaml` execution_context specifies sandbox, network, filesystem, and shell scope. `shell` and `network` describe what the skill directs the agent to run and reach, not only what it bundles |
+| Network restrictions | agent-memory: none; every other skill: outbound-only, to the hosts in the table below |
 | No host-mode execution | Skills run inside the host agent's sandbox |
-| Docker guidance | localhost-screenshots documents container sandboxing for shared environments |
+
+| Skill | Shell | Network | What the skill directs |
+|-------|-------|---------|------------------------|
+| agent-memory | limited | none | One optional, read-only Node.js script that checks the memory index against its files. No Git commands |
+| discord-harvest | limited | outbound-only | Bash helpers around `curl`, `mktemp`, and `cp`. `GET` requests to the Discord API with a bot token, and downloads from Discord's CDN hosts only; third-party links are recorded, never fetched |
+| eleventy-nunjucks | limited | outbound-only | Package installs and builds in the user's project (`npm` or `pnpm`, `eleventy`), `grep` and `find` audits, registry lookups, and `curl` header checks against the user's own deployed site |
+| init-rulebook | limited | outbound-only | Directory listings and symlink checks. On request only: one symlink, a fast-forward-only Git pull of the user's rulebook, the user's chosen installer, or a host hook that prints one line |
+| localhost-screenshots | limited | outbound-only | `npm` installs of pinned packages when the project has none, Node.js scripts that drive a browser against local addresses, and optional `portless` commands. Main-frame navigation is held to local hosts; pages may still load external subresources |
+| skill-architect | limited | outbound-only | Python helper scripts in an isolated environment with one hash-pinned dependency from PyPI, and the repository's own check commands |
 
 ### AST07 — Update Drift
 
@@ -127,12 +137,13 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 | Semantic versioning | All skills use semver in `metadata.version` |
 | Version in lock file | `skills-lock.json` pairs version with file hashes |
 | CI version-bump check | Validates version changes are accompanied by hash updates |
+| Upstream drift check | `.github/workflows/upstream-drift.yml` runs weekly (Mondays 06:40 UTC) and on manual dispatch. `bin/upstream-check.mjs` compares each version in `.github/upstream-pins.json` with its npm dist-tag or PyPI release, confirms the pinned string still appears in the files that state it, and checks external links in skill prose and `docs/`. Drift opens or updates one tracking issue; the check is not a pull-request gate. |
 
 ### AST08 — Poor Scanning
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory` and `init-rulebook` scan without overrides; `discord-harvest`, `eleventy-nunjucks`, `localhost-screenshots`, and `skill-architect` have documented expected findings that must match this file before overrides are accepted. |
+| guardskills | Pinned to `guardskills@1.6.0`. `agent-memory` and `init-rulebook` scan without overrides; `discord-harvest`, `eleventy-nunjucks`, `localhost-screenshots`, and `skill-architect` have documented expected findings that must match this file before overrides are accepted. |
 | CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
 | Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
 | GitHub Actions SHA-pinning | All `uses:` directives across every workflow are pinned to a commit SHA (with a trailing `# vX.Y.Z` comment for human readability). Floating major tags (`@v4`) would expose CI to upstream compromise — see e.g. the tj-actions/changed-files 2025 incident. `.github/dependabot.yml` opens grouped weekly PRs to keep the SHAs moving forward; each upgrade PR hits the full required-checks matrix before merge. |
@@ -166,6 +177,8 @@ The following findings are expected and documented:
 
 | Finding | Severity | File(s) | Explanation |
 |---------|----------|---------|-------------|
+| `R005_SECRET_READ` | HIGH/medium | `assets/scripts/run_uv.py` | False positive, first reported by guardskills 1.6.0. `run_uv.py` copies the process environment with every `UV_*` variable removed and passes the copy to `uv` through `os.execvpe`, so host `uv` configuration cannot redirect the isolated install. It reads no secret, and writes, logs, or sends no variable. |
+| `R008_ENV_ACCESS` | LOW | `assets/scripts/run_uv.py` | `run_uv.py` reads `os.environ` only to build the child environment for `uv` without `UV_*` variables. |
 | `R008_ENV_ACCESS` | LOW | `references/helper-runtime.md` | The temporary-venv fallback stores its generated path in a shell variable so every install and helper invocation stays inside the same isolated environment. |
 | `R009_FILE_STAGE` | LOW | `references/helper-runtime.md` | The documented fallback creates a temporary virtual environment for pinned validation dependencies; it does not stage user skill content or execute automatically. |
 
@@ -190,7 +203,6 @@ The following findings are expected and documented:
 | `R005_SECRET_READ` | HIGH/medium | `references/playwright-patterns.md` | False positive. The Persistent Browser Sessions example references `process.env.HOME` / `USERPROFILE` to compute a `~/.cache/localhost-screenshots/` profile directory — no credentials or secrets are read; the path stores browser cookies/localStorage for multi-step screenshot workflows. |
 | `R005_SECRET_READ` | HIGH/medium | `references/interaction-templates.md` | False positive. The Auth → Dashboard template reads `process.env.DEMO_USER` / `DEMO_PASS` as an example of sourcing demo-environment credentials from the environment instead of hardcoding them — this is the secure pattern guardskills R005 is intended to encourage. |
 | `R008_ENV_ACCESS` | LOW | `references/playwright-patterns.md` | Code examples reference `process.env.HOME` / `USERPROFILE` for the optional persistent-session browser-profile directory used in multi-step screenshot workflows. |
-| `R008_ENV_ACCESS` | LOW | `references/visual-regression.md` | Code examples reference environment variables (`PORT`, etc.) in the CI workflow snippet. |
 | `R008_ENV_ACCESS` | LOW | `references/interaction-templates.md` | Login-flow template reads `process.env.DEMO_USER` / `DEMO_PASS` so example credentials live in the environment rather than being hardcoded. |
 
 **Resolved in 3.3.0** — the following 3.2.0 findings are no longer flagged:
@@ -216,12 +228,12 @@ Run security scans locally:
 
 ```bash
 # guardskills (skill-specific; pinned to CI version)
-npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run
-npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run --force
-npx guardskills@1.2.1 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force
-npx guardskills@1.2.1 add t4sh/skills4sh --skill init-rulebook --dry-run
-npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run
-npx guardskills@1.2.1 add t4sh/skills4sh --skill skill-architect --dry-run
+npx guardskills@1.6.0 add t4sh/skills4sh --skill agent-memory --dry-run
+npx guardskills@1.6.0 add t4sh/skills4sh --skill discord-harvest --dry-run --force
+npx guardskills@1.6.0 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force
+npx guardskills@1.6.0 add t4sh/skills4sh --skill init-rulebook --dry-run
+npx guardskills@1.6.0 add t4sh/skills4sh --skill localhost-screenshots --dry-run
+npx guardskills@1.6.0 add t4sh/skills4sh --skill skill-architect --dry-run
 
 # Local scan-local (any skill folder, useful before or after pushing):
 # npx guardskills scan-local skills/<name> --json

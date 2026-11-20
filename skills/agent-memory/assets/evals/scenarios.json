@@ -41,7 +41,7 @@
       "assertions": [
         "Lists source/destination moves, backup and confirmation boundary.",
         "No mutation of legacy files; no content loss.",
-        "Plans CURSOR.md shared content to merge into AGENTS.md, with .cursor/rules/index.mdc as a thin pointer and CURSOR.md.migrated kept as the backup; no shared instructions land in .cursor/."
+        "Plans CURSOR.md shared content to merge into AGENTS.md with CURSOR.md.migrated kept as the backup; plans no new .cursor/rules/ pointer because Cursor reads AGENTS.md; no shared instructions land in .cursor/."
       ]
     },
     {
@@ -101,7 +101,7 @@
           "load": true
         },
         {
-          "text": "Onboard a new developer's agent onto this repo.",
+          "text": "Onboard a new developer's agent from this repo's .agent-memory.",
           "load": true
         },
         {
@@ -134,6 +134,38 @@
         },
         {
           "text": "Set up my personal agent rules.",
+          "load": false
+        },
+        {
+          "text": "This repo has .agent-memory/. What did we decide about the storage layer?",
+          "load": true
+        },
+        {
+          "text": "Why did we choose SQLite? Check project memory.",
+          "load": true
+        },
+        {
+          "text": "Review the AGENTS.md instruction that loads .agent-memory at session start.",
+          "load": true
+        },
+        {
+          "text": "Set up a new developer's laptop for this repo.",
+          "load": false
+        },
+        {
+          "text": "Onboard our new hire: accounts, access, and a codebase tour.",
+          "load": false
+        },
+        {
+          "text": "Write an ADR for moving to PostgreSQL.",
+          "load": false
+        },
+        {
+          "text": "This repo has .agent-memory/. Fix the failing date-parser test.",
+          "load": false
+        },
+        {
+          "text": "Add our lint command to AGENTS.md.",
           "load": false
         }
       ],
@@ -190,6 +222,151 @@
         "Records owning repo and supplied revision as an explicit reference with minimal local context.",
         "Marks unavailable source as unverified and does not invent contract details.",
         "Only local memory/index files change; no automatic sync or writes to another repo."
+      ]
+    },
+    {
+      "id": "save-without-memory-dir",
+      "prompt": "Remember why we chose SQLite: the prototype must work offline. This is a confirmed team decision as of 2026-11-02.",
+      "files": {
+        "README.md": "# Small Notes\nAn offline notes prototype.\n"
+      },
+      "assertions": [
+        "Reports that .agent-memory/ does not exist; does not silently scaffold it, create or edit AGENTS.md, or write the fact to an ad hoc file or a host-native memory store.",
+        "Asks one focused question to confirm running Init before saving, and keeps the stated decision ready to save once Init is approved.",
+        "No Git operations; README.md unchanged."
+      ]
+    },
+    {
+      "id": "maintain-without-memory-dir",
+      "prompt": "Run memory maintenance for this project.",
+      "files": {
+        "README.md": "# Small Notes\nAn offline notes prototype.\n"
+      },
+      "assertions": [
+        "Reports that there is no .agent-memory/ to maintain and suggests Init.",
+        "Creates, edits, and deletes nothing."
+      ]
+    },
+    {
+      "id": "init-claude-code-agents-md-native",
+      "prompt": "Initialize .agent-memory for this project. The team uses a current Claude Code release (v2.1.277 or later) and no other agent. Do not build memory from source docs.",
+      "files": {
+        "README.md": "# Atlas Notes\nA local notes prototype.\n",
+        ".claude/settings.json": "{}"
+      },
+      "assertions": [
+        "Creates no CLAUDE.md: with no CLAUDE.md, .claude/CLAUDE.md, or CLAUDE.local.md present, Claude Code reads AGENTS.md directly.",
+        "Creates AGENTS.md with the session-start loading instruction and an empty `[]` index; .claude/settings.json unchanged.",
+        "Report lists the files created and states that no pointer file was needed; no .cursor/ or other vendor file is created."
+      ]
+    },
+    {
+      "id": "init-existing-claude-md",
+      "prompt": "Initialize .agent-memory for this project. The team uses Claude Code. No change to existing files has been approved.",
+      "files": {
+        "README.md": "# Atlas Notes\nA local notes prototype.\n",
+        "CLAUDE.md": "# Claude notes\nRun make verify before integration.\n"
+      },
+      "assertions": [
+        "Creates AGENTS.md with the session-start loading instruction and an empty `[]` index.",
+        "Recognizes that the existing CLAUDE.md stops Claude Code from reading AGENTS.md; proposes adding the exact `@AGENTS.md` import as its first line and reports that change as pending approval.",
+        "CLAUDE.md is not overwritten, renamed, or deleted and keeps its notes; the import is not replaced with prose such as 'read AGENTS.md'; no Cursor or other vendor pointer is created."
+      ]
+    },
+    {
+      "id": "save-native-memory-host",
+      "prompt": "This host keeps its own auto memory; the native-memory/ directory stands in for that store. Remember this confirmed project decision as of 2026-11-02: releases are cut from the release branch.",
+      "files": {
+        ".agent-memory/index.yaml": "[]\n",
+        "native-memory/MEMORY.md": "Host-managed notes; not shared project memory.\n"
+      },
+      "assertions": [
+        "Saves the decision to an indexed .agent-memory/decisions/ file with standard frontmatter.",
+        "native-memory/MEMORY.md is unchanged byte for byte; the fact is not mirrored into the native store.",
+        "Report names .agent-memory/ as where the fact was saved; no Git operations."
+      ]
+    },
+    {
+      "id": "sync-external-update",
+      "prompt": "Sync memory. Use 2026-11-21 as today. This session produced nothing new to save. Make only memory-file changes; no Git operations.",
+      "files": {
+        ".agent-memory/index.yaml": "- id: decisions/storage\n  type: decision\n  title: \"Storage choice\"\n  status: active\n- id: conventions/format\n  type: convention\n  title: \"Formatting\"\n  status: active\n",
+        ".agent-memory/decisions/storage.md": "---\nid: decisions/storage\ntype: decision\ntitle: Storage choice\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-10-30\nstatus: archived\n---\n\nSQLite for the offline prototype. Archived after the hosted service replaced it.\n",
+        ".agent-memory/conventions/format.md": "---\nid: conventions/format\ntype: convention\ntitle: Formatting\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nUse project formatter.\n",
+        ".agent-memory/README.md": "# Agent memory\nSystem notes for this directory; not a memory entry.\n"
+      },
+      "assertions": [
+        "Refreshes the decisions/storage index entry to status archived from the file's frontmatter and reports exactly one file as updated externally.",
+        "Reports zero new files and zero orphan entries; .agent-memory/README.md is not added to the index.",
+        "Memory file bodies and frontmatter are unchanged; no body-only change is estimated or reported; no session log is invented."
+      ]
+    },
+    {
+      "id": "maintain-archive-approved",
+      "prompt": "Run memory maintenance as of 2026-11-21. I approve archiving context/sprint. Delete nothing.",
+      "files": {
+        ".agent-memory/index.yaml": "- id: context/sprint\n  type: context\n  title: \"Sprint focus\"\n  status: active\n",
+        ".agent-memory/context/sprint.md": "---\nid: context/sprint\ntype: context\ntitle: Sprint focus\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\nexpires: 2026-09-01\n---\n\nTemporary sprint context.\n",
+        ".agent-memory/conventions/format.md": "---\nid: conventions/format\ntype: convention\ntitle: Formatting\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nUse project formatter.\n"
+      },
+      "assertions": [
+        "Archives context/sprint by setting status: archived in both the file's frontmatter and its index entry, sets its updated date to 2026-11-21, and keeps the file on disk.",
+        "Adds the missing conventions/format index entry and reports it as an index fix; index and filesystem match afterwards.",
+        "Deletes nothing; conventions/format.md content and its updated date are unchanged."
+      ]
+    },
+    {
+      "id": "recall-decision",
+      "prompt": "Why did we choose SQLite for this project?",
+      "files": {
+        ".agent-memory/index.yaml": "- id: decisions/storage\n  type: decision\n  title: \"Storage choice\"\n  status: active\n- id: conventions/format\n  type: convention\n  title: \"Formatting\"\n  status: active\n",
+        ".agent-memory/decisions/storage.md": "---\nid: decisions/storage\ntype: decision\ntitle: Storage choice\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-09-01\nupdated: 2026-09-01\nstatus: active\n---\n\nSQLite for the offline prototype.\n\n**Why:** the prototype must work without a network connection.\n",
+        ".agent-memory/conventions/format.md": "---\nid: conventions/format\ntype: convention\ntitle: Formatting\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nUse project formatter.\n"
+      },
+      "assertions": [
+        "Answers that SQLite was chosen because the prototype must work offline, and cites .agent-memory/decisions/storage.md.",
+        "Reads the index and the relevant entry only; does not present unrelated entries as the answer.",
+        "Writes nothing: no memory file, index entry, session log, or updated date changes; no Git operations."
+      ]
+    },
+    {
+      "id": "recall-no-entry",
+      "prompt": "What did we decide about caching?",
+      "files": {
+        ".agent-memory/index.yaml": "- id: decisions/storage\n  type: decision\n  title: \"Storage choice\"\n  status: active\n- id: conventions/format\n  type: convention\n  title: \"Formatting\"\n  status: active\n",
+        ".agent-memory/decisions/storage.md": "---\nid: decisions/storage\ntype: decision\ntitle: Storage choice\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-09-01\nupdated: 2026-09-01\nstatus: active\n---\n\nSQLite for the offline prototype.\n\n**Why:** the prototype must work without a network connection.\n",
+        ".agent-memory/conventions/format.md": "---\nid: conventions/format\ntype: convention\ntitle: Formatting\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nUse project formatter.\n"
+      },
+      "assertions": [
+        "States that project memory has no entry about caching; does not invent a decision or present a guess as recorded memory.",
+        "Writes nothing; does not save a new memory unless asked."
+      ]
+    },
+    {
+      "id": "status-index-check",
+      "prompt": "Check memory status as of 2026-11-21. Do not change any file.",
+      "files": {
+        ".agent-memory/index.yaml": "- id: decisions/storage\n  type: decision\n  title: \"Storage choice\"\n  status: active\n- id: context/missing\n  type: context\n  title: \"Removed context\"\n  status: active\n",
+        ".agent-memory/decisions/storage.md": "---\nid: decisions/storage\ntype: decision\ntitle: Storage choice\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-09-01\nupdated: 2026-10-30\nstatus: archived\n---\n\nSQLite for the offline prototype.\n",
+        ".agent-memory/conventions/format.md": "---\nid: conventions/format\ntype: convention\ntitle: Formatting\ndescription: Fixture project fact.\ntags: [fixture]\nsource: other\ncreated: 2026-08-01\nupdated: 2026-08-01\nstatus: active\n---\n\nUse project formatter.\n"
+      },
+      "assertions": [
+        "Reports one unindexed file (conventions/format), one orphan entry (context/missing), and one entry whose status differs from its file (decisions/storage), whether found with the bundled checker or by manual comparison.",
+        "If the checker is used, it is run read-only against this project with the stated date; nothing is installed to run it.",
+        "Changes no file and suggests Maintain."
+      ]
+    },
+    {
+      "id": "init-claude-local-md-only",
+      "prompt": "Initialize .agent-memory for this project. The team uses Claude Code. Do not build memory from source docs.",
+      "files": {
+        "README.md": "# Atlas Notes\nA local notes prototype.\n",
+        "CLAUDE.local.md": "# My local notes\nPrefer short answers.\n"
+      },
+      "assertions": [
+        "Creates AGENTS.md with the session-start loading instruction and an empty `[]` index.",
+        "Reports that CLAUDE.local.md stops Claude Code from reading AGENTS.md and proposes a root CLAUDE.md containing the `@AGENTS.md` import; does not create that CLAUDE.md without the user's agreement.",
+        "CLAUDE.local.md is unchanged; no Claude Code setting is changed."
       ]
     }
   ]
