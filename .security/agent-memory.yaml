@@ -31,10 +31,15 @@ execution_context:
   sandbox: host-agent
   network: none
   filesystem: read-write
-  shell: none
+  shell: limited
   risk_tier: low
 
-dependencies: []
+dependencies:
+  - name: node
+    type: runtime
+    optional: true
+    version: ">=22"
+    reason: "Only needed to run the optional read-only index checker under assets/scripts; the manual comparison needs no runtime"
 
 scanning:
   guardskills: SAFE

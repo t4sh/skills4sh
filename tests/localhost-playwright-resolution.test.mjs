@@ -9,7 +9,7 @@ import test from 'node:test';
 // outside the project (for example ~/.agents/skills). NODE_PATH is removed so
 // only the helper's own resolution logic can find the module.
 const scriptsDir = resolve('skills/localhost-screenshots/assets/scripts');
-const scripts = ['quick.js', 'multi-breakpoint.js', 'screenshot-a11y.js'];
+const scripts = ['quick.js', 'multi-breakpoint.js', 'screenshot-a11y.js', 'capture.js'];
 
 function envWithoutNodePath() {
   const env = { ...process.env };
@@ -48,23 +48,26 @@ function writeStub(root, label, name = 'playwright') {
 
 // Relative output paths prove captures land in the invoking project's _screenshots/.
 function argsFor(script) {
+  if (script === 'capture.js') return ['--base-url', 'http://localhost:3000', '--out', '_screenshots/set', '--breakpoints', 'mobile:375x812'];
   if (script === 'multi-breakpoint.js') return ['http://localhost:3000', '_screenshots/home', 'mobile:375x812'];
   if (script === 'screenshot-a11y.js') return ['http://localhost:3000', '_screenshots/page', '375x812'];
   return ['http://localhost:3000', '375x812', '_screenshots/quick.png'];
 }
 
 function outputFor(project, script) {
+  if (script === 'capture.js') return join(project, '_screenshots', 'set', 'home', 'mobile-375x812.png');
   if (script === 'multi-breakpoint.js') return join(project, '_screenshots', 'home', 'mobile-375x812.png');
   if (script === 'screenshot-a11y.js') return join(project, '_screenshots', 'page.png');
   return join(project, '_screenshots', 'quick.png');
 }
 
-// Copies a helper into an isolated "installed skill" folder so script-dir
-// resolution never sees this repository's tree.
+// Copies a helper, with the shared module it requires, into an isolated "installed
+// skill" folder so script-dir resolution never sees this repository's tree.
 function installHelper(root, script) {
   const dir = join(root, 'installed-skill', 'assets', 'scripts');
   mkdirSync(dir, { recursive: true });
   copyFileSync(join(scriptsDir, script), join(dir, script));
+  copyFileSync(join(scriptsDir, 'local-guard.js'), join(dir, 'local-guard.js'));
   copyFileSync(join(scriptsDir, 'package.json'), join(dir, 'package.json'));
   return dir;
 }
@@ -148,7 +151,7 @@ for (const script of scripts) {
       const result = spawnSync(process.execPath, [join(helperDir, script), ...argsFor(script)], {
         cwd: project, encoding: 'utf8', env: envWithoutNodePath(),
       });
-      assert.equal(result.status, 1);
+      assert.equal(result.status, script === 'capture.js' ? 2 : 1);
       assert.match(result.stderr, /Missing dependency: playwright\. Install it in the project you run this command from/);
       assert.match(result.stderr, /neither playwright nor @playwright\/test resolved/);
       assert.doesNotMatch(result.stderr, /Require stack/);

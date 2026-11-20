@@ -6,7 +6,7 @@ When the project already uses the Playwright test runner, prefer native screensh
 
 ```js
 import { test, expect } from '@playwright/test';
-// gotoLocal: the Local Navigation Guard block from playwright-patterns.md, kept in a helper the tests import.
+// gotoLocal comes from the skill's assets/scripts/local-guard.js (createRequire, or a copy in the repo); see playwright-patterns.md § Local Navigation Guard.
 
 test('homepage visual baseline', async ({ page }) => {
   await gotoLocal(page, 'http://localhost:3000/', { waitUntil: 'load' });
@@ -24,248 +24,95 @@ test('hero visual baseline', async ({ page }) => {
 });
 ```
 
-Use the custom comparison and `pixelmatch` sections below when the task is an ad hoc before/after review, when the repository does not use Playwright Test, or when the user needs a standalone HTML comparison artifact.
+Use `compare.js` below when the task is an ad hoc before/after review, when the repository does not use Playwright Test, or when the user needs a standalone HTML comparison artifact.
 
-## Before/After Comparison HTML
+## Comparison Script
 
-Save the JavaScript examples as ES modules (`.mjs`, or `.js` in a `type: module` project). The enhanced HTML generator reuses `fs`, `path`, `escapeHtml`, `htmlPath`, and `listPngs` from this first example; combine them without duplicate imports. All three functions walk subdirectories (Node.js 20.1+ `readdirSync` `recursive`), so they read the canonical `<dir>/<route>/<breakpoint>.png` layout as well as a flat directory.
-
-```js
-import fs from 'node:fs';
-import path from 'node:path';
-
-function escapeHtml(value) {
-  return String(value)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function htmlPath(fromFile, toFile) {
-  return path.relative(path.dirname(fromFile), toFile).split(path.sep).join('/');
-}
-
-// Every PNG under dir, as '/'-separated paths relative to it (for example home/mobile-375x812.png).
-function listPngs(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { recursive: true })
-    .map(f => String(f).split(path.sep).join('/'))
-    .filter(f => f.endsWith('.png'));
-}
-
-function generateSideBySideComparison(beforeDir, afterDir, outputPath) {
-  const breakpoints = [...new Set([...listPngs(beforeDir), ...listPngs(afterDir)])].sort();
-  if (breakpoints.length === 0) throw new Error(`No PNG screenshots under ${beforeDir} or ${afterDir}`);
-
-  const html = `<!DOCTYPE html><html><head>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; background: #f5f5f5; }
-  h1 { margin-bottom: 24px; }
-  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 32px;
-          background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .pair h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
-  .pair img { width: 100%; border: 1px solid #eee; border-radius: 4px; }
-  .breakpoint-label { font-size: 18px; font-weight: 600; margin: 24px 0 12px; color: #333; }
-</style></head><body>
-<h1>Visual Comparison</h1>
-${breakpoints.map(f => {
-  const name = f.replace('.png', '');
-  const beforePath = path.join(beforeDir, f);
-  const afterPath = path.join(afterDir, f);
-  const beforeSrc = fs.existsSync(beforePath) ? escapeHtml(htmlPath(outputPath, beforePath)) : '';
-  const afterSrc = fs.existsSync(afterPath) ? escapeHtml(htmlPath(outputPath, afterPath)) : '';
-  return `<div class="breakpoint-label">${escapeHtml(name)}</div>
-<div class="pair">
-  <div><h3>Before</h3>${beforeSrc ? `<img src="${beforeSrc}">` : '<p>Missing before screenshot</p>'}</div>
-  <div><h3>After</h3>${afterSrc ? `<img src="${afterSrc}">` : '<p>Missing after screenshot</p>'}</div>
-</div>`;
-}).join('\n')}
-</body></html>`;
-
-  fs.writeFileSync(outputPath, html);
-}
-```
-
-## Pixel-Diff Scoring
+The standard path for before/after work. It pairs PNG files by their path relative to the two directories, so it reads the `<dir>/<route>/<breakpoint>.png` layout `capture.js` writes as well as a flat directory.
 
 ```bash
-# Install pixelmatch (one-time)
-npm install --save-dev --save-exact pixelmatch@7.2.0 pngjs@7.0.0
+node "<skill-dir>/assets/scripts/compare.js" --before _screenshots/before --after _screenshots/after --out _screenshots/diff
 ```
 
-Keep `pixelmatch@7.2.0`. `pixelmatch@8.0.0` (2026-10-06) replaces the colour metric, so its diff counts differ and the 0.5% pass line below has not been re-tuned for it; it is not adopted here (checked 2026-11-21, [release notes](https://github.com/mapbox/pixelmatch/releases/tag/v8.0.0)).
+| Option | Meaning |
+|---|---|
+| `--before DIR`, `--after DIR` | The two capture directories. Required. Pass the top-level directories, not one route |
+| `--out DIR` | Where the diff images and reports go. Required; must not be inside `--before` or `--after`. Nothing is written elsewhere |
+| `--threshold N` | Per-pixel colour sensitivity, 0 to 1; smaller is stricter. Default `0.05` |
+| `--max-diff-pixels N` | Differing pixels allowed in a pair before it counts as different. Default `0` |
+| `--max-diff-percent P` | The same allowance as a percentage of the pair's pixels. Not with `--max-diff-pixels` |
+| `--window-size N` | Count the densest N×N square of differing pixels instead of the whole image; use with `--max-diff-pixels` |
+| `--include-aa` | Count anti-aliased pixels too (by default pixelmatch detects and skips them) |
+| `--json` | Print the full report as JSON instead of text |
+
+| Exit code | Meaning |
+|---|---|
+| 0 | Every pair was compared and is within the allowance |
+| 1 | **Differences above the allowance**: a pair over it, a size change, an unreadable image, or an image present on one side only |
+| 2 | Nothing was compared: bad arguments, a missing dependency or directory, or no image exists on both sides. This is a failed run, never a pass |
+
+What it writes into `--out`:
+
+- `report.json` — `totals` (`pairs`, `compared`, `same`, `different`, `sizeChanged`, `missing`, `unreadable`), the options and pixelmatch version used, and one entry per pair with `status`, `diffPixels`, `diffPercent`, both sizes, and file paths.
+- `report.html` — before, after, and diff image for every pair, differing pairs first and open, matching pairs collapsed. It is a single offline file: inline CSS, no scripts, no remote resources, and every file name HTML-escaped. Images are linked by relative path, so keep the three directories together.
+- `<route>/diff-<breakpoint>.png` — one diff image for each pair with any differing pixel.
+
+Per-pair statuses: `same`, `different`, `size-changed` (the two images have different dimensions; they are compared on a canvas padded to the larger size and always count as a difference), `missing-before`, `missing-after`, `unreadable`.
+
+The comparison itself is one `pixelmatch` call per pair:
 
 ```js
-import { PNG } from 'pngjs';
-import pixelmatch from 'pixelmatch';
-import fs from 'node:fs';
-import path from 'node:path';
-
-function diffScreenshots(beforePath, afterPath, diffPath, threshold = 0.1) {
-  const before = PNG.sync.read(fs.readFileSync(beforePath));
-  const after = PNG.sync.read(fs.readFileSync(afterPath));
-
-  const width = Math.max(before.width, after.width);
-  const height = Math.max(before.height, after.height);
-
-  function padImage(img, w, h) {
-    if (img.width === w && img.height === h) return img;
-    const padded = new PNG({ width: w, height: h });
-    PNG.bitblt(img, padded, 0, 0, img.width, img.height, 0, 0);
-    return padded;
-  }
-
-  const paddedBefore = padImage(before, width, height);
-  const paddedAfter = padImage(after, width, height);
-  const diff = new PNG({ width, height });
-
-  const mismatchedPixels = pixelmatch(
-    paddedBefore.data, paddedAfter.data, diff.data,
-    width, height,
-    { threshold }  // 0.1 = strict, 0.3 = lenient (anti-aliasing tolerant)
-  );
-
-  fs.writeFileSync(diffPath, PNG.sync.write(diff));
-
-  const totalPixels = width * height;
-  const diffPercent = ((mismatchedPixels / totalPixels) * 100).toFixed(2);
-
-  return {
-    mismatchedPixels,
-    totalPixels,
-    diffPercent: parseFloat(diffPercent),
-    dimensions: { width, height },
-    passed: parseFloat(diffPercent) < 0.5,  // < 0.5% difference = pass
-  };
-}
-
-// Walks both trees, so the canonical <dir>/<route>/<breakpoint>.png layout and a flat
-// directory both work. Keys are '/'-separated paths relative to beforeDir/afterDir.
-function diffAllBreakpoints(beforeDir, afterDir, diffDir) {
-  const pngs = dir => fs.readdirSync(dir, { recursive: true })
-    .map(f => String(f).split(path.sep).join('/'))
-    .filter(f => f.endsWith('.png'));
-  const files = [...new Set([...pngs(beforeDir), ...pngs(afterDir)])].sort();
-  const results = [];
-
-  for (const file of files) {
-    const beforePath = path.join(beforeDir, file);
-    const afterPath = path.join(afterDir, file);
-    const diffPath = path.join(diffDir, path.dirname(file), `diff-${path.basename(file)}`);
-    fs.mkdirSync(path.dirname(diffPath), { recursive: true });
-    if (!fs.existsSync(beforePath) || !fs.existsSync(afterPath)) {
-      results.push({
-        breakpoint: file.replace('.png', ''),
-        passed: false,
-        missing: !fs.existsSync(beforePath) ? 'before' : 'after',
-        mismatchedPixels: 0,
-        totalPixels: 0,
-        diffPercent: 100,
-      });
-      continue;
-    }
-    const result = diffScreenshots(beforePath, afterPath, diffPath);
-    results.push({ breakpoint: file.replace('.png', ''), ...result });
-  }
-
-  // An empty comparison is a failed run, never a pass: wrong directory, or capture did not run.
-  const compared = results.filter(r => !r.missing).length;
-  if (compared === 0) {
-    throw new Error(`Nothing to compare: ${files.length} PNG file(s) found, none present under both ${beforeDir} and ${afterDir}`);
-  }
-
-  const report = {
-    timestamp: new Date().toISOString(),
-    totalBreakpoints: results.length,
-    compared,
-    passed: results.filter(r => r.passed).length,
-    failed: results.filter(r => !r.passed).length,
-    results,
-  };
-
-  fs.writeFileSync(path.join(diffDir, 'report.json'), JSON.stringify(report, null, 2));
-  return report;
-}
+const diffPixels = pixelmatch(before.data, after.data, diff.data, width, height, { threshold: 0.05 });
+const status = sizeChanged ? 'size-changed' : diffPixels > allowed ? 'different' : 'same';
 ```
 
-## Enhanced Comparison HTML with Diff Overlay
+### Dependencies
 
-```js
-function generateComparison(beforeDir, afterDir, diffDir, outputPath) {
-  // diff-<name>.png sits beside the same relative path under diffDir.
-  const diffFiles = listPngs(diffDir)
-    .filter(f => path.posix.basename(f).startsWith('diff-'))
-    .map(f => path.posix.join(path.posix.dirname(f), path.posix.basename(f).slice(5)));
-  const breakpoints = [...new Set([...listPngs(beforeDir), ...listPngs(afterDir), ...diffFiles])].sort();
-  if (breakpoints.length === 0) throw new Error(`No PNG screenshots under ${beforeDir} or ${afterDir}`);
-  const reportPath = path.join(diffDir, 'report.json');
-  const report = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, 'utf-8')) : null;
-
-  const html = `<!DOCTYPE html><html><head>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; background: #f5f5f5; }
-  h1 { margin-bottom: 8px; }
-  .summary { margin-bottom: 24px; padding: 16px; background: white; border-radius: 8px;
-             box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .summary .pass { color: #16a34a; font-weight: 600; }
-  .summary .fail { color: #dc2626; font-weight: 600; }
-  .triple { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 32px;
-            background: white; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-  .triple h3 { font-size: 14px; color: #666; margin-bottom: 8px; }
-  .triple img { width: 100%; border: 1px solid #eee; border-radius: 4px; }
-  .diff-stat { font-size: 12px; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 4px; }
-  .diff-stat.pass { background: #dcfce7; color: #166534; }
-  .diff-stat.fail { background: #fef2f2; color: #991b1b; }
-  .breakpoint-label { font-size: 18px; font-weight: 600; margin: 24px 0 12px; color: #333; }
-</style></head><body>
-<h1>Visual Regression Report</h1>
-${report ? `<div class="summary">
-  <p><span class="pass">${escapeHtml(report.passed)} passed</span> · <span class="fail">${escapeHtml(report.failed)} failed</span> · ${escapeHtml(report.totalBreakpoints)} breakpoints</p>
-  <p style="font-size:13px;color:#666;margin-top:4px;">Generated ${escapeHtml(report.timestamp)}</p>
-</div>` : ''}
-${breakpoints.map(f => {
-  const name = f.replace('.png', '');
-  const result = report?.results?.find(r => r.breakpoint === name);
-  const stat = result
-    ? `<span class="diff-stat ${result.passed ? 'pass' : 'fail'}">${result.missing ? `missing ${escapeHtml(result.missing)}` : `${escapeHtml(result.diffPercent)}% changed (${escapeHtml(result.mismatchedPixels.toLocaleString())} px)`}</span>`
-    : '';
-  const beforePath = path.join(beforeDir, f);
-  const afterPath = path.join(afterDir, f);
-  const diffPath = path.join(diffDir, path.dirname(f), 'diff-' + path.basename(f));
-  const beforeSrc = fs.existsSync(beforePath) ? escapeHtml(htmlPath(outputPath, beforePath)) : '';
-  const afterSrc = fs.existsSync(afterPath) ? escapeHtml(htmlPath(outputPath, afterPath)) : '';
-  const diffSrc = fs.existsSync(diffPath) ? escapeHtml(htmlPath(outputPath, diffPath)) : '';
-  return `<div class="breakpoint-label">${escapeHtml(name)} ${stat}</div>
-<div class="triple">
-  <div><h3>Before</h3>${beforeSrc ? `<img src="${beforeSrc}">` : '<p>Missing before screenshot</p>'}</div>
-  <div><h3>After</h3>${afterSrc ? `<img src="${afterSrc}">` : '<p>Missing after screenshot</p>'}</div>
-  <div><h3>Diff</h3>${diffSrc ? `<img src="${diffSrc}">` : '<p>No diff image</p>'}</div>
-</div>`;
-}).join('\n')}
-</body></html>`;
-
-  fs.writeFileSync(outputPath, html);
-}
+```bash
+npm install --save-dev --save-exact pixelmatch@8.0.0 pngjs@7.0.0
 ```
+
+`compare.js` resolves both from the current project first, then from beside the script, and stops with exit 2 when it finds neither or only pixelmatch 7 or earlier. `pixelmatch@8.0.0` (2026-10-06) replaced the YIQ colour metric used since 2015 with OKLab/HyAB distance, so **diff counts differ from 7.x** and a threshold tuned on 7.x must be re-checked ([release notes](https://github.com/mapbox/pixelmatch/releases/tag/v8.0.0)). The call signature and the `threshold` scale are unchanged; 8.0.0 adds `windowSize` and `ignoreMask`.
+
+### How the defaults were chosen
+
+Measured on 2026-11-21, not carried over from 7.x. Method: one realistic fixture page (header, gradient hero, six cards with shadows and inline SVG, a table) served locally in several variants; each captured with `capture.js` (Playwright 1.65.1, headless Chrome 158, macOS) at 375, 1280, and 1920 px wide, full page; each variant compared with the unchanged baseline. Figures are differing pixels at 1280 px (1,524,480 pixels); the other two widths gave the same pattern, except that the status dot is not rendered at 375 px and scored 0 there.
+
+| Variant against the baseline | pixelmatch 8.0.0 `threshold` 0.05 | 8.0.0 at 0.1 | 7.2.0 at 0.1 | Densest 16×16 square, 8.0.0 at 0.1 |
+|---|---:|---:|---:|---:|
+| Unchanged page, captured again (5 runs) | 0 | 0 | 0 | 0 |
+| Font smoothing switched (`-webkit-font-smoothing: antialiased`) | 12,873 | 4,755 | 3,538 | 40 |
+| All content shifted 0.4 px sideways | 14,835 | 11,925 | 11,524 | 95 |
+| Status dot recoloured (10 px circle) | 60 | 60 | 60 | 60 |
+| One word changed in a button label | 376 | 351 | 345 | 86 |
+| Button background one palette step darker (`#2563eb` → `#1d4ed8`) | 4,513 | 0 | 0 | 0 |
+| Card border one palette step darker (`#e2e8f0` → `#cbd5e1`) | 3,984 | 0 | 0 | 0 |
+| Hero restyled (page 66 px taller) | 528,276 | 498,839 | 498,925 | 256 |
+
+What the numbers decided:
+
+- **Allowance 0 pixels.** Two captures of an unchanged page on the same machine and browser were pixel-identical in every run, down to `threshold` 0.01. Same-machine before/after work has no noise to forgive, so any differing pixel is reported.
+- **`threshold` 0.05, not pixelmatch's 0.1.** At 0.1 a one-step colour change to a button or a border produced zero differing pixels; at 0.05 the whole button (4,513 px) and every border (3,984 px) registered. Smaller colour changes still fall below it: `#2563eb` → `#2a67ec` registered only at 0.01, and a one-to-two-unit-per-channel change (`#2462e9`) at no threshold tried. Lower `--threshold` when a change that subtle matters.
+- **A percentage line does not separate noise from change.** Applied to the 0.05 counts, the earlier "under 0.5% of pixels is a pass" rule passes the changed word (0.02%), the recoloured dot (0.004%), and the darker button at 1280 px (0.30%), and fails the same button at 375 px (0.56%). `--max-diff-percent` exists for callers who want it; it is not the default.
+- **Rendering-level differences are larger than small real changes.** A font-smoothing switch changed more pixels (4,755 at 0.1) than a changed word (351) or dot (60). No total count tells them apart. When the two captures come from different machines or browser builds, expect such differences and do not raise `--max-diff-pixels` blindly.
+- **`--window-size` is the option for that case, with thin margins.** Counting the densest 16×16 square at `threshold` 0.1, font smoothing scored 40 while the recoloured dot scored 60 and the changed word 86, so `--threshold 0.1 --window-size 16 --max-diff-pixels 50` passed the first and flagged the others on this fixture. The 0.4 px shift scored 95 and is flagged too. These margins come from one page; measure on the project's own pages before relying on them. Note that a window count at 0.1 cannot see the one-step colour changes.
+- **`ignoreMask` is not used.** It needs a per-image mask of regions to skip, which a directory comparison has no source for. Hide or freeze dynamic regions before capture instead, or use Playwright Test's `mask` option above.
+- **7.x and 8.0.0 disagree most on low-contrast differences**: 3,538 against 4,755 pixels for font smoothing at 0.1, and within 4% of each other on the other rows.
 
 ## Workflow
 
-1. Capture the baseline: run the [canonical screenshot script](playwright-patterns.md#canonical-screenshot-script) with `_screenshots/before` as its argument. It writes `_screenshots/before/<route>/<breakpoint>.png`. If the change is already in the working tree, get the baseline from [Baseline when the change is already made](#baseline-when-the-change-is-already-made) instead.
+1. Capture the baseline: `capture.js --base-url <url> --out _screenshots/before` ([options](playwright-patterns.md#systematic-capture-script)). If the change is already in the working tree, get the baseline from [Baseline when the change is already made](#baseline-when-the-change-is-already-made) instead.
 2. User makes their changes
-3. Run the same script, same routes and breakpoints, with `_screenshots/after`
-4. Run `diffAllBreakpoints('_screenshots/before', '_screenshots/after', '_screenshots/diff')`. Pass the two top-level directories; it pairs files by relative path and throws when no file exists on both sides.
-5. Generate comparison HTML: `generateComparison(beforeDir, afterDir, diffDir, '_screenshots/comparison.html')`
+3. Capture again with the same routes and breakpoints: `--out _screenshots/after`
+4. Run `compare.js --before _screenshots/before --after _screenshots/after --out _screenshots/diff`
+5. Open or hand over `_screenshots/diff/report.html`
 
 **Done when** all of these hold; otherwise report the comparison as failed or incomplete, not as "no differences":
 
-- `diffAllBreakpoints` returned without throwing and `_screenshots/diff/report.json` exists.
-- `report.totalBreakpoints` equals routes × breakpoints and `report.compared` equals it too. A lower `compared` means some results carry `missing: 'before'` or `'after'`; name them.
-- `_screenshots/comparison.html` exists.
-- The reply states `passed`, `failed`, the pass line used (under 0.5% changed pixels), each failed or missing entry, and the paths of the report and HTML. "0 failed" may be reported only together with a non-zero `compared`.
+- `compare.js` exited 0 or 1 and `_screenshots/diff/report.json` exists. Exit 2 means nothing was compared.
+- `totals.pairs` equals routes × breakpoints and `totals.compared` equals it too. A lower `compared` means some pairs are `missing-before`, `missing-after`, or `unreadable`; name them.
+- `_screenshots/diff/report.html` exists.
+- The reply states the `same`, `different`, `sizeChanged`, and `missing` counts, the threshold and allowance used, each differing or missing entry, where the baseline came from, and the paths of the report files. "No differences" may be reported only together with a non-zero `compared`.
 
 ### Baseline when the change is already made
 
@@ -281,7 +128,7 @@ The two captures differ in port. Keep routes, breakpoints, viewport sizes, and s
 
 Save as `.github/workflows/visual-regression.yml`. Do not write Playwright `storageState` files under `_screenshots/`; they contain plaintext cookies/localStorage and must not be uploaded as artifacts.
 
-`scripts/capture-screenshots.js` and `scripts/diff-screenshots.mjs` are files the project adds: the first is the [canonical screenshot script](playwright-patterns.md#canonical-screenshot-script) (output directory as its argument), the second calls `diffAllBreakpoints` and `generateComparison` from above. The diff step exits non-zero when nothing was compared; visual differences only raise a warning. Action majors and the Node.js line were checked on 2026-11-21: `actions/checkout` v7, `actions/setup-node` v7, `actions/upload-artifact` v7, `actions/github-script` v9, and Node.js 24 (LTS; Node.js 20 reached end of life on 2026-04-30, and Playwright 1.65 lists 22, 24, or 26). Pin each action to a commit SHA where the repository's policy requires it.
+Copy the skill's whole `assets/scripts/` folder into the repository as `scripts/visual/` (the scripts require `local-guard.js` from their own folder), and add `playwright`, `pixelmatch`, and `pngjs` at the pinned versions to the project's dev dependencies. Both branches need them: on the pull request that introduces the setup the baseline steps have nothing to run, so merge the setup first. The compare step warns on visual differences (exit 1) and fails the job when nothing could be compared (exit 2). Action majors and the Node.js line were checked on 2026-11-21: `actions/checkout` v7, `actions/setup-node` v7, `actions/upload-artifact` v7, `actions/github-script` v9, and Node.js 24 (LTS; Node.js 20 reached end of life on 2026-04-30, and Playwright 1.65 lists 22, 24, or 26). Pin each action to a commit SHA where the repository's policy requires it.
 
 ```yaml
 name: Visual Regression
@@ -321,7 +168,7 @@ jobs:
         run: npx wait-on http://localhost:3000 --timeout 30000
 
       - name: Capture baseline screenshots
-        run: node scripts/capture-screenshots.js _screenshots/before
+        run: node scripts/visual/capture.js --base-url http://localhost:3000 --out _screenshots/before
 
       - name: Stop dev server (base)
         run: kill $(lsof -t -i:3000) || true
@@ -346,22 +193,19 @@ jobs:
         run: npx wait-on http://localhost:3000 --timeout 30000
 
       - name: Capture current screenshots
-        run: node scripts/capture-screenshots.js _screenshots/after
+        run: node scripts/visual/capture.js --base-url http://localhost:3000 --out _screenshots/after
 
       # ── Diff and report ──
-      - name: Run pixel diff
-        run: node scripts/diff-screenshots.mjs
-
-      - name: Check results
+      - name: Compare
         run: |
-          if [ ! -f _screenshots/diff/report.json ]; then
-            echo "::warning::Visual regression report was not generated"
+          set +e
+          node scripts/visual/compare.js --before _screenshots/before --after _screenshots/after --out _screenshots/diff
+          code=$?
+          if [ "$code" -eq 1 ]; then
+            echo "::warning::Visual differences found; see the visual-regression-report artifact"
             exit 0
           fi
-          FAILED=$(node -e "const r=require('./_screenshots/diff/report.json'); console.log(r.failed)")
-          if [ "$FAILED" -gt 0 ]; then
-            echo "::warning::$FAILED breakpoints have visual differences > 0.5%"
-          fi
+          exit "$code"
 
       - name: Upload artifacts
         if: always()
@@ -383,10 +227,12 @@ jobs:
               return;
             }
             const report = JSON.parse(fs.readFileSync(reportPath, 'utf-8'));
+            const t = report.totals;
             const body = `### Visual Regression Results\n\n` +
-              `**${report.passed}** passed · **${report.failed}** failed · ${report.totalBreakpoints} breakpoints\n\n` +
+              `**${t.same}** same · **${t.different + t.sizeChanged}** different · **${t.missing}** missing · ${t.compared} of ${t.pairs} compared\n\n` +
+              `| Capture | Status | Changed |\n|---|---|---|\n` +
               report.results.map(r =>
-                `| ${r.breakpoint} | ${r.passed ? '✅' : '❌'} | ${r.diffPercent}% |`
+                `| ${r.name} | ${r.status} | ${r.diffPercent ?? '–'}${r.diffPercent === undefined ? '' : '%'} |`
               ).join('\n') +
               `\n\nDownload the full report from the workflow artifacts.`;
             github.rest.issues.createComment({

@@ -38,7 +38,7 @@ execution_context:
   sandbox: host-agent
   network: outbound-only
   filesystem: read-write
-  shell: none
+  shell: limited
   risk_tier: low
 
 dependencies:
@@ -52,15 +52,26 @@ dependencies:
     type: library
     optional: true
     version: "6.0.3"
-    reason: "Required only for explicit validation/inspection; installed from version-and-hash-pinned helper requirements in an isolated Python environment"
+    reason: "Required only for explicit validation/inspection; installed from version-and-hash-pinned helper requirements in an isolated Python environment. Wheels exist for Python 3.10-3.14 only, so validation and inspection need an interpreter in that range"
 
 scanning:
   guardskills: SAFE
   guardskills_risk_score: 96
-  guardskills_note: "guardskills@1.2.1 scan-local reports SAFE. Findings are isolated temporary-environment setup examples, not skill-side execution. See expected_findings."
+  guardskills_note: "guardskills@1.6.0 scan-local reports SAFE. Findings are the environment-scrubbing uv launcher and isolated temporary-environment setup examples, not skill-side execution. See expected_findings."
   snyk: pass
   codeql: pass
   expected_findings:
+    - id: R005_SECRET_READ
+      severity: high
+      confidence: medium
+      acknowledged: true
+      file: assets/scripts/run_uv.py
+      reason: "False positive, first reported by guardskills 1.6.0. run_uv.py copies the process environment with every UV_* variable removed and passes the copy to uv through os.execvpe, so host uv configuration cannot redirect the isolated install. It reads no secret, and writes, logs, or sends no variable."
+    - id: R008_ENV_ACCESS
+      severity: low
+      confidence: low
+      file: assets/scripts/run_uv.py
+      reason: "run_uv.py reads os.environ only to build the child environment for uv without UV_* variables."
     - id: R008_ENV_ACCESS
       severity: low
       confidence: low

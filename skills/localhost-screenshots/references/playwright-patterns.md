@@ -2,11 +2,11 @@
 
 ## Rules
 
-[SKILL.md § Golden Rules](../SKILL.md#golden-rules) owns the browser, origin-scheme, `file://`, and local-navigation rules. The patterns below assume them.
+[SKILL.md § Policy](../SKILL.md#policy--every-backend) owns the local-target, URL re-check, untrusted-content, viewport, and artifact rules; [SKILL.md § Resolve the local target](../SKILL.md#resolve-the-local-target) owns origin scheme and `file://`. The patterns below assume them. The bundled scripts launch Playwright's own Chromium: do not point them at a system browser binary, Puppeteer, or Selenium, and do not probe for installed browsers.
 
 ## Setup (only when the project has no Playwright)
 
-This applies to the Playwright path (systematic sets, before/after, visual regression). A quick capture that only lacks a host browser capability follows [SKILL.md § Bind capabilities to the current host](../SKILL.md#bind-capabilities-to-the-current-host) and installs nothing.
+This applies to the Playwright path (systematic sets, before/after, visual regression). A quick capture that only lacks a host browser capability follows [SKILL.md § Host browser path](../SKILL.md#host-browser-path) and installs nothing.
 
 Check what the project already resolves before installing anything, with the project's own package manager (the lockfile names it): `npm ls playwright @playwright/test`, `pnpm ls playwright @playwright/test`, or `yarn why playwright`.
 
@@ -23,7 +23,9 @@ npm install --save-dev playwright@1.65.1
 npm exec -- playwright install chromium
 ```
 
-Do not use `@latest` or an unversioned install. `playwright@1.65.1` is the latest release the bundled helpers were run against (2026-11-21, also run against 1.62.0). They use only `chromium.launch`, `page.goto`, `page.screenshot`, `request.redirectedFrom`, `browserContext.newCDPSession`, and `locator.ariaSnapshot`, which Playwright's API docs list as available since 1.49 or earlier.
+`compare.js` additionally needs `pixelmatch` 8 and `pngjs`, resolved the same way (project first, then beside the script). Install them only for a comparison: `npm install --save-dev --save-exact pixelmatch@8.0.0 pngjs@7.0.0`. It refuses pixelmatch 7 and earlier, whose counts use a different colour metric.
+
+Do not use `@latest` or an unversioned install. `playwright@1.65.1` is the latest release the bundled helpers were run against (2026-11-21, also run against 1.62.0). They use only `chromium.launch`, `page.goto`, `page.screenshot` (with `animations: 'disabled'` in `capture.js`), `request.redirectedFrom`, `browserContext.newCDPSession`, and `locator.ariaSnapshot`, which Playwright's API docs list as available since 1.49 or earlier.
 
 **Done when** `npm exec -- playwright --version` (or the package manager's equivalent) prints a version from the project and a helper run reaches `saved …`.
 
@@ -68,7 +70,7 @@ npx serve _site -l 3000 --no-clipboard
 ```js
 const testPage = await browser.newPage();
 try {
-  const response = await gotoLocal(testPage, BASE_URL, { timeout: 5000 }); // § Local Navigation Guard
+  const response = await gotoLocal(testPage, BASE_URL, { timeout: 5000 }); // from local-guard.js, see § Local Navigation Guard
   if (!response || !response.ok()) {
     throw new Error(`Server returned ${response?.status()}`);
   }
@@ -92,6 +94,8 @@ Resolve viewports in this order:
 3. **Device-model overrides** — if the user names a specific device, use the labeled preset (see [Custom Breakpoints & Device-Model Labels](#custom-breakpoints--device-model-labels)).
 
 ## Standard Breakpoints
+
+`capture.js` uses this set when `--breakpoints` is not given.
 
 ```js
 const BREAKPOINTS = [
@@ -156,131 +160,95 @@ Bounds rationale: below 200px Chromium clips layout primitives; above 3840×2160
 
 ## Local Navigation Guard
 
-Every snippet in these references navigates with `gotoLocal(page, url, options)`, never a bare `page.goto`. Paste this block, unchanged, into any hand-written capture script; the bundled helpers carry the same code.
+The guard lives in one file, [`assets/scripts/local-guard.js`](../assets/scripts/local-guard.js), and every bundled script requires it. A hand-written script uses the same file instead of calling `page.goto`:
 
 ```js
-function isLocalUrl(value) {
-  try {
-    const parsed = new URL(value);
-    const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
-    return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
-      && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost'));
-  } catch {
-    return false;
-  }
-}
+// <skill-dir> is the folder that contains this skill's SKILL.md.
+const { gotoLocal, assertLocalPage } = require('<skill-dir>/assets/scripts/local-guard.js');
 
-// Main-frame navigation guard. Playwright route handlers are called once per request and
-// never for redirect hops, so the guard pauses document requests through a CDP Fetch session
-// instead: a main-frame request to a non-local host is failed before it is sent, on every hop
-// of a redirect chain and for later page-initiated navigations. Subframes and other
-// subresources are not intercepted.
-const localGuards = new WeakMap();
+const response = await gotoLocal(page, 'http://localhost:3000/', { waitUntil: 'load' });
+const png = await page.screenshot({ fullPage: true });
+assertLocalPage(page); // before writing the file
+fs.writeFileSync('_screenshots/home.png', png);
+```
 
-async function gotoLocal(page, value, options) {
-  if (!isLocalUrl(value)) throw new Error(`Refusing non-localhost URL: ${value}`);
-  let guard = localGuards.get(page);
-  if (!guard) {
-    guard = { blockedUrl: '' };
-    localGuards.set(page, guard);
-    const cdp = await page.context().newCDPSession(page);
-    // Read the main frame id once, up front: the renderer does not answer while a paused
-    // navigation is pending, so the handler must not ask it anything.
-    const mainFrameId = (await cdp.send('Page.getFrameTree')).frameTree.frame.id;
-    cdp.on('Fetch.requestPaused', ({ requestId, frameId, request }) => {
-      const external = frameId === mainFrameId && !isLocalUrl(request.url);
-      if (external) guard.blockedUrl = request.url;
-      cdp.send(
-        external ? 'Fetch.failRequest' : 'Fetch.continueRequest',
-        external ? { requestId, errorReason: 'BlockedByClient' } : { requestId },
-      ).catch(() => {
-        // Page or session closed: the request stays paused, so nothing is sent.
-      });
-    });
-    await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*', resourceType: 'Document' }] });
-  }
-  let response;
-  try {
-    response = await page.goto(value, options);
-  } catch (err) {
-    if (guard.blockedUrl) throw new Error(`Refusing non-localhost main-frame redirect: ${guard.blockedUrl}`);
-    throw err;
-  }
-  // Second check, independent of the guard: no hop of the completed chain may be external.
-  for (let request = response && response.request(); request; request = request.redirectedFrom()) {
-    if (!isLocalUrl(request.url())) throw new Error(`Refusing non-localhost main-frame redirect: ${request.url()}`);
-  }
-  assertLocalPage(page);
-  return response;
-}
+The mechanism, in excerpt (the full code is in the file):
 
-// Call again after capturing and before writing any file: a navigation blocked after load
-// leaves a browser error page, which must not be saved as the app.
-function assertLocalPage(page) {
-  const guard = localGuards.get(page);
-  if (guard && guard.blockedUrl) throw new Error(`Refusing non-localhost main-frame navigation: ${guard.blockedUrl}`);
-  if (!isLocalUrl(page.url())) throw new Error(`Refusing non-localhost final URL: ${page.url()}`);
-}
+```js
+const cdp = await page.context().newCDPSession(page);
+const mainFrameId = (await cdp.send('Page.getFrameTree')).frameTree.frame.id;
+cdp.on('Fetch.requestPaused', ({ requestId, frameId, request }) => {
+  const external = frameId === mainFrameId && !isLocalUrl(request.url);
+  cdp.send(external ? 'Fetch.failRequest' : 'Fetch.continueRequest',
+    external ? { requestId, errorReason: 'BlockedByClient' } : { requestId });
+});
+await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*', resourceType: 'Document' }] });
 ```
 
 What it does and does not do:
 
 - **Stops the request.** An HTTP redirect to a non-local host — including a local → external → local bounce — is failed before the external request is sent, and `gotoLocal` throws. A `page.route` handler cannot do this: Playwright calls it once, for the original request, and the browser follows redirects on its own ([Playwright network docs § Redirects](https://playwright.dev/docs/network#redirects)).
+- **Checks again.** After navigation `gotoLocal` walks the completed redirect chain and the final URL, independently of the pause handler.
 - **Stays installed.** Later main-frame navigations on the same page (clicks, form posts, `location =`, meta refresh) pass the same check. A blocked one leaves a browser error page, so call `assertLocalPage(page)` after capturing and before writing the file.
 - **Leaves the page's own content alone.** Images, scripts, fonts, and iframes from other hosts still load.
 - **Works beside `page.route`.** API mocks registered with `page.route` keep working; the guard only pauses document requests.
 - **Chromium only.** Playwright documents CDP sessions as Chromium-only. `gotoLocal` reaches `page.goto` only after the guard is installed, so it cannot navigate unguarded in another browser.
+- **Errors carry `code: 'NON_LOCAL_NAVIGATION'` and `url`.** `capture.js` reports only the origin of that URL, because the rest is chosen by the page.
 
-Observed on 2026-11-21 with Playwright 1.62.0 and 1.65.1 driving headless Chrome 158: the stand-in external server received no request in the redirect, bounce, post-load `location.href`, meta-refresh, and link-click cases.
+Observed on 2026-11-21 with Playwright 1.62.0 and 1.65.1 driving headless Chrome 158, for `quick.js`, `multi-breakpoint.js`, `screenshot-a11y.js`, and `capture.js`: the stand-in external server received no request in the redirect, bounce, post-load `location.href`, and meta-refresh cases.
 
-## Canonical Screenshot Script
+A browser driven through host tools cannot install this guard; see [host-browser.md](host-browser.md).
 
-Requires `BREAKPOINTS` from above and the [Local Navigation Guard](#local-navigation-guard) block. The optional first argument sets the output directory, so a before/after run writes `_screenshots/before` and `_screenshots/after`.
+## Systematic Capture Script
 
-```js
-const { chromium } = require('playwright');
-const fs = require('fs');
-const path = require('path');
+The standard path for a route × breakpoint set. Run it from the project root:
 
-const BASE_URL = 'http://localhost:8080';
-const ROUTES = ['/'];
-
-(async () => {
-  const browser = await chromium.launch();
-  const outDir = process.argv[2] || '_screenshots';
-
-  try {
-    for (const route of ROUTES) {
-      const routeName = route === '/' ? 'home' : route.slice(1).replace(/\//g, '-');
-      const routeDir = path.join(outDir, routeName);
-      fs.mkdirSync(routeDir, { recursive: true });
-
-      for (const bp of BREAKPOINTS) {
-        const page = await browser.newPage();
-        await page.setViewportSize({ width: bp.width, height: bp.height });
-        await gotoLocal(page, `${BASE_URL}${route}`, { waitUntil: 'load' });
-        const png = await page.screenshot({ fullPage: true });
-        assertLocalPage(page);
-        fs.writeFileSync(path.join(routeDir, `${bp.name}-${bp.width}x${bp.height}.png`), png);
-        await page.close();
-      }
-    }
-  } finally {
-    await browser.close();
-  }
-  console.log(`Done. Screenshots saved to ${outDir}/`);
-})();
+```bash
+node "<skill-dir>/assets/scripts/capture.js" --base-url http://localhost:3000 --routes /,/about,/pricing --out _screenshots/current
 ```
 
-**Done when** `<outDir>/<route>/` holds one non-empty PNG per breakpoint for every route (routes × breakpoints files in total), each named for its breakpoint, and the script exited 0. Report the output directory, the file count, and any route or size that failed; a thrown `Refusing non-localhost …` error is a failed capture, not a retry prompt.
+| Option | Meaning |
+|---|---|
+| `--base-url URL` | Local origin. Required. Refused, with the corrected URL, when it is not local or has no scheme |
+| `--out DIR` | Output directory. Required. Nothing is written outside it |
+| `--routes LIST` | Comma-separated paths on that origin. Default `/`. A route that resolves to another origin is a usage error |
+| `--breakpoints LIST` | Comma-separated `name:WIDTHxHEIGHT`. Default: the eight standard breakpoints |
+| `--wait-until EVENT` | `load` (default), `domcontentloaded`, `networkidle`, or `commit` |
+| `--wait-for SELECTOR` | Wait for this selector on every route before capturing |
+| `--viewport-only` | Capture the viewport instead of the full scrollable page |
+| `--json` | Print the summary as JSON instead of text |
+
+Output layout (`/` is saved as `home`; other routes keep only letters, digits, `.`, `_`, `-`):
+
+```
+_screenshots/current/
+  capture.json                 # base URL, routes, breakpoints, expected / saved / failed, one entry per capture
+  home/
+    mobile-sm-320x568.png
+    mobile-375x812.png
+    ...
+    wide-1920x1080.png
+  about/
+    ...
+```
+
+| Exit code | Meaning |
+|---|---|
+| 0 | Every route was captured at every breakpoint |
+| 1 | At least one capture failed; `capture.json` and the output name each one. The rest are saved |
+| 2 | Usage or setup error (bad option, non-local URL, Playwright or Chromium missing). Nothing was captured |
+
+Each capture uses a new page, the navigation guard, and `animations: 'disabled'`. On the measurement fixture, five runs of an unchanged page produced pixel-identical files ([visual-regression.md § How the defaults were chosen](visual-regression.md#how-the-defaults-were-chosen)). A run does not delete files from an earlier run: use a fresh directory when the route or breakpoint list changes, or stale images will show up in a comparison as "only in before".
+
+**Done when** the exit code is 0 and `capture.json` has `saved` equal to `expected` (routes × breakpoints). Report the output directory, the count, and every failed entry; a `refused: the page left the local host` entry is a failed capture, not a retry prompt.
 
 ### Key API Details
 
 - `chromium.launch()` — no arguments needed, uses Playwright's bundled Chromium
-- `waitUntil: 'load'` — safer default for SPAs with analytics/websockets; add explicit `waitForSelector()` for the content that matters. Use `networkidle` only for known-static pages.
+- `waitUntil: 'load'` — safer default for SPAs with analytics/websockets; add explicit `waitForSelector()` (`--wait-for`) for the content that matters. Use `networkidle` only for known-static pages.
 - `fullPage: true` — captures the entire scrollable page, not just the viewport
 - `page.setViewportSize()` — set before navigating for accurate responsive rendering
-- Create a **new page per breakpoint** for stateless or storage-state captures. For authentication held in `sessionStorage`, keep the same authenticated page and verify its protected state at every breakpoint.
+- Create a **new page per breakpoint** for stateless or storage-state captures. For authentication held in `sessionStorage`, keep the same authenticated page and verify its protected state at every breakpoint; see [Persistent Browser Sessions](#persistent-browser-sessions).
 
 ## Persistent Browser Sessions
 
@@ -520,19 +488,27 @@ if (overlays.length > 0) {
 
 ## Bundled Scripts
 
-The skill ships three runnable scripts under `assets/scripts/`. Prefer these over inline `node -e "…"` strings: they're statically analysable, signable, and reviewable in PR diffs. They also satisfy "no dynamic code execution" rules in agentic-skill scanners.
+The skill ships its runnable code under `assets/scripts/`. Prefer these over inline `node -e "…"` strings: they're statically analysable, signable, and reviewable in PR diffs. They also satisfy "no dynamic code execution" rules in agentic-skill scanners.
 
 | Script | Purpose |
 |--------|---------|
+| `assets/scripts/capture.js` | Routes × breakpoints for one local origin; see [Systematic Capture](#systematic-capture-script) |
+| `assets/scripts/compare.js` | Before/after comparison with exit codes and an offline HTML report; see [visual-regression.md](visual-regression.md) |
 | `assets/scripts/quick.js` | Single-viewport screenshot of one localhost URL |
 | `assets/scripts/multi-breakpoint.js` | Mobile/tablet/desktop screenshot set for one localhost URL |
 | `assets/scripts/screenshot-a11y.js` | Screenshot + ARIA snapshot JSON (wrapped in `untrusted-page-content` envelope) |
+| `assets/scripts/local-guard.js` | Shared module: local-URL policy, navigation guard, Playwright resolution. Not run directly |
+| `assets/scripts/package.json` | Marks the folder as CommonJS so the scripts run inside ESM projects |
+
+The four capture scripts `require('./local-guard.js')`, so the folder travels as a unit: copy all of `assets/scripts/` (for example into a repository's `scripts/visual/` for CI), not single files. A script copied alone stops with `Cannot find module './local-guard.js'` rather than running unguarded.
 
 ### Invocation
 
-Run the helpers from the **project root** and address them by the installed skill path (`<skill-dir>` is the folder containing this skill's `SKILL.md`, for example `~/.agents/skills/localhost-screenshots` or `.claude/skills/localhost-screenshots`). Relative output paths resolve against the current directory, so captures land in the project's `_screenshots/`. Each helper loads `playwright` or `@playwright/test` from the current project first, then from beside the script; when neither resolves, follow [Setup](#setup-only-when-the-project-has-no-playwright).
+Run the scripts from the **project root** and address them by the installed skill path (`<skill-dir>` is the folder containing this skill's `SKILL.md`, for example `~/.agents/skills/localhost-screenshots` or `.claude/skills/localhost-screenshots`). Relative output paths resolve against the current directory, so captures land in the project's `_screenshots/`. Each capture script loads `playwright` or `@playwright/test` from the current project first, then from beside the script; when neither resolves, follow [Setup](#setup-only-when-the-project-has-no-playwright).
 
-The bundled scripts fail closed on non-localhost URLs before loading Playwright. Accepted hosts are `localhost`, `127.0.0.1`, `[::1]`, and `*.localhost`, always with an `http://` or `https://` scheme. A scheme-less `localhost:3000` and a bind address such as `http://0.0.0.0:3000` are refused with the corrected URL in the message; rerun with that URL. During and after navigation the helpers apply the [Local Navigation Guard](#local-navigation-guard): a main-frame redirect or navigation to another host is failed before the request is sent, and the helper exits non-zero without writing a capture.
+The scripts fail closed on non-localhost URLs before loading Playwright. Accepted hosts are `localhost`, `127.0.0.1`, `[::1]`, and `*.localhost`, always with an `http://` or `https://` scheme. A scheme-less `localhost:3000` and a bind address such as `http://0.0.0.0:3000` are refused with the corrected URL in the message; rerun with that URL. During and after navigation they apply the [Local Navigation Guard](#local-navigation-guard): a main-frame redirect or navigation to another host is failed before the request is sent, and the script exits non-zero without writing that capture.
+
+`capture.js` and `compare.js` take named flags (`--help` lists them). The three single-URL helpers take positional arguments:
 
 | Script | Positional arguments (in order) |
 |--------|---------------------------------|

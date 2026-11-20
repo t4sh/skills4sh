@@ -30,8 +30,31 @@
       "files": [
         "skills/localhost-screenshots/SKILL.md",
         "skills/localhost-screenshots/references/playwright-patterns.md",
-        "skills/localhost-screenshots/assets/scripts/quick.js",
+        "skills/localhost-screenshots/assets/scripts/local-guard.js",
         ".security/localhost-screenshots.yaml"
+      ]
+    },
+    {
+      "name": "pixelmatch",
+      "registry": "npm",
+      "pinned": "8.0.0",
+      "files": [
+        "skills/localhost-screenshots/SKILL.md",
+        "skills/localhost-screenshots/references/visual-regression.md",
+        "skills/localhost-screenshots/assets/scripts/compare.js",
+        ".security/localhost-screenshots.yaml",
+        "tests/fixtures/visual/package.json"
+      ]
+    },
+    {
+      "name": "pngjs",
+      "registry": "npm",
+      "pinned": "7.0.0",
+      "files": [
+        "skills/localhost-screenshots/SKILL.md",
+        "skills/localhost-screenshots/references/visual-regression.md",
+        ".security/localhost-screenshots.yaml",
+        "tests/fixtures/visual/package.json"
       ]
     },
     {
@@ -63,7 +86,7 @@
     {
       "name": "guardskills",
       "registry": "npm",
-      "pinned": "1.2.1",
+      "pinned": "1.6.0",
       "files": [
         "bin/guardskills-check.mjs",
         "SECURITY.md"

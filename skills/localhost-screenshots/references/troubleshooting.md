@@ -26,6 +26,8 @@
 
 ## What NOT to Do
 
+The browser-binary items apply to the bundled Playwright scripts. A host browser tool that drives the user's own browser is a separate, supported backend (SKILL.md § "Choose a backend").
+
 - **Do not use Puppeteer** — separate headless browser that can't reach localhost from sandbox
 - **Do not use JSDOM** — missing browser APIs (matchMedia, IntersectionObserver, sessionStorage)
 - Do not look for system Chrome or Chromium installations
@@ -34,7 +36,7 @@
 - Do not use `capture-website-cli` or similar npm screenshot wrappers
 - Do not check for `CHROME_PATH` or `PUPPETEER_EXECUTABLE_PATH` environment variables
 - Do not install Chrome via apt, snap, or any package manager
-- Do not stop at one viewport when the request is a systematic multi-breakpoint set or visual regression; capture every breakpoint in that set. For a quick or unsized capture, follow SKILL.md § "Quick screenshot flow" (retain and report the observed viewport).
+- Do not stop at one viewport when the request is a systematic multi-breakpoint set or visual regression; capture every breakpoint in that set. For a quick or unsized capture, follow SKILL.md § "Policy" rules 4 and 5 (retain and report the observed viewport).
 - **Do not open HTTP-dependent pages via `file://` paths** — CSS/JS paths, modules, service workers, and fetches often fail without an HTTP server. Self-contained static HTML with inline/relative assets is the only exception.
 - Do not assume the user's host `localhost` is reachable from a sandboxed VM — always verify connectivity first
-- **Do not waste time on Puppeteer workarounds** when Chrome MCP is already connected
+- **Do not waste time on Puppeteer workarounds** when a host browser tool is already connected

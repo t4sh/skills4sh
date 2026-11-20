@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -23,6 +23,7 @@ const scripts = [
 //     ever sees: Playwright calls it once and the browser follows redirects on its own.
 //   - A request that is failed is never sent. Sent URLs are written to PLAYWRIGHT_DOUBLE_LOG.
 //   - `afterLoad` is a page-initiated navigation that fires while the page is being captured.
+//   - `redirects` applies to every navigation; `redirectsFor` maps one requested URL to its chain.
 const MARKER = 'TEST DOUBLE: no pixels';
 const DOUBLE = `
   const fs = require('fs');
@@ -75,7 +76,7 @@ const DOUBLE = `
       route: async (_pattern, handler) => { routeHandler = handler; },
       mainFrame: () => frame,
       setViewportSize: async () => {},
-      goto: (url) => navigate([url, ...(scenario.redirects || [])]),
+      goto: (url) => navigate([url, ...((scenario.redirectsFor && scenario.redirectsFor[url]) || scenario.redirects || [])]),
       url: () => current,
       waitForSelector: async () => {},
       screenshot: async ({ path } = {}) => {
@@ -225,6 +226,130 @@ for (const script of scripts) {
 }
 
 const patterns = readFileSync('skills/localhost-screenshots/references/playwright-patterns.md', 'utf8');
+const captureScript = 'skills/localhost-screenshots/assets/scripts/capture.js';
+
+// Runs capture.js in an empty project directory whose only content is the Playwright double,
+// and returns everything it left on disk so "writes only under --out" can be asserted.
+function runCapture(args, scenario = {}) {
+  const project = mkdtempSync(join(tmpdir(), 'localhost-capture-'));
+  const moduleDir = join(project, 'node_modules', 'playwright');
+  mkdirSync(moduleDir, { recursive: true });
+  writeFileSync(join(moduleDir, 'index.js'), DOUBLE);
+  const log = join(tmpdir(), `localhost-capture-sent-${process.pid}-${Date.now()}.json`);
+  try {
+    const result = spawnSync(process.execPath, [resolve(captureScript), ...args], {
+      cwd: project, encoding: 'utf8',
+      env: { ...process.env, PLAYWRIGHT_DOUBLE_SCENARIO: JSON.stringify(scenario), PLAYWRIGHT_DOUBLE_LOG: log },
+    });
+    const files = readdirSync(project, { recursive: true }).map(String)
+      .filter(f => !f.startsWith('node_modules')).map(f => f.split('\\').join('/')).sort();
+    const contents = new Map(files.filter(f => statSync(join(project, f)).isFile()).map(f => [f, readFileSync(join(project, f), 'utf8')]));
+    const read = file => contents.get(file) ?? null;
+    return { ...result, files, read, sent: existsSync(log) ? JSON.parse(readFileSync(log, 'utf8')) : [] };
+  } finally {
+    rmSync(project, { recursive: true, force: true });
+    rmSync(log, { force: true });
+  }
+}
+
+test('capture.js saves every route at every breakpoint under --out and nowhere else', () => {
+  const result = runCapture(['--base-url', 'http://localhost:3000', '--out', 'shots/before', '--routes', '/,/docs/intro?tab=api', '--breakpoints', 'mobile:375x812,desktop:1280x800']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.deepEqual(result.files, [
+    'shots', 'shots/before', 'shots/before/capture.json',
+    'shots/before/docs-intro-tab-api', 'shots/before/docs-intro-tab-api/desktop-1280x800.png', 'shots/before/docs-intro-tab-api/mobile-375x812.png',
+    'shots/before/home', 'shots/before/home/desktop-1280x800.png', 'shots/before/home/mobile-375x812.png',
+  ]);
+  assert.equal(result.read('shots/before/home/mobile-375x812.png'), MARKER);
+  const summary = JSON.parse(result.read('shots/before/capture.json'));
+  assert.equal(summary.expected, 4); assert.equal(summary.saved, 4); assert.equal(summary.failed, 0);
+  assert.deepEqual(summary.routes, ['/', '/docs/intro?tab=api']);
+  assert.deepEqual(result.sent, ['http://localhost:3000/', 'http://localhost:3000/', 'http://localhost:3000/docs/intro?tab=api', 'http://localhost:3000/docs/intro?tab=api']);
+  assert.match(result.stdout, /4 of 4 captures saved to shots\/before\//);
+});
+
+test('capture.js defaults to the eight documented standard breakpoints', () => {
+  const result = runCapture(['--base-url', 'http://myapp.localhost:1355', '--out', 'out', '--json']);
+  assert.equal(result.status, 0, result.stderr);
+  const documented = [...patterns.split('## Standard Breakpoints')[1].split('```')[1].matchAll(/name: '([a-z-]+)',\s+width: (\d+),\s+height: (\d+)/g)]
+    .map(m => `${m[1]}:${m[2]}x${m[3]}`);
+  assert.equal(documented.length, 8);
+  assert.deepEqual(JSON.parse(result.stdout).breakpoints, documented);
+  assert.equal(result.files.filter(f => f.endsWith('.png')).length, 8);
+});
+
+test('capture.js fails a route that redirects to another host, keeps the others, and exits 1', () => {
+  const result = runCapture(['--base-url', 'http://localhost:3000', '--out', 'out', '--routes', '/,/go', '--breakpoints', 'mobile:375x812'], {
+    redirectsFor: { 'http://localhost:3000/go': [EXTERNAL, 'http://localhost:3000/landed'] },
+  });
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.files.filter(f => f.endsWith('.png')), ['out/home/mobile-375x812.png']);
+  assert.deepEqual(result.sent, ['http://localhost:3000/', 'http://localhost:3000/go']);
+  const summary = JSON.parse(result.read('out/capture.json'));
+  assert.equal(summary.saved, 1); assert.equal(summary.failed, 1);
+  assert.equal(summary.results[1].error, 'refused: the page left the local host for https://example.com');
+  // Only the origin of a page-chosen URL is repeated.
+  assert.doesNotMatch(result.stdout + result.stderr + result.read('out/capture.json'), /escaped/);
+  assert.match(result.stdout, /FAILED \/go mobile: refused/);
+  assert.match(result.stdout, /1 of 2 captures saved/);
+});
+
+test('capture.js writes no image when the page leaves the local host after load', () => {
+  const result = runCapture(['--base-url', 'http://localhost:3000', '--out', 'out', '--breakpoints', 'mobile:375x812'], { afterLoad: EXTERNAL });
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.files, ['out', 'out/capture.json']);
+  assert.deepEqual(result.sent, ['http://localhost:3000/']);
+});
+
+for (const [label, args, message] of [
+  ['no arguments', [], /Missing --base-url/],
+  ['no --out', ['--base-url', 'http://localhost:3000'], /Missing --out/],
+  ['a public base URL', ['--base-url', 'https://example.com', '--out', 'out'], /Refusing non-localhost URL/],
+  ['a scheme-less base URL', ['--base-url', 'localhost:3000', '--out', 'out'], /did you mean http:\/\/localhost:3000\?/],
+  ['a route on another origin', ['--base-url', 'http://localhost:3000', '--out', 'out', '--routes', '/,//evil.example/x'], /resolves to another origin/],
+  ['an absolute-URL route', ['--base-url', 'http://localhost:3000', '--out', 'out', '--routes', 'https://evil.example/'], /a route must start with \//],
+  ['two routes with one directory name', ['--base-url', 'http://localhost:3000', '--out', 'out', '--routes', '/a/b,/a-b'], /would both be saved to a-b\//],
+  ['an out-of-range breakpoint', ['--base-url', 'http://localhost:3000', '--out', 'out', '--breakpoints', 'tiny:100x100'], /width 100 outside/],
+  ['an unknown option', ['--base-url', 'http://localhost:3000', '--out', 'out', '--output', 'x'], /Unknown option: --output/],
+  ['an unknown wait event', ['--base-url', 'http://localhost:3000', '--out', 'out', '--wait-until', 'idle'], /--wait-until must be one of/],
+]) {
+  test(`capture.js treats ${label} as a usage error: exit 2, nothing written, no navigation`, () => {
+    const result = runCapture(args);
+    assert.equal(result.status, 2, result.stderr);
+    assert.match(result.stderr, message);
+    assert.deepEqual(result.files, []);
+    assert.deepEqual(result.sent, []);
+  });
+}
+
+test('capture.js keeps a traversal-shaped route inside --out', () => {
+  const result = runCapture(['--base-url', 'http://localhost:3000', '--out', 'out', '--routes', '/..%2f..%2fescape/../up', '--breakpoints', 'mobile:375x812']);
+  assert.equal(result.status, 0, result.stderr);
+  assert.ok(result.files.length > 0 && result.files.every(f => f === 'out' || f.startsWith('out/')), result.files.join(', '));
+  assert.equal(result.files.filter(f => f.endsWith('.png')).length, 1);
+});
+
+test('capture.js --help documents its flags and exit codes without running', () => {
+  const result = runCapture(['--help']);
+  assert.equal(result.status, 0);
+  for (const text of ['--base-url', '--out', '--routes', '--breakpoints', '--json', 'Exit codes:', '  0  ', '  1  ', '  2  ']) assert.ok(result.stdout.includes(text), text);
+  assert.deepEqual(result.files, []);
+});
+
+test('capture.js reports a missing Playwright as a setup error', () => {
+  const project = mkdtempSync(join(tmpdir(), 'localhost-capture-missing-'));
+  try {
+    const dir = join(project, 'copied-scripts');
+    mkdirSync(dir);
+    for (const file of ['capture.js', 'local-guard.js', 'package.json']) copyFileSync(join('skills/localhost-screenshots/assets/scripts', file), join(dir, file));
+    const env = { ...process.env }; delete env.NODE_PATH;
+    const result = spawnSync(process.execPath, [join(dir, 'capture.js'), '--base-url', 'http://localhost:3000', '--out', 'out'], { cwd: project, encoding: 'utf8', env });
+    assert.equal(result.status, 2);
+    assert.match(result.stderr, /Missing dependency: playwright\./);
+    assert.equal(existsSync(join(project, 'out')), false);
+  } finally { rmSync(project, { recursive: true, force: true }); }
+});
+
 const tlsSnippet = patterns.split('## Self-Signed HTTPS')[1].match(/```js\n([\s\S]*?)```/)[1];
 const verifiedTarget = { startedByThisTask: true, selfSigned: true, isPortless: false, tlsExceptionAuthorized: true };
 for (const [label, url, evidence, expected] of [
@@ -253,21 +378,43 @@ for (const [label, url, evidence, expected] of [
   });
 }
 
-// The references tell agents to paste this block into hand-written scripts; it must be the
-// code the bundled helpers run, not a paraphrase of it.
-const guardSnippet = patterns.split('## Local Navigation Guard')[1].match(/```js\n([\s\S]*?)```/)[1];
-for (const script of scripts) {
-  test(`${script} carries the documented local navigation guard verbatim`, () => {
+// One guard, in one file. Every script that drives a browser must take it from there, and no
+// script or reference snippet may navigate any other way.
+const scriptsDir = 'skills/localhost-screenshots/assets/scripts';
+const browserScripts = [...scripts, captureScript];
+for (const script of browserScripts) {
+  test(`${script} navigates only through the shared local-guard.js`, () => {
     const source = readFileSync(script, 'utf8');
-    for (const part of guardSnippet.split(/\n(?=\/\/ Main-frame navigation guard|\/\/ Call again after capturing)/)) {
-      assert.ok(source.includes(part.trim()), part.split('\n')[0]);
-    }
+    assert.match(source, /require\('\.\/local-guard\.js'\)/);
+    assert.doesNotMatch(source, /\.goto\(|newCDPSession|page\.route\(/);
+    assert.match(source, /await gotoLocal\(page, /);
+    // Every screenshot is followed by the local check before anything is written.
+    assert.match(source, /await page\.screenshot\([^)]*\);\n(?:\s+const ariaSnapshot = [^\n]+\n)?\s+assertLocalPage\(page\);\n(?:\s+fs\.mkdirSync[^\n]+\n)?\s+fs\.writeFileSync\(/);
   });
 }
 
-for (const file of ['playwright-patterns.md', 'interaction-templates.md', 'ai-snapshots.md', 'visual-regression.md']) {
+test('local-guard.js is the only bundled file that calls page.goto, and compare.js opens no browser or network', () => {
+  const files = readdirSync(scriptsDir).filter(f => f.endsWith('.js')).sort();
+  assert.deepEqual(files, ['capture.js', 'compare.js', 'local-guard.js', 'multi-breakpoint.js', 'quick.js', 'screenshot-a11y.js']);
+  assert.deepEqual(files.filter(f => /\.goto\(/.test(readFileSync(join(scriptsDir, f), 'utf8'))), ['local-guard.js']);
+  const compare = readFileSync(join(scriptsDir, 'compare.js'), 'utf8');
+  assert.doesNotMatch(compare, /playwright|chromium|https?:\/\/|require\('(?:node:)?(?:http|https|net|child_process)'\)|fetch\(/);
+});
+
+test('a helper copied without local-guard.js stops instead of running unguarded', () => {
+  const dir = mkdtempSync(join(tmpdir(), 'localhost-alone-'));
+  try {
+    copyFileSync(join(scriptsDir, 'quick.js'), join(dir, 'quick.js'));
+    copyFileSync(join(scriptsDir, 'package.json'), join(dir, 'package.json'));
+    const result = spawnSync(process.execPath, [join(dir, 'quick.js'), 'http://localhost:3000'], { cwd: dir, encoding: 'utf8' });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Cannot find module '\.\/local-guard\.js'/);
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+});
+
+for (const file of ['playwright-patterns.md', 'interaction-templates.md', 'ai-snapshots.md', 'visual-regression.md', 'host-browser.md']) {
   test(`${file} navigates only through gotoLocal`, () => {
-    const text = readFileSync(`skills/localhost-screenshots/references/${file}`, 'utf8').replace(guardSnippet, '');
+    const text = readFileSync(`skills/localhost-screenshots/references/${file}`, 'utf8');
     assert.doesNotMatch(text, /\.goto\(/);
   });
 }
@@ -275,7 +422,7 @@ for (const file of ['playwright-patterns.md', 'interaction-templates.md', 'ai-sn
 test('pinned Playwright version is the same everywhere it is stated', () => {
   const pins = new Set();
   for (const file of [
-    ...scripts, 'skills/localhost-screenshots/SKILL.md',
+    'skills/localhost-screenshots/assets/scripts/local-guard.js', 'skills/localhost-screenshots/SKILL.md',
     'skills/localhost-screenshots/references/playwright-patterns.md',
   ]) {
     const found = [...readFileSync(file, 'utf8').matchAll(/playwright@(\d+\.\d+\.\d+)/g)].map(m => m[1]);
@@ -339,7 +486,36 @@ test('bundled helpers keep a real browser on the local host', { skip: realPlaywr
       saved: existsSync(script.endsWith('multi-breakpoint.js') ? join(base, 'm-800x600.png') : `${base}.png`),
     }));
   });
+  const capture = (routes, extra = []) => new Promise((done) => {
+    const out = join(fixture, `capture-${routes.replace(/\W+/g, '-')}`);
+    externalRequests.length = 0;
+    const child = spawn(process.execPath, [resolve(captureScript), '--base-url', `http://localhost:${app.address().port}`,
+      '--out', out, '--routes', routes, '--breakpoints', 'mobile:375x812,desktop:1280x800', '--json', ...extra], { cwd: fixture });
+    let stdout = '';
+    child.stdout.on('data', (chunk) => { stdout += chunk; });
+    child.on('close', status => done({
+      status, summary: JSON.parse(stdout || '{}'), external: [...externalRequests],
+      pngs: existsSync(out) ? readdirSync(out, { recursive: true }).map(String).filter(f => f.endsWith('.png')).sort() : [],
+    }));
+  });
   try {
+    const set = await capture('/,/subresources');
+    assert.equal(set.status, 0, JSON.stringify(set.summary));
+    assert.deepEqual(set.pngs.map(f => f.split('\\').join('/')), ['home/desktop-1280x800.png', 'home/mobile-375x812.png', 'subresources/desktop-1280x800.png', 'subresources/mobile-375x812.png']);
+    assert.deepEqual([...new Set(set.external)].sort(), ['/app.js', '/frame']);
+    for (const route of ['/to-external', '/bounce']) {
+      const refused = await capture(`/,${route}`);
+      assert.equal(refused.status, 1, `capture.js ${route}`);
+      assert.deepEqual(refused.external, [], `capture.js ${route}: the external server must receive nothing`);
+      assert.equal(refused.summary.saved, 2); assert.equal(refused.summary.failed, 2);
+      assert.equal(refused.pngs.length, 2);
+      assert.match(refused.summary.results.find(r => !r.ok).error, /^refused: the page left the local host for http:\/\/external\.test:\d+$/);
+    }
+    const leaving = await capture('/leaves-after-load', ['--wait-for', '#ready']);
+    await new Promise(done => setTimeout(done, 200));
+    assert.deepEqual(externalRequests, [], 'capture.js: a post-load navigation must not reach the external server');
+    assert.equal(leaving.summary.saved + leaving.summary.failed, 2);
+
     for (const script of scripts) {
       const plain = await run(script, '/subresources');
       assert.equal(plain.status, 0, plain.stderr);

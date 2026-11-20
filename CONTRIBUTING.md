@@ -189,7 +189,7 @@ npm ci --prefix tests/fixtures/eleventy --ignore-scripts --no-audit --no-fund
 npm ci --prefix tests/fixtures/visual --ignore-scripts --no-audit --no-fund
 ```
 
-Isolation tests require `uv` 0.12.16+ on `PATH` (CI pins that version with `astral-sh/setup-uv`). On Windows, use the virtual environment's `Scripts/python.exe` and set `SKILL_TEST_PYTHON` in the calling shell. Python helpers require Python 3.10–3.14: the pinned PyYAML 6.0.3 has no wheel for 3.15 (checked 2026-11-21), so when `python3` is 3.15 create the environment with a supported interpreter, for example `python3.14 -m venv /tmp/skills4sh-python`. Rendering and PNG comparison dependencies live under `tests/fixtures/eleventy/` and `tests/fixtures/visual/`, each with its own `package-lock.json`; both are excluded from the published installer. PNG comparison tests execute the documented pixel-diff and HTML generators. The render tests cover stable Eleventy 3.1.8, Nunjucks 3.2.4, and the Tailwind 4.3.3 selector recipe; they do not certify the v4 alpha migration or browser/nginx deployment recipes.
+Isolation tests require `uv` 0.12.16+ on `PATH` (CI pins that version with `astral-sh/setup-uv`). On Windows, use the virtual environment's `Scripts/python.exe` and set `SKILL_TEST_PYTHON` in the calling shell. Python helpers require Python 3.10–3.14: the pinned PyYAML 6.0.3 has no wheel for 3.15 (checked 2026-11-21), so when `python3` is 3.15 create the environment with a supported interpreter, for example `python3.14 -m venv /tmp/skills4sh-python`. Rendering and PNG comparison dependencies live under `tests/fixtures/eleventy/` and `tests/fixtures/visual/`, each with its own `package-lock.json`; both are excluded from the published installer. PNG comparison tests run the bundled `compare.js` against real PNGs with pixelmatch 8.0.0. The render tests cover stable Eleventy 3.1.8, Nunjucks 3.2.4, and the Tailwind 4.3.3 selector recipe; they do not certify the v4 alpha migration or browser/nginx deployment recipes.
 
 `bin/` is the installer and the check scripts (Node 22+, ESM). Changes here are tooling changes — keep them covered by `tests/`, run the full local check suite, and follow the supply-chain posture in [SECURITY.md](SECURITY.md).
 
@@ -227,7 +227,7 @@ bash bin/setup-hooks.sh
 
 ## Expected security findings
 
-When `guardskills@1.2.1 scan-local` flags something that is **definitively not a vulnerability** (e.g., a `grep` pattern in a documentation snippet, or an env-var read used as a teaching example), declare it as an expected finding in `.security/<name>.yaml#scanning.expected_findings`.
+When `guardskills@1.6.0 scan-local` flags something that is **definitively not a vulnerability** (e.g., a `grep` pattern in a documentation snippet, or an env-var read used as a teaching example), declare it as an expected finding in `.security/<name>.yaml#scanning.expected_findings`.
 
 Schema per finding:
 

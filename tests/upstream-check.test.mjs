@@ -196,7 +196,7 @@ describe("extractLinks", () => {
     ]);
   });
 
-  test("skips fenced code, inline code, templated URLs and example or local hosts", () => {
+  test("skips fenced code, inline code, templated URLs, bare origins and example or local hosts", () => {
     const links = extractLinks(
       [
         "Real: https://vendor.dev/real",
@@ -207,6 +207,7 @@ describe("extractLinks", () => {
         "Template https://api.vendor.dev/channels/{id} and https://api.vendor.dev/$CHANNEL are skipped.",
         "Local http://localhost:3000/ and http://127.0.0.1:8080/ and https://myapp.localhost/ are skipped.",
         "Example https://example.com/page and https://shop.example.org/ are skipped.",
+        "Bare origins https://fonts.vendor.dev and https://cdn.vendor.dev/ name hosts and are skipped.",
       ].join("\n"),
     );
     assert.deepEqual(links, ["https://vendor.dev/real"]);

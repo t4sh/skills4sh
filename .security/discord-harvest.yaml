@@ -30,7 +30,7 @@ execution_context:
   sandbox: host-agent
   network: outbound-only
   filesystem: read-write
-  shell: none
+  shell: limited
   risk_tier: medium
 
 dependencies:

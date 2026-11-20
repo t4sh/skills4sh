@@ -157,7 +157,8 @@ export async function checkPin(root, pin, fetchImpl) {
 }
 
 // Extracts external links from markdown prose. Fenced code blocks and inline
-// code are skipped: URLs there are examples, not sources.
+// code are skipped: URLs there are examples, not sources. So are bare origins
+// such as `https://fonts.gstatic.com`, which name a host rather than a page.
 export function extractLinks(markdown) {
   const prose = String(markdown)
     .replace(/^(```|~~~)[\s\S]*?^\1.*$/gm, "")
@@ -191,6 +192,8 @@ function isCheckableLink(url) {
   } catch {
     return false;
   }
+  // An origin with no path names a host (a CSP source, a service), not a document.
+  if (parsed.pathname === "/" && parsed.search === "") return false;
   return !SKIPPED_HOST_PATTERNS.some((pattern) => pattern.test(parsed.hostname));
 }
 

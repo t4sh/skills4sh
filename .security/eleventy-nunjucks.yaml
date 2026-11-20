@@ -35,10 +35,10 @@ permissions:
 
 execution_context:
   sandbox: host-agent
-  network: none
+  network: outbound-only
   filesystem: read-write
-  shell: none
-  risk_tier: low
+  shell: limited
+  risk_tier: medium
 
 dependencies:
   - name: "@11ty/eleventy"

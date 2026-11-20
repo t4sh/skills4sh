@@ -11,7 +11,7 @@ import {
   BLOCKING_SEVERITIES,
 } from "./lib/parsers.mjs";
 
-const GUARDSKILLS_VERSION = "1.2.1";
+const GUARDSKILLS_VERSION = "1.6.0";
 // BLOCKING_SEVERITIES is imported from lib/parsers.mjs — default-deny on
 // HIGH/CRITICAL findings. Any actual finding at this severity MUST be matched
 // by an expected entry carrying acknowledged: true.

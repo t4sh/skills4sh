@@ -1,6 +1,6 @@
 # Interaction Templates — Full Reference
 
-Every template opens its first URL with `gotoLocal(page, url)` from [playwright-patterns.md § Local Navigation Guard](playwright-patterns.md#local-navigation-guard); paste that block into the script and do not swap in a bare `page.goto`. The guard stays on the page, so a click, form submit, or script that tries to leave the local host is blocked; call `assertLocalPage(page)` before saving a capture taken after such a step.
+Every template opens its first URL with `gotoLocal(page, url)` from the skill's [`assets/scripts/local-guard.js`](../assets/scripts/local-guard.js) (`const { gotoLocal, assertLocalPage } = require('<skill-dir>/assets/scripts/local-guard.js')`; see [playwright-patterns.md § Local Navigation Guard](playwright-patterns.md#local-navigation-guard)). Do not swap in a bare `page.goto`. The guard stays on the page, so a click, form submit, or script that tries to leave the local host is blocked; call `assertLocalPage(page)` before saving a capture taken after such a step.
 
 ## Core Interaction Primitives
 
