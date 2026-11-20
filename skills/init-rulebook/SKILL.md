@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; requires file read access to the chosen rulebook and write access for setup or maintenance
 metadata:
   author: t4sh
-  version: "1.0.0"
+  version: "2.0.0"
   tags: agent-rules, AGENTS.md, rulebook, onboarding, dotfiles, setup, update
 ---
 

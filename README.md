@@ -8,12 +8,12 @@ Each skill is an [Agent Skills](https://agentskills.io/specification) folder. Th
 
 | Skill | What it helps you do | Version |
 |-------|---------------------|---------|
-| [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 2.8.0 |
-| [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 2.1.0 |
-| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 1.0.0 |
-| [init-rulebook](skills/init-rulebook/) ⭐ | Keep one personal rulebook that every agent loads: only the rules that apply, reloaded after compaction, with action gates read just in time | 1.0.0 |
-| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.5.0 |
-| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 1.1.0 |
+| [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 3.0.0 |
+| [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 3.0.0 |
+| [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 1.1.0 |
+| [init-rulebook](skills/init-rulebook/) ⭐ | Keep one personal rulebook that every agent loads: only the rules that apply, reloaded after compaction, with action gates read just in time | 2.0.0 |
+| [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 4.0.0 |
+| [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 2.0.0 |
 
 ## Start here: init-rulebook
 

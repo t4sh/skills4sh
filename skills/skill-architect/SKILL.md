@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10; validation and inspection require PyYAML 6.0.3 on Python 3.10-3.14
 metadata:
   author: t4sh
-  version: "1.1.0"
+  version: "2.0.0"
   tags: skill-authoring, skill-creator, skill-review, skill-rubric, agent-skills, multi-agent, anthropic, openai, grok, openclaw
 ---
 

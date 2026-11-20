@@ -4,7 +4,7 @@
 
 skill:
   name: localhost-screenshots
-  version: "3.5.0"
+  version: "4.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -26,7 +26,7 @@ integrity:
     references/playwright-patterns.md: 23dfdbb9632bf71101519b97fbd9bf1da063a36634abb790e12d18fa6436dd93
     references/troubleshooting.md: 51cbbc04cc52930be00a1fa2983bf8d058e48f059569ce4769a1376971f8a1ef
     references/visual-regression.md: f025c884f4adc8ae847023697911d5c3b4b5dee307984c0f4ce2f9a0ff291602
-    SKILL.md: eae3a93cbca4b01c91e9ac1c3fdb94a475da0845e3989721f827fe7c083da3f4
+    SKILL.md: 4426729b8d666a9c537265f2c73cdb9f92542d3af554a6ef157793690d8b1c20
     agents/openai.yaml: 50aa67bc14ce868565b67096bc113a38ecb4c62b6638e7280f275630be017869
     assets/scripts/capture.js: d94017dda53a94087d9279400565bcaa1b551a693f47e7c7db870eb9ac69268c
     assets/scripts/compare.js: 0eedcb4a75954bc890763c694629cedb90862a838415163887e0f5f8cff795cf
@@ -71,8 +71,8 @@ mitigations:
     addressed_in: "3.3.0"
     note: "Documented `npm ci` + lockfile pinning or explicit version installs, never `@latest` or unversioned installs. An existing project Playwright is used as is and never overridden. `compare.js` accepts only pixelmatch 8 or later and names the exact pins (`pixelmatch@8.0.0`, `pngjs@7.0.0`). `ignoreHTTPSErrors` is gated to localhost-only hostnames."
   - id: NETWORK_SCOPE
-    addressed_in: "3.3.7"
-    note: "3.3.7 added the requested-URL and final-URL checks, but its route handler never saw HTTP redirect hops, so a redirect to an external host was loaded before being rejected and a local-external-local bounce passed. After 3.5.0 the bundled helpers pause main-frame document requests through a Chromium CDP Fetch session and fail any request to a non-local hostname before it is sent: every redirect hop and every later page-initiated navigation. They also re-check the completed redirect chain and the final URL, and write no capture when a navigation was blocked. Subframes and other subresources are not intercepted. Observed with Playwright 1.62.0 and 1.65.1 driving Chrome 158 on 2026-11-21. The guard is one shared module, `assets/scripts/local-guard.js`, required by `capture.js`, `quick.js`, `multi-breakpoint.js`, and `screenshot-a11y.js`. A browser the agent only drives through host tools cannot install it: on that path the skill requires checking the URL before and after navigation and before each capture and discarding the capture on a mismatch (detect and discard, not block)."
+    addressed_in: "4.0.0"
+    note: "3.3.7 added the requested-URL and final-URL checks, but its route handler never saw HTTP redirect hops, so a redirect to an external host was loaded before being rejected and a local-external-local bounce passed. From 4.0.0 the bundled helpers pause main-frame document requests through a Chromium CDP Fetch session and fail any request to a non-local hostname before it is sent: every redirect hop and every later page-initiated navigation. They also re-check the completed redirect chain and the final URL, and write no capture when a navigation was blocked. Subframes and other subresources are not intercepted. Observed with Playwright 1.62.0 and 1.65.1 driving Chrome 158 on 2026-11-21. The guard is one shared module, `assets/scripts/local-guard.js`, required by `capture.js`, `quick.js`, `multi-breakpoint.js`, and `screenshot-a11y.js`. A browser the agent only drives through host tools cannot install it: on that path the skill requires checking the URL before and after navigation and before each capture and discarding the capture on a mismatch (detect and discard, not block)."
 
 scanning:
   guardskills: SAFE

@@ -8,6 +8,10 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+## [0.8.0] — 2026-11-21
+
+Skill versions in this release: `agent-memory` 3.0.0, `discord-harvest` 3.0.0, `eleventy-nunjucks` 1.1.0, `init-rulebook` 2.0.0, `localhost-screenshots` 4.0.0, `skill-architect` 2.0.0. The five major versions carry rewritten trigger descriptions; `localhost-screenshots` 4.0.0 also changes its comparison results and exit codes. `code-to-figma` and `figma-to-code` are no longer part of the package.
+
 ### Security
 - Security manifests now describe what each skill directs the agent to run and reach, not only what it bundles: `shell` is `limited` for all six skills (it was `none`), and `eleventy-nunjucks` and `localhost-screenshots` declare `outbound-only` network. `eleventy-nunjucks` and `localhost-screenshots` move from risk tier Low to Medium, because they install and run third-party packages or drive a browser. `SECURITY.md` gains a per-skill table of what is directed and drops a claim about Docker guidance that the skill never contained.
 - Upgrade the pinned scanner from `guardskills` 1.2.1 to 1.6.0 and re-scan all six skills. One new finding, on `skill-architect`'s `run_uv.py`, is documented as a false positive: the script only removes `UV_*` variables from the environment it passes to `uv`.
@@ -26,7 +30,7 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 - `npm run check:upstream` and a weekly **Upstream Drift** workflow: compares the versions pinned in `.github/upstream-pins.json` with npm and PyPI, checks external links in skill prose and `docs/`, and opens or updates one tracking issue. It is not a pull-request gate. Hosts that refuse automated clients are listed under `unverifiableLinks` in the pins file and are not requested.
 
 ### Changed
-- **Breaking (trigger contract):** descriptions rewritten for `agent-memory`, `discord-harvest`, `init-rulebook`, `localhost-screenshots` and `skill-architect`. Each drops over-broad cues, adds missing phrasings and states what the skill is not for. `discord-harvest` drops the `scrape` tag and excludes transcripts, user tokens, self-bots and Discord Web automation. Skill versions are unchanged in this entry; each takes a major version at release.
+- **Breaking (trigger contract):** descriptions rewritten for `agent-memory`, `discord-harvest`, `init-rulebook`, `localhost-screenshots` and `skill-architect`. Each drops over-broad cues, adds missing phrasings and states what the skill is not for. `discord-harvest` drops the `scrape` tag and excludes transcripts, user tokens, self-bots and Discord Web automation. Each of these skills takes a major version.
 - `agent-memory`: Init and Migrate create a `CLAUDE.md` or `.cursor/rules/index.mdc` pointer only when one is needed (Claude Code v2.1.277+ and Cursor read `AGENTS.md` directly); existing pointers are left in place. The skills CLI `universal` root is corrected to `~/.config/agents/skills/`. The README install table carries the same `universal` correction and links to the skills CLI's current agent catalog.
 - `discord-harvest`: Discord MCP tools need evidence of bot authentication; the channel list is documented as omitting channels the bot cannot view (Discord change of 2026-11-16); rate-limit notes corrected; `compatibility` states Bash and curl. `discord_api()` sends the `User-Agent` Discord requires, `DiscordBot ($url, $versionNumber)`; set `DISCORD_USER_AGENT` to identify your own bot application. The requested message count is documented as applying to the channel and to each thread separately.
 - `eleventy-nunjucks`: baseline is Eleventy 3.1.8 (plain `nunjucks` 3.2.4) and Build Awesome `4.0.0-alpha.12`, with the alpha.11/12 breaking changes, `buildawesome.config.*` filenames and lowercase `buildawesome*` data keys; Node 26 is the preferred LTS. The nginx / Tailwind / soft-navigation material is labelled as one example deployment profile that loads only on request or when the project already uses it, and its two profile-only rules moved out of the rules for every Eleventy project; no content removed. The security checklist states each section's scope. The test and eval fixtures run on Eleventy 3.1.8.
@@ -478,7 +482,8 @@ Tooling-hardening pack. Closes the meta-verification gap surfaced by the fresh-e
 ### Added
 - Initial public release of the `skills4sh` package.
 
-[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.7.1...HEAD
+[Unreleased]: https://github.com/t4sh/skills4sh/compare/v0.8.0...HEAD
+[0.8.0]: https://github.com/t4sh/skills4sh/compare/v0.7.1...v0.8.0
 [0.7.1]: https://github.com/t4sh/skills4sh/compare/v0.7.0...v0.7.1
 [0.7.0]: https://github.com/t4sh/skills4sh/compare/v0.6.0...v0.7.0
 [0.6.0]: https://github.com/t4sh/skills4sh/compare/v0.5.5...v0.6.0

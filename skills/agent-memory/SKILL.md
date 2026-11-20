@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows; optional checker needs Node.js 22+
 metadata:
   author: t4sh
-  version: "2.8.0"
+  version: "3.0.0"
   tags: memory, context, cross-interface, agent, persistence, grok, openclaw
 ---
 

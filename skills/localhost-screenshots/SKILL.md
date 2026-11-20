@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with a host browser tool, or Node.js 22+ and Playwright for the bundled scripts
 metadata:
   author: t4sh
-  version: "3.5.0"
+  version: "4.0.0"
   tags: screenshots, localhost, portless, visual-regression, before-after, responsive, breakpoints, playwright, chrome, host-browser, browser-automation, pixel-diff, accessibility
 ---
 

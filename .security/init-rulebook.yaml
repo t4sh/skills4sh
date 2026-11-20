@@ -4,7 +4,7 @@
 
 skill:
   name: init-rulebook
-  version: "1.0.0"
+  version: "2.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -17,7 +17,7 @@ integrity:
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
     references/onboarding.md: 160fc1e3409cedae81ae32daa7b0e3f62bba3d8d32b800426b3b892d86a1b80d
     references/public-example.md: 16bc78576273f7e2477d3e278ab8abcc64231e2c70473e27d17da4132b8e8962
-    SKILL.md: 5d308ca5dd9a9a798cd858416e181522a7413280e5c13ff5c16caec24a0e16e4
+    SKILL.md: 02fa2647353396307bccb4551b1c01521a00257f4ae2b4f17e2cd41e569b44c7
     agents/openai.yaml: d469314a54f16df989b943bd2be73a8b5d781b09499a34df8a4d6c21523a1c03
 permissions:
   alwaysAllow: []

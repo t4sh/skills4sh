@@ -4,7 +4,7 @@
 
 skill:
   name: agent-memory
-  version: "2.8.0"
+  version: "3.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -19,7 +19,7 @@ integrity:
     references/agent-pointers.md: 5c3b46a7d0165ef848f496c596485e209ed5f3e6400da40cf7f1f1c2a45af209
     references/templates.md: beea01a76f9f37d215f6ceaa309ea332189819e2881e7510022ac80d2ec6de64
     references/troubleshooting.md: c015e0e8b28b8dc0e7464c97006ca01821dc9ae7938572569369bbeed000f8e4
-    SKILL.md: 43d7b12e38c2054e7525cbe0e1a70b41b800384d1c5f740dde7fa9039e2f4543
+    SKILL.md: 2d9b95087c24423de676b8b092fdbdaa3b5243fdb31b11e12e17557b5e0e1c13
     agents/openai.yaml: cd70fe1c567806f7c1c3786b2c0c435ae2a473c7225e48edd92310c513fcf4fc
     assets/scripts/check-memory.mjs: 5bcbc88d70462a9b1b6b77dcf1979bdefc89f981c89ac8179d96ee79c39471ff
     references/checker.md: 9e04415a6fd4550035deca12eefea5bb93cd5f30c9a41a7359f157ddbdbc5c6c

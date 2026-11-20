@@ -6,12 +6,12 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 
 | Skill | Version | Supported |
 |-------|---------|-----------|
-| agent-memory | 2.8.0 | Yes |
-| discord-harvest | 2.1.0 | Yes |
-| eleventy-nunjucks | 1.0.0 | Yes |
-| init-rulebook | 1.0.0 | Yes |
-| localhost-screenshots | 3.5.0 | Yes |
-| skill-architect | 1.1.0 | Yes |
+| agent-memory | 3.0.0 | Yes |
+| discord-harvest | 3.0.0 | Yes |
+| eleventy-nunjucks | 1.1.0 | Yes |
+| init-rulebook | 2.0.0 | Yes |
+| localhost-screenshots | 4.0.0 | Yes |
+| skill-architect | 2.0.0 | Yes |
 
 ## Reporting a Vulnerability
 

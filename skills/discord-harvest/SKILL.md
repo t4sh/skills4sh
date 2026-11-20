@@ -5,7 +5,7 @@ license: MIT
 compatibility: macOS, Linux, or Windows with Bash and curl; a Discord bot token for server channels, or a user-provided Discord export; jq and unzip optional
 metadata:
   author: t4sh
-  version: "2.1.0"
+  version: "3.0.0"
   tags: discord, harvest, archive, attachments, images, links, media, backup, download, data-package, bot-api
 ---
 

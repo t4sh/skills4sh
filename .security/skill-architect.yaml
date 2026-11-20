@@ -4,7 +4,7 @@
 
 skill:
   name: skill-architect
-  version: "1.1.0"
+  version: "2.0.0"
   license: MIT
   author: t4sh
   repository: https://github.com/t4sh/skills4sh
@@ -26,7 +26,7 @@ integrity:
     references/house-rubric.md: d5554cece7ccf2430b034bb1b5283816e030f7d5766f34ade72c6e8f99e83515
     references/naming-and-packaging.md: 87765d0d5e03c38191483c8511804c9939dc88ac0e52209f3e340740ab1fec50
     references/vendor-adapters.md: 97b82863bb9b2b4b17a4366a51df5247eccb0b5db6f8c763862a35fe4b0343d0
-    SKILL.md: 906eda0bc36d80ec92011dd389842c1b7fa64fec949ffbd01f2345c045e15891
+    SKILL.md: 2aafa12000b476f26aed156e6dd734eae119391de08cb7475a9ea53795d0edc8
     agents/openai.yaml: 00b90846faf64cdf42cde987a7c7634d8887b87e23beca6a7ec6001dab5e2526
     references/helper-runtime.md: 5a09013e4bb5f9bf9d44cbb3232a844594828e6959e2f2b6cef107c52e5f54ea
     references/workflow-steps.md: 8268eddd5d5bbd4fc23b369965c20baed63677b0c097fd3007e63454fa95d82a
