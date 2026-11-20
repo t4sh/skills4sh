@@ -126,7 +126,7 @@ export async function findFilesMissingPin(root, pin) {
 
 function registryUrl(pin) {
   if (pin.registry === "npm") {
-    return `https://registry.npmjs.org/-/package/${pin.name.replace("/", "%2f")}/dist-tags`;
+    return `https://registry.npmjs.org/-/package/${pin.name.replaceAll("/", "%2f")}/dist-tags`;
   }
   return `https://pypi.org/pypi/${encodeURIComponent(pin.name)}/json`;
 }
