@@ -236,7 +236,7 @@ download_staged /absolute/path/to/staged-assets.tsv /absolute/path/to/discord-my
 
 ### Bot API Requests
 
-Read the bot token from an environment variable or the host's secret loader; never ask for it in chat. Pass it to curl through a private header file so it never appears on a command line, and never echo it or write it to the manifest, `links.md`, or logs. Validate guild, channel, and thread IDs as digits before building a route.
+Read the bot token from an environment variable or the host's secret loader; never ask for it in chat. Pass it to curl through a private header file so it never appears on a command line, and never echo it or write it to the manifest, `links.md`, or logs. `discord_api()` removes that file when it returns and when the shell is interrupted; only a `SIGKILL` can leave it behind. It also sends the `User-Agent` Discord requires, `DiscordBot ($url, $versionNumber)`; set `DISCORD_USER_AGENT` to identify your own bot application instead of the default. Validate guild, channel, and thread IDs as digits before building a route.
 
 ```bash
 discord_api() {
@@ -244,32 +244,35 @@ discord_api() {
   # Prints the response body on HTTP 200 only. Any other status prints nothing on stdout,
   # reports "discord_api: HTTP <status>" on stderr (plus the Retry-After seconds on 429),
   # and returns 1. Apply the status table below before any retry.
-  local route="$1" header_file response_headers body_file code retry_after curl_status=0 status=1
-  [[ -n "${DISCORD_BOT_TOKEN:-}" ]] || { echo "DISCORD_BOT_TOKEN is not set" >&2; return 1; }
-  # mktemp creates each file with mode 600
-  header_file=$(mktemp) && response_headers=$(mktemp) && body_file=$(mktemp) || {
-    rm -f "$header_file" "$response_headers"
-    return 1
-  }
-  if ! printf 'Authorization: Bot %s\n' "$DISCORD_BOT_TOKEN" > "$header_file"; then
-    echo "discord_api: could not write the private authorization header" >&2
-    rm -f "$header_file" "$response_headers" "$body_file"
-    return 1
-  fi
-  code=$(curl --disable --proto '=https' --globoff -H @"$header_file" --dump-header "$response_headers" -o "$body_file" -w '%{http_code}' "https://discord.com/api/v10$route") || curl_status=$?
-  if [[ "$curl_status" -ne 0 ]]; then
-    echo "discord_api: curl transport failure (exit $curl_status); no response body was accepted" >&2
-  elif [[ "$code" == "200" ]]; then
-    if cat "$body_file"; then status=0; fi
-  else
-    echo "discord_api: HTTP ${code:-000}" >&2
-    if [[ "$code" == "429" ]]; then
-      retry_after=$(grep -i '^retry-after:' "$response_headers" | tr -cd '0-9.\n' | tail -n 1)
-      echo "discord_api: retry after ${retry_after:-an unknown number of} seconds" >&2
+  # The body runs in a subshell so its cleanup trap also covers an interrupt (INT, TERM, HUP)
+  # and cannot replace the caller's own traps.
+  (
+    route="$1" header_file="" response_headers="" body_file="" curl_status=0 status=1
+    [[ -n "${DISCORD_BOT_TOKEN:-}" ]] || { echo "DISCORD_BOT_TOKEN is not set" >&2; exit 1; }
+    # Discord requires this User-Agent form; requests without it may be blocked.
+    user_agent="${DISCORD_USER_AGENT:-DiscordBot (https://github.com/t4sh/skills4sh, 1.0)}"
+    trap 'rm -f -- "$header_file" "$response_headers" "$body_file" 2>/dev/null' EXIT
+    trap 'exit 130' INT; trap 'exit 143' TERM; trap 'exit 129' HUP
+    # mktemp creates each file with mode 600
+    header_file=$(mktemp) && response_headers=$(mktemp) && body_file=$(mktemp) || exit 1
+    if ! printf 'Authorization: Bot %s\n' "$DISCORD_BOT_TOKEN" > "$header_file"; then
+      echo "discord_api: could not write the private authorization header" >&2
+      exit 1
     fi
-  fi
-  rm -f "$header_file" "$response_headers" "$body_file"
-  return "$status"
+    code=$(curl --disable --proto '=https' --globoff -H @"$header_file" -H "User-Agent: $user_agent" --dump-header "$response_headers" -o "$body_file" -w '%{http_code}' "https://discord.com/api/v10$route") || curl_status=$?
+    if [[ "$curl_status" -ne 0 ]]; then
+      echo "discord_api: curl transport failure (exit $curl_status); no response body was accepted" >&2
+    elif [[ "$code" == "200" ]]; then
+      if cat "$body_file"; then status=0; fi
+    else
+      echo "discord_api: HTTP ${code:-000}" >&2
+      if [[ "$code" == "429" ]]; then
+        retry_after=$(grep -i '^retry-after:' "$response_headers" | tr -cd '0-9.\n' | tail -n 1)
+        echo "discord_api: retry after ${retry_after:-an unknown number of} seconds" >&2
+      fi
+    fi
+    exit "$status"
+  )
 }
 ```
 

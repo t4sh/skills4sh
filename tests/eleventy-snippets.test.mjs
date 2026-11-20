@@ -207,6 +207,31 @@ test('formatFullDate accepts Date, YYYY-MM-DD, and ISO datetime input without a 
   }
 });
 
+test('formatDate and duration read Date and YYYY-MM input and return an empty string for unreadable input', () => {
+  const filters = new Map();
+  const context = { Date, eleventyConfig: { addFilter(name, fn) { filters.set(name, fn); } } };
+  vm.runInNewContext(firstAfter(doc('references/filters.md'), '### `formatDate`', 'js'), context);
+  vm.runInNewContext(firstAfter(doc('references/filters.md'), '### `duration`', 'js'), context);
+  const formatDate = filters.get('formatDate'), duration = filters.get('duration');
+
+  assert.equal(formatDate('2026-05'), 'May 2026');
+  assert.equal(formatDate('2026-05-11'), 'May 2026');
+  assert.equal(formatDate(new Date('2026-05-11T00:00:00.000Z')), 'May 2026');
+  for (const absent of [null, undefined, '']) assert.equal(formatDate(absent), 'Present');
+  for (const unreadable of ['not a date', '2026-13', '2026-00', '2026', '202605', new Date(NaN), 7]) {
+    assert.equal(formatDate(unreadable), '', String(unreadable));
+  }
+
+  assert.equal(duration('2022-03', '2024-06'), '2 yrs 3 mos');
+  assert.equal(duration('2024-01', '2024-01'), '< 1 mo');
+  assert.equal(duration('2024-06', '2022-03'), '< 1 mo');
+  assert.equal(duration(new Date('2022-03-15T00:00:00.000Z'), new Date('2024-06-01T00:00:00.000Z')), '2 yrs 3 mos');
+  assert.match(duration('2000-01', null), /^\d+ yrs?( \d+ mos?)?$/);
+  for (const [start, end] of [[null, '2024-06'], ['not a date', '2024-06'], ['2022-03', 'soon'], ['2022-13', '2024-06'], [new Date(NaN), '2024-06']]) {
+    assert.equal(duration(start, end), '', `${String(start)} to ${String(end)}`);
+  }
+});
+
 test('paired shortcode recipe escapes arguments interpolated into markup', () => {
   const shortcodes = new Map();
   const add = (name, fn) => shortcodes.set(name, fn);

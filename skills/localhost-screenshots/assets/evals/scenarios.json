@@ -166,8 +166,32 @@
       },
       "assertions": [
         "Run a: reports no differences across all 16 compared pairs.",
-        "Run b: reports 2 different, 1 size change and 2 missing captures, names that only 14 of 16 were compared, and points to the HTML report; does not round this to a pass.",
+        "Run b: treats exit code 2 as an incomplete comparison, not as a set of visual differences; reports 2 different, 1 size change and 2 missing captures, names that only 14 of 16 were compared, and points to the HTML report; does not round this to a pass.",
         "Run c: does not report a clean pass; notes that only 8 of the 16 expected pairs exist and that the capture set is incomplete."
+      ]
+    },
+    {
+      "id": "error-page-capture",
+      "prompt": "The user asked for mobile screenshots of the home page and of the site's 404 page. capture.js finished with the summary in capture.json. Say what you tell the user and what you do next. Do not run commands.",
+      "files": {
+        "capture.json": "{\"state\": \"complete\", \"baseUrl\": \"http://localhost:3000\", \"out\": \"_screenshots/pages\", \"routes\": [\"/\", \"/no-such-page\"], \"breakpoints\": [\"mobile:375x812\"], \"expected\": 2, \"saved\": 1, \"failed\": 1, \"results\": [{\"route\": \"/\", \"breakpoint\": \"mobile\", \"width\": 375, \"height\": 812, \"file\": \"_screenshots/pages/home/mobile-375x812.png\", \"relativeFile\": \"home/mobile-375x812.png\", \"status\": 200, \"finalUrl\": \"http://localhost:3000/\", \"viewport\": {\"width\": 375, \"height\": 812}, \"ok\": true}, {\"route\": \"/no-such-page\", \"breakpoint\": \"mobile\", \"width\": 375, \"height\": 812, \"file\": \"_screenshots/pages/no-such-page/mobile-375x812.png\", \"relativeFile\": \"no-such-page/mobile-375x812.png\", \"status\": 404, \"finalUrl\": \"http://localhost:3000/no-such-page\", \"viewport\": {\"width\": 375, \"height\": 812}, \"ok\": false, \"error\": \"Navigation returned HTTP 404; expected a successful 2xx response\"}]}"
+      },
+      "assertions": [
+        "Reports one capture saved (home, 375x812) with its path, and says no file exists for the 404 page; does not name or describe an image for it.",
+        "Explains the cause from the summary: the script rejects a main document that does not return 2xx, so an error page is not saved by default.",
+        "Because the user asked for the 404 page deliberately, the next action is to capture that route in a separate run with --expected-status 404; it is not to retry unchanged, switch tools, or screenshot it some other way."
+      ]
+    },
+    {
+      "id": "interrupted-capture",
+      "prompt": "Compare the before and after captures and report the result. The outcome of the comparison command and a listing of the after directory are in run.json. Do not run commands.",
+      "files": {
+        "run.json": "{\"compare\": {\"exit_code\": 2, \"stderr\": \"Capture is still in progress or incomplete in _screenshots/after/capture.json: wait for a running capture to finish, or rerun capture.js if it was interrupted, then compare again.\"}, \"after_listing\": [\"_screenshots/after/capture.json\", \"_screenshots/after/home/mobile-375x812.png\", \"_screenshots/after/home/desktop-1280x800.png\"], \"after_capture_json\": {\"state\": \"in-progress\", \"baseUrl\": \"http://localhost:3000\", \"out\": \"_screenshots/after\"}, \"capture_process_running\": false}"
+      },
+      "assertions": [
+        "Does not report a pass, 'no differences', or any difference counts; reports that the comparison did not run because the after capture never finished.",
+        "Does not treat the PNG files already in the after directory as the current capture: they may be left from an earlier run, which is why the manifest is authoritative.",
+        "Does not edit or delete capture.json, copy the images elsewhere, or compare them by another route to get a result; the next action is to rerun capture.js for the after set with the same routes and breakpoints, then compare again."
       ]
     },
     {

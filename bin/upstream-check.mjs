@@ -12,7 +12,9 @@
 // Exit codes: 0 = ran (drift is reported, not failed), 1 = drift found and
 // --strict was passed, 2 = usage or configuration error.
 //
-// Network failures never count as drift; they are listed as unverified.
+// Network failures never count as drift; they are listed as unverified. Links under a
+// prefix listed in the pins file's "unverifiableLinks" are not requested at all: those
+// hosts refuse automated clients, so a request could only ever report "unverified".
 // This check is informational and is not part of the PR gates.
 
 import { readFile, readdir, writeFile } from "node:fs/promises";
@@ -93,7 +95,17 @@ export function validatePins(document) {
     if (seen.has(key)) errors.push(`${label}: duplicate pin for ${key}`);
     seen.add(key);
   });
-  return { pins, errors };
+  const unverifiable = document.unverifiableLinks ?? [];
+  if (!Array.isArray(unverifiable)) {
+    errors.push(`${PINS_PATH}: "unverifiableLinks" must be an array`);
+  } else {
+    unverifiable.forEach((entry, index) => {
+      const label = `${PINS_PATH}: unverifiableLinks[${index}]`;
+      if (typeof entry?.url !== "string" || !/^https?:\/\/[^/]+\/./.test(entry.url)) errors.push(`${label}: "url" must be an http(s) URL prefix with a path`);
+      if (typeof entry?.reason !== "string" || entry.reason === "") errors.push(`${label}: "reason" is required`);
+    });
+  }
+  return { pins, unverifiable: Array.isArray(unverifiable) ? unverifiable : [], errors };
 }
 
 // Returns the listed files that no longer contain the pinned version string.
@@ -272,7 +284,7 @@ export async function runUpstreamCheck({ root, fetchImpl = fetch, links = true }
   } catch (error) {
     return { pins: [], links: [], drift: false, errors: [`${PINS_PATH}: ${error.message}`] };
   }
-  const { pins, errors } = validatePins(document);
+  const { pins, unverifiable, errors } = validatePins(document);
   if (errors.length > 0) return { pins: [], links: [], drift: false, errors };
 
   const pinResults = [];
@@ -282,7 +294,11 @@ export async function runUpstreamCheck({ root, fetchImpl = fetch, links = true }
   if (links) {
     const sources = await collectLinks(root);
     const urls = [...sources.keys()].sort();
-    const outcomes = await mapWithConcurrency(urls, LINK_CONCURRENCY, (url) => checkLink(url, fetchImpl));
+    const skipReason = (url) => unverifiable.find((entry) => url.startsWith(entry.url))?.reason;
+    const outcomes = await mapWithConcurrency(urls, LINK_CONCURRENCY, (url) => {
+      const reason = skipReason(url);
+      return reason ? { status: "skipped", reason } : checkLink(url, fetchImpl);
+    });
     linkResults = urls.map((url, index) => ({ url, files: sources.get(url), ...outcomes[index] }));
   }
 
@@ -332,7 +348,10 @@ export function formatReport(result, date = new Date().toISOString().slice(0, 10
 
   const current = result.pins.filter((pin) => pin.status === "current" || pin.status === "ahead").length;
   const ok = result.links.filter((link) => link.status === "ok").length;
-  lines.push(`${current} of ${result.pins.length} pins current; ${ok} of ${result.links.length} links resolve.`);
+  const skipped = result.links.filter((link) => link.status === "skipped").length;
+  const checked = result.links.length - skipped;
+  const skippedNote = skipped > 0 ? `; ${skipped} not checked (host refuses automated clients)` : "";
+  lines.push(`${current} of ${result.pins.length} pins current; ${ok} of ${checked} links resolve${skippedNote}.`);
   return `${lines.join("\n")}\n`;
 }
 

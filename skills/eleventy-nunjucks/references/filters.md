@@ -190,11 +190,13 @@ eleventyConfig.addFilter("localeString", (n) =>
 const MONTHS_SHORT = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 // {{ "2026-05" | formatDate }} → "May 2026"
 // {{ null     | formatDate }} → "Present"
+// Unreadable input (no leading YYYY-MM, or a month outside 01–12) → ""
 eleventyConfig.addFilter("formatDate", (value) => {
   if (!value) return "Present";
-  const iso = value instanceof Date ? value.toISOString() : String(value);
-  const [year, month] = iso.split("-").map(Number);
-  return `${MONTHS_SHORT[month - 1]} ${year}`;
+  const iso = value instanceof Date && !Number.isNaN(value.getTime()) ? value.toISOString() : String(value);
+  const match = /^(\d{4})-(\d{2})(?!\d)/.exec(iso);
+  const month = match && MONTHS_SHORT[Number(match[2]) - 1];
+  return month ? `${month} ${match[1]}` : "";
 });
 ```
 
@@ -231,19 +233,27 @@ eleventyConfig.addFilter("sitemapDate", (value) => {
 });
 ```
 
-Use this for `page.date` in `sitemap.xml`. Do not pass a format argument to the month/year `formatDate` filter above; it intentionally accepts only one `YYYY-MM` string.
+Use this for `page.date` in `sitemap.xml`. Do not pass a format argument to the month/year `formatDate` filter above; it reads only a leading `YYYY-MM` and returns an empty string for anything else.
 
 ### `duration` — months between two dates → "X yrs Y mos"
 
 ```js
 // {{ "2022-03" | duration("2024-06") }} → "2 yrs 3 mos"
 // {{ "2025-01" | duration(null)      }} → uses current month for end
+// A Date is read as its UTC month; unreadable input → ""
 eleventyConfig.addFilter("duration", (startDate, endDate) => {
-  if (!startDate) return "";
-  const [sy, sm] = startDate.split("-").map(Number);
-  let ey, em;
-  if (endDate) { [ey, em] = endDate.split("-").map(Number); }
-  else { const now = new Date(); ey = now.getFullYear(); em = now.getMonth() + 1; }
+  const yearMonth = (value) => {
+    const iso = value instanceof Date && !Number.isNaN(value.getTime()) ? value.toISOString() : String(value);
+    const match = /^(\d{4})-(\d{2})(?!\d)/.exec(iso);
+    const month = match ? Number(match[2]) : 0;
+    return month >= 1 && month <= 12 ? [Number(match[1]), month] : null;
+  };
+  const start = startDate ? yearMonth(startDate) : null;
+  if (!start) return "";
+  let end;
+  if (endDate) { end = yearMonth(endDate); if (!end) return ""; }
+  else { const now = new Date(); end = [now.getFullYear(), now.getMonth() + 1]; }
+  const [sy, sm] = start, [ey, em] = end;
   let total = (ey - sy) * 12 + (em - sm);
   if (total < 0) total = 0;
   const years  = Math.floor(total / 12);

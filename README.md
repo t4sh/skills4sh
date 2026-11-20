@@ -98,7 +98,7 @@ npx skills@latest add 't4sh/skills4sh#<branch>' --skill agent-memory --copy -g -
 
 Use the `#ref` form for branch names that contain `/`, such as `fix/my-change`; a `github.com/.../tree/<branch>` URL treats everything after the first `/` as a path. Reinstall from `t4sh/skills4sh` without a ref to return to released content after the branch merges.
 
-Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`, `openclaw`, or `github-copilot`. The [skills CLI supported-agents table](https://github.com/vercel-labs/skills#supported-agents) lists current `--agent` values and paths. Reload or restart as required by the host.
+Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`, `openclaw`, or `github-copilot`. The [skills CLI supported-agents catalog](https://github.com/vercel-labs/skills/blob/main/docs/agents.md) lists current `--agent` values and paths. Reload or restart as required by the host.
 
 | Runtime | `--agent` | Project root | Global root |
 |---|---|---|---|
@@ -108,7 +108,7 @@ Replace `codex` with a supported target such as `claude-code`, `cursor`, `grok`,
 | GitHub Copilot | `github-copilot` | `.agents/skills/` | `~/.copilot/skills/` |
 | Grok | `grok` | `.grok/skills/` | `~/.grok/skills/` |
 | OpenClaw | `openclaw` | `skills/` | `~/.openclaw/skills/` |
-| Generic / shared | host default | `.agents/skills/` | `~/.agents/skills/` |
+| Generic / shared | `universal` | `.agents/skills/` | `~/.config/agents/skills/` |
 
 Codex scans project `.agents/skills/` from the working directory up to the repository root and user `~/.agents/skills/`, and reads each skill's optional `agents/openai.yaml` for its `/skills` display name, short description, and default prompt (checked 2026-10-20 against the [Codex skills guide](https://learn.chatgpt.com/docs/build-skills)).
 

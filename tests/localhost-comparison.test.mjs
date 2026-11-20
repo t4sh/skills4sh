@@ -401,3 +401,16 @@ test('compare.js names the fix when pixelmatch is missing or older than 8', () =
     assert.equal(existsSync(join(root, 'diff')), false);
   } finally { rmSync(root, { recursive: true, force: true }); }
 });
+
+// compare.js stays runnable on its own, so it carries a copy of the function capture.js uses
+// to turn a route into a directory name. compare.js rejects a manifest whose file paths it
+// cannot reproduce, so the two copies must never drift apart.
+test('capture.js and compare.js name a route directory identically', () => {
+  const source = (file) => readFileSync(join(scriptsDir, file), 'utf8').match(/function routeDirectory\(route\) \{[\s\S]*?\n\}/)[0];
+  assert.equal(source('compare.js'), source('capture.js'), 'the routeDirectory copies in capture.js and compare.js differ');
+  const routeDirectory = new Function(`${source('capture.js')}; return routeDirectory;`)();
+  for (const [route, directory] of [['/', 'home'], ['/about', 'about'], ['/docs/intro?tab=api', 'docs-intro-tab-api'],
+    ['/../../etc', 'etc'], ['/.hidden/', 'hidden'], ['///', 'home']]) {
+    assert.equal(routeDirectory(route), directory, route);
+  }
+});

@@ -11,13 +11,13 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "2.1.0",
-      "computedHash": "4cc5a312a9ea6de5d7c51dd485a9e87f5e15623a61fdd8143e6f16f5d17e44d7"
+      "computedHash": "d3014df7525af19d1516e161aabdba7715c5e0025236df4f8c6f1d61c7e908a5"
     },
     "eleventy-nunjucks": {
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "1.0.0",
-      "computedHash": "3b7854bb293e684ad6bc4ddc3bf984fd853598294f895649e65323e5983f5544"
+      "computedHash": "1c5f389ea44118c7b58d73bf8ca396c41831620fc92d3cd1fe257096df78caf9"
     },
     "init-rulebook": {
       "source": "t4sh/skills4sh",
@@ -29,7 +29,7 @@
       "source": "t4sh/skills4sh",
       "sourceType": "github",
       "version": "3.5.0",
-      "computedHash": "2483d3ae9998179fb68ab0d90763360675c1c1f7c1cc26ba43aa8636fa3e1297"
+      "computedHash": "a656afe054d66813b3a1dbe1451f5bd7d3c7a1e5236d1ecb475c1b9e41d279c1"
     },
     "skill-architect": {
       "source": "t4sh/skills4sh",

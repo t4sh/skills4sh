@@ -13,7 +13,7 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 642102867ec18213e0096bf9cd3f9f8de5383204431aab380a91c0f7d09d42c6
+    assets/evals/scenarios.json: 260fb00c7cc2ee6f182604b875fb14af0812de44eb77a68fa469f1bd321d59bd
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
     assets/scripts/multi-breakpoint.js: 747c5294c61cdd1815a6412a73a0c8b53b49d7f82904f0237ad0c7ef5f2371d2
     assets/scripts/package.json: 8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a
@@ -23,13 +23,13 @@ integrity:
     references/ai-snapshots.md: 1fcb3e36896bc9a6ea43bad419a446880196f9564a49eb98747224abd002560a
     references/interaction-templates.md: 20957db40efee06534a4cf403e5b47fb4458a4b325e16f3b15574804cb30c9cf
     references/portless.md: f5f5617b4bf79a6f18fe7c1c7cdb5a0f9d3129b2952b0f4472198ea6b176e838
-    references/playwright-patterns.md: 309c06253da25183625b6362b150d617db431d268dbce0083cc4d9a059df4393
+    references/playwright-patterns.md: 23dfdbb9632bf71101519b97fbd9bf1da063a36634abb790e12d18fa6436dd93
     references/troubleshooting.md: 51cbbc04cc52930be00a1fa2983bf8d058e48f059569ce4769a1376971f8a1ef
     references/visual-regression.md: f025c884f4adc8ae847023697911d5c3b4b5dee307984c0f4ce2f9a0ff291602
     SKILL.md: eae3a93cbca4b01c91e9ac1c3fdb94a475da0845e3989721f827fe7c083da3f4
     agents/openai.yaml: 50aa67bc14ce868565b67096bc113a38ecb4c62b6638e7280f275630be017869
     assets/scripts/capture.js: d94017dda53a94087d9279400565bcaa1b551a693f47e7c7db870eb9ac69268c
-    assets/scripts/compare.js: 31c570ac548032852f3155ced77a2dcca171ca4d68065bc70924bf87c8517057
+    assets/scripts/compare.js: 0eedcb4a75954bc890763c694629cedb90862a838415163887e0f5f8cff795cf
     assets/scripts/local-guard.js: ebd06471cf93fa62cc5537a24bc26e105cdcdcc5fbb44a2ca253db95e0b3523b
     references/host-browser.md: 5d4e1d463fe5078469c3ab77707346a0e0ead5d4ae227291028778deeba119ef
 permissions:

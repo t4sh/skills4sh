@@ -116,7 +116,7 @@ function readCaptureManifest(dir) {
     fail(`Invalid capture manifest ${manifestPath}: ${err.message}`);
   }
   if (manifest?.state !== undefined && manifest.state !== 'complete') {
-    fail(`Capture is still in progress or incomplete in ${manifestPath}; wait for it to finish and rerun the comparison.`);
+    fail(`Capture is still in progress or incomplete in ${manifestPath}: wait for a running capture to finish, or rerun capture.js if it was interrupted or could not start, then compare again.`);
   }
   if (!manifest || typeof manifest !== 'object' || !Array.isArray(manifest.routes) || !Array.isArray(manifest.breakpoints)
     || !Array.isArray(manifest.results) || !Number.isInteger(manifest.expected)) {

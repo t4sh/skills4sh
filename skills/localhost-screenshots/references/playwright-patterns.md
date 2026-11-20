@@ -311,10 +311,18 @@ await new Promise((r) => setTimeout(r, 500));
 
 ## Screenshot a Specific Element
 
+Clip the verified page capture to the element instead of calling `locator.screenshot({ path })`, which writes the file before the URL, status, and viewport checks. `page` was opened with `gotoLocal` and `viewport` is the size that was set:
+
 ```js
-const element = await page.locator('.main-content');
-await element.screenshot({ path: 'content-only.png' });
+const target = page.locator('.main-content');
+await page.evaluate(() => window.scrollTo(0, 0)); // so the box is in page coordinates
+const clip = await target.boundingBox();          // null when the element is not visible
+if (!clip) throw new Error('.main-content is not visible; nothing to capture');
+const { png } = await captureVerifiedPng(page, viewport, { fullPage: true, clip });
+fs.writeFileSync('content-only.png', png);
 ```
+
+This also captures an element below the fold or taller than the viewport at its full size.
 
 ## Self-Signed HTTPS
 

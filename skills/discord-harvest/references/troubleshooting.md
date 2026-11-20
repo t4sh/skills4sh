@@ -79,7 +79,7 @@ Discord facts this skill relies on, each checked against the cited page on 2026-
 
 | Fact | Source |
 |---|---|
-| API v10 is an available version; bot requests send `Authorization: Bot <token>`; attachment CDN URLs are signed (`ex`, `is`, `hm`) with a preset expiry; the CDN base is `https://cdn.discordapp.com/` | https://docs.discord.com/developers/reference |
+| API v10 is an available version; bot requests send `Authorization: Bot <token>`; attachment CDN URLs are signed (`ex`, `is`, `hm`) with a preset expiry; the CDN base is `https://cdn.discordapp.com/`; HTTP clients send `User-Agent: DiscordBot ($url, $versionNumber)`, and requests without a valid one may be blocked | https://docs.discord.com/developers/reference |
 | HTTP 401 means the `Authorization` header was missing or invalid; 403 means the token lacks permission; 404 means the resource does not exist; 429 means rate limited | https://docs.discord.com/developers/topics/opcodes-and-status-codes |
 | A 429 carries `Retry-After`; each bot has a global limit of 50 requests per second; 401, 403, and 429 responses count toward an invalid-request limit of 10,000 per 10 minutes per IP | https://docs.discord.com/developers/topics/rate-limits |
 | `GET /channels/{channel.id}/messages` returns newest to oldest, `limit` 1–100 (default 50), with `before`, `after`, and `around` mutually exclusive; forwards use `message_reference.type` `1` with `message_snapshots`; embed images carry `url` and `proxy_url`; `content`, `embeds`, `attachments`, and `components` are empty without message-content access | https://docs.discord.com/developers/resources/message |

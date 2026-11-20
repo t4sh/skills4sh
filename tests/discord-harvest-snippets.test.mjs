@@ -125,6 +125,14 @@ test('flag_suspicious flags executable extensions by final extension only', () =
   }
 });
 
+// BSD mktemp (macOS) ignores TMPDIR when called without a template, so tests that inspect
+// the helpers' temp files route the real mktemp to a directory they own.
+function writeMktempShim(bin, directory) {
+  const real = spawnSync('sh', ['-c', 'command -v mktemp'], { encoding: 'utf8' }).stdout.trim();
+  writeFileSync(join(bin, 'mktemp'), `#!/bin/sh\nexec "${real}" "${directory}/tmp.XXXXXXXXXX"\n`);
+  chmodSync(join(bin, 'mktemp'), 0o755);
+}
+
 function withStubCurl(fn) {
   const root = mkdtempSync(join(tmpdir(), 'discord-download-'));
   try {
@@ -227,7 +235,7 @@ const routes = {
 const server = https.createServer({ key: readFileSync(keyPath), cert: readFileSync(certPath) }, (req, res) => {
   const path = req.url.split('?')[0];
   const scheme = (req.headers.authorization || '').split(' ')[0];
-  appendFileSync(logPath, JSON.stringify({ host: req.headers.host, path, scheme }) + '\\n');
+  appendFileSync(logPath, JSON.stringify({ host: req.headers.host, path, scheme, userAgent: req.headers['user-agent'] }) + '\\n');
   const [status, headers, body] = routes[path] || [404, {}, 'no route'];
   res.writeHead(status, headers);
   res.end(body);
@@ -368,6 +376,11 @@ test('discord_api reports status and Retry-After, and always sends the Bot schem
     const requests = seen();
     assert.equal(requests.length, shells.length * 6);
     assert.ok(requests.every(r => r.host === 'discord.com' && r.scheme === 'Bot'), 'a request left the Bot scheme or host');
+    // Discord's reference requires this form; a request without it may be blocked.
+    assert.ok(requests.every(r => /^DiscordBot \(https:\/\/\S+, \S+\)$/.test(r.userAgent)), 'an API request lacked the DiscordBot User-Agent');
+    const custom = runIn(shells[0], 'discord_api "$1"', ['/ok'], { cwd: root, env: { ...env, DISCORD_BOT_TOKEN: token, DISCORD_USER_AGENT: 'DiscordBot (https://example.test/my-bot, 3.2)' } });
+    assert.equal(custom.status, 0, custom.stderr);
+    assert.equal(seen().at(-1).userAgent, 'DiscordBot (https://example.test/my-bot, 3.2)');
     assert.equal(requests.filter(r => r.path === '/api/v10/ok').length, shells.length, 'an API redirect was followed');
 
     const temp = join(root, 'curl-temp'); mkdirSync(temp);
@@ -375,6 +388,7 @@ test('discord_api reports status and Retry-After, and always sends the Bot schem
     const interruptedCurl = join(interruptedBin, 'curl');
     writeFileSync(interruptedCurl, '#!/bin/sh\n"$BASE_CURL" "$@"\nstatus=$?\n[ "$status" -eq 0 ] && exit 18\nexit "$status"\n');
     chmodSync(interruptedCurl, 0o755);
+    writeMktempShim(interruptedBin, temp);
     for (const shell of shells) {
       const envWithInterruptedCurl = {
         ...env,
@@ -384,6 +398,8 @@ test('discord_api reports status and Retry-After, and always sends the Bot schem
         DISCORD_BOT_TOKEN: token,
       };
       const before = readdirSync(temp);
+      assert.equal(runIn(shell, 'mktemp', [], { cwd: root, env: envWithInterruptedCurl }).stdout.startsWith(temp), true, 'the temp-file guard is not watching the directory mktemp writes to');
+      for (const name of readdirSync(temp)) rmSync(join(temp, name));
       const partial = runIn(shell, 'discord_api "$1"', ['/ok'], { cwd: root, env: envWithInterruptedCurl });
       assert.equal(partial.status, 1, 'curl exit 18 must fail even after it reports HTTP 200');
       assert.equal(partial.stdout, '', 'a partial response body must never be parsed');
@@ -391,4 +407,50 @@ test('discord_api reports status and Retry-After, and always sends the Bot schem
       assert.deepEqual(readdirSync(temp), before, 'all private API temporary files must be removed');
     }
   });
+});
+
+// An interrupted request must not leave the private header file, which holds the bot token,
+// in the temp directory. The stand-in curl only blocks until it is signalled; the signal goes
+// to the whole process group, as Ctrl-C or a harness timeout would send it.
+test('discord_api removes its private temp files when interrupted', async () => {
+  const token = 'SYNTHETIC_BOT_TOKEN_NOT_REAL';
+  for (const shell of shells) {
+    for (const signal of ['SIGINT', 'SIGTERM']) {
+      const root = mkdtempSync(join(tmpdir(), 'discord-interrupt-'));
+      try {
+        const bin = join(root, 'bin'); mkdirSync(bin);
+        const temp = join(root, 'temp'); mkdirSync(temp);
+        const started = join(root, 'curl-started');
+        writeFileSync(join(bin, 'curl'), `#!/bin/sh\n: > "$CURL_STARTED"\nexec sleep 30\n`);
+        chmodSync(join(bin, 'curl'), 0o755);
+        writeMktempShim(bin, temp);
+        const child = spawn(shell, ['-c', `${functions}\ndiscord_api "$1"`, 'fixture', '/slow'], {
+          cwd: root, detached: true, stdio: 'ignore',
+          env: { ...process.env, PATH: `${bin}:${process.env.PATH}`, TMPDIR: temp, CURL_STARTED: started, DISCORD_BOT_TOKEN: token },
+        });
+        const exited = new Promise((resolve) => child.on('exit', (code, sig) => resolve({ code, sig })));
+        const deadline = Date.now() + 10000;
+        while (!existsSync(started)) {
+          assert.ok(Date.now() < deadline, `${shell}: the stand-in curl never started`);
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        // Guard: the token file really is on disk while the request is in flight.
+        const inFlight = readdirSync(temp);
+        assert.equal(inFlight.length, 3, `${shell}: expected three private temp files in flight`);
+        assert.ok(inFlight.some((name) => readFileSync(join(temp, name), 'utf8') === `Authorization: Bot ${token}\n`));
+        process.kill(-child.pid, signal);
+        const { code, sig } = await exited;
+        // The outer shell is in the signalled group too, so it may report the helper's exit
+        // status or die by the signal itself; either way it must not report success.
+        assert.ok(code !== 0 || sig !== null, `${shell} ${signal}: the interrupted request reported success`);
+        // The helper's subshell runs its cleanup trap as it exits, which can be just after
+        // the outer shell is gone: wait for the directory to empty rather than assuming order.
+        const cleanupDeadline = Date.now() + 5000;
+        while (readdirSync(temp).length > 0 && Date.now() < cleanupDeadline) {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+        }
+        assert.deepEqual(readdirSync(temp), [], `${shell} ${signal}: private temp files survived the interrupt`);
+      } finally { rmSync(root, { recursive: true, force: true }); }
+    }
+  }
 });

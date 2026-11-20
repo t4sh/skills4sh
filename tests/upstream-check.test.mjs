@@ -105,6 +105,19 @@ describe("validatePins", () => {
     assert.ok(errors.some((error) => error.includes("duplicate pin for npm:twice:latest")));
   });
 
+  test("validates unverifiableLinks entries", () => {
+    const pins = [{ name: "demo", registry: "npm", pinned: "1.0.0", files: ["a.md"] }];
+    const valid = validatePins({ pins, unverifiableLinks: [{ url: "https://help.vendor.dev/hc/", reason: "answers 403 to automated clients" }] });
+    assert.deepEqual(valid.errors, []);
+    assert.equal(valid.unverifiable.length, 1);
+    assert.deepEqual(validatePins({ pins }).unverifiable, []);
+    const invalid = validatePins({ pins, unverifiableLinks: [{ url: "https://help.vendor.dev", reason: "" }, { url: "ftp://x/y", reason: "r" }] });
+    assert.ok(invalid.errors.some((error) => error.includes('unverifiableLinks[0]: "url" must be an http(s) URL prefix with a path')));
+    assert.ok(invalid.errors.some((error) => error.includes('unverifiableLinks[0]: "reason" is required')));
+    assert.ok(invalid.errors.some((error) => error.includes("unverifiableLinks[1]")));
+    assert.ok(validatePins({ pins, unverifiableLinks: "all" }).errors.some((error) => error.includes('"unverifiableLinks" must be an array')));
+  });
+
   test("rejects a document without a pins array", () => {
     assert.equal(validatePins({}).errors.length, 1);
   });
@@ -302,6 +315,25 @@ describe("runUpstreamCheck", () => {
     assert.match(report, /## Could not verify/);
     assert.match(report, /`demo` — registry answered HTTP 502/);
     assert.match(report, /https:\/\/vendor\.dev\/blocked — HTTP 403/);
+  });
+
+  test("never requests a link under an unverifiableLinks prefix, and reports it as not checked", async (t) => {
+    const root = await buildFixture({
+      ".github/upstream-pins.json": JSON.stringify({
+        pins: [{ name: "demo", registry: "npm", pinned: "1.2.0", files: ["skills/demo/SKILL.md"] }],
+        unverifiableLinks: [{ url: "https://help.vendor.dev/hc/", reason: "answers 403 to automated clients" }],
+      }),
+      "skills/demo/SKILL.md": "Install demo@1.2.0. See https://help.vendor.dev/hc/articles/1 and https://vendor.dev/guide.",
+    });
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    const fetchImpl = fakeFetch({ [NPM_DEMO]: response(200, { latest: "1.2.0" }), "https://vendor.dev/guide": response(200) });
+    const result = await runUpstreamCheck({ root, fetchImpl });
+    assert.equal(result.drift, false);
+    assert.equal(fetchImpl.calls.some((call) => call.url.startsWith("https://help.vendor.dev/")), false);
+    assert.deepEqual(result.links.find((link) => link.url === "https://help.vendor.dev/hc/articles/1").status, "skipped");
+    const report = formatReport(result, "2026-11-21");
+    assert.match(report, /1 of 1 pins current; 1 of 1 links resolve; 1 not checked \(host refuses automated clients\)\./);
+    assert.doesNotMatch(report, /Could not verify/);
   });
 
   test("skips link requests when links are disabled", async (t) => {
