@@ -16,7 +16,7 @@ This skill captures screenshots of locally running websites. It supports two pri
 - **Chrome MCP** — for quick debugging, single screenshots, and interactive verification
 - **Playwright** — for systematic multi-breakpoint screenshot sets and visual regression
 
-When the host or project already exposes Playwright's own CLI/MCP entry points, see [playwright-patterns.md](references/playwright-patterns.md) § "Playwright 1.62 CLI/MCP entry points and supported OS images" before adding the bundled scripts.
+When the host or project already exposes Playwright's own CLI/MCP entry points, see [playwright-patterns.md](references/playwright-patterns.md) § "Playwright CLI/MCP entry points and supported platforms" before adding the bundled scripts.
 
 For niche scenarios (persistent sessions, AI snapshots, CI workflows), see the [Reference Files](#reference-files) section.
 
@@ -115,23 +115,26 @@ Use Playwright for automated, repeatable screenshot sets across all breakpoints.
 
 1. **Always use Playwright's bundled Chromium.** Never use Puppeteer, Selenium, or system Chrome. Do not check for installed browsers.
 2. **Keep an existing local origin's scheme. Prefer HTTP only when starting a server.** A verified HTTPS target, including a Portless route, stays HTTPS; do not rewrite it to HTTP. `file://` is acceptable *only* when the page has no `fetch`/XHR to sibling files, no `<script type="module">`, no service workers, and no absolute `/asset` paths — otherwise those will break silently. When starting a server and no HTTPS origin is already in use, serve over HTTP.
-3. **Keep main-frame navigation local.** Validate the requested URL and every main-frame redirect/final URL. The bundled helpers abort navigation when a localhost target redirects to an external hostname; external subresources may still load as part of the local page.
+3. **Keep main-frame navigation local.** Navigate with the bundled helpers or the `gotoLocal` guard ([playwright-patterns.md](references/playwright-patterns.md#local-navigation-guard)), never a bare `page.goto`. The guard fails a main-frame request to any other host before it is sent — each redirect hop and later navigations — and rejects the capture. External subresources may still load.
 
-### Setup (run once per session)
+### Setup (only when the project has no Playwright)
+
+Check first with the project's package manager (`npm ls playwright @playwright/test`). If either resolves, use it as is — the helpers load both; never upgrade, downgrade, or duplicate it. Only when neither resolves:
 
 ```bash
-npm install --save-dev playwright@1.62.0
+npm install --save-dev playwright@1.65.1   # or the project's package manager
 npm exec -- playwright install chromium
 ```
 
-Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` when the project already pins a compatible Playwright version in its lockfile. For unsupported runner images (Debian 11), see [references/playwright-patterns.md](references/playwright-patterns.md) § "Playwright 1.62 CLI/MCP entry points and supported OS images". If Chromium reports missing OS libraries, surface them to the user and **ask them to install** — never run `sudo` from this skill. See [references/playwright-patterns.md](references/playwright-patterns.md) § "When Chromium reports missing OS libraries".
+Do not use `@latest` or an unversioned install; name the added dependency in the report. ARIA snapshots need Playwright 1.49+: ask before changing an older project version. Decision table and supported platforms: [references/playwright-patterns.md](references/playwright-patterns.md) § "Setup". If Chromium reports missing OS libraries, surface them and **ask the user to install** — never run `sudo` from this skill (same file, § "When Chromium reports missing OS libraries").
 
 ### Quick workflow
 
-1. Confirm the verified local origin responds. Keep an existing HTTPS origin, including Portless. When starting a static server, HTTP is enough (`npx serve _site -l 3000 --no-clipboard` in a separate terminal).
+1. Keep an existing HTTPS origin, including Portless. When starting a static server, HTTP is enough (`npx serve _site -l 3000 --no-clipboard` in a separate terminal).
 2. Verify the server responds before screenshotting (see [playwright-patterns.md](references/playwright-patterns.md) § "Verifying the Server").
 3. Capture all 8 standard breakpoints (320–1920px) unless the user asks for specific sizes. Check the project's CSS/Tailwind config for custom breakpoints first.
 4. Save to `_screenshots/` in the project folder.
+5. Done when one non-empty PNG exists per requested route and viewport and the script exited 0. Report the directory, file count, and every failure.
 
 For the **canonical screenshot script**, **standard breakpoints array**, **serving patterns**, **server verification**, **waiting for dynamic content**, **element screenshots**, **persistent sessions**, and **when the dev server isn't running** — see [references/playwright-patterns.md](references/playwright-patterns.md).
 
@@ -150,7 +153,7 @@ _screenshots/
 
 ### Before/after visual comparison
 
-Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), then generate a comparison HTML. For the comparison script and pixel-diff scoring, see [references/visual-regression.md](references/visual-regression.md).
+Run the canonical script twice (`_screenshots/before`, `_screenshots/after`), diff the two top-level directories, then generate a comparison HTML. Done only when `report.json` has `compared` equal to routes × breakpoints; comparing nothing is an error, never a pass. If the change is already made, never stash, reset, or check out over the user's work; follow § "Baseline when the change is already made". See [references/visual-regression.md](references/visual-regression.md) for both, the comparison script, and pixel-diff scoring.
 
 ### Key API notes
 
@@ -188,9 +191,9 @@ For advanced patterns (persistent sessions, pixel-diff, AI snapshots, CI workflo
 | [assets/scripts/quick.js](assets/scripts/quick.js) | One viewport capture via Playwright without writing a custom script; run helpers from the project root by skill path (see playwright-patterns.md § "Invocation" for argument order) |
 | [assets/scripts/multi-breakpoint.js](assets/scripts/multi-breakpoint.js) | Custom breakpoint list or a smaller scripted set before adopting the full 8-breakpoint pipeline |
 | [assets/scripts/screenshot-a11y.js](assets/scripts/screenshot-a11y.js) | Screenshot plus ARIA snapshot with optional `WIDTHxHEIGHT` viewport and `untrusted-page-content` JSON envelope for agent consumption |
-| [references/playwright-patterns.md](references/playwright-patterns.md) | Pre-flight checks, serving patterns, persistent sessions, breakpoint detection, canonical 8-breakpoint script templates |
+| [references/playwright-patterns.md](references/playwright-patterns.md) | Setup table, local navigation guard, pre-flight checks, serving patterns, persistent sessions, breakpoint detection, canonical 8-breakpoint script templates |
 | [references/portless.md](references/portless.md) | Portless route discovery, worktree URLs, HTTPS trust, and local proxy troubleshooting |
-| [references/visual-regression.md](references/visual-regression.md) | Pixel-diff scoring, comparison HTML generation, GitHub Actions CI/CD workflow |
+| [references/visual-regression.md](references/visual-regression.md) | Pixel-diff scoring, comparison HTML generation, baseline after a change, GitHub Actions CI/CD workflow |
 | [references/interaction-templates.md](references/interaction-templates.md) | Auth flows, e-commerce flows, state variations, interactive mode, core interaction primitives |
 | [references/ai-snapshots.md](references/ai-snapshots.md) | ARIA snapshots, DOM snapshots, interactive element maps, incremental DOM diff |
 | [references/troubleshooting.md](references/troubleshooting.md) | Common issues by project type (SSG, Next.js, Tailwind, WordPress); full "What NOT to Do" list |

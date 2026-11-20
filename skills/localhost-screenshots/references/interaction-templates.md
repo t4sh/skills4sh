@@ -1,5 +1,7 @@
 # Interaction Templates — Full Reference
 
+Every template opens its first URL with `gotoLocal(page, url)` from [playwright-patterns.md § Local Navigation Guard](playwright-patterns.md#local-navigation-guard); paste that block into the script and do not swap in a bare `page.goto`. The guard stays on the page, so a click, form submit, or script that tries to leave the local host is blocked; call `assertLocalPage(page)` before saving a capture taken after such a step.
+
 ## Core Interaction Primitives
 
 ```js
@@ -49,7 +51,7 @@ const fs = require('fs');
 
     // Step 1: Login — credentials come from the environment, never hardcoded.
     // Set DEMO_USER / DEMO_PASS before running, or wire to a secrets manager.
-    await page.goto('http://localhost:3000/login');
+    await gotoLocal(page, 'http://localhost:3000/login');
     await page.fill('#email',    process.env.DEMO_USER || 'demo@example.com');
     await page.fill('#password', process.env.DEMO_PASS || '');
     await page.click('button[type="submit"]');
@@ -94,7 +96,7 @@ const fs = require('fs');
     fs.mkdirSync('_screenshots/checkout-flow', { recursive: true });
 
     // Browse products
-    await page.goto('http://localhost:3000/products');
+    await gotoLocal(page, 'http://localhost:3000/products');
     await page.waitForSelector('.product-card');
     await page.screenshot({ path: '_screenshots/checkout-flow/01-products.png', fullPage: true });
 
@@ -129,7 +131,7 @@ const fs = require('fs');
 
     fs.mkdirSync('_screenshots/states', { recursive: true });
 
-    await page.goto('http://localhost:3000/dashboard');
+    await gotoLocal(page, 'http://localhost:3000/dashboard');
 
     // Empty state
     await page.evaluate(() => localStorage.setItem('tasks', '[]'));
@@ -173,7 +175,7 @@ const { chromium } = require('playwright');
     const context = await browser.newContext();
     const page = await context.newPage();
 
-    await page.goto('http://localhost:3000');
+    await gotoLocal(page, 'http://localhost:3000');
     console.log('Browser ready. Page:', page.url());
 
     // Inspect

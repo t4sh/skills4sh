@@ -47,36 +47,83 @@ function isLocalUrl(value) {
   }
 }
 
+// Names the likely fix for two common inputs: a missing scheme and a bind address.
+function localUrlHint(value) {
+  const candidate = /^[a-z][a-z0-9+.-]*:\/\//i.test(value) ? value : `http://${value}`;
+  try {
+    const parsed = new URL(candidate);
+    if (parsed.hostname === '0.0.0.0' || parsed.hostname === '[::]') {
+      return ` ${parsed.hostname} is a listen-on-all-interfaces address; use ${parsed.protocol}//localhost${parsed.port ? `:${parsed.port}` : ''} instead.`;
+    }
+    if (candidate !== value && isLocalUrl(candidate)) return ` Missing scheme: did you mean ${candidate}?`;
+  } catch {
+    // No hint for input that is not a URL even with a scheme.
+  }
+  return '';
+}
+
 function validateLocalUrl(value) {
   try {
     new URL(value);
   } catch {
-    console.error(`Invalid URL: ${value}`);
+    console.error(`Invalid URL: ${value}${localUrlHint(value)}`);
     process.exit(1);
   }
   if (!isLocalUrl(value)) {
-    console.error('Refusing non-localhost URL. Use http(s)://localhost, 127.0.0.1, [::1], or *.localhost.');
+    console.error(`Refusing non-localhost URL. Use http(s)://localhost, 127.0.0.1, [::1], or *.localhost.${localUrlHint(value)}`);
     process.exit(1);
   }
 }
 
+// Main-frame navigation guard. Playwright route handlers are called once per request and
+// never for redirect hops, so the guard pauses document requests through a CDP Fetch session
+// instead: a main-frame request to a non-local host is failed before it is sent, on every hop
+// of a redirect chain and for later page-initiated navigations. Subframes and other
+// subresources are not intercepted.
+const localGuards = new WeakMap();
+
 async function gotoLocal(page, value, options) {
-  let blockedUrl = '';
-  await page.route('**/*', async (route) => {
-    const request = route.request();
-    if (request.isNavigationRequest() && request.frame() === page.mainFrame() && !isLocalUrl(request.url())) {
-      blockedUrl = request.url();
-      await route.abort('blockedbyclient');
-      return;
-    }
-    await route.continue();
-  });
+  if (!isLocalUrl(value)) throw new Error(`Refusing non-localhost URL: ${value}`);
+  let guard = localGuards.get(page);
+  if (!guard) {
+    guard = { blockedUrl: '' };
+    localGuards.set(page, guard);
+    const cdp = await page.context().newCDPSession(page);
+    // Read the main frame id once, up front: the renderer does not answer while a paused
+    // navigation is pending, so the handler must not ask it anything.
+    const mainFrameId = (await cdp.send('Page.getFrameTree')).frameTree.frame.id;
+    cdp.on('Fetch.requestPaused', ({ requestId, frameId, request }) => {
+      const external = frameId === mainFrameId && !isLocalUrl(request.url);
+      if (external) guard.blockedUrl = request.url;
+      cdp.send(
+        external ? 'Fetch.failRequest' : 'Fetch.continueRequest',
+        external ? { requestId, errorReason: 'BlockedByClient' } : { requestId },
+      ).catch(() => {
+        // Page or session closed: the request stays paused, so nothing is sent.
+      });
+    });
+    await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*', resourceType: 'Document' }] });
+  }
+  let response;
   try {
-    await page.goto(value, options);
+    response = await page.goto(value, options);
   } catch (err) {
-    if (blockedUrl) throw new Error(`Refusing non-localhost main-frame redirect: ${blockedUrl}`);
+    if (guard.blockedUrl) throw new Error(`Refusing non-localhost main-frame redirect: ${guard.blockedUrl}`);
     throw err;
   }
+  // Second check, independent of the guard: no hop of the completed chain may be external.
+  for (let request = response && response.request(); request; request = request.redirectedFrom()) {
+    if (!isLocalUrl(request.url())) throw new Error(`Refusing non-localhost main-frame redirect: ${request.url()}`);
+  }
+  assertLocalPage(page);
+  return response;
+}
+
+// Call again after capturing and before writing any file: a navigation blocked after load
+// leaves a browser error page, which must not be saved as the app.
+function assertLocalPage(page) {
+  const guard = localGuards.get(page);
+  if (guard && guard.blockedUrl) throw new Error(`Refusing non-localhost main-frame navigation: ${guard.blockedUrl}`);
   if (!isLocalUrl(page.url())) throw new Error(`Refusing non-localhost final URL: ${page.url()}`);
 }
 
@@ -95,17 +142,20 @@ const waitForSelector = process.argv[6] || '';
 validateLocalUrl(url);
 
 function loadChromium() {
-  try {
-    // Resolve from the invoking project first so a globally installed skill uses the
-    // project's Playwright; fall back to a copy beside this script.
-    return require(require.resolve('playwright', { paths: [process.cwd(), __dirname] })).chromium;
-  } catch (err) {
-    if (err && err.code === 'MODULE_NOT_FOUND') {
-      console.error('Missing dependency: playwright. Install it in the project you run this command from (npm install --save-dev playwright@1.62.0), then rerun from that project root.');
-      process.exit(1);
+  // Resolve from the invoking project first so a globally installed skill uses the
+  // project's Playwright; fall back to a copy beside this script. Either package works:
+  // a project that has only the test runner (@playwright/test) is used as is.
+  for (const dir of [process.cwd(), __dirname]) {
+    for (const name of ['playwright', '@playwright/test']) {
+      try {
+        return require(require.resolve(name, { paths: [dir] })).chromium;
+      } catch (err) {
+        if (!err || err.code !== 'MODULE_NOT_FOUND') throw err;
+      }
     }
-    throw err;
   }
+  console.error('Missing dependency: playwright. Install it in the project you run this command from (neither playwright nor @playwright/test resolved; for example npm install --save-dev playwright@1.65.1), then rerun from that project root.');
+  process.exit(1);
 }
 
 (async () => {
@@ -117,9 +167,17 @@ function loadChromium() {
       const page = await browser.newPage();
       await page.setViewportSize({ width: bp.width, height: bp.height });
       await gotoLocal(page, url, { waitUntil });
-      if (waitForSelector) await page.waitForSelector(waitForSelector, { timeout: 10000 });
+      if (waitForSelector) {
+        // A blocked navigation is the real cause when the wait fails on a browser error page.
+        await page.waitForSelector(waitForSelector, { timeout: 10000 }).catch((err) => {
+          assertLocalPage(page);
+          throw err;
+        });
+      }
       const file = path.join(outDir, `${bp.name}-${bp.width}x${bp.height}.png`);
-      await page.screenshot({ path: file, fullPage: true });
+      const png = await page.screenshot({ fullPage: true });
+      assertLocalPage(page);
+      fs.writeFileSync(file, png);
       await page.close();
       console.log(`saved ${file}`);
     }

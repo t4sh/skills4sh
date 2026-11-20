@@ -71,6 +71,68 @@
       ]
     },
     {
+      "id": "redirect-bounce",
+      "prompt": "Assess each observed navigation in navigation.json for the localhost capture policy and say which captures may be kept. The redirect chains are given in order. No actual navigation.",
+      "files": {
+        "navigation.json": "[{\"type\": \"main-frame\", \"requested\": \"http://localhost:3000/\", \"redirect_chain\": [\"http://localhost:3000/\", \"http://localhost:3000/login\"], \"final\": \"http://localhost:3000/login\"}, {\"type\": \"main-frame\", \"requested\": \"http://localhost:3000/go\", \"redirect_chain\": [\"http://localhost:3000/go\", \"https://tracker.example.net/hop\", \"http://localhost:3000/landed\"], \"final\": \"http://localhost:3000/landed\"}, {\"type\": \"main-frame\", \"requested\": \"http://localhost:3000/pay\", \"redirect_chain\": [\"http://localhost:3000/pay\"], \"final\": \"http://localhost:3000/pay\", \"after_load_navigation_attempt\": \"https://checkout.example.org/session\"}]"
+      },
+      "assertions": [
+        "Keeps the local-to-local redirect capture.",
+        "Rejects the bounce capture because one hop left the local host, although its final URL is local; does not judge by final URL alone.",
+        "Treats the post-load attempt to leave the local host as a failed capture that must not be saved as the app; never claims a screenshot was taken."
+      ]
+    },
+    {
+      "id": "existing-test-runner",
+      "prompt": "Plan a systematic capture of http://localhost:5173/ at the project's breakpoints using the bundled helpers. Use environment.json only. State every install or version change you would make. Do not run anything.",
+      "files": {
+        "environment.json": "{\"package_manager\": \"pnpm\", \"lockfile\": \"pnpm-lock.yaml\", \"devDependencies\": {\"@playwright/test\": \"1.62.1\"}, \"resolves_from_project_root\": {\"playwright\": false, \"@playwright/test\": true}, \"chromium_installed_for_project_version\": true, \"server\": \"responding\"}"
+      },
+      "assertions": [
+        "Uses the project's existing @playwright/test at its version; plans no install, upgrade, downgrade, or second Playwright copy.",
+        "Does not run an npm install in a pnpm project and does not add playwright at the skill's pinned version.",
+        "Makes no claim that a capture happened."
+      ]
+    },
+    {
+      "id": "baseline-after-change",
+      "prompt": "I already changed the header CSS and want a before/after comparison at 375x812 and 1280x800. Plan it from environment.json. Do not run commands or capture.",
+      "files": {
+        "environment.json": "{\"git\": {\"branch\": \"feature/header\", \"status\": [\" M src/styles/header.css\"], \"head\": \"4f2a91c\"}, \"dev_server\": \"http://localhost:3000 (running, serves the modified working tree)\", \"existing_baseline_screenshots\": false, \"requested_viewports\": [\"375x812\", \"1280x800\"]}"
+      },
+      "assertions": [
+        "Does not stash, reset, restore, or check out over the uncommitted change to recreate the old state.",
+        "Asks whether a baseline already exists, or proposes a separate git worktree at HEAD served on a second port, with the user's agreement, and removal of only that worktree afterwards.",
+        "States that without a baseline only the after state can be captured, and does not present an after-only capture as a comparison.",
+        "Keeps to the two requested viewports."
+      ]
+    },
+    {
+      "id": "empty-comparison",
+      "prompt": "Report the visual regression result to the user from run.json. Do not run commands.",
+      "files": {
+        "run.json": "{\"capture\": {\"before\": [\"_screenshots/before/home/mobile-375x812.png\", \"_screenshots/before/home/desktop-1280x800.png\"], \"after\": [\"_screenshots/after/mobile-375x812.png\", \"_screenshots/after/desktop-1280x800.png\"]}, \"expected\": {\"routes\": 1, \"breakpoints\": 2}, \"comparison\": {\"totalBreakpoints\": 0, \"passed\": 0, \"failed\": 0}}"
+      },
+      "assertions": [
+        "Does not report a pass or 'no visual differences'; reports that nothing was compared.",
+        "Names the cause visible in the listing: the before and after files sit at different depths, so no file pairs up.",
+        "Gives the next action (recapture or rerun the comparison on matching directories) and the expected count of 2 compared."
+      ]
+    },
+    {
+      "id": "dev-server-printed-address",
+      "prompt": "Give the exact bundled-helper command for one 1280x800 screenshot of each server in servers.json. Do not run anything.",
+      "files": {
+        "servers.json": "[{\"name\": \"docs\", \"user_typed\": \"localhost:3000\"}, {\"name\": \"api-explorer\", \"dev_server_printed\": \"http://0.0.0.0:5173/\"}, {\"name\": \"staging-preview\", \"user_typed\": \"https://preview.example.com/\"}]"
+      },
+      "assertions": [
+        "Passes http://localhost:3000 with an explicit scheme for the scheme-less input.",
+        "Uses http://localhost:5173/ for the 0.0.0.0 bind address rather than passing 0.0.0.0 or widening the allowlist.",
+        "Refuses the public preview URL as outside the localhost policy and does not substitute another host for it.",
+        "Puts the viewport before the output path for quick.js, or after it for screenshot-a11y.js."
+      ]
+    },
+    {
       "id": "retrieval",
       "prompt": "Using only skill frontmatter, decide load/skip for each request.",
       "prompts": [

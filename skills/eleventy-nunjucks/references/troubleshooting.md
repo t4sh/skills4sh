@@ -43,12 +43,13 @@ return {
 ls -la src/assets/css/tailwind.css
 # Timestamp should update on every CSS-relevant edit
 
-# Confirm 11ty's watch is including the file you edited
-grep "addWatchTarget" .eleventy.js
+# Confirm the edited file is not gitignored: Eleventy does not watch gitignored paths
+git check-ignore -v src/assets/css/tailwind.css
 ```
 
 **Fix:**
-- Add `addWatchTarget("src/assets/")` if missing
+- Templates and passthrough-copied files are watched without configuration; `addWatchTarget` is only for files Eleventy neither renders nor copies
+- Generated CSS that is gitignored (the example deployment profile's `src/assets/css/tailwind.css`) is not watched even when a watch target covers it; apply `conventions.md` § Asset watch target
 - Kill and restart `pnpm dev`. `--kill-others-on-fail` only stops the sibling process when one exits non-zero; it never restarts anything
 - Hard refresh the browser (`Cmd+Shift+R`)
 
@@ -127,6 +128,18 @@ Trace the layout chain: page → layout1 → layout2 → base. Each layer's `{{ 
 **Fix:**
 - The section should appear in exactly one place in the chain
 - If it's in a layout, it shouldn't be in the pages that use that layout
+
+### Page prints its front matter and has no layout
+
+**Symptom:** the built page shows `--- layout: … ---` as text and the layout shell is missing.
+
+**Cause:** something precedes the opening `---`. Front matter is parsed only when `---` is the first line of the file; a Nunjucks comment or a blank line above it turns the whole block into page content (verified on Eleventy 3.1.8, 2026-11-21).
+
+**Fix:** move the comment below the closing `---`, or delete the leading line. Change nothing else: the layout, config, and directories are not the cause.
+
+### Layout shows the wrong title or another wrong value
+
+Trace the data cascade before editing templates: template front matter beats layout front matter, a layout closer to the content beats its parent layouts, and a `{% set %}` in the page never reaches the layout. See `data-cascade.md` § Common cascade pitfalls.
 
 ### Layout shows escaped HTML
 
@@ -295,6 +308,8 @@ module.exports = {
 
 ## Tailwind / asset issues
 
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
+
 ### Tailwind classes work in some templates, not others
 
 **Cause:** `@source` directive in `tailwind.input.css` doesn't cover all template directories.
@@ -349,15 +364,16 @@ The leading `pnpm run build:tailwind &&` is required — it produces the initial
 
 ### Shortcodes don't work inside `.md` files
 
-**Cause:** `markdownTemplateEngine` not set, or set to something other than `njk`.
+Markdown files are preprocessed by a template engine before Markdown rendering. The default engine is Liquid, and universal shortcodes registered with `addShortcode` already work there. Match the symptom (verified on Eleventy 3.1.8, 2026-11-21):
 
-**Fix:**
+| Symptom | Cause | Fix |
+|---|---|---|
+| `{% year %}` appears literally in the output | `markdownTemplateEngine: false` disables preprocessing | Enable the engine the project's other templates use, after applying the Markdown trust rule in `SKILL.md` |
+| Liquid error `tag "year" not found` | Registered with `addNunjucksShortcode` while `.md` is preprocessed by Liquid | Register it with the universal `addShortcode` |
+| Nunjucks error `parseSignature: expected comma after expression` | Liquid-style space-separated arguments under `markdownTemplateEngine: "njk"` | Separate arguments with commas: `{% greet "a", "b" %}` |
+| Shortcode HTML shows as escaped text | The shortcode ran, then a Markdown library set to `html: false` escaped its output | Emit that markup from an `.njk` template or layout; use `html: true` only for trusted authored content |
 
-```js
-return {
-  markdownTemplateEngine: "njk",        // ← critical
-};
-```
+Do not switch `markdownTemplateEngine` project-wide to fix one page: it changes how every `.md` file is parsed and which template source is executed.
 
 ### `<` and `>` in markdown content render as `&lt;` `&gt;` literally
 
@@ -366,7 +382,7 @@ return {
 **Fix decision:**
 - If the markdown should NEVER contain HTML: keep `html: false` (safer)
 - For trusted authored content only: `html: true`
-- If sometimes-yes-sometimes-no: use shortcodes for the inline HTML; keep `html: false`
+- If only some pages need HTML: keep `html: false` and author those pages as `.njk`; shortcode output inside a `.md` template is escaped by `html: false` too
 
 ### Linkify isn't autolinking URLs
 
@@ -407,6 +423,8 @@ add_header X-Frame-Options "DENY" always;
 
 ### Pages 404 in production despite being in `out/`
 
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
+
 **Cause:** nginx `try_files` doesn't match the actual file structure.
 
 **Fix:** For flat-permalink (`permalink: /foo.html`):
@@ -427,6 +445,8 @@ location / {
 
 ### Soft-nav swap breaks page-specific scripts
 
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
+
 **Cause:** Modules attached listeners on initial load; soft-nav swapped the DOM; listeners point to detached nodes.
 
 **Fix:** Hook the lifecycle events:
@@ -439,6 +459,8 @@ document.addEventListener("site:before-page-unload", destroy);
 ```
 
 ### `version-banner.js` fires constantly
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 **Diagnosis:** Check the network request, response cache headers, polling interval, and SHA comparison. Same-origin GET requests do not acquire a CORS preflight merely because CSP is enabled. A cross-origin request may additionally need CORS and `connect-src` permission.
 
@@ -488,6 +510,8 @@ DEBUG=Eleventy:* pnpm build 2>&1 | grep -E "render|copy" | head -20
 - Move large data sets to async-cached files
 
 ### Tailwind dev rebuild is slow
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 **Cause:** `@source` globs are too broad, scanning `node_modules/` or `out/`.
 

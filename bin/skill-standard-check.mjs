@@ -60,6 +60,10 @@ export async function runSkillStandardChecks(rootDir) {
     } else if (description && !hasConcreteTriggerDetail(description)) {
       errors.push(`${skill}: SKILL.md description trigger/use conditions are too generic; include a quoted request phrase, path/file cue, tool cue, named situation, or multi-clause trigger`);
     }
+    // A bare block-scalar indicator (`>-`, `|`) is not description text; the trigger check above already rejects it.
+    if (/[<>]/.test(description) && !/^[>|][0-9+-]*$/.test(description)) {
+      errors.push(`${skill}: SKILL.md description must not contain angle brackets (< or >); first-party skill validators reject them and some runtimes escape them`);
+    }
 
     for (const field of fm.metadataFields.keys()) {
       if (!ALLOWED_METADATA_FIELDS.has(field)) {

@@ -34,7 +34,7 @@ Sync Report
 External changes ingested:
   New files found:      X  (added to index)
   Orphan entries:       X  (removed from index)
-  Updated externally:   X  (content refreshed)
+  Updated externally:   X  (index entry refreshed)
 
 Session saved:
   Memories updated:     X
@@ -43,6 +43,8 @@ Session saved:
 
 Index entries:          X total
 ```
+
+Count a file under `Updated externally` only when its frontmatter `type`, `title`, or `status` differed from its index entry before Sync refreshed that entry. Compare the two files directly, or take the count from `summary.mismatchedFiles` of the optional [index checker](checker.md); no Git command is involved. An edit that changed only the body or other fields leaves nothing to compare, so do not estimate it. Report `0` when no entry differed.
 
 ## Memory Health Report Template
 
@@ -59,6 +61,8 @@ Compaction candidates: X
 Sessions cleaned:      X
 ```
 
+`Index fixes` counts the entries Maintain added for unindexed memory files, removed as orphans, or refreshed because they differed from the file's frontmatter. `Archived` counts files whose `status` is `archived`, including any archived in this run.
+
 ## Memory File Frontmatter Schema
 
 ```yaml
@@ -71,7 +75,7 @@ description: >-
 tags: [tag1, tag2]
 source: {runtime-slug}           # e.g. codex, claude-code, cursor, grok, openclaw, vscode, craft-agent, other
 created: YYYY-MM-DD
-updated: YYYY-MM-DD
+updated: YYYY-MM-DD              # set to today whenever the file is edited, including when it is archived
 status: active | archived
 expires: YYYY-MM-DD              # optional — review date for context memories
 supersedes: {id}                 # optional — ID of memory this replaces
@@ -80,6 +84,8 @@ supersedes: {id}                 # optional — ID of memory this replaces
 Markdown body.
 For feedback/decision types, include **Why:** and **How to apply:** sections.
 ```
+
+**Archiving** keeps the file. Set `status: archived` in the file's frontmatter and in its index entry, and set `updated` to today so the 90-day review of archived entries counts from the day of archiving. Deleting is a separate step that needs its own confirmation.
 
 ## Entry-Point Templates
 

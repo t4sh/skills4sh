@@ -82,16 +82,39 @@ Nunjucks `if` uses JavaScript-style truthiness. Falsy values include `false`, `n
 ### Async iteration — Eleventy v3 / Nunjucks 3
 
 ```nunjucks
-{# Use asyncEach / asyncAll only when the loop body contains async filters or extensions. #}
-{# Regular {% for %} will fail if filters in the body are async. #}
+{# A plain {% for %} works with async filters and shortcodes in its body: #}
+{# Nunjucks compiles such a loop as asyncEach automatically. #}
+{% for item in items %}
+  <li>{{ item.url | titleFor(titleCache) }}</li>
+{% endfor %}
+```
+
+```nunjucks
+{# Explicit forms: asyncEach is sequential, asyncAll runs iterations in parallel. #}
 {% asyncEach item in items %}
   <li>{{ item.url | titleFor(titleCache) }}</li>
 {% endeach %}
 ```
 
-`asyncAll` runs iterations in parallel; `asyncEach` runs sequentially. Prefer `asyncAll` for local deterministic work unless ordering matters. Do not use async loops to fetch arbitrary third-party URLs from templates.
+An explicit `asyncEach` is required only when the loop body loads templates through an asynchronous custom loader. `asyncAll` runs iterations in parallel; `asyncEach` runs sequentially. Prefer `asyncAll` for local deterministic work unless ordering matters. Do not use async loops to fetch arbitrary third-party URLs from templates. Source: [Nunjucks `asyncEach`](https://mozilla.github.io/nunjucks/templating.html#asynceach).
 
-Build Awesome v4 prereleases use the `@11ty/nunjucks` fork and no longer require async-specific `{% for %}` or `{% set %}` tags for the newly supported async paths. Do not apply that behavior to stable v3; see `build-awesome-v4.md`.
+### Async capture — block `set` and macros are not async-safe
+
+On stable v3, async filters and shortcodes work in output expressions, `{% if %}` bodies, `{% for %}` loops, and inline assignments such as `{% set title = url | titleFor(titleCache) %}`. The constructs below are not async-safe (verified on Eleventy 3.1.8 with Nunjucks 3.2.4, 2026-11-21; block `set` and macros are documented [Eleventy warnings](https://www.11ty.dev/docs/languages/nunjucks/#warning-macros-are-not-async-friendly)):
+
+| Construct | Observed result | Use instead |
+|---|---|---|
+| Block capture `{% set x %}…{% endset %}` with async content | Captures `[object Promise]` or `[object Object]`, then the process fails with `TypeError: cb is not a function` | Eleventy's `{% setAsync "x" %}…{% endsetAsync %}`, an inline assignment, or precomputed data |
+| `{% macro %}` body with async content | The async output is silently dropped (renders empty) | Pass the resolved value in as a macro argument, or use a shortcode |
+| `{% call %}` body with async content | Rendering throws `ReferenceError` | Resolve the value before the `call` block |
+
+```nunjucks
+{# Eleventy only: the variable name is a quoted string. Not available in standalone Nunjucks. #}
+{% setAsync "heading" %}{{ items[0].url | titleFor(titleCache) }}{% endsetAsync %}
+<h1>{{ heading }}</h1>
+```
+
+Build Awesome v4 prereleases use the `@11ty/nunjucks` fork, whose async refactor changes these paths. Do not apply that behavior to stable v3; see `build-awesome-v4.md`.
 
 ## Variables
 
@@ -261,7 +284,7 @@ Common cases: code examples in documentation pages, embedded templates for downs
 
 ## Autoescaping
 
-Stock Nunjucks 3 (Mozilla `3.2.4`, and `@11ty/nunjucks@3.3.0`, which Eleventy `3.1.7` aliases as `nunjucks`) has no `{% autoescape %}` block tag. Configure autoescaping through the environment and use `safe` only for a reviewed, trusted HTML value:
+Stock Nunjucks 3 (Mozilla `3.2.4`, which Eleventy `3.1.8` depends on) has no `{% autoescape %}` block tag. Configure autoescaping through the environment and use `safe` only for a reviewed, trusted HTML value:
 
 ```nunjucks
 {{ "<b>x</b>" }}                  {# &lt;b&gt;x&lt;/b&gt; with autoescape enabled #}
@@ -270,7 +293,20 @@ Stock Nunjucks 3 (Mozilla `3.2.4`, and `@11ty/nunjucks@3.3.0`, which Eleventy `3
 
 Custom autoescape extensions require their own documentation and tests. They are not a portable built-in API.
 
-## Built-in filters — full table
+Autoescape makes a value safe for HTML text and for quoted attribute values only. It does not help in these contexts (verified on Eleventy 3.1.8, 2026-11-21):
+
+| Context | Example | Why autoescape is not enough |
+|---|---|---|
+| Unquoted attribute | `<div class={{ kind }}>` | A space in the value starts a new attribute such as `onmouseover=…`; always quote attribute values |
+| URL attribute | `<a href="{{ link }}">` | A `javascript:` URL contains nothing to escape; allow only vetted schemes |
+| Shortcode output | `{% badge user.name %}` | Eleventy marks shortcode return values safe; escape inside the shortcode (`filters.md`) |
+| Inline `<script>` | `<script>var x = "{{ value }}";</script>` | HTML escaping is not JavaScript escaping; use `jsonScript` (`filters.md`) |
+
+Run the checks in `security-checklist.md` §1 when reviewing a template.
+
+## Built-in filters — common set
+
+The complete list is in the [Nunjucks built-in filters](https://mozilla.github.io/nunjucks/templating.html#builtin-filters) documentation; Eleventy adds its own universal filters (`url`, `slugify`, `log`, `inputPathToUrl`, collection-item helpers).
 
 | Filter | Effect | Example |
 |---|---|---|
@@ -324,7 +360,7 @@ Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFil
 **Eleventy v3 / Nunjucks 3 constraints:**
 - Templates using async filters must be rendered through async render paths
 - Eleventy handles this automatically; standalone Nunjucks needs a callback for `env.render` / `env.renderString`; neither automatically returns a Promise. Wrap the callback explicitly when using `await`
-- An async filter in a `{% for %}` loop without `asyncEach`/`asyncAll` will fail
+- An async filter works in a plain `{% for %}` loop; block `{% set %}…{% endset %}` captures and macro bodies are not async-safe (see § Async capture)
 - Keep async filters local and deterministic. Network refresh belongs in an explicit prebuild step that writes validated JSON for templates to consume.
 
 ## Jinja2 divergence — what's different
@@ -336,10 +372,10 @@ Use `addAsyncFilter` for cross-template-engine helpers. Use `addNunjucksAsyncFil
 | `groupby` return | Object shaped like `{ key: [items] }`; iterate `{% for k, items in x \| groupby("key") %}` | Group objects expose `grouper` / `list`-style attributes |
 | `truncate` default | `length=255, killwords=false, end="..."` | Same defaults |
 | Whitespace control | `{%- -%}`, `trimBlocks`, `lstripBlocks` | Same |
-| Async iteration | Stable v3: `asyncEach` / `asyncAll` for async filters; v4 prerelease differs | Not needed (sync engine) |
+| Async iteration | Stable v3: plain `{% for %}` handles async filters; block `set` and macros are not async-safe; v4 prerelease differs | Not needed (sync engine) |
 | Empty collection truthiness | Empty arrays/objects are truthy in JavaScript semantics; check `.length` or use a helper when emptiness matters | Empty sequences/mappings are falsy |
 
-Most Jinja2 templates port to Nunjucks unchanged. The areas that bite are `groupby` shape, empty-collection truthiness, and async iteration. In Nunjucks, do not destructure `groupby` as an array of `[key, items]` pairs; iterate it as an object.
+Most Jinja2 templates port to Nunjucks unchanged. The areas that bite are `groupby` shape, empty-collection truthiness, and async content in block `set` and macros. In Nunjucks, do not destructure `groupby` as an array of `[key, items]` pairs; iterate it as an object.
 
 ## Browser usage
 

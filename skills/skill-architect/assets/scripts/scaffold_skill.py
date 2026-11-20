@@ -68,8 +68,8 @@ def titleize(slug: str) -> str:
 def yaml_double_quoted(value: str) -> str:
     """Emit value as a valid YAML double-quoted scalar.
 
-    Escapes backslashes and double quotes so an interpolated trigger phrase
-    cannot break the scalar or inject extra frontmatter keys.
+    Escapes backslashes and double quotes so an interpolated trigger phrase,
+    author, or tag list cannot break the scalar or inject extra frontmatter keys.
     """
     escaped = value.replace("\\", "\\\\").replace('"', '\\"')
     return f'"{escaped}"'
@@ -111,7 +111,7 @@ def main() -> int:
             slug=slug,
             title=title,
             description=yaml_double_quoted(description_text),
-            tags=args.tags,
+            tags=yaml_double_quoted(args.tags),
             author_line=f"  author: {yaml_double_quoted(args.author)}\n" if args.author else "",
         ),
         encoding="utf-8",

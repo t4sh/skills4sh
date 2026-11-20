@@ -4,21 +4,34 @@
 
 [SKILL.md § Golden Rules](../SKILL.md#golden-rules) owns the browser, origin-scheme, `file://`, and local-navigation rules. The patterns below assume them.
 
-## Setup (run once per session)
+## Setup (only when the project has no Playwright)
+
+This applies to the Playwright path (systematic sets, before/after, visual regression). A quick capture that only lacks a host browser capability follows [SKILL.md § Bind capabilities to the current host](../SKILL.md#bind-capabilities-to-the-current-host) and installs nothing.
+
+Check what the project already resolves before installing anything, with the project's own package manager (the lockfile names it): `npm ls playwright @playwright/test`, `pnpm ls playwright @playwright/test`, or `yarn why playwright`.
+
+| Project state | Action |
+|---|---|
+| `playwright` or `@playwright/test` resolves | Use that copy at its version. The bundled helpers load either package. Do not upgrade, downgrade, or add a second copy. Run `npm ci` (or the package manager's frozen install) when `node_modules` is missing. |
+| It resolves but is older than 1.49 and the task needs an ARIA snapshot | PNG capture still works; `locator.ariaSnapshot()` does not exist before 1.49. Report this and ask before changing the project's version. |
+| Chromium is reported missing at launch | Run that copy's installer: `npm exec -- playwright install chromium` (or `pnpm exec` / `yarn`). |
+| Neither package resolves | Install the pinned version below with the project's package manager, and name the added dev dependency and lockfile change in the report. |
 
 ```bash
-# Install the compatible Playwright version used by the bundled ARIA snapshot scripts.
-npm install --save-dev playwright@1.62.0
+# Only when neither playwright nor @playwright/test resolves. pnpm: pnpm add -D; yarn: yarn add -D.
+npm install --save-dev playwright@1.65.1
 npm exec -- playwright install chromium
 ```
 
-Do not use `@latest` or an unversioned install. Install the explicit compatible version before ARIA snapshot flows so older project Playwright versions do not skip setup and then fail at runtime. Prefer `npm ci` over `npm install` when the lockfile already pins a compatible Playwright version.
+Do not use `@latest` or an unversioned install. `playwright@1.65.1` is the latest release the bundled helpers were run against (2026-11-21, also run against 1.62.0). They use only `chromium.launch`, `page.goto`, `page.screenshot`, `request.redirectedFrom`, `browserContext.newCDPSession`, and `locator.ariaSnapshot`, which Playwright's API docs list as available since 1.49 or earlier.
 
-### Playwright 1.62 CLI/MCP entry points and supported OS images
+**Done when** `npm exec -- playwright --version` (or the package manager's equivalent) prints a version from the project and a helper run reaches `saved …`.
 
-Playwright 1.62 includes first-party `npx playwright cli` and `npx playwright mcp` entry points. Prefer an already-configured host integration when it satisfies the capture request; use the bundled scripts when the task needs explicit localhost-only URL guards, checked-in behavior, or deterministic CI. Do not install a second browser-control stack merely because these entry points exist.
+### Playwright CLI/MCP entry points and supported platforms
 
-Playwright 1.62 no longer supports Debian 11, so update the runner image rather than attempting to force-install unsupported browser libraries.
+Playwright 1.62 and later bundle first-party `npx playwright cli` and `npx playwright mcp` entry points. Prefer an already-configured host integration when it satisfies the capture request; use the bundled scripts when the task needs explicit localhost-only URL guards, checked-in behavior, or deterministic CI. Do not install a second browser-control stack merely because these entry points exist.
+
+Playwright 1.62 dropped Debian 11 and 1.63 dropped Ubuntu 20.04; update the runner image rather than attempting to force-install unsupported browser libraries. Playwright 1.65 lists Node.js 22, 24, or 26 and no longer tests Node.js 20 ([release notes](https://github.com/microsoft/playwright/releases), checked 2026-11-21). Since 1.65, text the browser does not render (for example inside a closed `<details>`) is left out of ARIA snapshots, so snapshots taken before and after that upgrade can differ.
 
 ### When Chromium reports missing OS libraries
 
@@ -55,7 +68,7 @@ npx serve _site -l 3000 --no-clipboard
 ```js
 const testPage = await browser.newPage();
 try {
-  const response = await testPage.goto(BASE_URL, { timeout: 5000 });
+  const response = await gotoLocal(testPage, BASE_URL, { timeout: 5000 }); // § Local Navigation Guard
   if (!response || !response.ok()) {
     throw new Error(`Server returned ${response?.status()}`);
   }
@@ -141,7 +154,88 @@ function validateViewport({ name, width, height }) {
 
 Bounds rationale: below 200px Chromium clips layout primitives; above 3840×2160 (4K) screenshots balloon past useful review sizes and often OOM on CI runners.
 
+## Local Navigation Guard
+
+Every snippet in these references navigates with `gotoLocal(page, url, options)`, never a bare `page.goto`. Paste this block, unchanged, into any hand-written capture script; the bundled helpers carry the same code.
+
+```js
+function isLocalUrl(value) {
+  try {
+    const parsed = new URL(value);
+    const host = parsed.hostname.toLowerCase().replace(/\.$/, '');
+    return (parsed.protocol === 'http:' || parsed.protocol === 'https:')
+      && (host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host.endsWith('.localhost'));
+  } catch {
+    return false;
+  }
+}
+
+// Main-frame navigation guard. Playwright route handlers are called once per request and
+// never for redirect hops, so the guard pauses document requests through a CDP Fetch session
+// instead: a main-frame request to a non-local host is failed before it is sent, on every hop
+// of a redirect chain and for later page-initiated navigations. Subframes and other
+// subresources are not intercepted.
+const localGuards = new WeakMap();
+
+async function gotoLocal(page, value, options) {
+  if (!isLocalUrl(value)) throw new Error(`Refusing non-localhost URL: ${value}`);
+  let guard = localGuards.get(page);
+  if (!guard) {
+    guard = { blockedUrl: '' };
+    localGuards.set(page, guard);
+    const cdp = await page.context().newCDPSession(page);
+    // Read the main frame id once, up front: the renderer does not answer while a paused
+    // navigation is pending, so the handler must not ask it anything.
+    const mainFrameId = (await cdp.send('Page.getFrameTree')).frameTree.frame.id;
+    cdp.on('Fetch.requestPaused', ({ requestId, frameId, request }) => {
+      const external = frameId === mainFrameId && !isLocalUrl(request.url);
+      if (external) guard.blockedUrl = request.url;
+      cdp.send(
+        external ? 'Fetch.failRequest' : 'Fetch.continueRequest',
+        external ? { requestId, errorReason: 'BlockedByClient' } : { requestId },
+      ).catch(() => {
+        // Page or session closed: the request stays paused, so nothing is sent.
+      });
+    });
+    await cdp.send('Fetch.enable', { patterns: [{ urlPattern: '*', resourceType: 'Document' }] });
+  }
+  let response;
+  try {
+    response = await page.goto(value, options);
+  } catch (err) {
+    if (guard.blockedUrl) throw new Error(`Refusing non-localhost main-frame redirect: ${guard.blockedUrl}`);
+    throw err;
+  }
+  // Second check, independent of the guard: no hop of the completed chain may be external.
+  for (let request = response && response.request(); request; request = request.redirectedFrom()) {
+    if (!isLocalUrl(request.url())) throw new Error(`Refusing non-localhost main-frame redirect: ${request.url()}`);
+  }
+  assertLocalPage(page);
+  return response;
+}
+
+// Call again after capturing and before writing any file: a navigation blocked after load
+// leaves a browser error page, which must not be saved as the app.
+function assertLocalPage(page) {
+  const guard = localGuards.get(page);
+  if (guard && guard.blockedUrl) throw new Error(`Refusing non-localhost main-frame navigation: ${guard.blockedUrl}`);
+  if (!isLocalUrl(page.url())) throw new Error(`Refusing non-localhost final URL: ${page.url()}`);
+}
+```
+
+What it does and does not do:
+
+- **Stops the request.** An HTTP redirect to a non-local host — including a local → external → local bounce — is failed before the external request is sent, and `gotoLocal` throws. A `page.route` handler cannot do this: Playwright calls it once, for the original request, and the browser follows redirects on its own ([Playwright network docs § Redirects](https://playwright.dev/docs/network#redirects)).
+- **Stays installed.** Later main-frame navigations on the same page (clicks, form posts, `location =`, meta refresh) pass the same check. A blocked one leaves a browser error page, so call `assertLocalPage(page)` after capturing and before writing the file.
+- **Leaves the page's own content alone.** Images, scripts, fonts, and iframes from other hosts still load.
+- **Works beside `page.route`.** API mocks registered with `page.route` keep working; the guard only pauses document requests.
+- **Chromium only.** Playwright documents CDP sessions as Chromium-only. `gotoLocal` reaches `page.goto` only after the guard is installed, so it cannot navigate unguarded in another browser.
+
+Observed on 2026-11-21 with Playwright 1.62.0 and 1.65.1 driving headless Chrome 158: the stand-in external server received no request in the redirect, bounce, post-load `location.href`, meta-refresh, and link-click cases.
+
 ## Canonical Screenshot Script
+
+Requires `BREAKPOINTS` from above and the [Local Navigation Guard](#local-navigation-guard) block. The optional first argument sets the output directory, so a before/after run writes `_screenshots/before` and `_screenshots/after`.
 
 ```js
 const { chromium } = require('playwright');
@@ -153,29 +247,32 @@ const ROUTES = ['/'];
 
 (async () => {
   const browser = await chromium.launch();
-  const outDir = '_screenshots';
+  const outDir = process.argv[2] || '_screenshots';
 
-  for (const route of ROUTES) {
-    const routeName = route === '/' ? 'home' : route.slice(1).replace(/\//g, '-');
-    const routeDir = path.join(outDir, routeName);
-    fs.mkdirSync(routeDir, { recursive: true });
+  try {
+    for (const route of ROUTES) {
+      const routeName = route === '/' ? 'home' : route.slice(1).replace(/\//g, '-');
+      const routeDir = path.join(outDir, routeName);
+      fs.mkdirSync(routeDir, { recursive: true });
 
-    for (const bp of BREAKPOINTS) {
-      const page = await browser.newPage();
-      await page.setViewportSize({ width: bp.width, height: bp.height });
-      await page.goto(`${BASE_URL}${route}`, { waitUntil: 'load' });
-      await page.screenshot({
-        path: path.join(routeDir, `${bp.name}-${bp.width}x${bp.height}.png`),
-        fullPage: true,
-      });
-      await page.close();
+      for (const bp of BREAKPOINTS) {
+        const page = await browser.newPage();
+        await page.setViewportSize({ width: bp.width, height: bp.height });
+        await gotoLocal(page, `${BASE_URL}${route}`, { waitUntil: 'load' });
+        const png = await page.screenshot({ fullPage: true });
+        assertLocalPage(page);
+        fs.writeFileSync(path.join(routeDir, `${bp.name}-${bp.width}x${bp.height}.png`), png);
+        await page.close();
+      }
     }
+  } finally {
+    await browser.close();
   }
-
-  await browser.close();
   console.log(`Done. Screenshots saved to ${outDir}/`);
 })();
 ```
+
+**Done when** `<outDir>/<route>/` holds one non-empty PNG per breakpoint for every route (routes × breakpoints files in total), each named for its breakpoint, and the script exited 0. Report the output directory, the file count, and any route or size that failed; a thrown `Refusing non-localhost …` error is a failed capture, not a retry prompt.
 
 ### Key API Details
 
@@ -307,7 +404,7 @@ try {
     let testPage;
     try {
       testPage = await browser.newPage();
-      await testPage.goto(BASE_URL, { timeout: 2000 });
+      await gotoLocal(testPage, BASE_URL, { timeout: 2000 });
       ready = true;
       break;
     } catch {
@@ -349,7 +446,7 @@ async function preflight(baseUrl) {
   const issues = [];
 
   try {
-    const response = await page.goto(baseUrl, { waitUntil: 'load', timeout: 10000 });
+    const response = await gotoLocal(page, baseUrl, { waitUntil: 'load', timeout: 10000 });
     if (!response || !response.ok()) {
       issues.push(`Server returned ${response?.status()}`);
       return { ok: false, issues };
@@ -433,9 +530,9 @@ The skill ships three runnable scripts under `assets/scripts/`. Prefer these ove
 
 ### Invocation
 
-Run the helpers from the **project root** and address them by the installed skill path (`<skill-dir>` is the folder containing this skill's `SKILL.md`, for example `~/.agents/skills/localhost-screenshots` or `.claude/skills/localhost-screenshots`). Relative output paths resolve against the current directory, so captures land in the project's `_screenshots/`. Each helper loads Playwright from the current project first, then from beside the script; install `playwright@1.62.0` in the project when neither has it.
+Run the helpers from the **project root** and address them by the installed skill path (`<skill-dir>` is the folder containing this skill's `SKILL.md`, for example `~/.agents/skills/localhost-screenshots` or `.claude/skills/localhost-screenshots`). Relative output paths resolve against the current directory, so captures land in the project's `_screenshots/`. Each helper loads `playwright` or `@playwright/test` from the current project first, then from beside the script; when neither resolves, follow [Setup](#setup-only-when-the-project-has-no-playwright).
 
-The bundled scripts fail closed on non-localhost URLs before loading Playwright. Accepted hosts are `localhost`, `127.0.0.1`, `[::1]`, and `*.localhost`.
+The bundled scripts fail closed on non-localhost URLs before loading Playwright. Accepted hosts are `localhost`, `127.0.0.1`, `[::1]`, and `*.localhost`, always with an `http://` or `https://` scheme. A scheme-less `localhost:3000` and a bind address such as `http://0.0.0.0:3000` are refused with the corrected URL in the message; rerun with that URL. During and after navigation the helpers apply the [Local Navigation Guard](#local-navigation-guard): a main-frame redirect or navigation to another host is failed before the request is sent, and the helper exits non-zero without writing a capture.
 
 | Script | Positional arguments (in order) |
 |--------|---------------------------------|

@@ -6,9 +6,10 @@ When the project already uses the Playwright test runner, prefer native screensh
 
 ```js
 import { test, expect } from '@playwright/test';
+// gotoLocal: the Local Navigation Guard block from playwright-patterns.md, kept in a helper the tests import.
 
 test('homepage visual baseline', async ({ page }) => {
-  await page.goto('http://localhost:3000/', { waitUntil: 'load' });
+  await gotoLocal(page, 'http://localhost:3000/', { waitUntil: 'load' });
   await expect(page).toHaveScreenshot('homepage.png', {
     animations: 'disabled',
     maxDiffPixelRatio: 0.01,
@@ -16,7 +17,7 @@ test('homepage visual baseline', async ({ page }) => {
 });
 
 test('hero visual baseline', async ({ page }) => {
-  await page.goto('http://localhost:3000/', { waitUntil: 'load' });
+  await gotoLocal(page, 'http://localhost:3000/', { waitUntil: 'load' });
   await expect(page.locator('.hero')).toHaveScreenshot('hero.png', {
     mask: [page.locator('[data-dynamic]')],
   });
@@ -27,7 +28,7 @@ Use the custom comparison and `pixelmatch` sections below when the task is an ad
 
 ## Before/After Comparison HTML
 
-Save the JavaScript examples as ES modules (`.mjs`, or `.js` in a `type: module` project). The enhanced HTML generator reuses `fs`, `path`, `escapeHtml`, and `htmlPath` from this first example; combine them without duplicate imports.
+Save the JavaScript examples as ES modules (`.mjs`, or `.js` in a `type: module` project). The enhanced HTML generator reuses `fs`, `path`, `escapeHtml`, `htmlPath`, and `listPngs` from this first example; combine them without duplicate imports. All three functions walk subdirectories (Node.js 20.1+ `readdirSync` `recursive`), so they read the canonical `<dir>/<route>/<breakpoint>.png` layout as well as a flat directory.
 
 ```js
 import fs from 'node:fs';
@@ -46,10 +47,17 @@ function htmlPath(fromFile, toFile) {
   return path.relative(path.dirname(fromFile), toFile).split(path.sep).join('/');
 }
 
+// Every PNG under dir, as '/'-separated paths relative to it (for example home/mobile-375x812.png).
+function listPngs(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { recursive: true })
+    .map(f => String(f).split(path.sep).join('/'))
+    .filter(f => f.endsWith('.png'));
+}
+
 function generateSideBySideComparison(beforeDir, afterDir, outputPath) {
-  const beforeFiles = fs.readdirSync(beforeDir).filter(f => f.endsWith('.png'));
-  const afterFiles = fs.readdirSync(afterDir).filter(f => f.endsWith('.png'));
-  const breakpoints = [...new Set([...beforeFiles, ...afterFiles])].sort();
+  const breakpoints = [...new Set([...listPngs(beforeDir), ...listPngs(afterDir)])].sort();
+  if (breakpoints.length === 0) throw new Error(`No PNG screenshots under ${beforeDir} or ${afterDir}`);
 
   const html = `<!DOCTYPE html><html><head>
 <style>
@@ -87,6 +95,8 @@ ${breakpoints.map(f => {
 # Install pixelmatch (one-time)
 npm install --save-dev --save-exact pixelmatch@7.2.0 pngjs@7.0.0
 ```
+
+Keep `pixelmatch@7.2.0`. `pixelmatch@8.0.0` (2026-10-06) replaces the colour metric, so its diff counts differ and the 0.5% pass line below has not been re-tuned for it; it is not adopted here (checked 2026-11-21, [release notes](https://github.com/mapbox/pixelmatch/releases/tag/v8.0.0)).
 
 ```js
 import { PNG } from 'pngjs';
@@ -132,16 +142,20 @@ function diffScreenshots(beforePath, afterPath, diffPath, threshold = 0.1) {
   };
 }
 
+// Walks both trees, so the canonical <dir>/<route>/<breakpoint>.png layout and a flat
+// directory both work. Keys are '/'-separated paths relative to beforeDir/afterDir.
 function diffAllBreakpoints(beforeDir, afterDir, diffDir) {
-  fs.mkdirSync(diffDir, { recursive: true });
-  const beforeFiles = fs.readdirSync(beforeDir).filter(f => f.endsWith('.png'));
-  const afterFiles = fs.readdirSync(afterDir).filter(f => f.endsWith('.png'));
-  const files = [...new Set([...beforeFiles, ...afterFiles])].sort();
+  const pngs = dir => fs.readdirSync(dir, { recursive: true })
+    .map(f => String(f).split(path.sep).join('/'))
+    .filter(f => f.endsWith('.png'));
+  const files = [...new Set([...pngs(beforeDir), ...pngs(afterDir)])].sort();
   const results = [];
 
   for (const file of files) {
     const beforePath = path.join(beforeDir, file);
     const afterPath = path.join(afterDir, file);
+    const diffPath = path.join(diffDir, path.dirname(file), `diff-${path.basename(file)}`);
+    fs.mkdirSync(path.dirname(diffPath), { recursive: true });
     if (!fs.existsSync(beforePath) || !fs.existsSync(afterPath)) {
       results.push({
         breakpoint: file.replace('.png', ''),
@@ -153,17 +167,20 @@ function diffAllBreakpoints(beforeDir, afterDir, diffDir) {
       });
       continue;
     }
-    const result = diffScreenshots(
-      beforePath,
-      afterPath,
-      path.join(diffDir, `diff-${file}`)
-    );
+    const result = diffScreenshots(beforePath, afterPath, diffPath);
     results.push({ breakpoint: file.replace('.png', ''), ...result });
+  }
+
+  // An empty comparison is a failed run, never a pass: wrong directory, or capture did not run.
+  const compared = results.filter(r => !r.missing).length;
+  if (compared === 0) {
+    throw new Error(`Nothing to compare: ${files.length} PNG file(s) found, none present under both ${beforeDir} and ${afterDir}`);
   }
 
   const report = {
     timestamp: new Date().toISOString(),
     totalBreakpoints: results.length,
+    compared,
     passed: results.filter(r => r.passed).length,
     failed: results.filter(r => !r.passed).length,
     results,
@@ -178,10 +195,12 @@ function diffAllBreakpoints(beforeDir, afterDir, diffDir) {
 
 ```js
 function generateComparison(beforeDir, afterDir, diffDir, outputPath) {
-  const beforeFiles = fs.readdirSync(beforeDir).filter(f => f.endsWith('.png'));
-  const afterFiles = fs.readdirSync(afterDir).filter(f => f.endsWith('.png'));
-  const diffFiles = fs.existsSync(diffDir) ? fs.readdirSync(diffDir).filter(f => f.startsWith('diff-') && f.endsWith('.png')).map(f => f.slice(5)) : [];
-  const breakpoints = [...new Set([...beforeFiles, ...afterFiles, ...diffFiles])].sort();
+  // diff-<name>.png sits beside the same relative path under diffDir.
+  const diffFiles = listPngs(diffDir)
+    .filter(f => path.posix.basename(f).startsWith('diff-'))
+    .map(f => path.posix.join(path.posix.dirname(f), path.posix.basename(f).slice(5)));
+  const breakpoints = [...new Set([...listPngs(beforeDir), ...listPngs(afterDir), ...diffFiles])].sort();
+  if (breakpoints.length === 0) throw new Error(`No PNG screenshots under ${beforeDir} or ${afterDir}`);
   const reportPath = path.join(diffDir, 'report.json');
   const report = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, 'utf-8')) : null;
 
@@ -216,7 +235,7 @@ ${breakpoints.map(f => {
     : '';
   const beforePath = path.join(beforeDir, f);
   const afterPath = path.join(afterDir, f);
-  const diffPath = path.join(diffDir, 'diff-' + f);
+  const diffPath = path.join(diffDir, path.dirname(f), 'diff-' + path.basename(f));
   const beforeSrc = fs.existsSync(beforePath) ? escapeHtml(htmlPath(outputPath, beforePath)) : '';
   const afterSrc = fs.existsSync(afterPath) ? escapeHtml(htmlPath(outputPath, afterPath)) : '';
   const diffSrc = fs.existsSync(diffPath) ? escapeHtml(htmlPath(outputPath, diffPath)) : '';
@@ -235,15 +254,34 @@ ${breakpoints.map(f => {
 
 ## Workflow
 
-1. Run the canonical screenshot script, saving to `_screenshots/before/`
+1. Capture the baseline: run the [canonical screenshot script](playwright-patterns.md#canonical-screenshot-script) with `_screenshots/before` as its argument. It writes `_screenshots/before/<route>/<breakpoint>.png`. If the change is already in the working tree, get the baseline from [Baseline when the change is already made](#baseline-when-the-change-is-already-made) instead.
 2. User makes their changes
-3. Run the same script again, saving to `_screenshots/after/`
-4. Run `diffAllBreakpoints('_screenshots/before', '_screenshots/after', '_screenshots/diff')`
+3. Run the same script, same routes and breakpoints, with `_screenshots/after`
+4. Run `diffAllBreakpoints('_screenshots/before', '_screenshots/after', '_screenshots/diff')`. Pass the two top-level directories; it pairs files by relative path and throws when no file exists on both sides.
 5. Generate comparison HTML: `generateComparison(beforeDir, afterDir, diffDir, '_screenshots/comparison.html')`
+
+**Done when** all of these hold; otherwise report the comparison as failed or incomplete, not as "no differences":
+
+- `diffAllBreakpoints` returned without throwing and `_screenshots/diff/report.json` exists.
+- `report.totalBreakpoints` equals routes × breakpoints and `report.compared` equals it too. A lower `compared` means some results carry `missing: 'before'` or `'after'`; name them.
+- `_screenshots/comparison.html` exists.
+- The reply states `passed`, `failed`, the pass line used (under 0.5% changed pixels), each failed or missing entry, and the paths of the report and HTML. "0 failed" may be reported only together with a non-zero `compared`.
+
+### Baseline when the change is already made
+
+The "before" state then exists only in version control or on the user's side. Never stash, reset, restore, check out over, or otherwise move the user's uncommitted work to recreate it.
+
+1. **Ask first** whether a baseline already exists: earlier screenshots, a second checkout, or a running copy of the old version on another port. Use it if so.
+2. **Otherwise use a separate worktree, with the user's agreement** (it creates a directory, installs dependencies, and starts a second server). `git worktree add --detach <path-outside-the-project> <base-ref>` checks the base out beside the working tree and leaves the working tree untouched. Use `HEAD` as `<base-ref>` when the change is uncommitted, or the commit before the change (for a branch, `git merge-base HEAD <default-branch>`) when it is committed. Install dependencies there, start that copy on a different port, and capture `before` from that port. Capture `after` from the user's running server. Stop the second server and run `git worktree remove <path>` afterwards; remove only the worktree this task created.
+3. **If neither is possible** (no git history, the base no longer builds, the user declines), capture `after` only and say that no baseline exists. Do not diff a capture against itself or against an unrelated state.
+
+The two captures differ in port. Keep routes, breakpoints, viewport sizes, and seed data identical, and say which base ref the baseline came from.
 
 ## GitHub Actions Visual Regression Workflow
 
 Save as `.github/workflows/visual-regression.yml`. Do not write Playwright `storageState` files under `_screenshots/`; they contain plaintext cookies/localStorage and must not be uploaded as artifacts.
+
+`scripts/capture-screenshots.js` and `scripts/diff-screenshots.mjs` are files the project adds: the first is the [canonical screenshot script](playwright-patterns.md#canonical-screenshot-script) (output directory as its argument), the second calls `diffAllBreakpoints` and `generateComparison` from above. The diff step exits non-zero when nothing was compared; visual differences only raise a warning. Action majors and the Node.js line were checked on 2026-11-21: `actions/checkout` v7, `actions/setup-node` v7, `actions/upload-artifact` v7, `actions/github-script` v9, and Node.js 24 (LTS; Node.js 20 reached end of life on 2026-04-30, and Playwright 1.65 lists 22, 24, or 26). Pin each action to a commit SHA where the repository's policy requires it.
 
 ```yaml
 name: Visual Regression
@@ -259,13 +297,13 @@ jobs:
   visual-regression:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
 
       # ── Baseline: capture screenshots from the base branch ──
       - name: Checkout base branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.base.sha }}
 
@@ -283,14 +321,14 @@ jobs:
         run: npx wait-on http://localhost:3000 --timeout 30000
 
       - name: Capture baseline screenshots
-        run: node scripts/capture-screenshots.js --output _screenshots/before
+        run: node scripts/capture-screenshots.js _screenshots/before
 
       - name: Stop dev server (base)
         run: kill $(lsof -t -i:3000) || true
 
       # ── Current: capture screenshots from the PR branch ──
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           clean: false
 
@@ -308,11 +346,11 @@ jobs:
         run: npx wait-on http://localhost:3000 --timeout 30000
 
       - name: Capture current screenshots
-        run: node scripts/capture-screenshots.js --output _screenshots/after
+        run: node scripts/capture-screenshots.js _screenshots/after
 
       # ── Diff and report ──
       - name: Run pixel diff
-        run: node scripts/diff-screenshots.js
+        run: node scripts/diff-screenshots.mjs
 
       - name: Check results
         run: |
@@ -327,7 +365,7 @@ jobs:
 
       - name: Upload artifacts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: visual-regression-report
           path: _screenshots/
@@ -335,7 +373,7 @@ jobs:
 
       - name: Comment on PR
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

@@ -26,9 +26,21 @@ Use this order:
 3. If no rule exists, report partial adapter coverage as a policy decision and recommend either consistent adapter coverage or a documented selective-coverage rationale.
 4. Validate that adapter metadata does not rewrite, dilute, or contradict the portable `SKILL.md` contract.
 
+## Description characters
+
+Keep `<` and `>` out of frontmatter descriptions on every host. Checked 2026-11-21:
+
+| Host or tool | Behavior | Source |
+|---|---|---|
+| Anthropic `skill-creator` validator | Fails with `Description cannot contain angle brackets (< or >)` | [`quick_validate.py`](https://github.com/anthropics/skills/blob/main/skills/skill-creator/scripts/quick_validate.py) |
+| Codex bundled `skill-creator` validator | Fails with the same message | [`quick_validate.py` at `rust-v0.171.0`](https://github.com/openai/codex/blob/rust-v0.171.0/codex-rs/skills/src/assets/samples/skill-creator/scripts/quick_validate.py) |
+| Claude Code v2.1.228 or later | Escapes angle brackets in skill-supplied text that reaches the model, such as the description | [Claude Code skills docs](https://code.claude.com/docs/en/skills) |
+
+`validate_skill.py` fails a description that contains either character.
+
 ## Claude / Claude Code
 
-Borrow from [Anthropic `Skill Development`](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development):
+Borrow from [Anthropic `Skill Development`](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev/skills/skill-development):
 
 - retrieval-focused descriptions with concrete trigger/use conditions
 - lean `SKILL.md`
@@ -60,7 +72,7 @@ Adapter rule: restore these ideas under non-colliding names such as `skill-evalu
 
 ## OpenAI / Codex
 
-Borrow from [OpenAI `skill-creator`](https://github.com/openai/skills/tree/main/skills/.system/skill-creator):
+Borrow from [OpenAI `skill-creator`](https://github.com/openai/codex/tree/main/codex-rs/skills/src/assets/samples/skill-creator), which ships bundled with Codex (the earlier `openai/skills` repository is marked deprecated in its README):
 
 - concise scaffold guidance
 - explicit `agents/openai.yaml` interface metadata
@@ -68,15 +80,15 @@ Borrow from [OpenAI `skill-creator`](https://github.com/openai/skills/tree/main/
 
 Keep OpenAI-specific metadata separate from the portable core. A portable skill may ship an adapter file only when the distribution target reads it.
 
-Codex facts, checked 2026-10-20 against [Codex skills docs](https://developers.openai.com/codex/skills) (redirects to [Build skills](https://learn.chatgpt.com/docs/build-skills)), the bundled `~/.codex/skills/.system/skill-creator`, and `codex-cli 0.163.0`. Recheck these on Codex upgrades:
+Codex facts, checked 2026-11-21 against [Codex skills docs](https://developers.openai.com/codex/skills) (redirects to [Build skills](https://learn.chatgpt.com/docs/build-skills)), the bundled `~/.codex/skills/.system/skill-creator`, and `codex-cli 0.171.0`. Recheck these on Codex upgrades:
 
 | Topic | Fact | Authoring consequence |
 |---|---|---|
 | Discovery roots | Repo `.agents/skills/` in each directory from the CWD up to the repo root; user `~/.agents/skills/`; admin `/etc/codex/skills/`; bundled system skills | Install portable skills under `.agents/skills/`; no Codex-only path is needed |
 | `agents/openai.yaml` interface | `interface.display_name`, `interface.short_description` (25-64 characters), `interface.icon_small`, `interface.icon_large`, `interface.brand_color`, `interface.default_prompt` (one sentence that names the skill as `$skill-name`) | Quote every string; keep icons under the skill's `assets/` |
-| `agents/openai.yaml` policy and dependencies | `policy.allow_implicit_invocation` defaults to `true`; `false` keeps the skill out of default context but still invocable as `$skill`. `dependencies.tools` declares MCP tools (`type: "mcp"`, `value`, `description`, `transport`, `url`) | Set `false` only for user-invoked skills; declare MCP dependencies instead of describing them in `SKILL.md` |
-| `compatibility` frontmatter | Codex's bundled `skill-creator/scripts/quick_validate.py` rejects the specification's `compatibility` key (it allows only `name`, `description`, `license`, `allowed-tools`, `metadata`), but the Codex runtime loader accepts it: `codex debug prompt-input` listed all 8 skills4sh skills with `compatibility` present | Keep `compatibility`; treat the `quick_validate.py` failure as a known false positive, not a reason to drop the field |
-| Description budget | Under the 10,000-character skills budget, Codex truncates each description to 120 characters | Front-load the capability clause and the strongest quoted trigger inside the first 120 characters |
+| `agents/openai.yaml` policy and dependencies | `policy.allow_implicit_invocation` defaults to `true`; `false` keeps the skill out of default context but still invocable as `$skill`. `dependencies.tools` declares MCP tools (`type: "mcp"`, `value`, `description`, `transport`, `url`) | Set `false` only for user-invoked skills; declare MCP dependencies here in addition to naming the required tools in `SKILL.md`, which other runtimes still rely on |
+| `compatibility` frontmatter | Codex's bundled `skill-creator/scripts/quick_validate.py` rejects the specification's `compatibility` key (it allows only `name`, `description`, `license`, `allowed-tools`, `metadata`), but the Codex runtime loader accepts it: `codex debug prompt-input` listed all six skills4sh skills with `compatibility` present | Keep `compatibility`; treat the `quick_validate.py` failure as a known false positive, not a reason to drop the field |
+| Skills-list budget | By default the initial skills list uses at most 2% of the model's context window, or 8,000 characters when the context window is unknown. With many skills installed, Codex shortens descriptions first and may omit some skills with a warning. `skills.max_context_tokens` sets a different budget, up to 10,000 tokens | Front-load the capability clause and the strongest quoted trigger. The docs give no fixed per-description length, so do not write to a character count |
 
 `scaffold_skill.py --openai-yaml` writes a minimal `agents/openai.yaml` with `display_name`, `short_description`, `default_prompt`, and `allow_implicit_invocation: true`.
 
@@ -84,13 +96,25 @@ Codex facts, checked 2026-10-20 against [Codex skills docs](https://developers.o
 
 Craft-style skills are loaded by slug and `SKILL.md`. Keep instructions direct and make source/reference reads explicit when a skill requires them. Avoid assuming a browser, MCP source, or shell capability is active unless the skill checks and routes accordingly.
 
-## Cursor, VS Code Copilot, and generic file-reading agents
+## Cursor, GitHub Copilot, Gemini CLI, and generic file-reading agents
 
-Assume the agent can read markdown files but may not understand vendor metadata. Keep the portable workflow useful from `SKILL.md` alone. Put editor-specific rules in references or repo-level agent instructions.
+Cursor, GitHub Copilot, and Gemini CLI document native Agent Skills discovery. Roots checked 2026-11-21 against each vendor's docs; recheck before relying on one:
+
+| Runtime | Project roots | User roots | Source |
+|---|---|---|---|
+| Cursor | `.agents/skills/`, `.cursor/skills/`; for compatibility also `.claude/skills/`, `.codex/skills/` | `~/.agents/skills/`, `~/.cursor/skills/`; for compatibility also `~/.claude/skills/`, `~/.codex/skills/` | [Cursor skills docs](https://cursor.com/docs/skills) |
+| GitHub Copilot | `.github/skills`, `.claude/skills`, `.agents/skills` | `~/.copilot/skills`, `~/.agents/skills`; supported locations depend on the Copilot surface | [About agent skills](https://docs.github.com/en/copilot/concepts/customizations/agent-skills) |
+| Gemini CLI | `.gemini/skills/` or the `.agents/skills/` alias | `~/.gemini/skills/` or the `~/.agents/skills/` alias; within a tier the alias takes precedence | [Gemini CLI skills docs](https://geminicli.com/docs/cli/skills/) |
+
+`.agents/skills/` is the one project root that these three, Codex, and Antigravity all document, so a portable install needs no per-editor copy.
+
+For any other agent, assume it can read markdown files but may not understand vendor metadata. Keep the portable workflow useful from `SKILL.md` alone. Put editor-specific rules in references or repo-level agent instructions.
 
 ## Antigravity
 
-Treat Antigravity as a discovery-backed adapter, not a guessed standard. Before encoding Antigravity-specific rules:
+Discovery roots, checked 2026-11-21 against the [Antigravity skills docs](https://antigravity.google/docs/skills): workspace skills load from `.agents/skills/` in the workspace root and in each parent folder up to the repository root (`.agent/skills` is still read for backward compatibility); global skills load from `~/.gemini/config/skills/`. The Antigravity CLI also reads `~/.gemini/antigravity-cli/skills/` and `~/.gemini/skills/`, which the Antigravity App does not.
+
+For anything beyond discovery roots, treat Antigravity as a discovery-backed adapter, not a guessed standard. Before encoding Antigravity-specific rules:
 
 1. Identify the exact skill-authoring/editing skill or official docs.
 2. Read the source.

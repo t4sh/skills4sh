@@ -13,11 +13,11 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 5ff7fcf7b46ed098b867172cdf3174c12e363c818d4fed30204c47b75099e0b8
+    assets/evals/scenarios.json: fe9a9eb789f453ae531ca0e78dfae2a510c293ceb699efbc20ed35acb9403ca3
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/onboarding.md: eecbc5619d067a9acd6f7199268cc756eaf57f18072f16bee109f66ce412faed
+    references/onboarding.md: 160fc1e3409cedae81ae32daa7b0e3f62bba3d8d32b800426b3b892d86a1b80d
     references/public-example.md: 16bc78576273f7e2477d3e278ab8abcc64231e2c70473e27d17da4132b8e8962
-    SKILL.md: 47077d98341d94854e76a56e024f1deef168ee9e82d37924fe6c355f3174ed01
+    SKILL.md: 5d308ca5dd9a9a798cd858416e181522a7413280e5c13ff5c16caec24a0e16e4
     agents/openai.yaml: d469314a54f16df989b943bd2be73a8b5d781b09499a34df8a4d6c21523a1c03
 permissions:
   alwaysAllow: []

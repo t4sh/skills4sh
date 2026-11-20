@@ -13,20 +13,20 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 9b62c50d8a687b5a8b1bb30f8f0082c0fdd71b69891d89e27ce7525b9b288219
+    assets/evals/scenarios.json: c7130af2df59d059be3195c96af433551d50fbbdb134f05f027c97b96fc0d743
     assets/icon.svg: 49037d73733ff677e6ff86ec7873cc2a6fa3535476c3c4938c88334b14112c56
-    assets/scripts/multi-breakpoint.js: 5376f4c11727cc75096e32096d798a3395a3554805238677a14dbb10b8267c6f
+    assets/scripts/multi-breakpoint.js: 702cb728c0025445bc3d0d56ae81f654c2676ada8a9a431efacfecb55a77c974
     assets/scripts/package.json: 8005a3491db7d92f36ac66369861589f9c47123d3a7c71e643fc2c06168cd45a
-    assets/scripts/quick.js: d758e967fe742cf5c7662b609d3079e1fdb92ddf68dfaae88e5b5844c00389a6
-    assets/scripts/screenshot-a11y.js: 036e03d4818c4c1a363e0ceb84f9539aaac5c05e451e38b076670e28e5517039
+    assets/scripts/quick.js: 4c9cf9a3d910a08395ce8d236ce7db97482b7555bba1a4761ed4afb51346852e
+    assets/scripts/screenshot-a11y.js: 3c95e55fdc71c916655d0c8a2f9598cf4236acf21ec6774555558db10f4aa289
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/ai-snapshots.md: c16b31c99fb65d008e711582aea882a40f8d9a2d8201d2aedd40bfc07ecbf0e8
-    references/interaction-templates.md: 9c38e9674960d66e871ac74e83e93fb9523674f5f9cc2db8eac9443ae6d24fb0
-    references/portless.md: 387dc8660061900430c39b4f600fc44aca60570fbe5242e92fc26900d8cd2e80
-    references/playwright-patterns.md: 38b22631188b880bb5adc12c42cc05b1767e01cb94d6e816da61767c3921a4b9
+    references/ai-snapshots.md: cabc7534801f67d1ecc9c16599bbbcf9f0f488e2dbb5ac62ca0b3a091ce66861
+    references/interaction-templates.md: 908985c7bb3b6ccc76d5fd3472b2a75b4a087ab7ed4687988336fbdec0a23934
+    references/portless.md: f5f5617b4bf79a6f18fe7c1c7cdb5a0f9d3129b2952b0f4472198ea6b176e838
+    references/playwright-patterns.md: 5403fd631beb78044ed97f84cf47674c3d7bd989e2c6aed116658b1fbd86e423
     references/troubleshooting.md: af8884c242df2d10a36f25c6bd33df08373c4be784a89dd0a1dd9d22275dc18d
-    references/visual-regression.md: 56df83bde0b15e37ae3dba02b9b796e969bcaac1ac3ce52acac0f241ff7324da
-    SKILL.md: 7744564a5c8436b50122aad70789d699a480151ebaeade4861c04de9b995ccdc
+    references/visual-regression.md: 08c38ebd7e355e99f340ded40bfff921a5f7e77b329e5bb086fea3b856ea919e
+    SKILL.md: d706ec047db0eea5aea6883f79e9c9323d0dec591647bfa4a381b8d05dbb65c1
     agents/openai.yaml: 2c506a1bf080e4405778e829623dd771b4bdf9fc692987b1694dba9c6e9be76f
 permissions:
   alwaysAllow: []
@@ -43,7 +43,7 @@ dependencies:
   - name: playwright
     type: npm
     optional: true
-    version: "1.62.0"
+    version: "1.65.1"
     reason: "Required for systematic multi-breakpoint captures and visual regression; Chrome MCP path has no dependencies. Pin this tested version in the consuming project's lockfile; never install with @latest or an unversioned npm install."
   - name: pixelmatch
     type: npm
@@ -62,7 +62,7 @@ mitigations:
     note: "Documented `npm ci` + lockfile pinning or explicit version installs, never `@latest` or unversioned installs. `ignoreHTTPSErrors` is gated to localhost-only hostnames."
   - id: NETWORK_SCOPE
     addressed_in: "3.3.7"
-    note: "Bundled helpers validate the requested localhost URL and abort any main-frame redirect or final navigation to a non-local hostname before capture."
+    note: "3.3.7 added the requested-URL and final-URL checks, but its route handler never saw HTTP redirect hops, so a redirect to an external host was loaded before being rejected and a local-external-local bounce passed. After 3.5.0 the bundled helpers pause main-frame document requests through a Chromium CDP Fetch session and fail any request to a non-local hostname before it is sent: every redirect hop and every later page-initiated navigation. They also re-check the completed redirect chain and the final URL, and write no capture when a navigation was blocked. Subframes and other subresources are not intercepted. Observed with Playwright 1.62.0 and 1.65.1 driving Chrome 158 on 2026-11-21."
 
 scanning:
   guardskills: SAFE

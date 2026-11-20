@@ -12,7 +12,35 @@ Deep dive on Eleventy defaults and an opinionated production profile for directo
 | Markdown / HTML preprocessor | Liquid | Nunjucks when the project selects `njk` |
 | CSS pipeline | None prescribed | Optional Tailwind v4 workflow |
 
+## Setup — new project on stable v3
+
+Use this for a "set up Eleventy" request when no Eleventy project exists yet. In an existing project, skip it and follow the checked-in config. Commands use npm; substitute the package manager the repository already uses. Verified end to end with Eleventy 3.1.8 on Node 22, 2026-11-21; source: [Get Started](https://www.11ty.dev/docs/).
+
+| Step | Action | Done when |
+|---|---|---|
+| 1 | `node --version` | It prints a supported LTS (22, 24, or 26); Eleventy v3 itself requires `>=18` |
+| 2 | `npm init -y`, then `npm pkg set type="module"` for an ESM project | `package.json` exists with `"type": "module"` |
+| 3 | `npm install @11ty/eleventy` | `npx @11ty/eleventy --version` prints the installed `3.x` version |
+| 4 | Add the minimal `eleventy.config.js` below | The file exports a function that returns the input and output directories |
+| 5 | Add `src/_includes/base.njk` containing `{{ content \| safe }}` and `src/index.njk` with `layout: base.njk` front matter | Both files exist under the configured input directory |
+| 6 | Add the scripts `"build": "eleventy"` and `"dev": "eleventy --serve"`, then run the build | The build reports `Wrote 1 file` and `_site/index.html` contains the layout shell around the page body |
+
+```js
+// eleventy.config.js — ESM
+export default function (eleventyConfig) {
+  return {
+    dir: { input: "src", output: "_site" },
+    markdownTemplateEngine: "njk",
+    htmlTemplateEngine: "njk",
+  };
+}
+```
+
+A config file is optional: without one, Eleventy reads the project root, writes `_site/`, and preprocesses `.md` and `.html` with Liquid. Add the Tailwind, lint, and directory profile below only when the project asks for it; use `eleventy-config-api.md` for filters, plugins, and passthrough copy.
+
 ## Project layout — full anatomy
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 A project using this production profile typically looks like this:
 
@@ -63,6 +91,8 @@ my-site/
 
 ## Two example `dir` configurations
 
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
+
 ### A — pages in subdirectory
 
 ```js
@@ -91,6 +121,8 @@ return {
 No `../` because `input` is the same level as `_includes/` and `_data/`. Use for small sites (<10 pages).
 
 ## Opinionated production-profile patterns
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 Apply these only when they match the checked-in project and its deployment contract.
 
@@ -137,7 +169,13 @@ Use only mappings for assets the project actually owns. Add specific entries for
 eleventyConfig.addWatchTarget("src/assets/");
 ```
 
-Without this, edits to CSS/JS files don't trigger rebuilds during `--serve`. Live reload misses everything outside the page templates.
+Templates and passthrough-copied files are watched during `--serve` without this line; it is needed only for files Eleventy neither renders nor copies. A watch target does not cover gitignored files: Eleventy skips `.gitignore` paths when watching, so this profile's generated, gitignored `src/assets/css/tailwind.css` never triggers a rebuild, and the copy in the output directory stays stale until another change rebuilds the site. Serve passthrough files from source during `--serve` instead:
+
+```js
+eleventyConfig.setServerPassthroughCopyBehavior("passthrough");
+```
+
+The dev server then reads the stylesheet from `src/` and live-reloads when Tailwind rewrites it; builds without `--serve` still copy. `eleventyConfig.setUseGitIgnore(false)` also restores watching, but every other gitignored path under the input directory must then be excluded through `.eleventyignore`. Verified on Eleventy 3.1.8, 2026-11-21; see [passthrough copy](https://www.11ty.dev/docs/copy/) and [watch and serve](https://www.11ty.dev/docs/watch-serve/).
 
 ### 6. Dev server port matches the script
 
@@ -148,6 +186,8 @@ eleventyConfig.setServerOptions({ liveReload: true, domDiff: true, port: 3000 })
 Set the port in **one place** — either here or in the `package.json` script (`eleventy --serve --port=3001`). If they differ, the port flag wins, and confusion follows.
 
 ## Scripts shape
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 Example `package.json` scripts for the optional Tailwind v4 + 11ty profile:
 
@@ -170,11 +210,15 @@ Example `package.json` scripts for the optional Tailwind v4 + 11ty profile:
 }
 ```
 
+The `tailwindcss` command comes from the `@tailwindcss/cli` package; `tailwindcss` v4 itself ships no binary. Install both as dev dependencies (`pnpm add -D tailwindcss @tailwindcss/cli`), plus `concurrently` for the `dev` script. Checked against npm `bin` metadata for 4.3.5, 2026-11-21.
+
 Substitutions:
 - pnpm → npm/yarn/bun based on project's `packageManager` field
 - port 3000 → whatever conflict-free port the project owns
 
 ## File-naming conventions
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 ### Pages
 
@@ -231,8 +275,8 @@ Patterns to expect (and accept) varying between projects:
 
 | Aspect | Common range | Pick to match the project |
 |---|---|---|
-| Package manager | `pnpm@10.x`, `npm`, `bun` | Match the existing `packageManager` field; don't switch unasked |
-| Node engine | v3 package floor `>=18`; supported deployments `>=22` or `>=24` | Use a supported LTS; Node 24 is preferred and Node 22 remains supported. Never recommend EOL Node 18 or 20 for new deployments. |
+| Package manager | `pnpm`, `npm`, `bun` | Match the existing `packageManager` field; don't switch unasked |
+| Node engine | v3 package floor `>=18`; supported deployments `>=22`, `>=24`, or `>=26` | Use a supported LTS: Node 26 is the Active LTS and preferred for new work; Node 24 and 22 are in maintenance and remain supported (Node release schedule, checked 2026-11-21). Never recommend EOL Node 18 or 20 for new deployments. |
 | Dev port | `3000`, `3001`, `8080` | Pick something unique per project so multiple dev servers can coexist |
 | Markdown `html` | `false` (safer) / `true` (more flexible) | `false` if any input is user-contributed; `true` if 100% authored content |
 | Output flatten | `out/` only / `out/` + `out-standalone/` + `out-spa/` | Add flatten variants only when offline / portable deployment is required |

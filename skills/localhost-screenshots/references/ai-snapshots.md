@@ -214,6 +214,8 @@ const s2 = await snap.capture(page);
 
 ## Combined Full Capture Script
 
+Navigation uses `gotoLocal` from [playwright-patterns.md § Local Navigation Guard](playwright-patterns.md#local-navigation-guard); include that block.
+
 ```js
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -228,7 +230,7 @@ async function fullCapture(baseUrl, route, breakpoints) {
   for (const bp of breakpoints) {
     const page = await browser.newPage();
     await page.setViewportSize({ width: bp.width, height: bp.height });
-    await page.goto(`${baseUrl}${route}`, { waitUntil: 'load' });
+    await gotoLocal(page, `${baseUrl}${route}`, { waitUntil: 'load' }); // playwright-patterns.md § Local Navigation Guard
 
     const basePath = path.join(outDir, `${bp.name}-${bp.width}x${bp.height}`);
 

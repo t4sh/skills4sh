@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "purpose": "Seven behavioral evaluations, separate from render-unit tests. Inputs and assertions are not observed pass evidence.",
+  "purpose": "Fifteen behavioral evaluations, separate from render-unit tests. Inputs and assertions are not observed pass evidence.",
   "execution": "Materialize each files map under an isolated directory. Keep assertions and routing load labels from the acting agent. Stable build cases use the dependencies locked in tests/fixtures/eleventy in the source repository, or provision the same pinned dependencies separately. Version inventory is synthetic/read-only. Record starting/final hashes, prompt, observed output, grading, runtime and limitations in an external run report. No mandatory repetitions or release mutation.",
   "cases": [
     {
@@ -9,8 +9,8 @@
       "kind": "workflow",
       "fixture_note": "Controlled package inventories, not installable packages or v4 runtime tests. generic.data.js is deliberately just an application file.",
       "files": {
-        "stable/package.json": "{\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\"\n  }\n}",
-        "stable/node_modules/@11ty/eleventy/package.json": "{\"name\": \"@11ty/eleventy\", \"version\": \"3.1.6\", \"engines\": {\"node\": \">=18\"}}",
+        "stable/package.json": "{\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\"\n  }\n}",
+        "stable/node_modules/@11ty/eleventy/package.json": "{\"name\": \"@11ty/eleventy\", \"version\": \"3.1.8\", \"engines\": {\"node\": \">=18\"}}",
         "stable/eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
         "stable/generic.data.js": "export default { label: \"application metadata\" };\n",
         "alpha/package.json": "{\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@awesome.me/buildawesome\": \"4.0.0-alpha.10\"\n  }\n}",
@@ -28,7 +28,7 @@
       "prompt": "The homepage build finishes but displays YAML and misses its layout. Diagnose and apply the smallest fix, then build and inspect the output.",
       "kind": "workflow",
       "files": {
-        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
         "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
         "content/index.njk": "{# Home page #}\n---\nlayout: base.njk\ntitle: Home\n---\n<h1>Home</h1>\n",
         "content/_includes/base.njk": "<!doctype html><html><title>{{ title }}</title><body><main>{{ content | safe }}</main></body></html>\n"
@@ -44,7 +44,7 @@
       "prompt": "Our config sets html:false. Does that make external Markdown supplied as a template source and as data equally safe? Audit both routes without editing files; support the answer with the fixture render.",
       "kind": "workflow",
       "files": {
-        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
         "eleventy.config.mjs": "import markdownIt from \"markdown-it\";\nexport default function(c) { const md = markdownIt({html:false}); c.setLibrary(\"md\",md); c.addFilter(\"md\", text => md.render(text)); return {dir:{input:\"content\",includes:\"_includes\",output:\"_site\"},markdownTemplateEngine:\"njk\"}; }\n",
         "content/template.md": "{{ 7 * 7 }} <img src=x onerror=alert(1)>\n",
         "content/_data/external.json": "{\"text\": \"{{ 7 * 7 }} <img src=x onerror=alert(1)>\"}",
@@ -62,7 +62,7 @@
       "prompt": "Add an FAQ link to the existing homepage navigation. Preserve the project conventions and verify the resulting build.",
       "kind": "workflow",
       "files": {
-        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
         "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
         "content/index.njk": "---\nlayout: base.njk\ntitle: Home\n---\n<h1>Home</h1>\n",
         "content/_includes/base.njk": "<!doctype html><html><title>{{ title }}</title><body>{% include \"nav.njk\" %}<main>{{ content | safe }}</main></body></html>\n",
@@ -82,7 +82,7 @@
       "prompt": "Review these templates for inline script data and CSP before deploy. Report findings by file and line with fixes; do not edit files.",
       "kind": "workflow",
       "files": {
-        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.6\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
         "eleventy.config.mjs": "export default function(c) {\n  c.addFilter(\"jsonScript\", v => JSON.stringify(v ?? null).replace(/[<>&\\u2028\\u2029]/g, ch => \"\\\\u\" + ch.charCodeAt(0).toString(16).padStart(4, \"0\")));\n  return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" };\n}\n",
         "content/_data/settings.json": "{\"title\": \"</script><script>alert(1)</script>\", \"theme\": \"dark\"}",
         "content/_includes/base.njk": "<!doctype html><html><head>\n<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; script-src 'self' 'unsafe-inline'; frame-ancestors 'none'\">\n<script>window.settings = {{ settings | dump | safe }};</script>\n<script type=\"module\">boot({{ settings | jsonScript | safe }});</script>\n</head><body>{{ content | safe }}</body></html>\n",
@@ -113,6 +113,156 @@
       ]
     },
     {
+      "id": "date-filter",
+      "prompt": "The blog index prints raw JavaScript dates. Add a Nunjucks filter so each post shows a date like \"May 11, 2026\", then build and inspect the output.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
+        "content/posts/launch.md": "---\ntitle: Launch\ndate: 2026-05-11\ntags: post\n---\nLaunch notes.\n",
+        "content/posts/update.md": "---\ntitle: Update\ndate: 2026-12-31\ntags: post\n---\nYear-end update.\n",
+        "content/index.njk": "---\ntitle: Blog\n---\n<ul>{% for post in collections.post %}<li>{{ post.data.title }}: <time>{{ post.date }}</time></li>{% endfor %}</ul>\n"
+      },
+      "assertions": [
+        "Registers one filter in the existing ESM config (export default); does not convert the config to CommonJS or add a date library unasked.",
+        "The filter accepts the Date objects in post.date: output shows May 11, 2026 and December 31, 2026, never NaN or a raw Date string.",
+        "Formats from UTC parts or the ISO string, not local-time getters, so the output is the same when the build runs with TZ=America/Los_Angeles.",
+        "Builds and inspects _site/index.html; leaves the collection, front matter, and other files unchanged."
+      ]
+    },
+    {
+      "id": "template-xss-contexts",
+      "prompt": "content/_data/profile.json is filled from a public sign-up form. Review content/index.njk and the config for XSS before merge. Report findings by file and line with fixes; do not edit files.",
+      "kind": "workflow",
+      "fixture_note": "profile.json stands for untrusted external input.",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) {\n  c.addShortcode(\"badge\", label => `<span class=\"badge\">${label}</span>`);\n  return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" };\n}\n",
+        "content/_data/profile.json": "{\"name\": \"<img src=x onerror=alert(1)>\", \"theme\": \"x onmouseover=alert(1)\", \"website\": \"javascript:alert(1)\"}",
+        "content/_includes/base.njk": "<!doctype html><html><title>{{ title }}</title><body>{{ content | safe }}</body></html>\n",
+        "content/index.njk": "---\nlayout: base.njk\ntitle: Profile\n---\n<h1>{{ profile.name }}</h1>\n<section class={{ profile.theme }}>\n  <a href=\"{{ profile.website }}\">Website</a>\n  {% badge profile.name %}\n</section>\n"
+      },
+      "assertions": [
+        "Flags the unquoted class attribute on index.njk line 6: a space in the value starts a new attribute; the fix is to quote the attribute.",
+        "Flags the href on line 7: autoescape does not stop javascript: URLs; the fix validates or allow-lists the scheme.",
+        "Flags the badge shortcode in the config: shortcode return values bypass autoescape, so the argument must be escaped inside the shortcode.",
+        "Does not flag {{ profile.name }} in the h1 (autoescaped text) or the layout's content | safe; makes no file edits."
+      ]
+    },
+    {
+      "id": "async-capture",
+      "prompt": "The page heading renders as [object Promise] and the build exits with an error, but the list below it is fine. Fix the heading with the smallest change, then build and inspect the output.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) {\n  c.addAsyncFilter(\"titleFor\", async (url, titles = {}) => titles[url] ?? url);\n  return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" } };\n}\n",
+        "content/_data/titles.json": "{\"/a/\": \"Alpha\", \"/b/\": \"Beta\"}",
+        "content/index.njk": "---\nlinks: [\"/a/\", \"/b/\"]\n---\n{% set heading %}{{ links[0] | titleFor(titles) }}{% endset %}\n<h1>{{ heading }}</h1>\n<ul>{% for url in links %}<li>{{ url | titleFor(titles) }}</li>{% endfor %}</ul>\n"
+      },
+      "assertions": [
+        "Identifies the block set capture as the cause: on stable v3 a block set does not capture async filter output.",
+        "Fixes it with setAsync, an inline set assignment, or direct output; the heading renders Alpha and the build exits 0.",
+        "Leaves the plain for loop unchanged and does not claim async filters require asyncEach or asyncAll inside loops.",
+        "Keeps the async filter and the rest of the config unchanged; inspects the built HTML."
+      ]
+    },
+    {
+      "id": "layout-title-trace",
+      "prompt": "The pricing page's browser tab says Example Site instead of Pricing. Find out why and apply the smallest fix, then build and inspect the output.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
+        "content/_includes/base.njk": "---\ntitle: Example Site\n---\n<!doctype html><html><title>{{ title }}</title><body>{{ content | safe }}</body></html>\n",
+        "content/_includes/page.njk": "---\nlayout: base.njk\n---\n<main>{{ content | safe }}</main>\n",
+        "content/pricing.njk": "---\nlayout: page.njk\n---\n{% set title = \"Pricing\" %}\n<h1>{{ title }}</h1>\n"
+      },
+      "assertions": [
+        "Traces the cascade: no template or directory data sets title, so base.njk layout front matter supplies it, and the page's {% set title %} never reaches the layout.",
+        "Moves the title into pricing.njk front matter (or a template data file); the built <title> is Pricing and the h1 still renders Pricing.",
+        "Does not change base.njk's default title, the layout chain, or the config."
+      ]
+    },
+    {
+      "id": "standalone-nunjucks-track",
+      "prompt": "npm run render prints \"Sent by\" with no site name in the email footer. Fix it and verify with the project's render script.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"mailer\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\n    \"render\": \"node render.mjs\"\n  },\n  \"dependencies\": {\n    \"nunjucks\": \"3.2.4\"\n  }\n}\n",
+        "render.mjs": "import nunjucks from \"nunjucks\";\nconst env = new nunjucks.Environment(new nunjucks.FileSystemLoader(\"views\"), { autoescape: true });\nprocess.stdout.write(env.render(\"welcome.njk\", { site: { name: \"Acme\" }, user: { name: \"Ada\" } }));\n",
+        "views/welcome.njk": "{% import \"macros/footer.njk\" as footer %}\n<p>Hello {{ user.name }}</p>\n{{ footer.signature() }}\n",
+        "views/macros/footer.njk": "{% macro signature() %}<p>Sent by {{ site.name }}</p>{% endmacro %}\n"
+      },
+      "assertions": [
+        "Notes there is no Eleventy package or config and works on the standalone Nunjucks track.",
+        "Fixes the macro scope with `with context` on the import or an explicit macro argument; the output contains Sent by Acme.",
+        "Adds no Eleventy front matter, layout key, shortcode, or setAsync, and no new dependency.",
+        "Verifies with npm run render instead of an Eleventy build."
+      ]
+    },
+    {
+      "id": "track-branches",
+      "prompt": "For each project, state which track of this skill applies, the evidence, and what must not be done without asking. Then say whether {{ profile.bio }} is escaped in the liquid project. Do not install, upgrade, or edit anything.",
+      "kind": "workflow",
+      "fixture_note": "Controlled package inventories, not installable packages. profile.json stands for untrusted external input.",
+      "files": {
+        "legacy/package.json": "{\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"2.0.1\"\n  }\n}",
+        "legacy/node_modules/@11ty/eleventy/package.json": "{\"name\": \"@11ty/eleventy\", \"version\": \"2.0.1\", \"engines\": {\"node\": \">=14\"}}",
+        "legacy/.eleventy.js": "module.exports = function(c) { return { dir: { input: \"src\" } }; };\n",
+        "legacy/src/index.njk": "<h1>{{ title }}</h1>\n",
+        "liquid/package.json": "{\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\"\n  }\n}",
+        "liquid/node_modules/@11ty/eleventy/package.json": "{\"name\": \"@11ty/eleventy\", \"version\": \"3.1.8\", \"engines\": {\"node\": \">=18\"}}",
+        "liquid/eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", output: \"_site\" } }; }\n",
+        "liquid/content/_data/profile.json": "{\"bio\": \"<img src=x onerror=alert(1)>\"}",
+        "liquid/content/about.liquid": "<p>{{ profile.bio }}</p>\n",
+        "liquid/content/notes.md": "# Notes\n\n{{ profile.bio }}\n"
+      },
+      "assertions": [
+        "legacy: reports Eleventy 2.0.1 from the package metadata and stops before applying v3 config, ESM, or plugin guidance; no upgrade without the user's go-ahead.",
+        "liquid: identifies the .liquid template and Markdown on the default liquid preprocessor (no markdownTemplateEngine set); does not apply Nunjucks syntax or autoescape rules.",
+        "States that Liquid output is not escaped, so profile.bio is written raw in both files and needs the escape filter; does not switch the engine to Nunjucks unasked.",
+        "No install, upgrade, or file edits; no live latest-version claim from fixtures."
+      ]
+    },
+    {
+      "id": "plain-task-no-profile",
+      "prompt": "Add a stylesheet to this site: style the page heading in the existing content/css/site.css, make sure the file reaches the build output, and link it from the layout. Build and inspect the output.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"content\", includes: \"_includes\", output: \"_site\" }, markdownTemplateEngine: \"njk\" }; }\n",
+        "content/_includes/base.njk": "<!doctype html><html><head><title>{{ title }}</title></head><body><main>{{ content | safe }}</main></body></html>\n",
+        "content/index.njk": "---\nlayout: base.njk\ntitle: Home\n---\n<h1>Home</h1>\n",
+        "content/css/site.css": "body { font-family: system-ui, sans-serif; }\n"
+      },
+      "assertions": [
+        "Adds an explicit passthrough copy for content/css (a src-to-dest map or the directory path), a heading rule in site.css, and a stylesheet link in base.njk; the built _site contains the CSS file and the link resolves to it.",
+        "Keeps content/, _includes, and _site as configured; does not rename the output to out/, move files under src/, or add Tailwind, concurrently, lint, or CI tooling.",
+        "Does not load or apply example-deployment-profile material (build-pipeline.md, production-patterns.md, bannered sections): no nginx config, CSP meta, normalize_path filter, soft navigation, or theme code is added.",
+        "Builds and inspects the output; no new dependencies."
+      ]
+    },
+    {
+      "id": "deployment-profile-on-request",
+      "prompt": "We serve this site's out/ folder from nginx with extensionless URLs (/pricing serves pricing.html). Write the nginx server block for that, and fix the nav highlight and canonical link, which break because page.url ends in .html. Build and inspect the output.",
+      "kind": "workflow",
+      "files": {
+        "package.json": "{\n  \"name\": \"skills4sh-eleventy-fixture\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"dependencies\": {\n    \"@11ty/eleventy\": \"3.1.8\",\n    \"nunjucks\": \"3.2.4\",\n    \"markdown-it\": \"14.1.0\",\n    \"tailwindcss\": \"4.3.3\"\n  }\n}\n",
+        "eleventy.config.mjs": "export default function(c) { return { dir: { input: \"src\", includes: \"_includes\", data: \"_data\", output: \"out\" }, markdownTemplateEngine: \"njk\" }; }\n",
+        "src/_data/site.json": "{\"baseUrl\": \"https://example.com\"}",
+        "src/_data/nav.json": "[{\"href\": \"/\", \"label\": \"Home\"}, {\"href\": \"/pricing\", \"label\": \"Pricing\"}]",
+        "src/_includes/base.njk": "<!doctype html><html><head><title>{{ title }}</title><link rel=\"canonical\" href=\"{{ site.baseUrl }}{{ page.url }}\"></head><body><nav>{% for link in nav %}<a href=\"{{ link.href }}\"{% if link.href == page.url %} aria-current=\"page\"{% endif %}>{{ link.label }}</a>{% endfor %}</nav><main>{{ content | safe }}</main></body></html>\n",
+        "src/index.njk": "---\nlayout: base.njk\ntitle: Home\npermalink: /index.html\n---\n<h1>Home</h1>\n",
+        "src/pricing.njk": "---\nlayout: base.njk\ntitle: Pricing\npermalink: /pricing.html\n---\n<h1>Pricing</h1>\n"
+      },
+      "assertions": [
+        "Treats the request as deployment work and uses the example deployment profile: the nginx serving model in production-patterns.md and the normalize_path filter in filters.md.",
+        "The server block serves out/ with try_files $uri $uri.html $uri/ =404 (or an equivalent that maps /pricing to pricing.html) and is presented as config for the user to install, not applied to a live server.",
+        "Registers normalize_path in the existing ESM config and uses it for both the nav comparison and the canonical link; built out/pricing.html marks Pricing with aria-current and has canonical https://example.com/pricing, and out/index.html has canonical https://example.com/.",
+        "Adds only the requested profile parts: no Tailwind pipeline, soft navigation, theme expiry, or OG image tooling; flat permalinks and the out/ directory stay as they are."
+      ]
+    },
+    {
       "id": "retrieval-boundaries",
       "prompt": "Using only the description, decide whether to load this skill for each request.",
       "kind": "description-only-routing",
@@ -130,6 +280,11 @@
         {
           "id": "alpha",
           "text": "Plan our migration to Build Awesome alpha.",
+          "load": true
+        },
+        {
+          "id": "buildawesome-config",
+          "text": "Our plugins stopped loading after we added buildawesome.config.js.",
           "load": true
         },
         {

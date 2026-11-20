@@ -1,8 +1,8 @@
 ---
 name: skill-architect
-description: "Create, audit, and refactor portable agent skills (`SKILL.md`). Use when asked to \"create a skill\", \"review a skill\", \"improve a skill\", \"author a skill\", \"refactor a skill\", \"compare skill rubrics\", \"distill a skill from sessions\", \"reconcile skill plans\", or \"teach skill authoring\"; when paths include `skills/<name>/SKILL.md`, `references/*.md`, helper scripts, evals, lockfiles, security manifests, or vendor adapters; or when mentions include skill-creator, Skill Development, skills.sh, trigger descriptions, progressive disclosure, skill evals, completion criteria, leading words, repository gates, or model/user invocation."
+description: "Create, audit, and refactor portable agent skills (`SKILL.md`). Use when asked to \"plan a skill\", \"create a skill\", \"review a skill\", \"fix skill validation errors\", \"improve a skill\", \"compare skill rubrics\", \"distill a skill from sessions\", \"reconcile skill plans\", or \"teach skill authoring\"; when turning a recurring workflow into reusable agent instructions; when a skill is not triggering; when paths include `skills/*/SKILL.md`; or when the request concerns skill trigger descriptions, skill evals, or skill-authoring rubrics such as skill-creator or Skill Development. Not for running another skill that the request names (for example \"use skill-creator\"), for employee, game, or other non-agent skills, or for general prompt writing."
 license: MIT
-compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10; validation and inspection require PyYAML 6.0.3
+compatibility: macOS, Linux, or Windows; optional helper scripts require Python >=3.10; validation and inspection require PyYAML 6.0.3 on Python 3.10-3.14
 metadata:
   author: t4sh
   version: "1.1.0"
@@ -13,184 +13,6 @@ metadata:
 
 Architect portable, high-quality agent skills from a vendor-neutral perspective. Use this skill as an independent planning, creation, review, refactoring, comparison, distillation, reconciliation, and teaching layer for any agent skill repository or runtime.
 
-## Command modes
-
-Use command-like modes when the user names one explicitly. If no mode is named, infer the closest mode from the request and state the assumption.
-
-| Mode | Use when | Primary reference | Output |
-|---|---|---|---|
-| `skill-architect: plan` | Designing a skill, repo standard, gate, release, or migration before editing | [Portable rubric](references/house-rubric.md), [Naming and packaging](references/naming-and-packaging.md) | Scope, affected files, standards, verification path, rollback notes |
-| `skill-architect: create` | Creating a new portable skill or scaffolding a skill folder | [Portable rubric](references/house-rubric.md) | `SKILL.md` plus linked references/assets/scripts and repo metadata plan |
-| `skill-architect: audit` | Reviewing an existing skill or skill repo against the rubric | [Portable rubric](references/house-rubric.md) | Source-cited findings table, mechanical gate status, patch recommendations |
-| `skill-architect: fix` | Applying narrow deterministic fixes that `validate_skill.py` can prove | [Portable rubric](references/house-rubric.md) | Dry-run patch list or applied safe fixes, then validation output |
-| `skill-architect: refactor` | Improving an existing skill without changing its purpose | [Portable rubric](references/house-rubric.md), [Eval methodology](references/eval-methodology.md) | Trigger rewrite, reference split, routing cleanup, verification updates |
-| `skill-architect: compare` | Comparing upstream skill-development, authoring, or creator rubrics | [Comparative study](references/comparative-study.md) | Evidence matrix, reusable rules, adoption/rejection decisions |
-| `skill-architect: distill` | Reviewing one session, a session ID/path, or a group of sessions to extract a reusable skill | [Eval methodology](references/eval-methodology.md), [Portable rubric](references/house-rubric.md) | Session evidence map, reusable workflow, skill proposal or draft, eval plan |
-| `skill-architect: reconcile` | Refreshing stale skill plans, audits, session-distilled proposals, or blocked skill backlogs | [Eval methodology](references/eval-methodology.md), [Portable rubric](references/house-rubric.md) | Updated status, drift decisions, retired/reopened items, next executable plan |
-| `skill-architect: teach` | Explaining skill authoring standards or coaching a user/agent | [Portable rubric](references/house-rubric.md), [Vendor adapters](references/vendor-adapters.md) | Concise lesson, examples, and next-step exercise or checklist |
-
-### Mode rules
-
-- **Plan** before non-trivial multi-file changes, new gates, release work, or cross-vendor adapter changes.
-- **Create** should start from concrete use cases, then draft the portable core before vendor metadata.
-- **Audit** is read-only by default; present findings and wait unless the user also asks to patch.
-- **Fix** is deterministic and dry-run-first; only apply `fix_skill.py --write` for safe mechanical edits, then run `validate_skill.py`.
-- **Refactor** preserves intent; do not rename, split, or change behavior beyond the requested scope without calling it out.
-- **Compare** must cite inspected sources and separate source facts from adoption decisions.
-- **Distill** must separate session-specific events from reusable patterns, cite the session source, and propose a skill only from repeated or high-value behavior.
-- **Reconcile** must verify whether prior plans, findings, and proposals still match the current context; retire fixed or rejected items instead of re-reporting them.
-- **Teach** should explain the smallest useful rule, then give one concrete example rather than dumping the whole rubric.
-
-## Operating mode
-
-Start with the current working context, not an upstream rubric. Check the CWD, project files, installed skill location, or repository convention first. Use the Agent Skills specification for portable baseline syntax; external rubrics inform content quality, while local rules win on accepted frontmatter fields, manifests, lockfiles, CI, and release gates. Do not add experimental `allowed-tools` unless the target runtime and repository schema both accept and enforce it.
-
-Use this order:
-
-1. **Classify the request** — choose `plan`, `create`, `audit`, `fix`, `refactor`, `compare`, `distill`, `reconcile`, or `teach` before deciding files or checks. Done when one mode is named or the inferred mode is stated as an assumption.
-2. **Read the local standard** — find the CWD/project/repository authoring standard, agent instructions, check commands, and target skill before editing. Done when the governing standard and check commands are cited by path, or their absence is stated.
-3. **Select the lens** — structure, quality/evals, vendor compatibility, distribution governance, or predictability. Done when each lens in scope is named.
-4. **Run the predictability pass** — check invocation fit, branch uniqueness, information hierarchy, completion criteria, leading words, duplication, sediment, sprawl, no-op lines, and premature-completion risk before proposing edits. Done when each check has a keep/patch decision with `file:line` evidence.
-5. **Plan the artifact** — decide the portable core, references, optional assets/scripts, vendor metadata, and validation path. Done when every file to add or change is listed with the command that will verify it.
-6. **Patch narrowly** — avoid churn-only rewrites; improve only the requested surface and directly related standard violations. Done when the diff touches only planned files, or each extra file is called out.
-7. **Verify mechanically** — run repo checks or the closest local equivalent before handing back. Done when each check is reported as passed, failed, or skipped with its exact command.
-
-## Skill architecture workflow
-
-### 1. Gather concrete use cases
-
-Capture only the details that determine structure:
-
-- exact request phrases that should trigger the skill
-- file paths, tools, APIs, or error messages that imply the skill
-- repeated task shape: quick reference, workflow, router, review rubric, or deterministic helper
-- target runtime capabilities: check required tools, permissions, and instruction loading; use [vendor-adapters.md](references/vendor-adapters.md) when host-specific execution or packaging details matter
-- whether the skill needs references, assets, examples, or helper scripts
-
-Ask one focused question if a structural choice is ambiguous. Otherwise infer from the CWD/project/repository pattern and state the assumption.
-
-### 2. Separate portable core from adapters
-
-The portable core lives in `SKILL.md` and linked references. Vendor details live in adapter sections or metadata files.
-
-Use this split:
-
-| Layer | Contains | Avoid |
-|---|---|---|
-| Portable core | trigger intent, workflow, checks, references, scripts/assets | one vendor's CLI assumptions as universal truth |
-| Local convention | required frontmatter, versions, hashes, security files, README/plugin registry updates, or platform conventions | upstream defaults that fail local checks |
-| Vendor adapter | OpenAI YAML, Claude plugin notes, Antigravity/Azure conventions, installation constraints | changing the portable workflow to fit one agent |
-| Quality harness | eval prompts, baseline comparisons, review packets, pressure tests | claiming quality from prose review alone |
-
-### 3. Draft with progressive disclosure
-
-Keep `SKILL.md` focused on routing and immediate behavior. Move long comparisons, advanced examples, vendor matrices, and eval details to `references/`.
-
-Minimum portable skill shape:
-
-```text
-skills/<skill-name>/
-├── SKILL.md
-├── LICENSE
-└── references/          # only when detail would bloat SKILL.md
-```
-
-Add `assets/` or helper scripts only when they materially improve repeatability. Treat scripts as inert skill assets unless the local project or runtime explicitly allows executable helpers; document, link, hash, and security-scan them according to local conventions when available.
-
-### 4. Review before patching
-
-Prepare a compact audit packet before making non-trivial edits:
-
-| Check | Evidence | Decision |
-|---|---|---|
-| Trigger description is concrete | `SKILL.md` frontmatter line | keep / patch |
-| Invocation fit is justified | description, expected caller, context/cognitive load tradeoff | keep model-invoked / make user-invoked / add router |
-| Branches are unique | description, command table, mode rules | keep / collapse synonym-only trigger branches |
-| Information hierarchy is clean | section inventory | keep in `SKILL.md` / move to reference / split sequence |
-| Completion criteria are checkable | every ordered step or command workflow | keep / sharpen / add done criteria |
-| Leading words carry repeated concepts | repeated behavior terms and trigger language | keep prose / collapse to leading word |
-| Pruning pass finds no sediment | duplicated, stale, no-op, or sprawling lines | keep / delete / disclose |
-| `SKILL.md` is lean enough | word count | keep / split |
-| References are linked | link check | keep / patch |
-| Vendor assumptions are isolated | relevant section/file | keep / patch |
-| Mechanical gates are available | repository scripts, CI, evals, or fixtures | run / note skipped |
-
-Run a **predictability and pruning pass** before judging style or patching content:
-
-1. **Invocation fit:** decide whether the skill should be model-invoked or user-invoked. Pay context load only when autonomous agent reach or cross-skill reach is necessary; recommend a router skill when many user-invoked skills create cognitive load.
-2. **Description branches:** keep one trigger per real branch, remove synonym-only trigger duplication, and front-load strong leading words that also appear in prompts, docs, or code.
-3. **Information hierarchy:** classify each major block as step, in-skill reference, or disclosed reference. Inline what every branch needs; move branch-only detail behind a context pointer.
-4. **Completion criteria:** every ordered step should end with a checkable done condition. Sharpen vague criteria before splitting a sequence.
-5. **Premature-completion risk:** if visible post-completion steps pull attention forward and the current criterion cannot be sharpened further, recommend a real context-boundary split.
-6. **Leading words:** replace repeated explanatory prose with a compact pretrained concept only when it improves predictable execution or invocation.
-7. **Pruning:** apply sentence-level relevance and no-op tests; remove duplication, sediment, and sprawl instead of polishing dead prose.
-
-For behavior-shaping skills, add at least one forward test or prompt scenario. For any shipped CI, shell, or code — helper scripts, snippets, or workflow examples — execute it against a fixture rather than vouching for it by reading; reading and security scans miss logic defects such as a wrong regex. An audit is incomplete until each embedded-code finding or pass includes a fixture command plus observed output, or an explicit skipped-risk note.
-
-Run the bounded executable-surface triage and calibrate eval, adapter, and weak-description findings with the [review rubric](references/house-rubric.md#review-rubric); route algorithmic correctness, exploitability, performance, and large refactors to a dedicated code-review skill.
-
-**Authors/reviewers evaluating Skill Architect itself only:** skip this catalog when using Skill Architect for another task. The [mode scenario catalog](assets/evals/scenarios.json) supplies self-contained fixture files for all nine modes, isolation instructions, grading criteria, and description-only routing prompts. Materialize a fresh case directory and withhold grading from the executor; the catalog is test input, not evidence that those modes passed.
-
-For test vectors, harness setup, enumeration consistency, and severity calibration, use [Eval methodology](references/eval-methodology.md) and [Portable rubric](references/house-rubric.md) rather than expanding `SKILL.md`.
-
-### 5. Make handoffs executable
-
-When producing a plan, proposal, audit packet, or distilled skill spec for another agent or a future session, write for the weakest plausible executor. Reference accessible authoritative artifacts with exact paths or URLs; include essential excerpts only when the executor needs them. Preserve local conventions, scope boundaries, verification commands with expected results, drift checks, and STOP conditions. For dependent tasks, specify consumed/produced interfaces and requirement coverage using the [handoff plan rubric](references/house-rubric.md#handoff-plan-rubric).
-
-Record rejected findings or non-adopted patterns with one-line rationales so they do not return in the next audit or reconciliation pass.
-
-### 6. Verify and hand off
-
-Run the narrowest meaningful checks for the current working context. Prefer documented validation commands, CI gates, evals, fixture tests, hash checks, and security scans when present. In `skills4sh`, run the [packaging check list](references/naming-and-packaging.md#packaging-checklist).
-
-Run a focused or full security scan when new files contain scripts, shell examples, credentials guidance, network examples, or other security-sensitive patterns.
-
-Report exactly what passed, failed, or was skipped. Do not claim an eval, scan, or fixture test that was not run.
-
-## Helper scripts
-
-Optional helper scripts live under `assets/scripts/` so they ship as inert skill assets:
-
-| Script | Use |
-|---|---|
-| [`assets/scripts/inspect_skill.py`](assets/scripts/inspect_skill.py) | Summarize a skill folder: files, frontmatter, body word count, linked references, and obvious missing pieces |
-| [`assets/scripts/validate_skill.py`](assets/scripts/validate_skill.py) | Run a local portable-skill validation pass against one skill folder, with warning-only progressive-disclosure hints |
-| [`assets/scripts/fix_skill.py`](assets/scripts/fix_skill.py) | Dry-run or apply conservative deterministic fixes to `SKILL.md`, then rerun validation |
-| [`assets/scripts/scaffold_skill.py`](assets/scripts/scaffold_skill.py) | Create a starter skill folder; `--author` sets `metadata.author` (omitted otherwise) and `--openai-yaml` adds a Codex `agents/openai.yaml` |
-| [`assets/scripts/run_uv.py`](assets/scripts/run_uv.py) | Start `uv` after removing inherited `UV_*` host configuration |
-
-`inspect_skill.py` and `validate_skill.py` each accept **one skill folder per invocation**. For multiple skills, invoke each helper separately for each folder; reuse the same Python environment.
-
-Validation and inspection need Python >=3.10 plus the hash-pinned [Python dependency file](assets/scripts/requirements.txt) in an isolated runner: `run_uv.py` first, a temporary virtual environment as fallback, with every helper run as `python -E -B`. Never install validation dependencies into the global Python environment, and do not use `python -I`. Use the [helper runtime](references/helper-runtime.md) for exact uv, venv, and PowerShell commands and for when to report a helper unavailable.
-
-Scaffold and fix helpers need only Python. The fixer accepts column-zero literal mapping keys and simple single-line literal names; it refuses unsupported key or name syntax before any edits. Use manual review for those cases, then validate.
-
-Read or run scripts only when the task needs deterministic inspection or scaffolding. Local validation commands and CI, when present, remain the source of truth.
-
-### Deterministic checks vs judgment
-
-Skill work splits across four layers — keep them separate and route each check to the layer that can decide it:
-
-| Layer | Owns | Examples |
-|---|---|---|
-| Portable validator (`validate_skill.py`) | Minimal deterministic checks that hold inside one skill folder, no repo metadata or network | valid YAML and typed, non-empty fields; specification length limits + `name`/directory match + kebab-case, description has concrete trigger detail, body within the hard size cap, `references/*.md` linked from `SKILL.md`, in-skill relative Markdown link targets, and same/cross-file Markdown heading anchors |
-| Portable fixer (`fix_skill.py`) | Safe mechanical edits that require no taste or domain judgment; dry-run unless `--write` is explicit | frontmatter `name` normalization and insertion of missing `references/*.md` links in `SKILL.md` |
-| Local binding gate (project CI) | Deterministic checks that depend on repo conventions; **binding and a superset** | file hashes, `skills-lock.json`, security manifests, doc-sync, semver — in `skills4sh`, the [packaging check list](references/naming-and-packaging.md#packaging-checklist) |
-| This skill's rubric (judgment) | What no script can decide | trigger *quality*, executable-surface triage, embedded-code *correctness* (review + fixture run), body altitude beyond the cap, vendor-isolation, narrative bloat |
-
-The litmus test: **if a script can decide it, automate it; if it needs reasoning or taste, it stays in the rubric.** When a local binding gate exists, it wins over the portable validator on any overlap. The portable validator is deliberately narrow: it checks only facts visible inside one skill folder. Codifying a rule (for example a numeric size band) moves it from judgment toward the validator; treat that as the goal, not a loss.
-
-## Reference files
-
-| File | Load when |
-|---|---|
-| [references/comparative-study.md](references/comparative-study.md) | Comparing Anthropic, OpenAI, Matt Pocock, Obra, Azure, Antigravity, or other skill-development/authoring/creator patterns |
-| [references/house-rubric.md](references/house-rubric.md) | Creating or reviewing a portable rubric; checking predictability, invocation fit, completion criteria, pruning, enumeration consistency, executable-surface triage, and severity calibration |
-| [references/vendor-adapters.md](references/vendor-adapters.md) | Runtime install roots, pointer files, and vendor metadata that must stay out of the portable workflow |
-| [references/eval-methodology.md](references/eval-methodology.md) | Testing triggers, building test-vector catalogs, setting up lightweight harnesses, comparing baseline behavior, or planning pressure tests |
-| [references/helper-runtime.md](references/helper-runtime.md) | Running `inspect_skill.py` or `validate_skill.py`: isolated uv/venv commands, interpreter flags, and unavailability reporting |
-| [references/naming-and-packaging.md](references/naming-and-packaging.md) | Avoiding slug collisions, deciding names, updating lockfiles/security manifests, and packaging repo updates |
-
 ## Non-negotiables
 
 - Do not make a vendor-specific skill the portable rubric verbatim.
@@ -199,3 +21,64 @@ The litmus test: **if a script can decide it, automate it; if it needs reasoning
 - Do not add unlinked reference files.
 - Do not add helper scripts without a concrete repeatability benefit and a validation path.
 - Do not treat `skills.sh` popularity as quality proof; inspect source, tests, security posture, and portability.
+
+## Reference files
+
+| File | Load when |
+|---|---|
+| [references/house-rubric.md](references/house-rubric.md) | Acting in any mode (mode rules and done conditions); writing or reviewing a description; checking predictability, invocation fit, completion criteria, pruning, enumeration consistency, executable-surface triage, and severity calibration |
+| [references/workflow-steps.md](references/workflow-steps.md) | Running procedure steps 2-8: intake list, layer split, audit packet, draft shape, checks versus judgment, and handoff rules |
+| [references/eval-methodology.md](references/eval-methodology.md) | Testing triggers, building test-vector catalogs, setting up lightweight harnesses, comparing baseline behavior, planning pressure tests, or filling the PR review packet |
+| [references/helper-runtime.md](references/helper-runtime.md) | Running any helper script: isolated uv/venv commands, interpreter selection, helper limits, and unavailability reporting |
+| [references/vendor-adapters.md](references/vendor-adapters.md) | Runtime install roots, pointer files, and vendor metadata that must stay out of the portable workflow |
+| [references/naming-and-packaging.md](references/naming-and-packaging.md) | Avoiding slug collisions, deciding names, updating lockfiles/security manifests, and packaging repo updates |
+| [references/comparative-study.md](references/comparative-study.md) | Comparing Anthropic, OpenAI, Matt Pocock, Obra, Azure, Antigravity, or other skill-development/authoring/creator patterns |
+
+## Command modes
+
+Use command-like modes when the user names one explicitly. If no mode is named, infer the closest mode from the request and state the assumption. Before acting, read the chosen mode's rule in the [command mode rubric](references/house-rubric.md#command-mode-rubric); finish only when its [done condition](references/house-rubric.md#done-conditions) holds.
+
+| Mode | Use when | Steps | Primary reference | Output |
+|---|---|---|---|---|
+| `skill-architect: plan` | Designing a skill, repo standard, gate, release, or migration before editing | 1-4, 8 | [Portable rubric](references/house-rubric.md), [Naming and packaging](references/naming-and-packaging.md) | Scope, affected files, standards, verification path, rollback notes |
+| `skill-architect: create` | Creating a new portable skill or scaffolding a skill folder | 1-4, 6, 5, 7, 8 | [Portable rubric](references/house-rubric.md), [Naming and packaging](references/naming-and-packaging.md) | `SKILL.md` plus linked references/assets/scripts and repo metadata plan |
+| `skill-architect: audit` | Reviewing an existing skill or skill repo against the rubric | 1-3, 5, 7, 8 | [Portable rubric](references/house-rubric.md) | Source-cited findings table, mechanical gate status, patch recommendations; read-only unless patching is also requested |
+| `skill-architect: fix` | Applying narrow deterministic fixes that `validate_skill.py` can prove | 1, 2, 6, 7 | [Portable rubric](references/house-rubric.md), [Helper runtime](references/helper-runtime.md) | Dry-run patch list or applied safe fixes, then validation output |
+| `skill-architect: refactor` | Improving an existing skill without changing its purpose | 1-8 | [Portable rubric](references/house-rubric.md), [Eval methodology](references/eval-methodology.md) | Trigger rewrite, reference split, routing cleanup, verification updates |
+| `skill-architect: compare` | Comparing upstream skill-development, authoring, or creator rubrics | 1-3, 8 | [Comparative study](references/comparative-study.md) | Evidence matrix, reusable rules, adoption/rejection decisions |
+| `skill-architect: distill` | Reviewing one session, a session ID/path, or a group of sessions to extract a reusable skill | 1-4, 8 | [Portable rubric](references/house-rubric.md), [Eval methodology](references/eval-methodology.md) | Session evidence map, reusable workflow, skill proposal or draft, eval plan |
+| `skill-architect: reconcile` | Refreshing stale skill plans, audits, session-distilled proposals, or blocked skill backlogs | 1, 2, 5, 7, 8 | [Eval methodology](references/eval-methodology.md), [Portable rubric](references/house-rubric.md) | Updated status, drift decisions, retired/reopened items, next executable plan |
+| `skill-architect: teach` | Explaining skill authoring standards or coaching a user/agent | 1, 2 | [Portable rubric](references/house-rubric.md), [Vendor adapters](references/vendor-adapters.md) | Concise lesson, examples, and next-step exercise or checklist |
+
+Run the steps listed for the mode in the order given; a step that is not listed is skipped, not failed. Step 8 applies only when another agent or a later session will act on the output.
+
+## Procedure
+
+Each step's detail is in [workflow steps](references/workflow-steps.md) under the same step number. A step is finished only when its `Done when` cell holds.
+
+| # | Step | Do | Done when |
+|---|---|---|---|
+| 1 | Classify the request | Choose `plan`, `create`, `audit`, `fix`, `refactor`, `compare`, `distill`, `reconcile`, or `teach` before deciding files or checks. | One mode is named, or the inferred mode is stated as an assumption. |
+| 2 | Read the local standard | Start with the current working context, not an upstream rubric: find the CWD/project/repository authoring standard, agent instructions, check commands, and target skill before editing. Local rules win over external rubrics ([detail](references/workflow-steps.md#step-2-read-the-local-standard)). | The governing standard and check commands are cited by path, or their absence is stated. |
+| 3 | Gather use cases and pick the lens | Capture only the details that determine structure, using the [intake list](references/workflow-steps.md#step-3-gather-use-cases-and-pick-the-lens); ask one focused question only when a structural choice is ambiguous. Select the lens: structure, quality/evals, vendor compatibility, distribution governance, or predictability. | Each intake item is recorded or marked not applicable; each lens in scope is named; at most one clarifying question is open. |
+| 4 | Plan the artifact | Decide the portable core, references, optional assets/scripts, vendor metadata, and validation path, assigning each planned file or section to a layer of the [portable/adapter split](references/workflow-steps.md#step-4-plan-the-artifact). | Every file to add or change is listed with its layer and the command that will verify it; the portable core holds no vendor-only assumption. |
+| 5 | Review before patching | Fill the [audit packet](references/workflow-steps.md#step-5-review-before-patching) and run the [predictability and pruning pass](references/house-rubric.md#predictability-and-pruning-checks) before judging style or proposing edits. Execute shipped CI, shell, or code against a fixture rather than vouching for it by reading, then run the [executable-surface triage](references/house-rubric.md#review-rubric). | Every packet row and predictability check has `file:line` evidence and a keep/patch decision; each shipped script or snippet in scope has a fixture command with observed output or a skipped-risk note. |
+| 6 | Draft or patch narrowly | Keep `SKILL.md` focused on routing and immediate behavior and move detail to `references/` ([draft rules](references/workflow-steps.md#step-6-draft-or-patch-narrowly)). Avoid churn-only rewrites; improve only the requested surface and directly related standard violations. | The diff touches only planned files, or each extra file is called out; the body is placed in a [size band](references/house-rubric.md#body-size); every reference is linked from `SKILL.md` with a load condition; each script or asset has a stated repeatability reason. |
+| 7 | Verify mechanically | Run repo checks or the closest local equivalent before handing back, routing each check to the layer that can decide it ([checks versus judgment](references/workflow-steps.md#deterministic-checks-vs-judgment)). In `skills4sh`, run the [packaging check list](references/naming-and-packaging.md#packaging-checklist). Run a security scan when new files contain scripts, shell examples, credentials guidance, or network examples. | Each check is reported as passed, failed, or skipped with its exact command; no eval, scan, or fixture test is claimed without a run. |
+| 8 | Hand off | Write a plan, proposal, audit packet, or distilled skill spec for the weakest plausible executor, following the [handoff rules](references/workflow-steps.md#step-8-hand-off) and the [handoff plan rubric](references/house-rubric.md#handoff-plan-rubric). Record rejected findings or non-adopted patterns with one-line rationales. | The artifact gives exact paths or URLs, scope boundaries, verification commands with expected results, and STOP conditions; rejected findings are recorded with a rationale. |
+
+## Helper scripts
+
+Optional helper scripts live under `assets/scripts/` so they ship as inert skill assets. Read or run them only when the task needs deterministic inspection or scaffolding.
+
+| Script | Use |
+|---|---|
+| [`assets/scripts/inspect_skill.py`](assets/scripts/inspect_skill.py) | Summarize a skill folder: files, frontmatter, body word count, and linked references |
+| [`assets/scripts/validate_skill.py`](assets/scripts/validate_skill.py) | Run a local portable-skill validation pass against one skill folder, with warning-only progressive-disclosure hints |
+| [`assets/scripts/fix_skill.py`](assets/scripts/fix_skill.py) | Dry-run or apply conservative deterministic fixes to `SKILL.md`; run `validate_skill.py` afterward |
+| [`assets/scripts/scaffold_skill.py`](assets/scripts/scaffold_skill.py) | Create a starter skill folder; `--author` sets `metadata.author` (omitted otherwise) and `--openai-yaml` adds a Codex `agents/openai.yaml` |
+| [`assets/scripts/run_uv.py`](assets/scripts/run_uv.py) | Start `uv` after removing inherited `UV_*` host configuration |
+
+Validation and inspection need Python 3.10–3.14 plus the hash-pinned [Python dependency file](assets/scripts/requirements.txt) in an isolated runner, with every helper run as `python -E -B`. Never install validation dependencies into the global Python environment, and do not use `python -I`. Use the [helper runtime](references/helper-runtime.md) for exact uv, venv, and PowerShell commands, interpreter selection, helper limits, and when to report a helper unavailable.
+
+**Author-only:** to evaluate Skill Architect itself, use the [mode scenario catalog](assets/evals/scenarios.json) as described in [Eval methodology](references/eval-methodology.md#evaluating-skill-architect-itself); skip it for any other task.

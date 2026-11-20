@@ -1,6 +1,6 @@
 # Skill Authoring Standard
 
-This repository uses the portable [`skill-architect`](../skills/skill-architect/) skill as the operational reference for planning, authoring, reviewing, and evolving skills. `skill-architect` bridges the overlapping strengths of [**Skill Development**](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) for structure, [**writing-skills**](https://www.skills.sh/obra/superpowers/writing-skills) for quality and validation discipline, Anthropic [**skill-creator**](https://www.skills.sh/anthropics/skills/skill-creator) for eval methodology, and OpenAI [**skill-creator**](https://github.com/openai/skills/tree/main/skills/.system/skill-creator) for compatibility awareness.
+This repository uses the portable [`skill-architect`](../skills/skill-architect/) skill as the operational reference for planning, authoring, reviewing, and evolving skills. `skill-architect` bridges the overlapping strengths of [**Skill Development**](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev/skills/skill-development) for structure, [**writing-skills**](https://www.skills.sh/obra/superpowers/writing-skills) for quality and validation discipline, Anthropic [**skill-creator**](https://www.skills.sh/anthropics/skills/skill-creator) for eval methodology, and OpenAI [**skill-creator**](https://github.com/openai/codex/tree/main/codex-rs/skills/src/assets/samples/skill-creator) for compatibility awareness.
 
 The goal is consistency across `skills/<name>/` folders while keeping skills useful to any file-reading agent that implements Agent Skills.
 
@@ -10,7 +10,7 @@ The goal is consistency across `skills/<name>/` folders while keeping skills use
 |---|---|---|
 | **This repo's distribution contract** — `license` / `compatibility` / `metadata` frontmatter, `.security/<name>.yaml`, `skills-lock.json`, drift / guardskills / hash CI, semver monotonicity, cross-agent compatibility | **Binding and CI-enforced; supersedes external rubrics on any conflict** | Mandatory for every skill — see **Frontmatter** and **Review & Audit Discipline** |
 | [`skill-architect`](../skills/skill-architect/) | **Operational planning/review skill for this repo**; bridges the external authoring rubrics into one portable workflow | Use first for skill planning, creation, audit, fix, refactor, comparison, distillation, reconciliation, and teaching |
-| [Skill Development](https://github.com/anthropics/claude-code/tree/main/plugins/plugin-dev/skills/skill-development) | Structural input covered by `skill-architect` | Use for repository layout, retrieval-focused descriptions, progressive disclosure, and plugin/package publishing expectations |
+| [Skill Development](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/plugin-dev/skills/skill-development) | Structural input covered by `skill-architect` | Use for repository layout, retrieval-focused descriptions, progressive disclosure, and plugin/package publishing expectations |
 | [writing-skills](https://www.skills.sh/obra/superpowers/writing-skills) | Quality/validation input covered by `skill-architect` | Use for trigger clarity, pressure/forward testing when practical, no narrative bloat, and concrete examples. See **Review & Audit Discipline** for how findings must be evidenced |
 | Anthropic / OpenAI `skill-creator` | Eval and compatibility inputs covered by `skill-architect` | Use for baseline/forward-test discipline, Codex/OpenAI compatibility, concise body guidance, and optional vendor adapter metadata |
 
@@ -54,7 +54,7 @@ compatibility: macOS, Linux, or Windows
 metadata:
   author: t4sh
   version: "0.1.0"
-  tags: comma, separated, keywords
+  tags: "comma, separated, keywords"
 ---
 ```
 
@@ -62,15 +62,16 @@ Rules:
 
 - `name` must match the directory.
 - `description` is the retrieval surface for the agent that loads the skill. It must contain **a concise capability clause plus concrete trigger/use conditions**.
-- Preferred format: `Capability summary. Use when <specific triggers, file paths, tools, error text, or situations apply>.`
-- Allowed short format: `Use when <specific triggers, file paths, tools, error text, or situations apply>.`
+- Preferred format: `Capability summary. Use when [specific triggers, file paths, tools, error text, or situations apply].`
+- Allowed short format: `Use when [specific triggers, file paths, tools, error text, or situations apply].`
 - The legacy strict format `This skill should be used when ...` remains valid, but is no longer the only accepted form.
 - Prefer `Use when asked to ...` over `Use when the user asks to ...`. The loading agent is the user of the skill.
 - Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.
 - Avoid loose summaries with no trigger/use conditions; they are harder for agents to retrieve reliably.
 - Avoid generic trigger-only descriptions such as `Use when creating skills.` The mechanical gate now requires concrete retrieval detail: a quoted request phrase, path/file cue, tool cue, named situation, or multi-clause trigger.
+- `description` must not contain `<` or `>`. Anthropic's and Codex's `skill-creator` validators reject angle brackets and Claude Code escapes them, so write a path cue as `skills/*/SKILL.md`; `npm run check:skill-standard` fails on either character.
 - `metadata.version` is the skill version. Planning, analysis, and testing branches may retain the released version during draft commits, including updates to existing skills. At the merge decision, choose the bump for the final diff and synchronize all version surfaces before merge. Keep hashes current during drafting; unchanged versions do not exempt validation or security checks. New skills may retain their initial version until first merge.
-- `tags` should include search synonyms, tool names, and domain terms.
+- `tags` should include search synonyms, tool names, and domain terms. Quote the value, as `scaffold_skill.py` does, so a tag containing `:` or `#` stays one string; an unquoted list without those characters remains valid.
 
 ## Body Size
 
@@ -155,7 +156,7 @@ The PR body is CI-checked for this packet on pull requests that touch `skills/`,
 
 Run before opening a PR; CI re-runs the same checks.
 
-1. `npm run check:skill-standard` — allowed frontmatter fields only, required repo metadata present, retrieval-focused description, no per-skill install docs/commands, no auxiliary README/changelog/install docs, and `SKILL.md` body below the hard 3,500-word threshold.
+1. `npm run check:skill-standard` — allowed frontmatter fields only, required repo metadata present, retrieval-focused description with no angle brackets, no per-skill install docs/commands, no auxiliary README/changelog/install docs, and `SKILL.md` body below the hard 3,500-word threshold.
 2. Every `references/` file is linked from `SKILL.md`, and every link resolves within the skill folder (`npm run check:drift`).
 3. Regenerate `.security/<name>.yaml` file hashes.
 4. Regenerate or verify `skills-lock.json`.

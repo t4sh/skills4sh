@@ -1,0 +1,90 @@
+name: Upstream Drift
+
+# Compares the versions and links the skills pin with upstream, once a week.
+#
+# Why: skills state dated facts — "Eleventy 3.1.8", "playwright@1.65.1", a
+# link to a vendor's documentation. Those decay silently. The 2026-11 review
+# found five skills carrying facts that had been stale for weeks because
+# nothing compared them with their sources.
+#
+# What it checks (bin/upstream-check.mjs):
+#   - every pin in .github/upstream-pins.json still appears in the files it
+#     names, and matches the registry version it tracks (npm dist-tag or PyPI)
+#   - every external link in skill prose and docs/ still resolves (404 and 410
+#     count as broken; blocks, timeouts and server errors are "unverified")
+#
+# What it does with the result: opens one tracking issue titled "Upstream
+# drift report", rewrites that issue's body on later runs, and closes it when
+# a run finds no drift. It never fails a pull request — it is not triggered
+# by one and is not a required check. The job fails only when the check
+# itself cannot run (exit 2: bad arguments or an invalid pins file).
+#
+# Run it locally with `npm run check:upstream`.
+
+on:
+  schedule:
+    # Mondays 06:40 UTC — after the CodeQL scan and Dependabot's weekly run.
+    - cron: "40 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: compare pinned versions and links with upstream
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      - name: Run upstream check
+        id: check
+        run: |
+          set +e
+          node bin/upstream-check.mjs --strict --report "$RUNNER_TEMP/upstream-drift.md"
+          status=$?
+          set -e
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          # 0 = no drift, 1 = drift (reported through the issue below).
+          # Anything else means the check could not run: fail the job.
+          if [ "$status" -ge 2 ]; then
+            exit "$status"
+          fi
+
+      - name: Open, update or close the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          STATUS: ${{ steps.check.outputs.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          title="Upstream drift report"
+          report="$RUNNER_TEMP/upstream-drift.md"
+
+          number="$(gh issue list --state open --search "\"$title\" in:title" \
+            --json number,title \
+            --jq "[.[] | select(.title == \"$title\")][0].number // empty")"
+
+          if [ "$STATUS" = "1" ]; then
+            printf '\nRun: %s\n' "$RUN_URL" >> "$report"
+            if [ -n "$number" ]; then
+              gh issue edit "$number" --body-file "$report"
+              echo "Updated issue #$number"
+            else
+              gh issue create --title "$title" --body-file "$report"
+            fi
+          elif [ -n "$number" ]; then
+            gh issue close "$number" --comment "No drift on the latest run: $RUN_URL"
+            echo "Closed issue #$number"
+          else
+            echo "No drift and no open tracking issue."
+          fi

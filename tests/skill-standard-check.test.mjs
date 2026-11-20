@@ -120,6 +120,25 @@ describe("skill-standard-check — frontmatter contract", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   });
+
+  test("description rejects angle brackets and accepts the bracket-free path cue", async () => {
+    const dir = setupTmp();
+    try {
+      const withCue = (cue) => VALID_SKILL.replace("or mentions demo fixtures.", `or when paths include \`${cue}\`.`);
+      await buildFixture(dir, withCue("skills/<name>/SKILL.md"));
+      let result = await runSkillStandardChecks(dir);
+      assert.deepEqual(
+        result.errors.filter((e) => e.includes("description")),
+        ["demo: SKILL.md description must not contain angle brackets (< or >); first-party skill validators reject them and some runtimes escape them"],
+      );
+
+      await buildFixture(dir, withCue("skills/*/SKILL.md"));
+      result = await runSkillStandardChecks(dir);
+      assert.deepEqual(result.errors, [], result.errors.join("\n"));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe("skill-standard-check — body and install-command gates", () => {

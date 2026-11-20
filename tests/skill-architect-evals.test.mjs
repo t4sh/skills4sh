@@ -96,6 +96,54 @@ test('catalog audit-helper case ships a helper whose seeded defect reproduces on
   }
 });
 
+test('catalog description-characters case seeds a description the validator rejects only for angle brackets', () => {
+  const root = mkdtempSync(join(tmpdir(), 'architect-description-characters-'));
+  const c = catalog.cases.find(c => c.id === 'audit-description-characters');
+  try {
+    assert.equal(c.kind, 'workflow');
+    for (const [path, contents] of Object.entries(c.files)) {
+      const target = join(root, path);
+      mkdirSync(resolve(target, '..'), { recursive: true });
+      writeFileSync(target, contents);
+    }
+    const result = spawnSync(process.env.SKILL_TEST_PYTHON || 'python3', [
+      '-E', '-B', 'skills/skill-architect/assets/scripts/validate_skill.py', join(root, 'skills/report-helper'),
+    ], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stdout + result.stderr);
+    assert.equal(
+      result.stdout.trim(),
+      '✗ description must not contain angle brackets (< or >); first-party skill validators reject them and some runtimes escape them',
+    );
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test('routing catalog covers every mode phrase in the description, the dropped cues, and the skip clause', () => {
+  const skill = readFileSync('skills/skill-architect/SKILL.md', 'utf8');
+  const description = skill.match(/^description: "(.*)"$/m)[1].replaceAll('\\"', '"');
+  const [load, skip] = description.split(' Not for ');
+  assert.ok(skip, 'description needs a skip clause');
+  assert.doesNotMatch(description, /[<>]/);
+  assert.match(load, /`skills\/\*\/SKILL\.md`/);
+
+  const phrases = [...load.matchAll(/"([^"]+)"/g)].map(m => m[1]);
+  assert.equal(phrases.length, modes.length, `one quoted phrase per mode, got: ${phrases.join(' | ')}`);
+  const prompts = id => catalog.cases.find(c => c.id === id).prompts;
+  for (const phrase of phrases) {
+    assert.ok(
+      prompts('mode-phrases').some(p => p.load === true && p.text.toLowerCase().includes(phrase)),
+      `no positive routing prompt for "${phrase}"`,
+    );
+  }
+
+  for (const cue of ['references/*.md', 'helper scripts', 'lockfiles', 'security manifests', 'vendor adapters', 'completion criteria', 'repository gates', 'progressive disclosure']) {
+    assert.ok(!load.includes(cue), `dropped cue is back in the description: ${cue}`);
+  }
+  assert.ok(prompts('dropped-cues').length >= 8 && prompts('dropped-cues').every(p => p.load === false));
+  assert.ok(prompts('skip-clause').some(p => p.load === false) && prompts('skip-clause').some(p => p.load === true));
+});
+
 test('catalog keeps a named-skill routing near-miss for skill-creator', () => {
   const c = catalog.cases.find(c => c.id === 'named-skill-near-miss');
   assert.equal(c.kind, 'description-only-routing');

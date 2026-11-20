@@ -22,6 +22,8 @@ Use this file for PR template checks, grep-based regression sweeps, stability wa
 | Assuming a custom router/version endpoint exists | Missing lifecycle or update detection | Inspect the project’s router and deployment contract |
 | Skipping Prettier on `.njk` | Format drift | `prettier-plugin-jinja-template` + CI `format:check` |
 
+The rows about design tokens, `out/` output, numbered section variants, `concurrently`, custom routers, and Prettier belong to the example deployment profile; apply them only when the project already uses that pattern.
+
 ## Syntax and security greps
 
 Run from project root; set `file` or adjust paths per repo layout.
@@ -66,12 +68,16 @@ The import search can also find valid explicit macro arguments. Check the macro 
 
 ### Hardcoded hex / px in templates
 
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
+
 ```bash
 grep -rnE "#[0-9a-fA-F]{3,8}|: *[0-9]+px" src/_includes/sections/ src/pages/ \
   | grep -v "// allow"
 ```
 
 ### Missing `permalink` where flat-HTML convention applies
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 ```bash
 grep -L "^permalink:" src/pages/*.njk
@@ -112,6 +118,8 @@ grep -nE "markdownIt\(\{[^}]*html:\s*true" .eleventy.js eleventy.config.* 2>/dev
 
 ### Pipeline
 
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
+
 - [ ] `concurrently` uses `--kill-others-on-fail` where applicable
 - [ ] Tailwind (or CSS) written before or watched by 11ty as designed
 - [ ] `clean` removes `out/` and generated CSS if applicable
@@ -119,7 +127,7 @@ grep -nE "markdownIt\(\{[^}]*html:\s*true" .eleventy.js eleventy.config.* 2>/dev
 
 ### Dev / CSP
 
-- [ ] `addWatchTarget` covers asset dirs that must rebuild
+- [ ] `addWatchTarget` covers files Eleventy neither renders nor copies; gitignored generated CSS is served through emulated passthrough (`conventions.md` § Asset watch target)
 - [ ] Live reload verified on representative edits
 - [ ] Development CSP permits the actual live-reload script/WebSocket path, or the production-only meta policy is omitted during `serve`
 
@@ -132,6 +140,8 @@ grep -nE "markdownIt\(\{[^}]*html:\s*true" .eleventy.js eleventy.config.* 2>/dev
 ## Common page recipes
 
 ### Marketing `.njk` page
+
+> **Example deployment profile.** This section describes one project's deployment setup, not Eleventy or Nunjucks guidance. Load it only when the user asks for this kind of deployment work or the project already uses this pattern.
 
 ```nunjucks
 ---
@@ -149,16 +159,19 @@ ogType: website
 
 ```markdown
 ---
-layout: layouts/base.njk
+layout: false
 permalink: /products.md
+templateEngineOverride: njk
 title: Products
 ---
 
 # Products
 
-Plain markdown. Shortcodes work with `markdownTemplateEngine: "njk"`.
+Plain markdown, written to the output as Markdown. Shortcodes still run:
 {% year %}
 ```
+
+`templateEngineOverride: njk` runs Nunjucks only, so the body is not converted to HTML, and `layout: false` keeps an HTML layout from wrapping it. Without both, `/products.md` would contain layout-wrapped HTML. Autoescape still applies, so `{{ value }}` output is HTML-entity-encoded; keep interpolated values to plain text. Verified on Eleventy 3.1.8, 2026-11-21.
 
 ### JSON-LD from `_data`
 

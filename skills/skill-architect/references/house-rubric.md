@@ -63,7 +63,7 @@ A strong description has two required parts: a concise capability clause and con
 1. Names exact request phrases.
 2. Names file paths, tools, APIs, or error messages.
 3. States contexts where the skill should load even if the phrase differs.
-4. Front-loads leading words that requests, docs, or the codebase already use, keeping the capability clause and strongest trigger inside the first 120 characters because some runtimes truncate there ([vendor adapters](vendor-adapters.md#openai--codex)).
+4. Front-loads leading words that requests, docs, or the codebase already use, keeping the capability clause and strongest trigger at the start because some runtimes shorten descriptions to fit a skills-list budget ([vendor adapters](vendor-adapters.md#openai--codex)).
 5. Avoids becoming a workflow summary.
 
 Write the description for the agent that loads the skill. Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.
@@ -95,23 +95,40 @@ Avoid:
 - workflow summaries that omit retrieval cues
 - vendor-only trigger names unless the skill is truly vendor-specific
 - runtime compatibility advertising in descriptions; retain names that identify a real task or execution boundary
+- angle brackets (`<` or `>`) anywhere in the description: first-party validators reject them and Claude Code escapes them before the model sees the description ([vendor adapters](vendor-adapters.md#description-characters)); write a path cue as `skills/*/SKILL.md`, not with a bracketed placeholder. `validate_skill.py` fails on them.
 
 
 ## Command mode rubric
 
-`skill-architect` uses modes to keep broad architecture work precise:
+`skill-architect` uses modes to keep broad architecture work precise. Apply the rule for the chosen mode before acting; the [done conditions](#done-conditions) say when the mode is finished:
 
-| Mode | Quality bar | Failure mode to avoid |
-|---|---|---|
-| `plan` | Names scope, standards, affected files, gates, and rollback before edits | vague roadmap with no verification path |
-| `create` | Starts from concrete use cases and produces a portable core before adapters | scaffold-first skills with weak trigger descriptions |
-| `audit` | Produces source-cited findings and separates mechanical failures from judgment calls | opinion-only reviews |
-| `fix` | Applies only safe deterministic fixes with dry-run evidence and validation afterward | using a fixer to rewrite judgment-heavy content or guess broken anchors |
-| `refactor` | Preserves skill intent while improving retrieval, disclosure, routing, or checks | churn-only rewrites or accidental behavior changes |
-| `compare` | Cites inspected sources and records adopt/reject rationale | copying public patterns because they are popular |
-| `distill` | Converts session evidence into reusable workflow, trigger, resource, and eval candidates | mistaking one-off session details for durable skill behavior |
-| `reconcile` | Verifies stale plans/proposals against current files and retires fixed, rejected, or drifted items | re-reporting old findings without checking current reality |
-| `teach` | Gives the smallest useful rule plus an example or exercise | dumping the full rubric without context |
+| Mode | Rule | Quality bar | Failure mode to avoid |
+|---|---|---|---|
+| `plan` | Plan before non-trivial multi-file changes, new gates, release work, or cross-vendor adapter changes. | Names scope, standards, affected files, gates, and rollback before edits | vague roadmap with no verification path |
+| `create` | Create should start from concrete use cases, then draft the portable core before vendor metadata. | Starts from concrete use cases and produces a portable core before adapters | scaffold-first skills with weak trigger descriptions |
+| `audit` | Audit is read-only by default; present findings and wait unless the user also asks to patch. | Produces source-cited findings and separates mechanical failures from judgment calls | opinion-only reviews |
+| `fix` | Fix is deterministic and dry-run-first; only apply `fix_skill.py --write` for safe mechanical edits, then run `validate_skill.py`. | Applies only safe deterministic fixes with dry-run evidence and validation afterward | using a fixer to rewrite judgment-heavy content or guess broken anchors |
+| `refactor` | Refactor preserves intent; do not rename, split, or change behavior beyond the requested scope without calling it out. | Preserves skill intent while improving retrieval, disclosure, routing, or checks | churn-only rewrites or accidental behavior changes |
+| `compare` | Compare must cite inspected sources and separate source facts from adoption decisions. | Cites inspected sources and records adopt/reject rationale | copying public patterns because they are popular |
+| `distill` | Distill must separate session-specific events from reusable patterns, cite the session source, and propose a skill only from repeated or high-value behavior. | Converts session evidence into reusable workflow, trigger, resource, and eval candidates | mistaking one-off session details for durable skill behavior |
+| `reconcile` | Reconcile must verify whether prior plans, findings, and proposals still match the current context; retire fixed or rejected items instead of re-reporting them. | Verifies stale plans/proposals against current files and retires fixed, rejected, or drifted items | re-reporting old findings without checking current reality |
+| `teach` | Teach should explain the smallest useful rule, then give one concrete example rather than dumping the whole rubric. | Gives the smallest useful rule plus an example or exercise | dumping the full rubric without context |
+
+## Done conditions
+
+A mode is finished only when every clause in its row can be checked from the output. Each procedure step's done condition is the `Done when` column of the [procedure table in `SKILL.md`](../SKILL.md#procedure), which also lists the steps each mode runs.
+
+| Mode | Done when |
+|---|---|
+| `plan` | The plan names scope, every affected file, the governing standard by path, a verification command per change, and rollback notes; no file was edited. |
+| `create` | The new folder passes `validate_skill.py` or the local gate, with the command and output reported; the description has a capability clause plus concrete triggers; every reference is linked from `SKILL.md`; repository metadata the local standard requires is updated or listed as pending. |
+| `audit` | Every finding cites `file:line`, a command with its output, or a primary source, and carries a severity and a patch recommendation; each mechanical gate is reported as passed, failed, or skipped with its command; no file changed unless patching was also requested. |
+| `fix` | The dry-run output is shown; `--write` ran only when the request asked for edits; `validate_skill.py` ran afterward and its result is reported; every case the fixer refused is listed for manual review. |
+| `refactor` | The diff touches only the requested surface; name, triggers, and supported task are unchanged, or each change is called out; the checks that passed before still pass, with commands reported. |
+| `compare` | Each source has a URL or path and an inspection date; source facts and adoption decisions are separated; every candidate rule is marked adopt, adapt, or reject with a one-line rationale. |
+| `distill` | Each reusable step cites the session or sessions it came from; session-only details such as local paths, credentials, and project names are excluded; existing skills were checked for overlap before a new one is proposed; a skill is proposed only for repeated or high-value behavior; the output is a proposal with an eval plan, and nothing is written unless a draft was requested. |
+| `reconcile` | Every prior item is classified as still valid, fixed, rejected, or no longer applicable, with current `file:line` or command evidence; fixed and rejected items are retired, not re-reported; the next executable step is named. |
+| `teach` | One rule, one concrete example, and one next-step exercise or checklist were given; the full rubric was not pasted. |
 
 ## Body rubric
 
@@ -161,6 +178,16 @@ Add helper assets only when they meet all conditions:
 ## Predictability and pruning checks
 
 Use these checks during `audit` and `refactor`, especially when a skill is long, branchy, or inconsistent across runs.
+
+Run the pass in this order before judging style or patching content; the table below gives what to inspect and the pass condition for each check:
+
+1. **Invocation fit:** decide whether the skill should be model-invoked or user-invoked. Pay context load only when autonomous agent reach or cross-skill reach is necessary; recommend a router skill when many user-invoked skills create cognitive load.
+2. **Description branches:** keep one trigger per real branch, remove synonym-only trigger duplication, and front-load strong leading words that also appear in prompts, docs, or code.
+3. **Information hierarchy:** classify each major block as step, in-skill reference, or disclosed reference. Inline what every branch needs; move branch-only detail behind a context pointer.
+4. **Completion criteria:** every ordered step should end with a checkable done condition. Sharpen vague criteria before splitting a sequence.
+5. **Premature-completion risk:** if visible post-completion steps pull attention forward and the current criterion cannot be sharpened further, recommend a real context-boundary split.
+6. **Leading words:** replace repeated explanatory prose with a compact pretrained concept only when it improves predictable execution or invocation.
+7. **Pruning:** apply sentence-level relevance and no-op tests; remove duplication, sediment, and sprawl instead of polishing dead prose. The single-source, sediment, no-op, and sprawl rows below are its pass conditions.
 
 | Check | What to inspect | Pass condition |
 |---|---|---|

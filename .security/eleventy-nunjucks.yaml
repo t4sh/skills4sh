@@ -13,21 +13,21 @@ skill:
 integrity:
   hash_algorithm: sha256
   files:
-    assets/evals/scenarios.json: 2a0b4e53f2945e4a43649dd8a6621793eb895080e9c52b6a411c4396206aae71
+    assets/evals/scenarios.json: 0f87f8efec8c435bebe8c2bc2ee1a26e76ac2862aaa6cc33b06296f5909df39b
     assets/icon.svg: a1ab74f6044fd0eb42aa60f36fa27c63247a4f0e84e8c3df9333f05b7b13f151
     LICENSE: b208857e4c1af3a61cea456dc048d043e81b07c797c16f2f4b6911f09b4807ff
-    references/build-awesome-v4.md: f51e76c98a4ba2557c4e13cf6fb4f6010a290a7b67b718d56f1a725d86e8c5b4
-    references/build-pipeline.md: efbba9d500ed66b34e803a548f83cbf24d00754ae27594e89420ee8c9502da55
-    references/conventions.md: 993dbdb0cc5bd2091d241a7bd1cd050a6ffafaa67226ed43f091bf7d3bc8fb3c
-    references/data-cascade.md: 4bea8e9141bfb4da740a62d41f7e42b377832c1263dc5b8facb8233810ed2f59
-    references/eleventy-config-api.md: 33e7458fb996de1ca92d9051dd97ab41d69aab02f1b464de2d1d58b7a32d923a
-    references/filters.md: 5b78a0ccfe89c2efdce70b1fa3f42e09c849c983e2918a1c24e9165c4a8d260f
-    references/nunjucks-syntax.md: 351196a664a53a7e12ab5a3489e7bb4cdd29e6b26a2a79b5774b18e073a3deb2
-    references/production-patterns.md: c1b571a167f54b2c372c2b7d5f6a4dec7fb9f885f5732a36d84f99037980850a
-    references/review-shipping.md: 2ace12d6bd6daf808a085f444c311a53ea30b9d8f0cfb7910d4dcafcc7baa44c
-    references/security-checklist.md: 7efdd187d867bb575ec23a80ef8494add162a2949ad2ae516336e10be5fcb987
-    references/troubleshooting.md: a38752134048899a438456da63e171dad6a6f4a29639c33eaadd558b388c00fa
-    SKILL.md: 4f0a1bcf55361b512e7c46d2b6f4ca35b354c355c5fe074a5f7e306e38e72a0f
+    references/build-awesome-v4.md: 75ff3cd20319f56b3ad846cdc74d5d4b7a0f6edec0ff9fc9776fbe6a64f25d9f
+    references/build-pipeline.md: a6cde0b6295c64af7f49b0101ba2f094428f2670df8d5976618b49d28dec9982
+    references/conventions.md: 143efbe6f24ab132c6a5e4a3b73bdc091f8104cc63e2522be2a214156a5f0501
+    references/data-cascade.md: 739d519fdf92f506b6170f7215d3fb86a5c10410b4b1a736e660731711922de9
+    references/eleventy-config-api.md: d5c725bbb2f8240f093b861e7112a7c7b7186727b2a26729e65d77c69f137849
+    references/filters.md: bc26fb7ff5ad952d449e1813e97fdd08a1824dff1661b7e6ad7f6bad4eb8400a
+    references/nunjucks-syntax.md: d431155dd3b2200ae17bb02535d597e8207b8ce2342ff2ddb911b82ec923a238
+    references/production-patterns.md: 8a3aaa0ee43c85e3a9190f5ce65504eed202003cb89b151fbb696c311e7b3a7a
+    references/review-shipping.md: 6389e1f39767d1f76e6c821353b8c7c23f1c7ef345d67c5c7ee95f62aeb3754b
+    references/security-checklist.md: a5286e74dc8c85f3d24b15b7754885d36f3e0dc87dbf21f1b5036f0622be30a2
+    references/troubleshooting.md: 3f84e50eb9b6937c5a866f8d13724d9f1b2958ad50ccc8f1dbdcafce6e1aafd4
+    SKILL.md: 1930f4fe96ccc5e46b9dc386bf6e4307788faf10244524b7e9f62612a9eb7c9c
     agents/openai.yaml: 4f83f2cdeaf4b1d5487da069a35123aa50be0308943528596db80cd17a43c6c0
 permissions:
   alwaysAllow: []
@@ -49,7 +49,7 @@ dependencies:
   - name: "@awesome.me/buildawesome"
     type: npm
     optional: true
-    version: "4.0.0-alpha.10"
+    version: "4.0.0-alpha.12"
     reason: "Optional, exactly pinned Build Awesome v4 prerelease migration track"
   - name: markdown-it
     type: npm
