@@ -64,3 +64,11 @@
   type: session
   title: "skills4sh 0.7.0 release: Codex adapters and two 1.0 skills"
   status: active
+- id: decisions/retire-figma-skills
+  type: decision
+  title: "Retire code-to-figma and figma-to-code"
+  status: active
+- id: sessions/20261120-figma-retirement-undici-fix
+  type: session
+  title: "Figma skills retired and undici advisories patched"
+  status: active
