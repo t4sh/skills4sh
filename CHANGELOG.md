@@ -8,6 +8,13 @@ Per-skill versions evolve independently from the package version. See [SECURITY.
 
 ## [Unreleased]
 
+### Security
+- Upgrade the bundled `undici` to 6.29.1, fixing five advisories: TLS certificate validation bypass (GHSA-2m5v-pch6-74hx) and denial of service via TLS renegotiation (GHSA-qrxm-fqhp-jwvm), excessive content-encodings (GHSA-xjj6-f33q-929c), WebSocket PONG buffering (GHSA-9fm3-97px-rjf6), and the EventSource parser (GHSA-4qv8-2p9j-2685).
+- Update pinned CI actions: `github/codeql-action` 4.39.1, `astral-sh/setup-uv` 10.3.2, `actions/setup-python` 7.1.0.
+
+### Removed
+- Retired `code-to-figma` and `figma-to-code`, along with the `tokens-sync-to-figma` Figma plugin and its walker snippet tests. Figma's official skills ([figma/mcp-server-guide](https://github.com/figma/mcp-server-guide/tree/main/skills)) cover design-to-code, code-to-Figma, token reconciliation, and Code Connect. Existing installs keep working but receive no updates.
+
 ## [0.7.1] — 2026-10-21
 
 ### Changed

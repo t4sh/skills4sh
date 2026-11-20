@@ -17,14 +17,11 @@
 <!-- Check every area touched. Name the exact skill/plugin where applicable. -->
 
 - [ ] Skill: `agent-memory`
-- [ ] Skill: `code-to-figma`
 - [ ] Skill: `discord-harvest`
 - [ ] Skill: `eleventy-nunjucks`
-- [ ] Skill: `figma-to-code`
 - [ ] Skill: `init-rulebook`
 - [ ] Skill: `localhost-screenshots`
 - [ ] Skill: `skill-architect`
-- [ ] Plugin: `tokens-sync-to-figma`
 - [ ] Installer / CLI (`bin/`, package metadata, npm payload)
 - [ ] CI / release / security (`.github/`, `.security/`, branch protection, publishing)
 - [ ] Documentation only

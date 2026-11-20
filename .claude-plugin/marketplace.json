@@ -10,7 +10,7 @@
     {
       "name": "skills4sh",
       "source": ".",
-      "description": "Agent skills: agent-memory (cross-agent persistent project memory), code-to-figma (CI-anchored DTCG 2025.10 token export pipeline), discord-harvest (bot-authorized and user-exported Discord content archival), eleventy-nunjucks (11ty + Nunjucks conventions), figma-to-code (remote-first Figma MCP implementation, tokens, rules, and Code Connect), init-rulebook (personal agent rulebook setup and loading), localhost-screenshots (responsive screenshot capture), skill-architect (open-spec portable skill authoring/review rubric with adapters and eval planning)",
+      "description": "Agent skills: agent-memory (cross-agent persistent project memory), discord-harvest (bot-authorized and user-exported Discord content archival), eleventy-nunjucks (11ty + Nunjucks conventions), init-rulebook (personal agent rulebook setup and loading), localhost-screenshots (responsive screenshot capture), skill-architect (open-spec portable skill authoring/review rubric with adapters and eval planning)",
       "version": "0.7.1",
       "author": {
         "name": "t4sh"
@@ -25,8 +25,6 @@
         "11ty",
         "nunjucks",
         "static-site",
-        "figma",
-        "design-to-code",
         "agent-skills",
         "skill-authoring",
         "skill-architect",

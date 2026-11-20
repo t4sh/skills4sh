@@ -48,10 +48,8 @@ In summary:
 | Skill | Path |
 |-------|------|
 | agent-memory | `skills/agent-memory/` |
-| code-to-figma | `skills/code-to-figma/` |
 | discord-harvest | `skills/discord-harvest/` |
 | eleventy-nunjucks | `skills/eleventy-nunjucks/` |
-| figma-to-code | `skills/figma-to-code/` |
 | init-rulebook | `skills/init-rulebook/` |
 | localhost-screenshots | `skills/localhost-screenshots/` |
 | skill-architect | `skills/skill-architect/` |
