@@ -82,5 +82,5 @@
   status: active
 - id: context/v080-post-release-audit-todo
   type: context
-  title: "TODO: close the 0.8.0 post-release audit findings"
+  title: "Pending repository work and deferred decisions after the 0.8.0 audit"
   status: active
