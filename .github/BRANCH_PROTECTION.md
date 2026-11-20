@@ -1,19 +1,15 @@
 # Branch Protection Contract
 
-Protect `main` and require pull requests to pass these **19 checks** before merge:
+Protect `main` and require pull requests to pass these **15 checks** before merge:
 
 - `Validate Skills / validate (22)`
 - `Validate Skills / validate (24)`
 - `guardskills Scan / scan (agent-memory, 22)`
 - `guardskills Scan / scan (agent-memory, 24)`
-- `guardskills Scan / scan (code-to-figma, 22)`
-- `guardskills Scan / scan (code-to-figma, 24)`
 - `guardskills Scan / scan (discord-harvest, 22)`
 - `guardskills Scan / scan (discord-harvest, 24)`
 - `guardskills Scan / scan (eleventy-nunjucks, 22)`
 - `guardskills Scan / scan (eleventy-nunjucks, 24)`
-- `guardskills Scan / scan (figma-to-code, 22)`
-- `guardskills Scan / scan (figma-to-code, 24)`
 - `guardskills Scan / scan (localhost-screenshots, 22)`
 - `guardskills Scan / scan (localhost-screenshots, 24)`
 - `Release Guards / bin/ matches tag for current package.json version`

@@ -9,10 +9,8 @@ Each skill is an [Agent Skills](https://agentskills.io/specification) folder. Th
 | Skill | What it helps you do | Version |
 |-------|---------------------|---------|
 | [agent-memory](skills/agent-memory/) | Share project decisions, rationale, conventions, and handoffs across developers and agents through Git | 2.8.0 |
-| [code-to-figma](skills/code-to-figma/) | Build a CI pipeline that exports design tokens and page structure for a Figma plugin to consume | 0.3.0 |
 | [discord-harvest](skills/discord-harvest/) | Archive Discord images and attachments, and catalog shared links, using authorized bot access or supplied exports | 2.1.0 |
 | [eleventy-nunjucks](skills/eleventy-nunjucks/) | Build, debug, and review Eleventy sites and Nunjucks templates, with a separate Build Awesome prerelease migration guide | 1.0.0 |
-| [figma-to-code](skills/figma-to-code/) | Bring your repo's tokens, components, and agent rules to Figma work; pairs with Figma's official `figma-design-to-code` skill and implements designs itself when that skill is absent | 0.2.0 |
 | [init-rulebook](skills/init-rulebook/) ⭐ | Keep one personal rulebook that every agent loads: only the rules that apply, reloaded after compaction, with action gates read just in time | 1.0.0 |
 | [localhost-screenshots](skills/localhost-screenshots/) | Capture responsive screenshots and compare interface changes on a local development server | 3.5.0 |
 | [skill-architect](skills/skill-architect/) | Create, review, and improve skills with clear triggers, reusable procedures, and meaningful verification | 1.1.0 |
@@ -127,14 +125,12 @@ Pointer files (`AGENTS.md`, `CLAUDE.md`, Cursor rules, and similar) are document
 
 **Installing `agent-memory` globally makes the workflow reusable. It does not create one global memory shared across all your projects.**
 
-Installing a skill also does not provision its dependencies. Figma workflows need the relevant Figma access and tools; screenshot workflows need a running local site and browser tooling. Check each skill's compatibility notes for macOS, Windows, Linux, and runtime requirements.
+Installing a skill also does not provision its dependencies. Screenshot workflows need a running local site and browser tooling. Check each skill's compatibility notes for macOS, Windows, Linux, and runtime requirements.
 
 ### Try the other workflows
 
 | Skill | Example request |
 |-------|-----------------|
-| code-to-figma | “Set up a pipeline to export this repository's design tokens and page structure for the Figma plugin.” |
-| figma-to-code | “Map this Figma design's variables to our tokens and write the Figma rules for this repo.” |
 | init-rulebook | “Set up my personal agent rulebook.” |
 | discord-harvest | “Archive the images and attachments from this Discord export.” |
 | eleventy-nunjucks | “Help me debug the layout chain in this Eleventy site.” |
@@ -214,7 +210,7 @@ See [SECURITY.md](SECURITY.md) for scan details, expected findings, and vulnerab
 
 Skill files do not execute themselves. Agents may follow their instructions and run optional helpers when the task and permissions allow.
 
-> **Stability:** `code-to-figma` and `figma-to-code` are pre-1.0: prompt content and triggers may change incompatibly between minor releases. `agent-memory`, `discord-harvest`, `eleventy-nunjucks`, `init-rulebook`, `localhost-screenshots`, and `skill-architect` reserve breaking changes for major versions.
+> **Stability:** `agent-memory`, `discord-harvest`, `eleventy-nunjucks`, `init-rulebook`, `localhost-screenshots`, and `skill-architect` reserve breaking changes for major versions.
 
 ## License
 

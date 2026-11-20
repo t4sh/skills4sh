@@ -45,7 +45,7 @@ tests/                      # installer + integration tests (node:test)
 
 A skill is an **inert instruction bundle**: SKILL.md instructions plus optional reference markdown and static assets. Helper scripts and code examples may ship as inert assets; there are no install hooks. The installer (`bin/install.mjs`) only copies files to a destination directory; it never executes anything from the skill.
 
-Standalone executable tooling lives in two places: `bin/` (the installer and check scripts) and `plugins/` (standalone plugins that run in their own host, e.g. Figma). Neither is delivered by `bin/install.mjs` and neither participates in the skill version-sync surface — they are documented in their own folders and reviewed as code.
+Standalone executable tooling lives in two places: `bin/` (the installer and check scripts) and `plugins/` (standalone plugins that run in their own host). Neither is delivered by `bin/install.mjs` and neither participates in the skill version-sync surface — they are documented in their own folders and reviewed as code.
 
 ---
 
@@ -165,7 +165,7 @@ plugins/<your-plugin>/
 
 Requirements:
 
-1. **Folder name is kebab-case** and matches the plugin's stable id (e.g. `tokens-sync-to-figma`). The host-facing *display* name may differ and is set in the plugin's own manifest.
+1. **Folder name is kebab-case** and matches the plugin's stable id. The host-facing *display* name may differ and is set in the plugin's own manifest.
 2. **A per-folder `README.md`** that explains: what the plugin does, the data flow / contract (document any JSON or message schema it consumes), setup steps, and every external access scope it requests (network domains, document/filesystem access) with the reason.
 3. **No private or project-internal identifiers.** No customer names, internal collection/page names, internal hostnames, or org jargon hardcoded in source. Use generic, configurable names. This repo is public.
 4. **No secrets.** No tokens, gist URLs tied to a private account, or credentials committed. User-supplied URLs/keys belong in plugin UI inputs, not source.

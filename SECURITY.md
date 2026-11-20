@@ -7,10 +7,8 @@ This project follows the [OWASP Agentic Skills Top 10 (AST10)](https://owasp.org
 | Skill | Version | Supported |
 |-------|---------|-----------|
 | agent-memory | 2.8.0 | Yes |
-| code-to-figma | 0.3.0 | Yes |
 | discord-harvest | 2.1.0 | Yes |
 | eleventy-nunjucks | 1.0.0 | Yes |
-| figma-to-code | 0.2.0 | Yes |
 | init-rulebook | 1.0.0 | Yes |
 | localhost-screenshots | 3.5.0 | Yes |
 | skill-architect | 1.1.0 | Yes |
@@ -36,10 +34,8 @@ Each skill has a canonical security manifest containing integrity hashes, permis
 | Skill | Manifest |
 |-------|----------|
 | agent-memory | [`.security/agent-memory.yaml`](.security/agent-memory.yaml) |
-| code-to-figma | [`.security/code-to-figma.yaml`](.security/code-to-figma.yaml) |
 | discord-harvest | [`.security/discord-harvest.yaml`](.security/discord-harvest.yaml) |
 | eleventy-nunjucks | [`.security/eleventy-nunjucks.yaml`](.security/eleventy-nunjucks.yaml) |
-| figma-to-code | [`.security/figma-to-code.yaml`](.security/figma-to-code.yaml) |
 | init-rulebook | [`.security/init-rulebook.yaml`](.security/init-rulebook.yaml) |
 | localhost-screenshots | [`.security/localhost-screenshots.yaml`](.security/localhost-screenshots.yaml) |
 | skill-architect | [`.security/skill-architect.yaml`](.security/skill-architect.yaml) |
@@ -93,10 +89,8 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 | Skill | Permissions | Risk Tier |
 |-------|-------------|-----------|
 | agent-memory | None (all gated) | Low |
-| code-to-figma | None (all gated) | Medium |
 | discord-harvest | None (all gated) | Medium |
 | eleventy-nunjucks | None (all gated) | Low |
-| figma-to-code | None (all gated) | Low |
 | init-rulebook | None (all gated) | Low |
 | localhost-screenshots | None (all gated) | Low |
 | skill-architect | None (all gated) | Low |
@@ -138,12 +132,12 @@ Chain in one sentence: **maintainer-signed commit → maintainer-signed tag poin
 
 | Control | Implementation |
 |---------|----------------|
-| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory`, `figma-to-code`, and `init-rulebook` scan without overrides; `code-to-figma`, `discord-harvest`, `eleventy-nunjucks`, `localhost-screenshots`, and `skill-architect` have documented expected findings that must match this file before overrides are accepted. |
+| guardskills | Pinned to `guardskills@1.2.1`. `agent-memory` and `init-rulebook` scan without overrides; `discord-harvest`, `eleventy-nunjucks`, `localhost-screenshots`, and `skill-architect` have documented expected findings that must match this file before overrides are accepted. |
 | CodeQL | `.github/workflows/codeql.yml` runs static analysis on push, PR, and a weekly cron (Mondays 06:00 UTC). Languages: `actions`, `javascript-typescript`. |
 | Dependency review | `.github/workflows/dependency-review.yml` runs `actions/dependency-review-action` on every PR with `fail-on-severity: moderate` — blocks PRs that introduce known-vulnerable packages. |
 | GitHub Actions SHA-pinning | All `uses:` directives across every workflow are pinned to a commit SHA (with a trailing `# vX.Y.Z` comment for human readability). Floating major tags (`@v4`) would expose CI to upstream compromise — see e.g. the tj-actions/changed-files 2025 incident. `.github/dependabot.yml` opens grouped weekly PRs to keep the SHAs moving forward; each upgrade PR hits the full required-checks matrix before merge. |
 | npm provenance & publish auth | `.github/workflows/npm-publish.yml` authenticates via **OIDC Trusted Publisher** (no `NPM_TOKEN` secret since v0.3.9). The GitHub Actions OIDC token both authenticates the registry `PUT` and signs the SLSA v1 provenance attestation. Trusted Publisher binding on npmjs.com: Repository `t4sh/skills4sh`, Workflow `npm-publish.yml`. Package "Publishing access" is set to "Require 2FA and disallow tokens". Runner uses Node 24 / npm ≥ 11.5 (Trusted Publisher publish-auth requires npm 11+; Node 22's bundled npm 10 can only sign provenance, not authenticate publishes). Consumers verify each tarball via `npm audit signatures`. |
-| guardskills CI | `.github/workflows/guardskills.yml` matrix-scans all eight skills (agent-memory, code-to-figma, discord-harvest, eleventy-nunjucks, figma-to-code, init-rulebook, localhost-screenshots, skill-architect) on Node 22 and 24. Triggered on push, PR, and manual dispatch. |
+| guardskills CI | `.github/workflows/guardskills.yml` matrix-scans all six skills (agent-memory, discord-harvest, eleventy-nunjucks, init-rulebook, localhost-screenshots, skill-architect) on Node 22 and 24. Triggered on push, PR, and manual dispatch. |
 
 ### AST09 — No Governance
 
@@ -174,14 +168,6 @@ The following findings are expected and documented:
 |---------|----------|---------|-------------|
 | `R008_ENV_ACCESS` | LOW | `references/helper-runtime.md` | The temporary-venv fallback stores its generated path in a shell variable so every install and helper invocation stays inside the same isolated environment. |
 | `R009_FILE_STAGE` | LOW | `references/helper-runtime.md` | The documented fallback creates a temporary virtual environment for pinned validation dependencies; it does not stage user skill content or execute automatically. |
-
-### code-to-figma
-
-| Finding | Severity | File(s) | Explanation |
-|---------|----------|---------|-------------|
-| `R005_SECRET_READ` | HIGH/medium | `references/walker-patterns.md` | False positive (acknowledged). The generic `push-to-figma.mjs` template reads `process.env.GIST_TOKEN` to authenticate a Gist PATCH — sourcing the token from the environment instead of hardcoding it is the secure pattern. No secret file or credential store is read. The template is executed by `/code-to-figma sync` (step 5) and by CI, with the token sourced from the environment and sent only to the GitHub Gist API. |
-| `R008_ENV_ACCESS` | LOW | `references/ci-and-gist-setup.md`, `references/walker-patterns.md` | CI/template snippets reference `GIST_TOKEN` / `GIST_ID` via GitHub Actions secrets and `process.env`, while the local pusher may read `gistId` from config — the recommended pattern, shown as instructional examples. |
-| `R009_FILE_STAGE` | LOW | `SKILL.md`, `references/ci-and-gist-setup.md` | Instructional `/tmp/figma-export*.json` staging in the sync/verify and Gist-setup command examples — documentation, not skill-side file staging. |
 
 ### discord-harvest
 
@@ -231,10 +217,8 @@ Run security scans locally:
 ```bash
 # guardskills (skill-specific; pinned to CI version)
 npx guardskills@1.2.1 add t4sh/skills4sh --skill agent-memory --dry-run
-npx guardskills@1.2.1 add t4sh/skills4sh --skill code-to-figma --dry-run --force
 npx guardskills@1.2.1 add t4sh/skills4sh --skill discord-harvest --dry-run --force
 npx guardskills@1.2.1 add t4sh/skills4sh --skill eleventy-nunjucks --dry-run --force
-npx guardskills@1.2.1 add t4sh/skills4sh --skill figma-to-code --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill init-rulebook --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill localhost-screenshots --dry-run
 npx guardskills@1.2.1 add t4sh/skills4sh --skill skill-architect --dry-run
@@ -243,7 +227,7 @@ npx guardskills@1.2.1 add t4sh/skills4sh --skill skill-architect --dry-run
 # npx guardskills scan-local skills/<name> --json
 
 # Verify content hashes (includes references/ subdirectory)
-for skill in agent-memory code-to-figma discord-harvest eleventy-nunjucks figma-to-code init-rulebook localhost-screenshots skill-architect; do
+for skill in agent-memory discord-harvest eleventy-nunjucks init-rulebook localhost-screenshots skill-architect; do
   echo "=== $skill ==="
   find "skills/$skill" -type f -not -name '.DS_Store' | sort | while read -r f; do
     relpath="${f#skills/$skill/}"

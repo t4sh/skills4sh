@@ -9,8 +9,8 @@
     },
     {
       "title": "Design & UI",
-      "description": "Connect designs with code and verify interfaces with screenshots.",
-      "skills": ["figma-to-code", "code-to-figma", "localhost-screenshots"]
+      "description": "Verify interfaces with screenshots.",
+      "skills": ["localhost-screenshots"]
     },
     {
       "title": "Web & content",

@@ -14,11 +14,6 @@
       "description": "Cross-interface persistent memory system for any project"
     },
     {
-      "name": "code-to-figma",
-      "path": "skills/code-to-figma",
-      "description": "Generate a CI-anchored code \u2192 Figma pipeline with a conforming DTCG 2025.10 token artifact and Gist export"
-    },
-    {
       "name": "discord-harvest",
       "path": "skills/discord-harvest",
       "description": "Archive Discord assets through authorized bot access, a user-provided Data Package, or manual local exports"
@@ -27,11 +22,6 @@
       "name": "eleventy-nunjucks",
       "path": "skills/eleventy-nunjucks",
       "description": "11ty v3 + Nunjucks conventions, syntax cheat sheet, autoescape rules, stability + security checklists"
-    },
-    {
-      "name": "figma-to-code",
-      "path": "skills/figma-to-code",
-      "description": "Remote-first, repo-aware Figma MCP workflow for UI implementation, tokens, design-system rules, and Code Connect"
     },
     {
       "name": "init-rulebook",
