@@ -7,7 +7,7 @@ description: >-
 tags: [skill-authoring, descriptions, retrieval, skill-architect, standards]
 source: craft-agent
 created: 2026-06-13
-updated: 2026-09-15
+updated: 2026-11-21
 status: active
 ---
 
@@ -42,4 +42,6 @@ A 2026-06-13 `skills.sh` sample showed that public high-install skills commonly 
 - Use `Use when ...` for discipline/rule skills where the capability is obvious.
 - Reject loose summaries that have no retrieval cues.
 - Keep concrete triggers: quoted request phrases, file paths, tools, file types, named errors, or situations.
+- Never use `<` or `>` in a description. First-party skill validators reject angle brackets and Claude Code escapes them; write a path cue as `skills/*/SKILL.md`. Both `check:skill-standard` and `validate_skill.py` enforce this since 2026-11-21.
+- State what the skill is not for. The 2026-11 review rewrote five descriptions to drop over-broad cues and add a skip clause; a narrower description is a breaking change and takes a major version.
 - Write the description for the loading agent. Omit runtime compatibility lists from descriptions. Include a runtime name only when it identifies the task, a retrieval cue, or a required execution boundary. Put installation paths and general compatibility advertising in README notes or a linked reference.

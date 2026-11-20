@@ -72,3 +72,11 @@
   type: session
   title: "Figma skills retired and undici advisories patched"
   status: active
+- id: decisions/skills-review-2026-11
+  type: decision
+  title: "November 2026 skills review: positioning, manifest and tooling decisions"
+  status: active
+- id: sessions/20261121-skills-review-v080-release
+  type: session
+  title: "November skills review and skills4sh 0.8.0 release"
+  status: active

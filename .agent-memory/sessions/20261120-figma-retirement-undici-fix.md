@@ -8,7 +8,7 @@ description: >-
 tags: [session, figma, retirement, security, undici, dependabot, branch-protection]
 source: claude-code
 created: 2026-11-20
-updated: 2026-11-20
+updated: 2026-11-21
 status: active
 ---
 
@@ -28,7 +28,7 @@ status: active
 
 ## Open Threads
 
-- No release has been cut. The published npm package 0.7.1 still bundles `undici` 6.29.0 and still ships both Figma skills. Removing skills is a breaking change for the package.
-- The ten Dependabot alerts were still listed as open immediately after the merge, pending GitHub's rescan of `main`.
+- Resolved 2026-11-21: skills4sh 0.8.0 ships `undici` 6.29.1 and no Figma skills; see [sessions/20261121-skills-review-v080-release](20261121-skills-review-v080-release.md). (npm 0.7.1 and earlier still bundle `undici` 6.29.0 and both Figma skills.)
+- Resolved: GitHub listed no open Dependabot alerts on 2026-11-21.
 - Removing a skill changes the required-check list: update `.github/branch-protection.expected.json`, the count in `.github/BRANCH_PROTECTION.md`, and the live protection together, or the drift check blocks the PR.
-- The test environment needs PyYAML 6.0.3, which had no wheel for Python 3.15 on 2026-11-20; a Python 3.14 venv worked.
+- The test environment needs PyYAML 6.0.3, which had no wheel for Python 3.15 on 2026-11-20; a Python 3.14 venv worked. `CONTRIBUTING.md` and `bin/check-test-env.mjs` state the 3.10–3.14 range since 0.8.0.
